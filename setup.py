@@ -17,7 +17,7 @@ setup(
     install_requires = install_requires,
     name = "matterhorn",
     version = "0.1.0",
-    author = "PKU MLG, PCL, and other contributors",
+    author = "CAG, IAIR, XJTU, Xi'an, China",
     author_email = "ericwang017@stu.xjtu.edu.cn",
     description = "A neuromorphic framework based on PyTorch.",
     long_description = long_description,
