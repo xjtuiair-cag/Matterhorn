@@ -26,10 +26,7 @@ setup(
     packages = find_packages(),
     classifiers = [
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "License :: Other/Proprietary License",
+        "License :: MIT No Attribution License",
         "Operating System :: OS Independent",
     ],
     python_requires = '>=3.6'
