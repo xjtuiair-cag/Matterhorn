@@ -27,7 +27,7 @@ def main():
 
     print("This example is aimed to let you build your own SNN model and train it on traditional image dataset on [green]Matterhorn[/green], for example, MNIST.")
 
-    print("In this demo, we're about to build a 3-layer multi-layer perceptron. From the code below, you'll see how a spatial-temporal network is build.")
+    print("In this demo, we're about to build a 2-layer multi-layer perceptron. From the code below, you'll see how a spatial-temporal network is build.")
 
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
