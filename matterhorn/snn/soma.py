@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 from matterhorn.snn import functions
 
-from typing import Callable, Union, Any, Optional
-
 
 """
 脉冲神经网络神经元的胞体，一层的后半段。
@@ -11,10 +9,10 @@ from typing import Callable, Union, Any, Optional
 """
 
 
-class UOHSkeleton(nn.Module):
+class PFHSkeleton(nn.Module):
     def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
         """
-        U-O-H三段式神经元胞体骨架，分别为：
+        Potential-Firing-History三段式神经元胞体骨架，分别为：
         （1）通过历史电位$H_{i}^{l}(t)$和输入电位$X_{i}^{l}(t)$计算当前电位$U_{i}^{l}(t)$；
         （2）通过当前电位$U_{i}^{l}(t)$计算当前脉冲$O_{i}^{l}(t)$；
         （3）通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
@@ -31,17 +29,17 @@ class UOHSkeleton(nn.Module):
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function()
-        self.reset()
+        self.n_reset()
     
 
-    def reset(self):
+    def n_reset(self):
         """
         重置整个神经元
         """
         self.u = self.u_rest
 
     
-    def detach(self):
+    def n_detach(self):
         """
         将历史电位从计算图中分离，以停止在时间上进行反向传播
         """
@@ -49,7 +47,7 @@ class UOHSkeleton(nn.Module):
             self.u = self.u.detach()
 
 
-    def calc_potential(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    def f_potential(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         通过历史电位$H_{i}^{l}(t)$和输入电位$X_{i}^{l}(t)$计算当前电位$U_{i}^{l}(t)$。
         @params:
@@ -61,7 +59,7 @@ class UOHSkeleton(nn.Module):
         return h + (1. / self.tau_m) * x
     
 
-    def calc_spike(self, u: torch.Tensor) -> torch.Tensor:
+    def f_firing(self, u: torch.Tensor) -> torch.Tensor:
         """
         通过当前电位$U_{i}^{l}(t)$计算当前脉冲$O_{i}^{l}(t)$。
         @params:
@@ -72,7 +70,7 @@ class UOHSkeleton(nn.Module):
         return self.spiking_function.apply(u - self.u_threshold)
     
 
-    def calc_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+    def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
         """
         通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
         @params:
@@ -92,37 +90,42 @@ class UOHSkeleton(nn.Module):
         @return:
             o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self.u = self.calc_potential(self.u, x)
-        o = self.calc_spike(self.u)
-        self.u = self.calc_history(self.u, o)
+        self.u = self.f_potential(self.u, x)
+        o = self.f_firing(self.u)
+        self.u = self.f_history(self.u, o)
         return o
 
 
-class RORSkeleton(nn.Module):
-    def __init__(self, u_threshold: float = 1.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
+class RFRSkeleton(nn.Module):
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
         """
-        R-O-R三段式神经元胞体骨架，分别为：
+        Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
         （2）通过当前电位$U_{i}^{l}(t)$计算当前脉冲$O_{i}^{l}(t)$；
         （3）通过当前脉冲$O_{i}^{l}(t)$重置当前电位$U_{i}^{l}(t)$。
         @params:
+            tau_m: float 膜时间常数$τ_{m}$
+            u_threshold: float 阈电位$u_{th}$
+            u_rest: float 静息电位$u_{rest}$
             spiking_function: torch.autograd.Function 计算脉冲时所使用的阶跃函数
         """
         super().__init__()
         assert callable(spiking_function) and isinstance(spiking_function(), torch.autograd.Function), "Spiking function must be a function that can be calculate gratitude"
+        self.tau_m = tau_m
         self.u_threshold = u_threshold
+        self.u_rest = u_rest
         self.spiking_function = spiking_function()
-        self.reset()
+        self.n_reset()
     
 
-    def reset(self):
+    def n_reset(self):
         """
         重置整个神经元
         """
         self.u = self.u_rest
 
     
-    def detach(self):
+    def n_detach(self):
         """
         将历史电位从计算图中分离，以停止在时间上进行反向传播
         """
@@ -130,7 +133,7 @@ class RORSkeleton(nn.Module):
             self.u = self.u.detach()
 
 
-    def response_function(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    def f_response(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
         @params:
@@ -144,7 +147,18 @@ class RORSkeleton(nn.Module):
         return u
 
 
-    def reset_function(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+    def f_firing(self, u: torch.Tensor) -> torch.Tensor:
+        """
+        通过当前电位$U_{i}^{l}(t)$计算当前脉冲$O_{i}^{l}(t)$。
+        @params:
+            u: torch.Tensor 当前电位$U_{i}^{l}(t)$
+        @return:
+            o: torch.Tensor 当前脉冲$O_{i}^{l}(t)$
+        """
+        return self.spiking_function.apply(u - self.u_threshold)
+
+
+    def f_reset(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
         """
         通过当前脉冲$O_{i}^{l}(t)$重置当前电位$U_{i}^{l}(t)$。
         @params:
@@ -165,13 +179,13 @@ class RORSkeleton(nn.Module):
         @return:
             o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self.u = self.response_function(self.u, x)
-        o = self.spiking_function(self.u)
-        self.u = self.reset_function(self.u, o)
+        self.u = self.f_response(self.u, x)
+        o = self.f_firing(self.u)
+        self.u = self.f_reset(self.u, o)
         return o
     
 
-class IF(UOHSkeleton):
+class IF(PFHSkeleton):
     def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
         """
         Integrate-and-Fire(IF)神经元。
@@ -190,7 +204,7 @@ class IF(UOHSkeleton):
         )
     
 
-    def calc_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+    def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
         """
         通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
         使用离散代换推得历史电位公式为：
@@ -206,7 +220,7 @@ class IF(UOHSkeleton):
         return h
 
 
-class LIF(UOHSkeleton):
+class LIF(PFHSkeleton):
     def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
@@ -226,7 +240,7 @@ class LIF(UOHSkeleton):
         )
     
     
-    def calc_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+    def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
         """
         通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
         使用离散代换推得历史电位公式为：
@@ -242,7 +256,7 @@ class LIF(UOHSkeleton):
         return h
 
 
-class QIF(UOHSkeleton):
+class QIF(PFHSkeleton):
     def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_c: float = 0.8, a_0: float = 1.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
         """
         Quadratic Integrate-and-Fire(QIF)神经元。
@@ -266,7 +280,7 @@ class QIF(UOHSkeleton):
         self.u_c = u_c
     
     
-    def calc_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+    def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
         """
         通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
         使用离散代换推得历史电位公式为：
@@ -282,7 +296,7 @@ class QIF(UOHSkeleton):
         return h
 
 
-class EIF(UOHSkeleton):
+class EIF(PFHSkeleton):
     def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_t: float = 8.0, delta_t: float = 1.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
         """
         Exponential Integrate-and-Fire(EIF)神经元。
@@ -306,7 +320,7 @@ class EIF(UOHSkeleton):
         self.u_t = u_t
     
     
-    def calc_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+    def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
         """
         通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
         使用离散代换推得历史电位公式为：
@@ -322,7 +336,7 @@ class EIF(UOHSkeleton):
         return h
 
 
-class Izhikevich(UOHSkeleton):
+class Izhikevich(PFHSkeleton):
     def __init__(self, a: float = 1.0, b: float = 1.0, u_threshold: float = 1.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
         """
         Izhikevich神经元。
@@ -347,7 +361,7 @@ class Izhikevich(UOHSkeleton):
         self.b = b
 
 
-    def reset(self):
+    def n_reset(self):
         """
         重置整个神经元
         """
@@ -355,7 +369,7 @@ class Izhikevich(UOHSkeleton):
         self.w = 0.0
 
     
-    def detach(self):
+    def n_detach(self):
         """
         将历史电位从计算图中分离，以停止在时间上进行反向传播
         """
@@ -365,7 +379,7 @@ class Izhikevich(UOHSkeleton):
             self.w = self.w.detach()
 
 
-    def calc_potential(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    def f_potential(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         通过历史电位$H_{i}^{l}(t)$和输入电位$X_{i}^{l}(t)$计算当前电位$U_{i}^{l}(t)$。
         @params:
@@ -377,7 +391,7 @@ class Izhikevich(UOHSkeleton):
         return h + x
     
 
-    def calc_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+    def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
         """
         通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
         使用离散代换推得历史电位公式为：
