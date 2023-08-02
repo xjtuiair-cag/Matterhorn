@@ -10,7 +10,7 @@ import os, sys
 sys.path.append(os.path.abspath("."))
 
 
-from matterhorn.snn import container, encoder, decoder, soma, synapse
+import matterhorn.snn as snn
 
 
 from rich import print
@@ -21,6 +21,8 @@ from rich.table import Table
 
 
 def main():
+    # 欢迎语，客套话
+
     print(Panel(Text("EXAMPLE 1: USE MATTERHORN TO BUILD YOUR SNN", justify = "center", style = "bold blue")))
 
     print("Welcome to [green]Matterhorn[/green]! This is your first example.")
@@ -28,6 +30,8 @@ def main():
     print("This example is aimed to let you build your own SNN model and train it on traditional image dataset on [green]Matterhorn[/green], for example, MNIST.")
 
     print("In this demo, we're about to build a 2-layer multi-layer perceptron. From the code below, you'll see how a spatial-temporal network is build.")
+
+    # 设置参数
 
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
@@ -50,26 +54,30 @@ def main():
     hyper_param_table.add_row("Tau m", str(tau))
     print(hyper_param_table)
 
+    # 根据参数建立模型
+
     print(Panel(Text("Model", justify = "center")))
 
-    model = container.Container(
-        encoder = encoder.PoissonMultiple(
+    model = snn.SNNContainer(
+        encoder = snn.PoissonMultipleEncoder(
             time_steps = time_steps,
         ),
-        snn_model = container.Temporal(
-            container.Spatial(
-                nn.Flatten(),
-                nn.Linear(28 * 28, 80, bias = False),
-                soma.LIF(tau_m = tau),
-                nn.Linear(80, 10, bias = False),
-                soma.LIF(tau_m = tau)
+        snn_model = snn.TemporalContainer(
+            snn.SpatialContainer(
+                snn.Flatten(),
+                snn.Linear(28 * 28, 80, bias = False),
+                snn.LIF(tau_m = tau),
+                snn.Linear(80, 10, bias = False),
+                snn.LIF(tau_m = tau)
             ),
         ),
-        decoder = decoder.Average()
+        decoder = snn.AvgDecoder()
     )
     model = model.to(device)
 
     print(model)
+
+    # 调取数据集，本次使用的数据集为MNIST
 
     print(Panel(Text("Dataset", justify = "center")))
 
@@ -103,9 +111,13 @@ def main():
 
     print(test_dataset[0][0].shape)
 
+    # 设置学习率，优化器，学习率衰减机制等等
+
     print(Panel(Text("Prepare for Training", justify = "center")))
 
     optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
+
+    # 开始训练
 
     print(Panel(Text("Training", justify = "center")))
 
@@ -113,6 +125,8 @@ def main():
 
     for e in range(epochs):
         start_time = time.time()
+
+        # 使用训练集进行训练
 
         model.train()
         train_loss = 0.0
@@ -135,8 +149,8 @@ def main():
 
         train_loss /= train_samples
         train_acc /= train_samples
-
-        mid_time = time.time()
+        
+        # 使用测试集进行评估
 
         model.eval()
         test_loss = 0.0
@@ -162,13 +176,15 @@ def main():
         
         end_time = time.time()
 
+        # 打印测试结果
+
         result_table = Table(show_header = True, header_style = "bold blue")
         result_table.add_column("Name", justify = "center")
         result_table.add_column("Value", justify = "center")
         result_table.add_row("Epoch", str(e))
-        result_table.add_row("Training Loss", "%.3f" % (train_loss,))
+        result_table.add_row("Training Loss", "%.6f" % (train_loss,))
         result_table.add_row("Training Accuracy", "%.2f%%" % (100 * train_acc,))
-        result_table.add_row("Testing Loss", "%.3f" % (test_loss,))
+        result_table.add_row("Testing Loss", "%.6f" % (test_loss,))
         result_table.add_row("Testing Accuracy", "%.2f%%" % (100 * test_acc,))
         result_table.add_row("Maximum Testing Accuracy", "%.2f%%" % (100 * max_test_acc,))
         result_table.add_row("Duration", "%.3fs" %(end_time - start_time,))

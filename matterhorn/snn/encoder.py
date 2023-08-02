@@ -3,8 +3,8 @@ import torch.nn as nn
 
 
 """
-脉冲神经网络的编码机制
-注意：此单元可能会改变张量形状
+脉冲神经网络的编码机制。
+注意：此单元可能会改变张量形状。
 """
 
 
@@ -43,6 +43,15 @@ class Poisson(nn.Module):
         assert max_value > min_value, "Max value is less than min value."
         self.max_value = max_value
         self.min_value = min_value
+    
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来
+        @return:
+            repr_str: str 参数表
+        """
+        return "max=%.3f, min=%.3f" % (self.max_value, self.min_value)
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -74,6 +83,16 @@ class PoissonMultiple(nn.Module):
         self.max_value = max_value
         self.min_value = min_value
 
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来
+        @return:
+            repr_str: str 参数表
+        """
+        return "time_steps=%d, max=%.3f, min=%.3f" % (self.time_steps, self.max_value, self.min_value)
+    
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         泊松编码的前向传播函数，将值$V$转化为该时间步$t$内的脉冲$O^{0}(t)$
@@ -91,7 +110,7 @@ class PoissonMultiple(nn.Module):
         return y
 
 
-class Temporal(nn.Module):
+class Latency(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         

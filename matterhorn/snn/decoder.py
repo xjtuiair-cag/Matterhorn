@@ -3,12 +3,12 @@ import torch.nn as nn
 
 
 """
-脉冲神经网络的解码机制
-注意：此单元可能会改变张量形状
+脉冲神经网络的解码机制。
+注意：此单元可能会改变张量形状。
 """
 
 
-class Sum(nn.Module):
+class SumSpike(nn.Module):
     def __init__(self) -> None:
         """
         取张量在时间维度上的总值（总脉冲）
@@ -28,7 +28,7 @@ class Sum(nn.Module):
         return y
 
 
-class Average(nn.Module):
+class AverageSpike(nn.Module):
     def __init__(self) -> None:
         """
         取张量在时间维度上的平均值（平均脉冲）

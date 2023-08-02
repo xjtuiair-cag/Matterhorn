@@ -5,6 +5,11 @@ import torch
 import torch.nn as nn
 
 
+"""
+阶跃函数及其替代导数。
+"""
+
+
 @torch.jit.script
 def forward_heaviside(x: torch.Tensor) -> torch.Tensor:
     """

@@ -1,21 +1,21 @@
 import torch
 import torch.nn as nn
-from matterhorn.snn import functions
+from matterhorn.snn import surrogate
 
 
 """
-脉冲神经网络神经元的胞体，一层的后半段。
+脉冲神经网络神经元的胞体，一层的后半段。输入为模拟电位值，输出为脉冲。
 由突触将来自上一层神经元的脉冲信号$O_{j}^{l-1}(t)$整合成为突触后电位$X_{i}^{l}(t)$后，在胞体中进行突触后电位的累积和发放。
 """
 
 
 class PFHSkeleton(nn.Module):
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
         """
         Potential-Firing-History三段式神经元胞体骨架，分别为：
         （1）通过历史电位$H_{i}^{l}(t)$和输入电位$X_{i}^{l}(t)$计算当前电位$U_{i}^{l}(t)$；
         （2）通过当前电位$U_{i}^{l}(t)$计算当前脉冲$O_{i}^{l}(t)$；
-        （3）通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
+        （3）通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$
         @params:
             tau_m: float 膜时间常数$τ_{m}$
             u_threshold: float 阈电位$u_{th}$
@@ -36,7 +36,7 @@ class PFHSkeleton(nn.Module):
         """
         额外的表达式，把参数之类的放进来
         @return:
-            repr_str 参数表
+            repr_str: str 参数表
         """
         surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
         return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, surrogate_str)
@@ -107,7 +107,7 @@ class PFHSkeleton(nn.Module):
 
 
 class RFRSkeleton(nn.Module):
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -132,7 +132,7 @@ class RFRSkeleton(nn.Module):
         """
         额外的表达式，把参数之类的放进来
         @return:
-            repr_str 参数表
+            repr_str: str 参数表
         """
         surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
         return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, surrogate_str)
@@ -206,7 +206,7 @@ class RFRSkeleton(nn.Module):
     
 
 class IF(PFHSkeleton):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
         """
         Integrate-and-Fire(IF)神经元。
         无泄漏过程，一阶电位变换公式为：
@@ -228,7 +228,7 @@ class IF(PFHSkeleton):
         """
         额外的表达式，把参数之类的放进来
         @return:
-            repr_str 参数表
+            repr_str: str 参数表
         """
         surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
         return "u_th=%.3f, u_rest=%.3f, surrogate=%s" % (self.u_threshold, self.u_rest, surrogate_str)
@@ -251,7 +251,7 @@ class IF(PFHSkeleton):
 
 
 class LIF(PFHSkeleton):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
@@ -287,7 +287,7 @@ class LIF(PFHSkeleton):
 
 
 class QIF(PFHSkeleton):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_c: float = 0.8, a_0: float = 1.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_c: float = 0.8, a_0: float = 1.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
         """
         Quadratic Integrate-and-Fire(QIF)神经元。
         一阶电位变换公式为：
@@ -314,7 +314,7 @@ class QIF(PFHSkeleton):
         """
         额外的表达式，把参数之类的放进来
         @return:
-            repr_str 参数表
+            repr_str: str 参数表
         """
         surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
         return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, a_0=%.3f, u_C=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, self.a_0, self.u_c, surrogate_str)
@@ -337,7 +337,7 @@ class QIF(PFHSkeleton):
 
 
 class EIF(PFHSkeleton):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_t: float = 8.0, delta_t: float = 1.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_t: float = 8.0, delta_t: float = 1.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
         """
         Exponential Integrate-and-Fire(EIF)神经元。
         一阶电位变换公式为：
@@ -364,7 +364,7 @@ class EIF(PFHSkeleton):
         """
         额外的表达式，把参数之类的放进来
         @return:
-            repr_str 参数表
+            repr_str: str 参数表
         """
         surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
         return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, u_T=%.3f, delta_T=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, self.u_t, self.delta_t, surrogate_str)
@@ -387,7 +387,7 @@ class EIF(PFHSkeleton):
 
 
 class Izhikevich(PFHSkeleton):
-    def __init__(self, a: float = 1.0, b: float = 1.0, u_threshold: float = 1.0, spiking_function: torch.autograd.Function = functions.heaviside_rectangular) -> None:
+    def __init__(self, a: float = 1.0, b: float = 1.0, u_threshold: float = 1.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
         """
         Izhikevich神经元。
         一阶电位变换公式为：
@@ -415,7 +415,7 @@ class Izhikevich(PFHSkeleton):
         """
         额外的表达式，把参数之类的放进来
         @return:
-            repr_str 参数表
+            repr_str: str 参数表
         """
         surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
         return "a=%.3f, b=%.3f, u_th=%.3f, surrogate=%s" % (self.a, self.b, self.u_threshold, surrogate_str)
