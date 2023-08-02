@@ -1,0 +1,179 @@
+import torch
+import torch.nn as nn
+import torchvision
+from torchvision.datasets import MNIST
+from torch.utils.data import DataLoader, Dataset
+
+
+import time
+import os, sys
+sys.path.append(os.path.abspath("."))
+
+
+from matterhorn.snn import container, encoder, decoder, soma, synapse
+
+
+from rich import print
+from rich.panel import Panel
+from rich.text import Text
+from rich.progress import track
+from rich.table import Table
+
+
+def main():
+    print(Panel(Text("EXAMPLE 1: USE MATTERHORN TO BUILD YOUR SNN", justify = "center", style = "bold blue")))
+
+    print("Welcome to [green]Matterhorn[/green]! This is your first example.")
+
+    print("This example is aimed to let you build your own SNN model and train it on traditional image dataset on [green]Matterhorn[/green], for example, MNIST.")
+
+    print("In this demo, we're about to build a 3-layer multi-layer perceptron. From the code below, you'll see how a spatial-temporal network is build.")
+
+    print(Panel(Text("Hyper Parameters", justify = "center")))
+
+    time_steps = 32
+    batch_size = 64
+    device = "cuda"
+    epochs = 100
+    learning_rate = 1e-3
+    momentum = 0.9
+    tau = 2.0
+
+    hyper_param_table = Table(show_header = True, header_style = "bold blue")
+    hyper_param_table.add_column("Name", justify = "center")
+    hyper_param_table.add_column("Value", justify = "center")
+    hyper_param_table.add_row("Time Steps", str(time_steps))
+    hyper_param_table.add_row("Batch Size", str(batch_size))
+    hyper_param_table.add_row("Epochs", str(epochs))
+    hyper_param_table.add_row("Learning Rate", str(learning_rate))
+    hyper_param_table.add_row("Momentum", str(momentum))
+    hyper_param_table.add_row("Tau m", str(tau))
+    print(hyper_param_table)
+
+    print(Panel(Text("Model", justify = "center")))
+
+    model = container.Container(
+        encoder = encoder.PoissonMultiple(
+            time_steps = time_steps,
+        ),
+        snn_model = container.Temporal(
+            container.Spatial(
+                nn.Flatten(),
+                nn.Linear(28 * 28, 80, bias = False),
+                soma.LIF(tau_m = tau),
+                nn.Linear(80, 10, bias = False),
+                soma.LIF(tau_m = tau)
+            ),
+        ),
+        decoder = decoder.Average()
+    )
+    model = model.to(device)
+
+    print(model)
+
+    print(Panel(Text("Dataset", justify = "center")))
+
+    train_dataset = torchvision.datasets.MNIST(
+        root = "./examples/data",
+        train = True,
+        transform = torchvision.transforms.ToTensor(),
+        download=True
+    )
+    test_dataset = torchvision.datasets.MNIST(
+        root = "./examples/data",
+        train = False,
+        transform = torchvision.transforms.ToTensor(),
+        download = True
+    )
+
+    train_data_loader = DataLoader(
+        dataset = train_dataset,
+        batch_size = batch_size,
+        shuffle = True,
+        drop_last = True,
+        pin_memory = True
+    )
+    test_data_loader = DataLoader(
+        dataset = test_dataset,
+        batch_size = batch_size,
+        shuffle = True,
+        drop_last = True,
+        pin_memory = True
+    )
+
+    print(test_dataset[0][0].shape)
+
+    print(Panel(Text("Prepare for Training", justify = "center")))
+
+    optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
+
+    print(Panel(Text("Training", justify = "center")))
+
+    max_test_acc = 0.0
+
+    for e in range(epochs):
+        start_time = time.time()
+
+        model.train()
+        train_loss = 0.0
+        train_acc = 0.0
+        train_samples = 0
+        for x, y in track(train_data_loader, description = "Training"):
+            optimizer.zero_grad()
+            x = x.to(device)
+            y = y.to(device)
+            y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
+
+            o = model(x)
+            loss = torch.nn.functional.mse_loss(o, y0)
+            loss.backward()
+            optimizer.step()
+
+            train_samples += y.numel()
+            train_loss += loss.item() * y.numel()
+            train_acc += (o.argmax(1) == y).float().sum().item()
+
+        train_loss /= train_samples
+        train_acc /= train_samples
+
+        mid_time = time.time()
+
+        model.eval()
+        test_loss = 0.0
+        test_acc = 0.0
+        test_samples = 0
+        with torch.no_grad():
+            for x, y in track(test_data_loader, description = "Testing"):
+                x = x.to(device)
+                y = y.to(device)
+                y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
+                
+                o = model(x)
+                loss = torch.nn.functional.mse_loss(o, y0)
+
+                test_samples += y.numel()
+                test_loss += loss.item() * y.numel()
+                test_acc += (o.argmax(1) == y).float().sum().item()
+        
+        test_loss /= test_samples
+        test_acc /= test_samples
+        if test_acc > max_test_acc:
+            max_test_acc = test_acc
+        
+        end_time = time.time()
+
+        result_table = Table(show_header = True, header_style = "bold blue")
+        result_table.add_column("Name", justify = "center")
+        result_table.add_column("Value", justify = "center")
+        result_table.add_row("Epoch", str(e))
+        result_table.add_row("Training Loss", "%.3f" % (train_loss,))
+        result_table.add_row("Training Accuracy", "%.2f%%" % (100 * train_acc,))
+        result_table.add_row("Testing Loss", "%.3f" % (test_loss,))
+        result_table.add_row("Testing Accuracy", "%.2f%%" % (100 * test_acc,))
+        result_table.add_row("Maximum Testing Accuracy", "%.2f%%" % (100 * max_test_acc,))
+        result_table.add_row("Duration", "%.3fs" %(end_time - start_time,))
+        print(result_table)
+
+
+if __name__ == "__main__":
+    main()

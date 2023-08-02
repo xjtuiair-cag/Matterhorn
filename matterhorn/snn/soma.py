@@ -32,6 +32,16 @@ class PFHSkeleton(nn.Module):
         self.n_reset()
     
 
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来
+        @return:
+            repr_str 参数表
+        """
+        surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
+        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, surrogate_str)
+    
+
     def n_reset(self):
         """
         重置整个神经元
@@ -116,6 +126,16 @@ class RFRSkeleton(nn.Module):
         self.u_rest = u_rest
         self.spiking_function = spiking_function()
         self.n_reset()
+    
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来
+        @return:
+            repr_str 参数表
+        """
+        surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
+        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, surrogate_str)
     
 
     def n_reset(self):
@@ -204,6 +224,16 @@ class IF(PFHSkeleton):
         )
     
 
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来
+        @return:
+            repr_str 参数表
+        """
+        surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
+        return "u_th=%.3f, u_rest=%.3f, surrogate=%s" % (self.u_threshold, self.u_rest, surrogate_str)
+    
+
     def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
         """
         通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
@@ -279,6 +309,16 @@ class QIF(PFHSkeleton):
         self.a_0 = a_0
         self.u_c = u_c
     
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来
+        @return:
+            repr_str 参数表
+        """
+        surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
+        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, a_0=%.3f, u_C=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, self.a_0, self.u_c, surrogate_str)
+    
     
     def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
         """
@@ -318,6 +358,16 @@ class EIF(PFHSkeleton):
         )
         self.delta_t = delta_t
         self.u_t = u_t
+    
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来
+        @return:
+            repr_str 参数表
+        """
+        surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
+        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, u_T=%.3f, delta_T=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, self.u_t, self.delta_t, surrogate_str)
     
     
     def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
@@ -359,6 +409,16 @@ class Izhikevich(PFHSkeleton):
         )
         self.a = a
         self.b = b
+    
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来
+        @return:
+            repr_str 参数表
+        """
+        surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
+        return "a=%.3f, b=%.3f, u_th=%.3f, surrogate=%s" % (self.a, self.b, self.u_threshold, surrogate_str)
 
 
     def n_reset(self):

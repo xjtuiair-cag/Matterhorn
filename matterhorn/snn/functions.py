@@ -33,56 +33,16 @@ def backward_rectangular(grad_output: torch.Tensor, x: torch.Tensor, a: float = 
     return h * grad_output
 
 
-@torch.jit.script
-def backward_polynomial(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1.) -> torch.Tensor:
-    """
-    阶跃函数的导数，一次函数窗，
-    详见文章[Spatio-Temporal Backpropagation for Training High-Performance Spiking Neural Networks](https://www.frontiersin.org/articles/10.3389/fnins.2018.00331/full)。
-    @params:
-        grad_output: torch.Tensor 输出梯度
-        x: torch.Tensor 输入
-        a: float 参数a，详见文章
-    @return:
-        grad_input: torch.Tensor 输入梯度
-    """
-    h = ((a ** 0.5) / 2. - a / 4. * x) * torch.sign(2. / (a ** 0.5) - x)
-    return h * grad_output
-
-
-@torch.jit.script
-def backward_sigmoid(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1.) -> torch.Tensor:
-    """
-    阶跃函数的导数，sigmoid函数窗，
-    详见文章[Spatio-Temporal Backpropagation for Training High-Performance Spiking Neural Networks](https://www.frontiersin.org/articles/10.3389/fnins.2018.00331/full)。
-    @params:
-        grad_output: torch.Tensor 输出梯度
-        x: torch.Tensor 输入
-        a: float 参数a，详见文章
-    @return:
-        grad_input: torch.Tensor 输入梯度
-    """
-    ex = torch.exp(-x / a)
-    h = (1. / a) * (ex / ((1. + ex) ** 2.))
-    return h * grad_output
-
-
-@torch.jit.script
-def backward_gaussian(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1.) -> torch.Tensor:
-    """
-    阶跃函数的导数，高斯函数窗，
-    详见文章[Spatio-Temporal Backpropagation for Training High-Performance Spiking Neural Networks](https://www.frontiersin.org/articles/10.3389/fnins.2018.00331/full)。
-    @params:
-        grad_output: torch.Tensor 输出梯度
-        x: torch.Tensor 输入
-        a: float 参数a，详见文章
-    @return:
-        grad_input: torch.Tensor 输入梯度
-    """
-    h = (1. / ((2. * torch.pi * a) ** 0.5)) * torch.exp(-(x ** 2.) / 2 * a)
-    return h * grad_output
-
-
 class heaviside_rectangular(torch.autograd.Function):
+    def surrogate_str(self):
+        """
+        反向传播的替代梯度（字符串）
+        @return:
+            surrogate_str: str 反向传播的替代梯度（字符串）
+        """
+        return "rectangular"
+
+
     @staticmethod
     def forward(ctx: Any, x: torch.Tensor, a: float = 2.) -> torch.Tensor:
         """
@@ -114,7 +74,32 @@ class heaviside_rectangular(torch.autograd.Function):
         return backward_rectangular(grad_output, x, ctx.a), None
 
 
+@torch.jit.script
+def backward_polynomial(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1.) -> torch.Tensor:
+    """
+    阶跃函数的导数，一次函数窗，
+    详见文章[Spatio-Temporal Backpropagation for Training High-Performance Spiking Neural Networks](https://www.frontiersin.org/articles/10.3389/fnins.2018.00331/full)。
+    @params:
+        grad_output: torch.Tensor 输出梯度
+        x: torch.Tensor 输入
+        a: float 参数a，详见文章
+    @return:
+        grad_input: torch.Tensor 输入梯度
+    """
+    h = ((a ** 0.5) / 2. - a / 4. * x) * torch.sign(2. / (a ** 0.5) - x)
+    return h * grad_output
+
+
 class heaviside_polynomial(torch.autograd.Function):
+    def surrogate_str(self):
+        """
+        反向传播的替代梯度（字符串）
+        @return:
+            surrogate_str: str 反向传播的替代梯度（字符串）
+        """
+        return "polynomial"
+
+
     @staticmethod
     def forward(ctx: Any, x: torch.Tensor, a: float = 1.) -> torch.Tensor:
         """
@@ -146,7 +131,33 @@ class heaviside_polynomial(torch.autograd.Function):
         return backward_polynomial(grad_output, x, ctx.a), None
 
 
+@torch.jit.script
+def backward_sigmoid(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1.) -> torch.Tensor:
+    """
+    阶跃函数的导数，sigmoid函数窗，
+    详见文章[Spatio-Temporal Backpropagation for Training High-Performance Spiking Neural Networks](https://www.frontiersin.org/articles/10.3389/fnins.2018.00331/full)。
+    @params:
+        grad_output: torch.Tensor 输出梯度
+        x: torch.Tensor 输入
+        a: float 参数a，详见文章
+    @return:
+        grad_input: torch.Tensor 输入梯度
+    """
+    ex = torch.exp(-x / a)
+    h = (1. / a) * (ex / ((1. + ex) ** 2.))
+    return h * grad_output
+
+
 class heaviside_sigmoid(torch.autograd.Function):
+    def surrogate_str(self):
+        """
+        反向传播的替代梯度（字符串）
+        @return:
+            surrogate_str: str 反向传播的替代梯度（字符串）
+        """
+        return "sigmoid"
+
+
     @staticmethod
     def forward(ctx: Any, x: torch.Tensor, a: float = 1.) -> torch.Tensor:
         """
@@ -178,7 +189,32 @@ class heaviside_sigmoid(torch.autograd.Function):
         return backward_sigmoid(grad_output, x, ctx.a), None
 
 
+@torch.jit.script
+def backward_gaussian(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1.) -> torch.Tensor:
+    """
+    阶跃函数的导数，高斯函数窗，
+    详见文章[Spatio-Temporal Backpropagation for Training High-Performance Spiking Neural Networks](https://www.frontiersin.org/articles/10.3389/fnins.2018.00331/full)。
+    @params:
+        grad_output: torch.Tensor 输出梯度
+        x: torch.Tensor 输入
+        a: float 参数a，详见文章
+    @return:
+        grad_input: torch.Tensor 输入梯度
+    """
+    h = (1. / ((2. * torch.pi * a) ** 0.5)) * torch.exp(-(x ** 2.) / 2 * a)
+    return h * grad_output
+
+
 class heaviside_gaussian(torch.autograd.Function):
+    def surrogate_str(self):
+        """
+        反向传播的替代梯度（字符串）
+        @return:
+            surrogate_str: str 反向传播的替代梯度（字符串）
+        """
+        return "gaussian"
+
+
     @staticmethod
     def forward(ctx: Any, x: torch.Tensor, a: float = 1.) -> torch.Tensor:
         """

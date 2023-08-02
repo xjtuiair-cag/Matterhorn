@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 
 
+from typing import Optional
+
+
 """
 脉冲神经网络的容器，用来容纳时间和空间维度的脉冲神经网络集合
 建议先在空间维度上构建完整的脉冲神经网络结构，再在多个时间步之内进行模拟
@@ -29,7 +32,7 @@ class Spatial(nn.Sequential):
 
 
 class Temporal(nn.Module):
-    def __init__(self, model: nn.Module) -> None:
+    def __init__(self, model: nn.Module, reset_after_process = True) -> None:
         """
         SNN的时间容器
         在多个时间步之内执行脉冲神经网络
@@ -38,6 +41,7 @@ class Temporal(nn.Module):
         """
         super().__init__()
         self.model = model
+        self.reset_after_process = reset_after_process
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -53,5 +57,34 @@ class Temporal(nn.Module):
         for t in range(time_steps):
             result.append(self.model(x[t]))
         y = torch.stack(result)
+        if self.reset_after_process and hasattr(self.model, "n_reset"):
+            self.model.n_reset()
         return y
+
+
+class Container(nn.Module):
+    def __init__(self, encoder: Optional[nn.Module] = None, snn_model: Optional[nn.Module] = None, decoder: Optional[nn.Module] = None) -> None:
+        """
+        SNN容器，包括编码器、神经网络主体和解码器，将SNN包装起来，以和ANN结合
+        """
+        super().__init__()
+        self.encoder = encoder
+        self.snn_model = snn_model
+        self.decoder = decoder
     
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数，根据所传入的编解码器判断SNN中的张量形态
+        @params:
+            x: torch.Tensor 输入张量
+        @return:
+            y: torch.Tensor 输出张量
+        """
+        if self.encoder is not None:
+            x = self.encoder(x)
+        if self.snn_model is not None:
+            x = self.snn_model(x)
+        if self.decoder is not None:
+            x = self.decoder(x)
+        return x
