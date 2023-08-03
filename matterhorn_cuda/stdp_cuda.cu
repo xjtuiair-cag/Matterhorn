@@ -39,25 +39,25 @@ __global__ void stdp_cuda_kernel(float* weight_mat,
     float weight = 0.0f;
     // 遍历输出脉冲
     for (int ti = 0; ti < time_steps; ti++) {
-        float spike_i = output_spike_train[i + ti * input_shape];
+        float spike_i = output_spike_train[i + ti * output_shape];
         if (!spike_i) {
             continue;
         }
         // 遍历输入脉冲
         for (int tj = 0; tj < time_steps; tj++) {
-            float spike_j = input_spike_train[j + tj * output_shape];
+            float spike_j = input_spike_train[j + tj * input_shape];
             if (!spike_j) {
                 continue;
             }
             int dt = ti - tj;
             if (dt > 0) {
-                weight = a_pos * expf(-dt / tau_pos);
+                weight += a_pos * expf(-dt / tau_pos);
             } else if (dt < 0) {
-                weight = -a_neg * expf(dt / tau_neg);
+                weight += -a_neg * expf(dt / tau_neg);
             }
         }
     }
-    weight_mat[i * output_shape + j] += weight;
+    weight_mat[i * input_shape + j] += weight;
 }
 
 /*
@@ -87,8 +87,8 @@ void stdp_cuda(float* weight_mat,
                float tau_neg) {
     cudaError_t err;
 
-    // j = blockIdx.x * blockDim.x + threadIdx.x，x为列，大小为input_shape
-    // i = blockIdx.y，y为行，大小为output_shape
+    // i = blockIdx.y 为行，大小为output_shape
+    // j = blockIdx.x * blockDim.x + threadIdx.x 为列，大小为input_shape
     dim3 blocks(DIVUP(input_shape, THREADS_PER_BLOCK), output_shape);
     dim3 threads(THREADS_PER_BLOCK);
 

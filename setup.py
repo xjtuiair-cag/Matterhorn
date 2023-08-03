@@ -1,6 +1,5 @@
 from setuptools import find_packages
 from setuptools import setup
-from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 
 requirements = ["torch"]
@@ -30,22 +29,5 @@ setup(
         "License :: MIT No Attribution License",
         "Operating System :: OS Independent",
     ],
-    ext_modules = [
-        CUDAExtension(
-            "matterhorn_cuda",
-            [
-                "matterhorn/cuda/api.cpp",
-                "matterhorn/cuda/stdp.cpp",
-                "matterhorn/cuda/stdp_cuda.cu"
-            ],
-            extra_compile_args = {
-                "cxx": ["-g"],
-                "nvcc": ["-O2"]
-            }
-        ),
-    ],
-    cmdclass = {
-        "build_ext": BuildExtension
-    },
     python_requires = '>=3.7'
 )

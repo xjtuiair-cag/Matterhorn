@@ -17,6 +17,12 @@ int stdp(at::Tensor weight_mat,
          float a_neg,
          float tau_neg);
 
+#endif
+
+
+#ifndef _STDP_CUDA_H
+#define _STDP_CUDA_H
+
 void stdp_cuda(float* weight_mat,
                int input_shape,
                int output_shape,
