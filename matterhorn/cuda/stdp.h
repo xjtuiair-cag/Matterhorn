@@ -6,7 +6,8 @@
 #include <torch/serialize/tensor.h>
 #include <vector>
 
-int stdp(int input_shape,
+int stdp(at::Tensor weight_mat,
+         int input_shape,
          int output_shape,
          int time_steps,
          at::Tensor input_spike_train,
@@ -16,7 +17,7 @@ int stdp(int input_shape,
          float a_neg,
          float tau_neg);
 
-void stdp_cuda(const float* weight_mat,
+void stdp_cuda(float* weight_mat,
                int input_shape,
                int output_shape,
                int time_steps,
@@ -25,7 +26,6 @@ void stdp_cuda(const float* weight_mat,
                float a_pos,
                float tau_pos,
                float a_neg,
-               float tau_neg,
-               cudaStream_t stream);
+               float tau_neg);
 
 #endif
