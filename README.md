@@ -50,7 +50,7 @@ We use an equation to describe synapse function:
 
 $$Y^{l}=synapse(X^{l-1})$$
 
-Where `l` here means the number of current layer.
+Where $l$ here means the number of current layer.
 
 **Operation 2** is **activation function**, which filters information from synapses and send the filtered information to next layer. Commonly used activation functions are including `nn.ReLU`, `nn.Sigmoid`, etc.
 
