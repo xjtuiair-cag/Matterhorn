@@ -145,7 +145,70 @@ snn_model = snn.TemporalContainer(
 
 In the code, `SpatialContainer` is one Matterhorn's container to represent sequential SNN layers in spatial dimension, and `TemporalContainer` is another Matterhorn's container to repeat calculating potential and spikes in temporal dimension. By using `SpatialContainer` and `TemporalContainer`, an SNN spatial-temporal topology network is built thus used for training and evaluating.
 
-The built network takes an $n+1$ dimension `torch.Tensor` as input spike train. It will take the first dimension as time steps, thus claculate through each time step. after that, it will generate a `torch.Tensor` as output spike train, just like what an ANN takes and generates in PyTorch. The only difference, which is also a key point, is that we should encode our information into spike train and decode the output spike train.
+The built network takes an $n+1$ dimensional `torch.Tensor` as input spike train. It will take the first dimension as time steps, thus claculate through each time step. after that, it will generate a `torch.Tensor` as output spike train, just like what an ANN takes and generates in PyTorch. The only difference, which is also a key point, is that we should encode our information into spike train and decode the output spike train.
 
 ### Encoding and Decoding
 
+A spike train is a set of Dirac impulse functions on the axis of time.
+
+$$O(t)=\sum_{t_{i}}δ(t-t_{i})$$
+
+In other words, there will only be 0s and 1s in discrete spike train. Therefore, we can use an $n+1$ dimensional tensor to represent our spike train. For example, if neurons are flattened into a 1-dimensional vector, we can use another dimension to represent time, thus let it be a 2-dimensional matrix to represent the spike train through space and time.
+
+$$
+\begin{matrix}
+ & →s \\
+↓t &
+\begin{bmatrix}
+0 & 1 & 1 & 0 & 1 & 0 & 0 & 1 \\
+1 & 0 & 0 & 1 & 0 & 0 & 1 & 1 \\
+1 & 1 & 1 & 1 & 1 & 1 & 0 & 1 \\
+1 & 0 & 1 & 1 & 0 & 1 & 0 & 1 \\
+\end{bmatrix}
+\end{matrix}
+$$
+
+The matrix above shows what a spike train looks like. It has 4 rows, representing 4 time steps. Besides, it has 8 columns, representing 8 output neurons.
+
+To transform our traditional binary information (images, sounds, etc.) into spike train, an encoder is needed. The most commonly used encoder for non-event data is Poisson encoder, which is a kind of rate coding encoder. It sees intensity of a pixel as probability to fire a spike.
+
+You can use Poisson encoder in Matterhorn by the code below:
+
+```python
+import torch
+import matterhorn.snn as snn
+
+encoder = snn.PoissonEncoder(
+    time_steps = 32
+)
+```
+
+Then, you can use it by the code below:
+
+```python
+spike_train = encoder(image)
+```
+
+An image with the shape of `[H, W, C]` would be encoded into a spike train with the shape of `[T, H, W, C]`. For example, a MNIST image which shape is `[28, 28]` would be encoded (`T=32`) into a spike train with the shape of `[32, 28, 28]`.
+
+After encoding and processing, the network would generate an output spike train. To get the information, we need to decode. Commonly used decoding method is to count average spikes each output neuron has generated.
+
+$$\hat{y}_{i}=\frac{1}{T}\sum_{t=1}^{T}{O_{i}^{K}(t)}$$
+
+You can use Poisson encoder in Matterhorn by the code below:
+
+```python
+import torch
+import matterhorn.snn as snn
+
+decoder = snn.AvgDecoder()
+```
+
+It will take first dimension as temporal dimension, and generate statistic result as output. The output can be transported into ANN for further process.
+
+By now, you have experienced how a SNN look like and how to build it by Matterhorn. For further experience, you can refer to [examples/2_layer_mlp.py](./examples/2_layer_mlp.py).
+
+```python
+cd Matterhorn
+python3 examples/2_layer_mlp.py
+```

@@ -32,43 +32,6 @@ class Direct(nn.Module):
 
 
 class Poisson(nn.Module):
-    def __init__(self, max_value: float = 1.0, min_value: float = 0.0) -> None:
-        """
-        泊松编码（速率编码），将值转化为脉冲发放率（单步）
-        @params:
-            max_value: float 最大值
-            min_value: float 最小值
-        """
-        super().__init__()
-        assert max_value > min_value, "Max value is less than min value."
-        self.max_value = max_value
-        self.min_value = min_value
-    
-
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来
-        @return:
-            repr_str: str 参数表
-        """
-        return "max=%.3f, min=%.3f" % (self.max_value, self.min_value)
-
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        泊松编码的前向传播函数，将值$V$转化为该时间步$t$内的脉冲$O^{0}(t)$
-        @params:
-            x: torch.Tensor 输入张量，形状为[B,...]
-        @return:
-            y: torch.Tensor 输出张量，形状为[B,...]
-        """
-        x = (x - self.min_value) / (self.max_value - self.min_value)
-        r = torch.rand_like(x)
-        y = r.le(x).to(x)
-        return y
-
-
-class PoissonMultiple(nn.Module):
     def __init__(self, time_steps: int = 16, max_value: float = 1.0, min_value: float = 0.0) -> None:
         """
         泊松编码（速率编码），将指转化为脉冲发放率（多步）

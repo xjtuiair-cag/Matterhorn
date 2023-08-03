@@ -59,7 +59,7 @@ def main():
     print(Panel(Text("Model", justify = "center")))
 
     model = snn.SNNContainer(
-        encoder = snn.PoissonMultipleEncoder(
+        encoder = snn.PoissonEncoder(
             time_steps = time_steps,
         ),
         snn_model = snn.TemporalContainer(
