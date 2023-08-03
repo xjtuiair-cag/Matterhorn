@@ -1,12 +1,40 @@
 import torch
 import torch.nn as nn
 from rich import print
-from matterhorn_cuda import stdp
+
+
+@torch.jit.script
+def stdp_py(weight_mat: torch.Tensor, input_shape: int, output_shape: int, time_steps: int, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float):
+    for i in range(output_shape):
+        for j in range(input_shape):
+            weight = 0.0
+            for ti in range(time_steps):
+                if not output_spike_train[ti, i]:
+                    continue
+                for tj in range(time_steps):
+                    if not input_spike_train[tj, j]:
+                        continue
+                    dt = ti - tj
+                    if dt > 0:
+                        weight += a_pos * torch.exp(-dt / tau_pos)
+                    else:
+                        weight += -a_neg * torch.exp(dt / tau_neg)
+            weight_mat[i, j] += weight
+
+
+if torch.cuda.is_available():
+    try:
+        from matterhorn_cuda import stdp
+    except:
+        stdp = stdp_py
+else:
+    stdp = stdp_py
 
 
 if __name__ == "__main__":
-    input_shape = 128 * 128 * 2
-    output_shape = 800
+    torch.random.manual_seed(2023)
+    input_shape = 150
+    output_shape = 10
     time_steps = 16
 
 
