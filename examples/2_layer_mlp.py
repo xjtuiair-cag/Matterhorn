@@ -116,6 +116,7 @@ def main():
     print(Panel(Text("Prepare for Training", justify = "center")))
 
     optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
+    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
 
     # 开始训练
 
@@ -132,7 +133,7 @@ def main():
         train_loss = 0.0
         train_acc = 0.0
         train_samples = 0
-        for x, y in track(train_data_loader, description = "Training"):
+        for x, y in track(train_data_loader, description = "Training at epoch %d" % (e,)):
             optimizer.zero_grad()
             x = x.to(device)
             y = y.to(device)
@@ -157,7 +158,7 @@ def main():
         test_acc = 0.0
         test_samples = 0
         with torch.no_grad():
-            for x, y in track(test_data_loader, description = "Testing"):
+            for x, y in track(test_data_loader, description = "Testing at epoch %d" % (e,)):
                 x = x.to(device)
                 y = y.to(device)
                 y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
@@ -182,6 +183,7 @@ def main():
         result_table.add_column("Name", justify = "center")
         result_table.add_column("Value", justify = "center")
         result_table.add_row("Epoch", str(e))
+        result_table.add_row("Learning Rate", "%.6f" % (lr_scheduler.get_last_lr()[0],))
         result_table.add_row("Training Loss", "%.6f" % (train_loss,))
         result_table.add_row("Training Accuracy", "%.2f%%" % (100 * train_acc,))
         result_table.add_row("Testing Loss", "%.6f" % (test_loss,))
@@ -189,6 +191,8 @@ def main():
         result_table.add_row("Maximum Testing Accuracy", "%.2f%%" % (100 * max_test_acc,))
         result_table.add_row("Duration", "%.3fs" %(end_time - start_time,))
         print(result_table)
+
+        lr_scheduler.step()
 
 
 if __name__ == "__main__":
