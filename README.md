@@ -261,19 +261,19 @@ Besides BPTT, there is another simple way to train locally in each neuron withou
 
 STDP follows equation as below:
 
-$$Δw_{ij}=\sum_{t_{j}∈\vec{t}_{j}}{\sum_{t_{i}∈\vec{t}_{i}}W(t_{i}-t_{j})}$$
+$$Δw_{ij}=\sum_{t_{j}∈\vec {t}_{j}}{\sum_{t_{i}∈\vec {t}_{i}}W(t_{i}-t_{j})}$$
 
 where the weight function $W(x)$ is:
 
 $$
 W(x)=
-\left\{
+\left \{
 \begin{aligned}
 A_{+}e^{-\frac{x}{τ_{+}}},x>0 \\\\
 0,x=0 \\\\
 -A_{-}e^{\frac{x}{τ_{-}}},x<0
 \end{aligned}
-\right.
+\right .
 $$
 
 ![STDP function](./assets/readme_6.png)
