@@ -24,7 +24,7 @@ class Spatial(nn.Sequential):
 
     def n_reset(self):
         """
-        一次性重置该序列中所有的神经元
+        一次重置该序列中所有的神经元
         """
         for module in self:
             if hasattr(module, "n_reset"):
@@ -38,6 +38,7 @@ class Temporal(nn.Module):
         在多个时间步之内执行脉冲神经网络
         @params:
             model: nn.Module 所用来执行的单步模型
+            reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__()
         self.model = model

@@ -3,10 +3,10 @@ from torch.utils.cpp_extension import BuildExtension, CUDAExtension
 
 
 setup(
-    name="matterhorn_cuda",
+    name="matterhorn_cuda_extensions",
     ext_modules = [
         CUDAExtension(
-            "matterhorn_cuda",
+            "matterhorn_cuda_extensions",
             [
                 "api.cpp",
                 "stdp.cpp",
