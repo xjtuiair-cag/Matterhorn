@@ -48,6 +48,17 @@ class PFHSkeleton(nn.Module):
         """
         self.u = self.u_rest
 
+
+    def n_init(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        """
+        校正整个电位形状
+        """
+        if isinstance(u, torch.Tensor):
+            u = u.to(x)
+        if isinstance(u, float):
+            u = u * torch.ones_like(x)
+        return u
+
     
     def n_detach(self):
         """
@@ -100,6 +111,7 @@ class PFHSkeleton(nn.Module):
         @return:
             o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
+        self.u = self.n_init(self.u, x)
         self.u = self.f_potential(self.u, x)
         o = self.f_firing(self.u)
         self.u = self.f_history(self.u, o)
@@ -136,7 +148,18 @@ class RFRSkeleton(nn.Module):
         """
         surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
         return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, surrogate_str)
-    
+
+
+    def n_init(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        """
+        校正整个电位形状
+        """
+        if isinstance(u, torch.Tensor):
+            u = u.to(x)
+        if isinstance(u, float):
+            u = u * torch.ones_like(x)
+        return u
+
 
     def n_reset(self):
         """
@@ -199,6 +222,7 @@ class RFRSkeleton(nn.Module):
         @return:
             o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
+        self.u = self.n_init(self.u, x)
         self.u = self.f_response(self.u, x)
         o = self.f_firing(self.u)
         self.u = self.f_reset(self.u, o)

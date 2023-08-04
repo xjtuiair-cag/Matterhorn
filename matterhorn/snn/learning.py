@@ -116,7 +116,7 @@ class STDPLinear(nn.Linear):
         self.tau_neg = tau_neg
         self.n_reset()
 
-    
+
     def n_reset(self):
         """
         重置整个神经元
@@ -125,7 +125,7 @@ class STDPLinear(nn.Linear):
         self.output_spike_seq = []
         if hasattr(self.soma, "n_reset"):
             self.soma.n_reset()
-    
+
 
     def l_step(self):
         """
