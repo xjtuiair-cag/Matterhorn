@@ -23,13 +23,11 @@ from rich.table import Table
 def main():
     # 欢迎语，客套话
 
-    print(Panel(Text("EXAMPLE 1: USE MATTERHORN TO BUILD YOUR SNN", justify = "center", style = "bold blue")))
+    print(Panel(Text("EXAMPLE 3: BUILD WITH SRM0 NEURON", justify = "center", style = "bold blue")))
 
-    print("Welcome to [green]Matterhorn[/green]! This is your first example.")
+    print("This is your third example. Unlike traditional neuron model, in this example, you will face with a brand new kind of neuron model, SRM0 neuron model.")
 
-    print("This example is aimed to let you build your own SNN model and train it on traditional image dataset on [green]Matterhorn[/green], for example, MNIST.")
-
-    print("In this demo, we're about to build a 2-layer multi-layer perceptron. From the code below, you'll see how a spatial-temporal network is build.")
+    print("In this demo, we're about to build a 2-layer multi-layer perceptron, but use SRM0 model.")
 
     # 设置参数
 
@@ -65,10 +63,8 @@ def main():
         snn_model = snn.TemporalContainer(
             snn.SpatialContainer(
                 snn.Flatten(),
-                snn.Linear(28 * 28, 80, bias = False),
-                snn.LIF(tau_m = tau),
-                snn.Linear(80, 10, bias = False),
-                snn.LIF(tau_m = tau)
+                snn.SRM0Linear(28 * 28, 80, tau_m = tau),
+                snn.SRM0Linear(80, 10, tau_m = tau)
             ),
         ),
         decoder = snn.AvgDecoder()

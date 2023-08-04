@@ -53,8 +53,6 @@ class PFHSkeleton(nn.Module):
         """
         校正整个电位形状
         """
-        if isinstance(u, torch.Tensor):
-            u = u.to(x)
         if isinstance(u, float):
             u = u * torch.ones_like(x)
         return u
@@ -154,8 +152,6 @@ class RFRSkeleton(nn.Module):
         """
         校正整个电位形状
         """
-        if isinstance(u, torch.Tensor):
-            u = u.to(x)
         if isinstance(u, float):
             u = u * torch.ones_like(x)
         return u

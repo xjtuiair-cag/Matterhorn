@@ -1,7 +1,6 @@
 import torch
 from torch import Tensor
 import torch.nn as nn
-from rich import print
 
 
 from matterhorn.snn import container
@@ -79,18 +78,15 @@ def stdp(weight_mat: torch.Tensor, input_shape: int, output_shape: int, time_ste
     if device_type == "cuda" and stdp_cuda is not None:
         stdp_cuda(weight_mat, input_shape, output_shape, time_steps, input_spike_train, output_spike_train, a_pos, tau_pos, a_neg, tau_neg)
         return
-    weight_mat_cpu = weight_mat.cpu()
-    input_spike_train_cpu = input_spike_train.cpu()
-    output_spike_train_cpu = output_spike_train.cpu()
     if stdp_cpp is not None:
-        stdp_cpp(weight_mat, input_shape, output_shape, time_steps, input_spike_train, output_spike_train, a_pos, tau_pos, a_neg, tau_neg)
+        stdp_cpp(weight_mat.cpu(), input_shape, output_shape, time_steps, input_spike_train.cpu(), output_spike_train.cpu(), a_pos, tau_pos, a_neg, tau_neg)
         return
     stdp_py(weight_mat, input_shape, output_shape, time_steps, input_spike_train, output_spike_train, a_pos, tau_pos, a_neg, tau_neg)
     return
 
 
 class STDPLinear(nn.Linear):
-    def __init__(self, in_features: int, out_features: int, soma: nn.Module, a_pos: float = 0.4, tau_pos: float = 1.0, a_neg: float = 0.4, tau_neg: float = 1.0, device = None, dtype = None) -> None:
+    def __init__(self, in_features: int, out_features: int, soma: nn.Module, a_pos: float = 0.25, tau_pos: float = 2.0, a_neg: float = 0.25, tau_neg: float = 2.0, device = None, dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层
         @params:
@@ -115,6 +111,22 @@ class STDPLinear(nn.Linear):
         self.a_neg = a_neg
         self.tau_neg = tau_neg
         self.n_reset()
+    
+
+    def start_step(self):
+        """
+        开始训练
+        """
+        if hasattr(self.soma, "start_step"):
+            self.soma.start_step()
+    
+
+    def stop_step(self):
+        """
+        停止训练
+        """
+        if hasattr(self.soma, "stop_step"):
+            self.soma.stop_step()
 
 
     def n_reset(self):
@@ -168,6 +180,24 @@ class STDPSpatial(container.Spatial):
             *args: [nn.Module] 按空间顺序传入的各个模块
         """
         super().__init__(*args)
+
+
+    def start_step(self):
+        """
+        开始训练
+        """
+        for module in self:
+            if hasattr(module, "start_step"):
+                module.start_step()
+
+
+    def stop_step(self):
+        """
+        停止训练
+        """
+        for module in self:
+            if hasattr(module, "stop_step"):
+                module.stop_step()
     
 
     def l_step(self):
@@ -189,6 +219,25 @@ class STDPTemporal(container.Temporal):
             reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(model, reset_after_process)
+        self.step_after_process = True
+
+    
+    def start_step(self):
+        """
+        开始训练
+        """
+        self.step_after_process = True
+        if hasattr(self.model, "start_step"):
+            self.model.start_step()
+    
+
+    def stop_step(self):
+        """
+        停止训练
+        """
+        self.step_after_process = True
+        if hasattr(self.model, "stop_step"):
+            self.model.stop_step()
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -202,9 +251,10 @@ class STDPTemporal(container.Temporal):
         time_steps = x.shape[0]
         result = []
         for t in range(time_steps):
-            result.append(self.model(x[t]))
+            y_t = self.model(x[t])
+            result.append(y_t)
         y = torch.stack(result)
-        if hasattr(self.model, "l_step"):
+        if self.step_after_process and hasattr(self.model, "l_step"):
             self.model.l_step()
         if self.reset_after_process and hasattr(self.model, "n_reset"):
             self.model.n_reset()

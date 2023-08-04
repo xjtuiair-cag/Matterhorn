@@ -2,6 +2,7 @@ import math
 import torch
 import torch.nn as nn
 from matterhorn.snn import surrogate
+torch.autograd.set_detect_anomaly(True)
 
 
 """
@@ -21,8 +22,8 @@ class val_to_spike(torch.autograd.Function):
         return grad_output
 
 
-class SRM0(nn.Module):
-    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, tau_r: float = 2.0, u_threshold: float = 4.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular, device=None, dtype=None) -> None:
+class SRM0Linear(nn.Module):
+    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, tau_r: float = 8.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular, device=None, dtype=None) -> None:
         """
         SRM0神经元，突触响应的神经元
         电位公式较为复杂：
@@ -40,6 +41,7 @@ class SRM0(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.weight = nn.Parameter(torch.empty((out_features, in_features), device = device, dtype = dtype))
+        nn.init.kaiming_uniform_(self.weight, a = math.sqrt(5))
         self.tau_m = tau_m
         self.tau_r = tau_r
         self.u_threshold = u_threshold
@@ -52,7 +54,6 @@ class SRM0(nn.Module):
         """
         重置整个神经元
         """
-        nn.init.kaiming_uniform_(self.weight, a = math.sqrt(5))
         self.s = 0.0
         self.r = 0.0
 
@@ -61,8 +62,6 @@ class SRM0(nn.Module):
         """
         校正整个电位形状
         """
-        if isinstance(u, torch.Tensor):
-            u = u.to(x)
         if isinstance(u, float):
             u = u * torch.ones_like(x)
         return u
@@ -123,7 +122,7 @@ class SRM0(nn.Module):
         @return:
             r: torch.Tensor 当前重置电位$R_{i}^{l}(t)$
         """
-        r = (1.0 / self.tau_r) * r - (self.out_features * (self.u_threshold - self.u_rest) * o)
+        r = (1.0 / self.tau_r) * r - (self.tau_r * (self.u_threshold - self.u_rest) * o)
         return r
 
 
@@ -135,9 +134,9 @@ class SRM0(nn.Module):
         @return:
             o: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
-        self.s = self.n_init(self.s, self.weight) # [batch_size, output_shape, input_shape]
-        self.s = self.f_synapse_response(self.s, o) # [batch_size, output_shape, input_shape]
-        x = self.f_synapse_sum(self.s, self.weight) # [batch_size, output_shape]
+        self.s = self.n_init(self.s, o) # [batch_size, input_shape]
+        self.s = self.f_synapse_response(self.s, o) # [batch_size, input_shape]
+        x = self.f_synapse_sum(self.weight, self.s) # [batch_size, output_shape]
         self.r = self.n_init(self.r, x) # [batch_size, output_shape]
         o = self.f_firing(x + self.r + self.u_rest) # [batch_size, output_shape]
         self.r = self.f_reset(self.r, o) # [batch_size, output_shape]

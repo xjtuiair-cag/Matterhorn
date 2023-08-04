@@ -72,7 +72,23 @@ class Container(nn.Module):
         self.encoder = encoder
         self.snn_model = snn_model
         self.decoder = decoder
-    
+
+
+    def start_step(self):
+        """
+        开始训练
+        """
+        if hasattr(self.snn_model, "start_step"):
+            self.snn_model.start_step()
+
+
+    def stop_step(self):
+        """
+        停止训练
+        """
+        if hasattr(self.snn_model, "stop_step"):
+            self.snn_model.stop_step()
+
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
