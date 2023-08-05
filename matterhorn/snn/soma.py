@@ -179,7 +179,7 @@ class RFRSkeleton(nn.Module):
             u: torch.Tensor 上一时刻的电位$U_{i}^{l}(t-1)$
             x: torch.Tensor 输入电位$X_{i}^{l}(t)$
         @return:
-            du: torch.Tensor 电位导数$dU/dt$
+            u: torch.Tensor 当前电位$U_{i}^{l}(t)$
         """
         du = (1. / 2.) * (-u + x)
         u = u + du

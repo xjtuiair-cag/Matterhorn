@@ -23,7 +23,7 @@ class val_to_spike(torch.autograd.Function):
 
 
 class SRM0Linear(nn.Module):
-    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, tau_r: float = 8.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular, device=None, dtype=None) -> None:
+    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular, device=None, dtype=None) -> None:
         """
         SRM0神经元，突触响应的神经元
         电位公式较为复杂：
@@ -43,7 +43,6 @@ class SRM0Linear(nn.Module):
         self.weight = nn.Parameter(torch.empty((out_features, in_features), device = device, dtype = dtype))
         nn.init.kaiming_uniform_(self.weight, a = math.sqrt(5))
         self.tau_m = tau_m
-        self.tau_r = tau_r
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function()
@@ -95,6 +94,21 @@ class SRM0Linear(nn.Module):
         """
         u = nn.functional.linear(s, w)
         return u
+
+
+    def f_response(self, r: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        """
+        通过上一时刻的响应$R_{i}^{l}(t)$和当前时刻的输入电位$X_{i}^{l}(t)$计算当前电位$U_{i}^{l}(t)$。
+        该部分可用如下公式概括：
+        $$U_{i}^{l}(t)=X_{i}^{l}(t)*R_{i}^{l}(t)+u_{rest}$$
+        @params:
+            r: torch.Tensor 上一时刻的电位$U_{i}^{l}(t-1)$
+            x: torch.Tensor 输入电位$X_{i}^{l}(t)$
+        @return:
+            u: torch.Tensor 当前电位$U_{i}^{l}(t)$
+        """
+        u = self.u_rest + (x * r)
+        return u
     
 
     def f_firing(self, u: torch.Tensor) -> torch.Tensor:
@@ -111,18 +125,20 @@ class SRM0Linear(nn.Module):
         return self.spiking_function.apply(u - self.u_threshold)
 
 
-    def f_reset(self, r: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+    def f_reset(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
         """
         通过上一时刻的重置电位$R_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$得到当前重置电位$R_{i}^{l}(t)$。
         该部分可用如下公式概括：
-        $$R_{i}^{l}(t)=\frac{1}{\tau_{r}}R_{i}^{l}(t-1)-m(u_{th}-u_{rest})O_{i}^{l}(t)$$
+        $$R_{i}^{l}(t)=\frac{1}{\tau_{r}}R_{i}^{l}(t-1)-m(u_{th}-u_{rest})O_{i}^{l}(t-1)$$
+        此处将其改为是否产生不应期，得到：
+        $$R_{i}^{l}(t)=-(u_{th}-u_{rest})O_{i}^{l}(t-1)$$
         @params:
-            r: torch.Tensor 上一时刻的重置电位$R_{i}^{l}(t-1)$
+            u: torch.Tensor 上一时刻的重置电位$R_{i}^{l}(t-1)$
             o: torch.Tensor 当前脉冲$O_{i}^{l}(t-1)$
         @return:
             r: torch.Tensor 当前重置电位$R_{i}^{l}(t)$
         """
-        r = (1.0 / self.tau_r) * r - (self.tau_r * (self.u_threshold - self.u_rest) * o)
+        r = 1.0 - o
         return r
 
 
@@ -134,12 +150,18 @@ class SRM0Linear(nn.Module):
         @return:
             o: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
-        self.s = self.n_init(self.s, o) # [batch_size, input_shape]
-        self.s = self.f_synapse_response(self.s, o) # [batch_size, input_shape]
-        x = self.f_synapse_sum(self.weight, self.s) # [batch_size, output_shape]
-        self.r = self.n_init(self.r, x) # [batch_size, output_shape]
-        o = self.f_firing(x + self.r + self.u_rest) # [batch_size, output_shape]
-        self.r = self.f_reset(self.r, o) # [batch_size, output_shape]
+        # 突触函数
+        # [batch_size, input_shape] -> [batch_size, output_shape]
+        self.s = self.n_init(self.s, o)
+        self.s = self.f_synapse_response(self.s, o)
+        x = self.f_synapse_sum(self.weight, self.s)
+
+        # 胞体函数，仍旧遵循R-S-R三段式
+        # [batch_size, output_shape] -> [batch_size, output_shape]
+        self.r = self.n_init(self.r, x)
+        u = self.f_response(self.r, x)
+        o = self.f_firing(u)
+        self.r = self.f_reset(u, o)
         return o
 
 
