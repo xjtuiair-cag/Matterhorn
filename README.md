@@ -279,3 +279,17 @@ $$
 ![STDP function](./assets/readme_6.png)
 
 By setting parameters $A_{+}$, $τ_{+}$, $A_{-}$ and $τ_{-}$, we can easily train SNNs unsupervised.
+
+## References
+
+1.Wei Fang. Spikingjelly. [https://github.com/fangwei123456/spikingjelly](https://github.com/fangwei123456/spikingjelly).
+
+```
+@misc{SpikingJelly,
+	title = {SpikingJelly},
+	author = {Fang, Wei and Chen, Yanqi and Ding, Jianhao and Chen, Ding and Yu, Zhaofei and Zhou, Huihui and Timothée Masquelier and Tian, Yonghong and other contributors},
+	year = {2020},
+	howpublished = {\url{https://github.com/fangwei123456/spikingjelly}},
+	note = {Accessed: 2023-08-01},
+}
+```
