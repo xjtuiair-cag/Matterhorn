@@ -31,6 +31,33 @@ class Spatial(nn.Sequential):
                 module.n_reset()
 
 
+    def start_step(self):
+        """
+        开始STDP训练
+        """
+        for module in self:
+            if hasattr(module, "start_step"):
+                module.start_step()
+
+
+    def stop_step(self):
+        """
+        停止STDP训练
+        """
+        for module in self:
+            if hasattr(module, "stop_step"):
+                module.stop_step()
+    
+
+    def l_step(self):
+        """
+        一次部署所有结点的STDP学习
+        """
+        for module in self:
+            if hasattr(module, "l_step"):
+                module.l_step()
+
+
 class Temporal(nn.Module):
     def __init__(self, model: nn.Module, reset_after_process = True) -> None:
         """
@@ -43,7 +70,42 @@ class Temporal(nn.Module):
         super().__init__()
         self.model = model
         self.reset_after_process = reset_after_process
+        self.step_after_process = False
+
+
+    def n_reset(self):
+        """
+        重置模型
+        """
+        if hasattr(self.model, "n_reset"):
+            self.model.n_reset()
+
     
+    def start_step(self):
+        """
+        开始STDP训练
+        """
+        self.step_after_process = True
+        if hasattr(self.model, "start_step"):
+            self.model.start_step()
+    
+
+    def stop_step(self):
+        """
+        停止STDP训练
+        """
+        self.step_after_process = False
+        if hasattr(self.model, "stop_step"):
+            self.model.stop_step()
+    
+
+    def l_step(self):
+        """
+        部署结点的STDP学习
+        """
+        if hasattr(self.model, "l_step"):
+            self.model.l_step()
+
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -58,8 +120,10 @@ class Temporal(nn.Module):
         for t in range(time_steps):
             result.append(self.model(x[t]))
         y = torch.stack(result)
-        if self.reset_after_process and hasattr(self.model, "n_reset"):
-            self.model.n_reset()
+        if self.step_after_process:
+            self.l_step()
+        if self.reset_after_process:
+            self.n_reset()
         return y
 
 
@@ -74,9 +138,21 @@ class Container(nn.Module):
         self.decoder = decoder
 
 
+    def n_reset(self):
+        """
+        重置模型
+        """
+        if hasattr(self.encoder, "n_reset"):
+            self.encoder.n_reset()
+        if hasattr(self.snn_model, "n_reset"):
+            self.snn_model.n_reset()
+        if hasattr(self.decoder, "n_reset"):
+            self.decoder.n_reset()
+
+
     def start_step(self):
         """
-        开始训练
+        开始STDP训练
         """
         if hasattr(self.snn_model, "start_step"):
             self.snn_model.start_step()
@@ -84,10 +160,18 @@ class Container(nn.Module):
 
     def stop_step(self):
         """
-        停止训练
+        停止STDP训练
         """
         if hasattr(self.snn_model, "stop_step"):
             self.snn_model.stop_step()
+    
+
+    def l_step(self):
+        """
+        部署结点的STDP学习
+        """
+        if hasattr(self.snn_model, "l_step"):
+            self.snn_model.l_step()
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
