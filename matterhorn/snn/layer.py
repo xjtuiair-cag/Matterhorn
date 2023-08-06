@@ -23,7 +23,7 @@ class val_to_spike(torch.autograd.Function):
 
 
 class SRM0Linear(nn.Module):
-    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular, device=None, dtype=None) -> None:
+    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.nn.Module = surrogate.Rectangular(), device=None, dtype=None) -> None:
         """
         SRM0神经元，突触响应的神经元
         电位公式较为复杂：
@@ -45,8 +45,17 @@ class SRM0Linear(nn.Module):
         self.tau_m = tau_m
         self.u_threshold = u_threshold
         self.u_rest = u_rest
-        self.spiking_function = spiking_function()
+        self.spiking_function = spiking_function
         self.n_reset()
+    
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来
+        @return:
+            repr_str: str 参数表
+        """
+        return "in_features=%d, out_features=%d, tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest)
 
 
     def n_reset(self):
@@ -122,7 +131,7 @@ class SRM0Linear(nn.Module):
         @return:
             o: torch.Tensor 当前脉冲$O_{i}^{l}(t)$
         """
-        return self.spiking_function.apply(u - self.u_threshold)
+        return self.spiking_function(u - self.u_threshold)
 
 
     def f_reset(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:

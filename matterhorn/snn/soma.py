@@ -10,7 +10,7 @@ from matterhorn.snn import surrogate
 
 
 class PFHSkeleton(nn.Module):
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
         """
         Potential-Firing-History三段式神经元胞体骨架，分别为：
         （1）通过历史电位$H_{i}^{l}(t)$和输入电位$X_{i}^{l}(t)$计算当前电位$U_{i}^{l}(t)$；
@@ -20,17 +20,16 @@ class PFHSkeleton(nn.Module):
             tau_m: float 膜时间常数$τ_{m}$
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
-            spiking_function: torch.autograd.Function 计算脉冲时所使用的阶跃函数
+            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
         """
         super().__init__()
-        assert callable(spiking_function) and isinstance(spiking_function(), torch.autograd.Function), "Spiking function must be a function that can be calculate gratitude"
         assert tau_m != 0.0, "Can't let membrane time constant tau_m be zero."
         self.tau_m = tau_m
         self.u_threshold = u_threshold
         self.u_rest = u_rest
-        self.spiking_function = spiking_function()
+        self.spiking_function = spiking_function
         self.n_reset()
-    
+
 
     def extra_repr(self) -> str:
         """
@@ -38,8 +37,7 @@ class PFHSkeleton(nn.Module):
         @return:
             repr_str: str 参数表
         """
-        surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
-        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, surrogate_str)
+        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
     
 
     def n_reset(self):
@@ -75,7 +73,7 @@ class PFHSkeleton(nn.Module):
         @return:
             u: torch.Tensor 当前电位$U_{i}^{l}(t)$
         """
-        return h + (1. / self.tau_m) * x
+        return h + (1.0 / self.tau_m) * x
     
 
     def f_firing(self, u: torch.Tensor) -> torch.Tensor:
@@ -86,7 +84,7 @@ class PFHSkeleton(nn.Module):
         @return:
             o: torch.Tensor 当前脉冲$O_{i}^{l}(t)$
         """
-        return self.spiking_function.apply(u - self.u_threshold)
+        return self.spiking_function(u - self.u_threshold)
     
 
     def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
@@ -117,7 +115,7 @@ class PFHSkeleton(nn.Module):
 
 
 class RFRSkeleton(nn.Module):
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -127,14 +125,13 @@ class RFRSkeleton(nn.Module):
             tau_m: float 膜时间常数$τ_{m}$
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
-            spiking_function: torch.autograd.Function 计算脉冲时所使用的阶跃函数
+            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
         """
         super().__init__()
-        assert callable(spiking_function) and isinstance(spiking_function(), torch.autograd.Function), "Spiking function must be a function that can be calculate gratitude"
         self.tau_m = tau_m
         self.u_threshold = u_threshold
         self.u_rest = u_rest
-        self.spiking_function = spiking_function()
+        self.spiking_function = spiking_function
         self.n_reset()
     
 
@@ -144,8 +141,7 @@ class RFRSkeleton(nn.Module):
         @return:
             repr_str: str 参数表
         """
-        surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
-        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, surrogate_str)
+        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
 
 
     def n_init(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -172,17 +168,17 @@ class RFRSkeleton(nn.Module):
             self.u = self.u.detach()
 
 
-    def f_response(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
         @params:
-            u: torch.Tensor 上一时刻的电位$U_{i}^{l}(t-1)$
+            h: torch.Tensor 上一时刻的电位$U_{i}^{l}(t-1)$
             x: torch.Tensor 输入电位$X_{i}^{l}(t)$
         @return:
             u: torch.Tensor 当前电位$U_{i}^{l}(t)$
         """
-        du = (1. / 2.) * (-u + x)
-        u = u + du
+        du = (1.0 / self.tau_m) * (-(h - self.u_rest) + x)
+        u = h + du
         return u
 
 
@@ -194,7 +190,7 @@ class RFRSkeleton(nn.Module):
         @return:
             o: torch.Tensor 当前脉冲$O_{i}^{l}(t)$
         """
-        return self.spiking_function.apply(u - self.u_threshold)
+        return self.spiking_function(u - self.u_threshold)
 
 
     def f_reset(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
@@ -204,10 +200,10 @@ class RFRSkeleton(nn.Module):
             u: torch.Tensor 当前电位$U_{i}^{l}(t-1)$
             o: torch.Tensor 当前脉冲$O_{i}^{l}(t-1)$
         @return:
-            u: torch.Tensor 经过重置之后的当前电位$U_{i}^{l}(t-1)$
+            h: torch.Tensor 经过重置之后的当前电位$U_{i}^{l}(t-1)$
         """
-        u = u * (1. - o)
-        return u
+        h = u * (1.0 - o) + self.u_rest * o
+        return h
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -225,8 +221,8 @@ class RFRSkeleton(nn.Module):
         return o
     
 
-class IF(PFHSkeleton):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
+class IF(RFRSkeleton):
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
         """
         Integrate-and-Fire(IF)神经元。
         无泄漏过程，一阶电位变换公式为：
@@ -234,7 +230,7 @@ class IF(PFHSkeleton):
         @params:
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
-            spiking_function: torch.autograd.Function 计算脉冲时所使用的阶跃函数
+            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
         """
         super().__init__(
             tau_m = 1.0,
@@ -250,28 +246,24 @@ class IF(PFHSkeleton):
         @return:
             repr_str: str 参数表
         """
-        surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
-        return "u_th=%.3f, u_rest=%.3f, surrogate=%s" % (self.u_threshold, self.u_rest, surrogate_str)
-    
+        return "u_th=%.3f, u_rest=%.3f" % (self.u_threshold, self.u_rest)
 
-    def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+
+    def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
-        通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
-        使用离散代换推得历史电位公式为：
-        $$H_{i}^{l}(t)=U_{i}^{l}(t-1)$$
+        通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
         @params:
-            u: torch.Tensor 当前电位$U_{i}^{l}(t-1)$
-            o: torch.Tensor 当前脉冲$O_{i}^{l}(t-1)$
+            h: torch.Tensor 上一时刻的电位$U_{i}^{l}(t-1)$
+            x: torch.Tensor 输入电位$X_{i}^{l}(t)$
         @return:
-            h: torch.Tensor 下一时刻的历史电位$H_{i}^{l}(t)$
+            u: torch.Tensor 当前电位$U_{i}^{l}(t)$
         """
-        h = u
-        h = h * (1. - o) + self.u_rest * o
-        return h
+        u = h + x
+        return u
 
 
-class LIF(PFHSkeleton):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
+class LIF(RFRSkeleton):
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
@@ -280,7 +272,7 @@ class LIF(PFHSkeleton):
             tau_m: float 膜时间常数$τ_{m}$
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
-            spiking_function: torch.autograd.Function 计算脉冲时所使用的阶跃函数
+            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
         """
         super().__init__(
             tau_m = tau_m,
@@ -288,26 +280,24 @@ class LIF(PFHSkeleton):
             u_rest = u_rest,
             spiking_function = spiking_function
         )
-    
-    
-    def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+
+
+    def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
-        通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
-        使用离散代换推得历史电位公式为：
-        $$H_{i}^{l}(t)=(1-\frac{1}{τ})U_{i}^{l}(t-1)+\frac{1}{τ}u_{rest}$$
+        通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
         @params:
-            u: torch.Tensor 当前电位$U_{i}^{l}(t-1)$
-            o: torch.Tensor 当前脉冲$O_{i}^{l}(t-1)$
+            h: torch.Tensor 上一时刻的电位$U_{i}^{l}(t-1)$
+            x: torch.Tensor 输入电位$X_{i}^{l}(t)$
         @return:
-            h: torch.Tensor 下一时刻的历史电位$H_{i}^{l}(t)$
+            u: torch.Tensor 当前电位$U_{i}^{l}(t)$
         """
-        h = (1. - 1. / self.tau_m) * u + (1. / self.tau_m) * self.u_rest
-        h = h * (1. - o) + self.u_rest * o
-        return h
+        du = (1.0 / self.tau_m) * (-(h - self.u_rest) + x)
+        u = h + du
+        return u
 
 
-class QIF(PFHSkeleton):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_c: float = 0.8, a_0: float = 1.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
+class QIF(RFRSkeleton):
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_c: float = 0.8, a_0: float = 1.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
         """
         Quadratic Integrate-and-Fire(QIF)神经元。
         一阶电位变换公式为：
@@ -318,7 +308,7 @@ class QIF(PFHSkeleton):
             u_rest: float 静息电位$u_{rest}$
             u_c: float 参数$u_{c}$
             a_0: float 参数$a_{0}$
-            spiking_function: torch.autograd.Function 计算脉冲时所使用的阶跃函数
+            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
         """
         super().__init__(
             tau_m = tau_m,
@@ -336,28 +326,25 @@ class QIF(PFHSkeleton):
         @return:
             repr_str: str 参数表
         """
-        surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
-        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, a_0=%.3f, u_C=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, self.a_0, self.u_c, surrogate_str)
-    
-    
-    def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, a_0=%.3f, u_C=%.3f" % (self.tau_m, self.u_threshold, self.u_rest, self.a_0, self.u_c)
+
+
+    def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
-        通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
-        使用离散代换推得历史电位公式为：
-        $$H_{i}^{l}(t)=U_{i}^{l}(t-1)-\frac{a_{0}}{τ}[U_{i}^{l}(t-1)-u_{rest}][U_{i}^{l}(t-1)-u_{c}]$$
+        通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
         @params:
-            u: torch.Tensor 当前电位$U_{i}^{l}(t-1)$
-            o: torch.Tensor 当前脉冲$O_{i}^{l}(t-1)$
+            h: torch.Tensor 上一时刻的电位$U_{i}^{l}(t-1)$
+            x: torch.Tensor 输入电位$X_{i}^{l}(t)$
         @return:
-            h: torch.Tensor 下一时刻的历史电位$H_{i}^{l}(t)$
+            u: torch.Tensor 当前电位$U_{i}^{l}(t)$
         """
-        h = u - (self.a_0 / self.tau_m) * (u - self.u_rest) * (u - self.u_c)
-        h = h * (1. - o) + self.u_rest * o
-        return h
+        du = (1.0 / self.tau_m) * (-self.a_0 * (h - self.u_rest) * (h - self.u_c) + x)
+        u = h + du
+        return u
 
 
-class EIF(PFHSkeleton):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_t: float = 8.0, delta_t: float = 1.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
+class EIF(RFRSkeleton):
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_t: float = 8.0, delta_t: float = 1.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
         """
         Exponential Integrate-and-Fire(EIF)神经元。
         一阶电位变换公式为：
@@ -368,7 +355,7 @@ class EIF(PFHSkeleton):
             u_rest: float 静息电位$u_{rest}$
             u_t: float 参数$u_{T}$
             delta_t: float 参数$Δ_{T}$
-            spiking_function: torch.autograd.Function 计算脉冲时所使用的阶跃函数
+            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
         """
         super().__init__(
             tau_m = tau_m,
@@ -386,28 +373,25 @@ class EIF(PFHSkeleton):
         @return:
             repr_str: str 参数表
         """
-        surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
-        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, u_T=%.3f, delta_T=%.3f, surrogate=%s" % (self.tau_m, self.u_threshold, self.u_rest, self.u_t, self.delta_t, surrogate_str)
-    
-    
-    def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, u_T=%.3f, delta_T=%.3f" % (self.tau_m, self.u_threshold, self.u_rest, self.u_t, self.delta_t)
+
+
+    def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
-        通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
-        使用离散代换推得历史电位公式为：
-        $$H_{i}^{l}(t)=(1-\frac{1}{τ})U_{i}^{l}(t-1)+\frac{1}{τ}u_{rest}+\frac{Δ_{T}}{τ}e^{\frac{U_{i}^{l}(t-1)-u_{T}}{Δ_{T}}}$$
+        通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
         @params:
-            u: torch.Tensor 当前电位$U_{i}^{l}(t-1)$
-            o: torch.Tensor 当前脉冲$O_{i}^{l}(t-1)$
+            h: torch.Tensor 上一时刻的电位$U_{i}^{l}(t-1)$
+            x: torch.Tensor 输入电位$X_{i}^{l}(t)$
         @return:
-            h: torch.Tensor 下一时刻的历史电位$H_{i}^{l}(t)$
+            u: torch.Tensor 当前电位$U_{i}^{l}(t)$
         """
-        h = (1. - 1. / self.tau_m) * u + (1. / self.tau_m) * self.u_rest + (self.delta_t / self.tau_m) * torch.exp((u - self.u_t) / self.delta_t)
-        h = h * (1. - o) + self.u_rest * o
-        return h
+        du = (1.0 / self.tau_m) * (-(h - self.u_rest) + self.delta_t * torch.exp((h - self.u_t) / self.delta_t) + x)
+        u = h + du
+        return u
 
 
-class Izhikevich(PFHSkeleton):
-    def __init__(self, a: float = 1.0, b: float = 1.0, u_threshold: float = 1.0, spiking_function: torch.autograd.Function = surrogate.heaviside_rectangular) -> None:
+class Izhikevich(RFRSkeleton):
+    def __init__(self, a: float = 1.0, b: float = 1.0, u_threshold: float = 1.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
         """
         Izhikevich神经元。
         一阶电位变换公式为：
@@ -419,7 +403,7 @@ class Izhikevich(PFHSkeleton):
             u_rest: float 静息电位$u_{rest}$
             u_t: float 参数$u_{T}$
             delta_t: float 参数$Δ_{T}$
-            spiking_function: torch.autograd.Function 计算脉冲时所使用的阶跃函数
+            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
         """
         super().__init__(
             tau_m = 1.0,
@@ -437,8 +421,7 @@ class Izhikevich(PFHSkeleton):
         @return:
             repr_str: str 参数表
         """
-        surrogate_str = self.spiking_function.surrogate_str() if hasattr(self.spiking_function, "surrogate_str") else "none"
-        return "a=%.3f, b=%.3f, u_th=%.3f, surrogate=%s" % (self.a, self.b, self.u_threshold, surrogate_str)
+        return "a=%.3f, b=%.3f, u_th=%.3f" % (self.a, self.b, self.u_threshold)
 
 
     def n_reset(self):
@@ -459,30 +442,110 @@ class Izhikevich(PFHSkeleton):
             self.w = self.w.detach()
 
 
-    def f_potential(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
-        通过历史电位$H_{i}^{l}(t)$和输入电位$X_{i}^{l}(t)$计算当前电位$U_{i}^{l}(t)$。
+        通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
         @params:
-            h: torch.Tensor 历史电位$H_{i}^{l}(t)$
+            h: torch.Tensor 上一时刻的电位$U_{i}^{l}(t-1)$
             x: torch.Tensor 输入电位$X_{i}^{l}(t)$
         @return:
             u: torch.Tensor 当前电位$U_{i}^{l}(t)$
         """
-        return h + x
+        self.w = self.n_init(self.w, h)
+        dw = self.a * (self.b * h - self.w)
+        self.w = self.w + dw
+        du = 0.04 * h * h + 5.0 * h + 140.0 - self.w + x
+        u = h + du
+        return u
+
+
+class AnalogRFRSkeleton(RFRSkeleton):
+    def __init__(self, tau_m: float = 1, u_threshold: float = 1, u_rest: float = 0, spiking_function: nn.Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU()) -> None:
+        """
+        带有模拟输出的Response-Firing-Reset三段式神经元胞体骨架，分别为：
+        （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
+        （2）通过当前电位$U_{i}^{l}(t)$计算当前脉冲$O_{i}^{l}(t)$；
+        （3）通过当前电位$U_{i}^{l}(t)$计算当前模拟输出$Y_{i}^{l}(t)$；
+        （4）通过当前脉冲$O_{i}^{l}(t)$重置当前电位$U_{i}^{l}(t)$。
+        @params:
+            tau_m: float 膜时间常数$τ_{m}$
+            u_threshold: float 阈电位$u_{th}$
+            u_rest: float 静息电位$u_{rest}$
+            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+            activation_function: nn.Module 激活函数
+        """
+        super().__init__(tau_m, u_threshold, u_rest, spiking_function)
+        self.activation_function = activation_function
     
 
-    def f_history(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+    def extra_repr(self) -> str:
         """
-        通过当前电位$U_{i}^{l}(t-1)$与当前脉冲$O_{i}^{l}(t-1)$计算下一时刻的历史电位$H_{i}^{l}(t)$。
-        使用离散代换推得历史电位公式为：
-        $$H_{i}^{l}(t)=0.04[U_{i}^{l}(t-1)]^{2}+6U_{i}^{l}(t-1)+140-W_{i}^{l}(t-1)$$
-        $$W_{i}^{l}(t)=abU_{i}^{l}(t-1)-(a-1)W_{i}^{l}(t-1)$$
-        @params:
-            u: torch.Tensor 当前电位$U_{i}^{l}(t-1)$
-            o: torch.Tensor 当前脉冲$O_{i}^{l}(t-1)$
+        额外的表达式，把参数之类的放进来
         @return:
-            h: torch.Tensor 下一时刻的历史电位$H_{i}^{l}(t)$
+            repr_str: str 参数表
         """
-        h = 0.04 * u * u + 6 * u + 140 - self.w
-        self.w = self.a * self.b * u - (self.a - 1) * self.w
-        return h
+        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
+    
+
+    def f_activation(self, u: torch.Tensor) -> torch.Tensor:
+        """
+        通过当前电位$U_{i}^{l}(t)$计算当前模拟输出$Y_{i}^{l}(t)$。
+        @params:
+            u: torch.Tensor 当前电位$U_{i}^{l}(t)$
+        @return:
+            y: torch.Tensor 当前模拟输出$Y_{i}^{l}(t)$
+        """
+        return self.activation_function(u - self.u_rest)
+    
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数
+        @params:
+            x: torch.Tensor 来自突触的输入电位$X_{i}^{l}(t)$
+        @return:
+            o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
+        """
+        self.u = self.n_init(self.u, x)
+        self.u = self.f_response(self.u, x)
+        o = self.f_firing(self.u)
+        y = self.f_activation(self.u)
+        self.u = self.f_reset(self.u, o)
+        return y
+
+
+class LIAF(AnalogRFRSkeleton):
+    def __init__(self, tau_m: float = 1, u_threshold: float = 1, u_rest: float = 0, spiking_function: nn.Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU()) -> None:
+        """
+        Leaky Integrate-and-Analog-Fire(LIAF)神经元
+        @params:
+            tau_m: float 膜时间常数$τ_{m}$
+            u_threshold: float 阈电位$u_{th}$
+            u_rest: float 静息电位$u_{rest}$
+            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+            activation_function: nn.Module 激活函数
+        """
+        super().__init__(tau_m, u_threshold, u_rest, spiking_function, activation_function)
+    
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来
+        @return:
+            repr_str: str 参数表
+        """
+        return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
+
+
+    def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        """
+        通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
+        @params:
+            h: torch.Tensor 上一时刻的电位$U_{i}^{l}(t-1)$
+            x: torch.Tensor 输入电位$X_{i}^{l}(t)$
+        @return:
+            u: torch.Tensor 当前电位$U_{i}^{l}(t)$
+        """
+        du = (1.0 / self.tau_m) * (-(h - self.u_rest) + x)
+        u = h + du
+        return u
