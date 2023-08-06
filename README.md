@@ -233,6 +233,31 @@ cd Matterhorn
 python3 examples/2_layer_mlp.py
 ```
 
+In most cases, neurons of SNNs can be divided into 1 synapse operation and 3 soma operations. However, there are always some special cases. SRM0 neuron model is one of them, whose response is calculated in each synapse. We can still use 4 operations to represent SRM0 neuron:
+
+**Operation 1**: **synapse response function**
+
+$$R_{j}^{l}(t)=(1-\frac{1}{\tau_{m}})R_{j}^{l}(t-1)+O_{j}^{l}(t)$$
+
+**Operation 2**: **potential function**
+
+$$U_{i}^{l}(t)=H_{i}^{l}(t)\sum_{j}{R_{j}^{l}(t)}$$
+
+**Operation 3**: **firing function**
+
+$$O_{i}^{l}(t)=Heaviside(U_{i}^{l}(t))$$
+
+**Operation 4**: **reset function**
+
+$$H_{i}^{l}(t)=1-O_{i}^{l}(t-1)$$
+
+With 4 operations resembled we can build a SRM0 neuron. For further experience, you can refer to [examples/2_layer_mlp_with_SRM0.py](./examples/2_layer_mlp_with_SRM0.py).
+
+```sh
+cd Matterhorn
+python3 examples/2_layer_mlp_with_SRM0.py
+```
+
 ### Why Should We Need Surrogate Gradient
 
 In spiking neurons, we usually use Heaviside step function $u(t)$ to decide whether to generate a spike:
@@ -289,14 +314,14 @@ python3 examples/2_layer_mlp_with_stdp.py
 
 ```sh
 cd matterhorn_cpp_extensions
-sudo python3 setup.py install
+python3 setup.py install
 ```
 
 if you have CUDA, you can install CUDA version:
 
 ```sh
 cd matterhorn_cuda_extensions
-sudo python3 setup.py install
+python3 setup.py install
 ```
 
 ## 4 Neuromorphic Hardware Support
