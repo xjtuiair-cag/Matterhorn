@@ -7,11 +7,11 @@ from matterhorn.snn import container
 
 
 @torch.jit.script
-def stdp_py(weight_mat: torch.Tensor, input_shape: int, output_shape: int, time_steps: int, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float) -> None:
+def stdp_py(delta_weight: torch.Tensor, input_shape: int, output_shape: int, time_steps: int, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float) -> torch.Tensor:
     """
     STDP的python版本实现，不到万不得已不会调用（性能是灾难级别的）
     @params:
-        weight_mat: torch.Tensor 权重矩阵，形状为[output_shape, input_shape]
+        delta_weight: torch.Tensor 权重矩阵，形状为[output_shape, input_shape]
         input_shape: int 输入长度
         output_shape: int 输出长度
         time_steps: int 时间步长
@@ -21,6 +21,8 @@ def stdp_py(weight_mat: torch.Tensor, input_shape: int, output_shape: int, time_
         tau_pos: float STDP参数tau+
         a_neg: float STDP参数A-
         tau_neg: float STDP参数tau-
+    @return:
+        delta_weight: torch.Tensor 权重增量
     """
     for i in range(output_shape):
         for j in range(input_shape):
@@ -36,8 +38,8 @@ def stdp_py(weight_mat: torch.Tensor, input_shape: int, output_shape: int, time_
                         weight += a_pos * torch.exp(-dt / tau_pos)
                     else:
                         weight += -a_neg * torch.exp(dt / tau_neg)
-            weight_mat[i, j] += weight
-    return
+            delta_weight[i, j] += weight
+    return delta_weight
 
 
 if torch.cuda.is_available():
@@ -51,11 +53,11 @@ except:
     stdp_cpp = None
 
 
-def stdp(weight_mat: torch.Tensor, input_shape: int, output_shape: int, time_steps: int, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float) -> None:
+def stdp(delta_weight: torch.Tensor, input_shape: int, output_shape: int, time_steps: int, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float) -> torch.Tensor:
     """
     STDP总函数，视情况调用函数
     @params:
-        weight_mat: torch.Tensor 权重矩阵，形状为[output_shape, input_shape]
+        delta_weight: torch.Tensor 权重矩阵，形状为[output_shape, input_shape]
         input_shape: int 输入长度
         output_shape: int 输出长度
         time_steps: int 时间步长
@@ -66,8 +68,8 @@ def stdp(weight_mat: torch.Tensor, input_shape: int, output_shape: int, time_ste
         a_neg: float STDP参数A-
         tau_neg: float STDP参数tau-
     """
-    w_type = weight_mat.device.type
-    w_idx = weight_mat.device.index
+    w_type = delta_weight.device.type
+    w_idx = delta_weight.device.index
     i_type = input_spike_train.device.type
     i_idx = input_spike_train.device.index
     o_type = output_spike_train.device.type
@@ -76,17 +78,18 @@ def stdp(weight_mat: torch.Tensor, input_shape: int, output_shape: int, time_ste
     device_type = w_type
     device_idx = w_idx
     if device_type == "cuda" and stdp_cuda is not None:
-        stdp_cuda(weight_mat, input_shape, output_shape, time_steps, input_spike_train, output_spike_train, a_pos, tau_pos, a_neg, tau_neg)
-        return
+        stdp_cuda(delta_weight, input_shape, output_shape, time_steps, input_spike_train, output_spike_train, a_pos, tau_pos, a_neg, tau_neg)
+        return delta_weight
     if stdp_cpp is not None:
-        stdp_cpp(weight_mat.cpu(), input_shape, output_shape, time_steps, input_spike_train.cpu(), output_spike_train.cpu(), a_pos, tau_pos, a_neg, tau_neg)
-        return
-    stdp_py(weight_mat, input_shape, output_shape, time_steps, input_spike_train, output_spike_train, a_pos, tau_pos, a_neg, tau_neg)
-    return
+        delta_weight_cpu = delta_weight.cpu()
+        stdp_cpp(delta_weight_cpu, input_shape, output_shape, time_steps, input_spike_train.cpu(), output_spike_train.cpu(), a_pos, tau_pos, a_neg, tau_neg)
+        delta_weight = delta_weight_cpu.to(delta_weight)
+        return delta_weight
+    return stdp_py(delta_weight, input_shape, output_shape, time_steps, input_spike_train, output_spike_train, a_pos, tau_pos, a_neg, tau_neg)
 
 
 class STDPLinear(nn.Linear):
-    def __init__(self, in_features: int, out_features: int, soma: nn.Module, a_pos: float = 0.25, tau_pos: float = 2.0, a_neg: float = 0.25, tau_neg: float = 2.0, device = None, dtype = None) -> None:
+    def __init__(self, in_features: int, out_features: int, soma: nn.Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, device = None, dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层
         @params:
@@ -105,6 +108,7 @@ class STDPLinear(nn.Linear):
             device = device,
             dtype = dtype
         )
+        self.weight.requires_grad_(False)
         self.soma = soma
         self.a_pos = a_pos
         self.tau_pos = tau_pos
@@ -113,7 +117,7 @@ class STDPLinear(nn.Linear):
         self.n_reset()
     
 
-    def start_step(self):
+    def start_step(self) -> None:
         """
         开始训练
         """
@@ -121,7 +125,7 @@ class STDPLinear(nn.Linear):
             self.soma.start_step()
     
 
-    def stop_step(self):
+    def stop_step(self) -> None:
         """
         停止训练
         """
@@ -129,7 +133,7 @@ class STDPLinear(nn.Linear):
             self.soma.stop_step()
 
 
-    def n_reset(self):
+    def n_reset(self) -> None:
         """
         重置整个神经元
         """
@@ -139,21 +143,23 @@ class STDPLinear(nn.Linear):
             self.soma.n_reset()
 
 
-    def l_step(self):
+    def l_step(self) -> None:
         """
         对整个神经元应用STDP使其更新
         """
+        time_steps = len(self.input_spike_seq)
         input_spike_train = torch.stack(self.input_spike_seq)
         output_spike_train = torch.stack(self.output_spike_seq)
         if len(input_spike_train.shape) == 3:
             batch_size = input_spike_train.shape[1]
             for b in range(batch_size):
                 delta_weight = torch.zeros_like(self.weight)
-                stdp(delta_weight, self.in_features, self.out_features, len(self.input_spike_seq), input_spike_train[:, b], output_spike_train[:, b], self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
+                delta_weight = stdp(delta_weight, self.in_features, self.out_features, time_steps, input_spike_train[:, b], output_spike_train[:, b], self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
+                # print(delta_weight)
                 self.weight += delta_weight
         else:
             delta_weight = torch.zeros_like(self.weight)
-            stdp(delta_weight, self.in_features, self.out_features, len(self.input_spike_seq), input_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
+            delta_weight = stdp(delta_weight, self.in_features, self.out_features, time_steps, input_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
             self.weight += delta_weight
     
 
@@ -165,8 +171,8 @@ class STDPLinear(nn.Linear):
         @return:
             o: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
-        self.input_spike_seq.append(x.clone())
+        self.input_spike_seq.append(x.clone().detach())
         x = super().forward(x)
         x = self.soma(x)
-        self.output_spike_seq.append(x.clone())
+        self.output_spike_seq.append(x.clone().detach())
         return x

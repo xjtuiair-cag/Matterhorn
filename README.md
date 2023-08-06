@@ -228,7 +228,7 @@ model = snn.SNNContainer(
 
 By now, you have experienced how a SNN look like and how to build it by Matterhorn. For further experience, you can refer to [examples/2_layer_mlp.py](./examples/2_layer_mlp.py).
 
-```python
+```sh
 cd Matterhorn
 python3 examples/2_layer_mlp.py
 ```
@@ -278,7 +278,30 @@ $$
 
 ![STDP function](./assets/readme_6.png)
 
-By setting parameters $A_{+}$, $τ_{+}$, $A_{-}$ and $τ_{-}$, we can easily train SNNs unsupervised.
+By setting parameters $A_{+}$, $τ_{+}$, $A_{-}$ and $τ_{-}$, we can easily train SNNs unsupervised. For further experience, you can refer to [examples/2_layer_mlp_with_stdp.py](./examples/2_layer_mlp_with_stdp.py).
+
+```sh
+cd Matterhorn
+python3 examples/2_layer_mlp_with_stdp.py
+```
+
+**Note:** Please make sure you have installed `matterhorn_cpp_extensions` (or `matterhorn_cuda_extensions` if you have CUDA), otherwise it will be extremely slow.
+
+```sh
+cd matterhorn_cpp_extensions
+sudo python3 setup.py install
+```
+
+if you have CUDA, you can install CUDA version:
+
+```sh
+cd matterhorn_cuda_extensions
+sudo python3 setup.py install
+```
+
+## 4 Neuromorphic Hardware Support
+
+Will come out soon, but not today.
 
 ## References
 

@@ -42,7 +42,7 @@ def main():
     epochs = 100
     learning_rate = 1e-3
     momentum = 0.9
-    tau = 2.0
+    tau = 1.1
 
     hyper_param_table = Table(show_header = True, header_style = "bold blue")
     hyper_param_table.add_column("Name", justify = "center")
@@ -63,18 +63,22 @@ def main():
         encoder = snn.PoissonEncoder(
             time_steps = time_steps,
         ),
-        snn_model = learning.STDPTemporal(
-            learning.STDPSpatial(
+        snn_model = snn.TemporalContainer(
+            snn.SpatialContainer(
                 snn.Flatten(),
                 learning.STDPLinear(
                     in_features = 28 * 28,
                     out_features = 80,
-                    soma = snn.LIF()
+                    soma = snn.LIF(
+                        tau_m = tau,
+                    )
                 ),
                 learning.STDPLinear(
                     in_features = 80,
                     out_features = 10,
-                    soma = snn.LIF()
+                    soma = snn.LIF(
+                        tau_m = tau,
+                    )
                 )
             )
         ),

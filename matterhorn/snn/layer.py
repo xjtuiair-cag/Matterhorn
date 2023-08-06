@@ -23,7 +23,7 @@ class val_to_spike(torch.autograd.Function):
 
 
 class SRM0Linear(nn.Module):
-    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: torch.nn.Module = surrogate.Rectangular(), device=None, dtype=None) -> None:
+    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), device=None, dtype=None) -> None:
         """
         SRM0神经元，突触响应的神经元
         电位公式较为复杂：
@@ -58,7 +58,7 @@ class SRM0Linear(nn.Module):
         return "in_features=%d, out_features=%d, tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest)
 
 
-    def n_reset(self):
+    def n_reset(self) -> None:
         """
         重置整个神经元
         """
@@ -75,7 +75,7 @@ class SRM0Linear(nn.Module):
         return u
 
 
-    def f_synapse_response(self, s: torch.Tensor, o: torch.Tensor):
+    def f_synapse_response(self, s: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
         """
         根据上一时刻的历史反应$S_{ij}^{l}(t-1)$与输入脉冲$O_{j}^{l-1}(t)$计算当前反应$S_{ij}^{l}(t)$。
         该部分可用如下公式概括：
@@ -90,7 +90,7 @@ class SRM0Linear(nn.Module):
         return s
 
 
-    def f_synapse_sum(self, w: torch.Tensor, s: torch.Tensor):
+    def f_synapse_sum(self, w: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
         """
         根据当前反应$S_{ij}^{l}(t)$与权重$W_{ij}$求和计算当前电位$U_{i}^{l}(t)$。
         该部分可用如下公式概括：

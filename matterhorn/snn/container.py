@@ -12,7 +12,7 @@ from typing import Optional
 
 
 class Spatial(nn.Sequential):
-    def __init__(self, *args):
+    def __init__(self, *args) -> None:
         """
         SNN的空间容器
         用法同nn.Sequential，加入一些特殊的作用于SNN的函数
@@ -22,7 +22,7 @@ class Spatial(nn.Sequential):
         super().__init__(*args)
     
 
-    def n_reset(self):
+    def n_reset(self) -> None:
         """
         一次重置该序列中所有的神经元
         """
@@ -31,7 +31,7 @@ class Spatial(nn.Sequential):
                 module.n_reset()
 
 
-    def start_step(self):
+    def start_step(self) -> None:
         """
         开始STDP训练
         """
@@ -40,7 +40,7 @@ class Spatial(nn.Sequential):
                 module.start_step()
 
 
-    def stop_step(self):
+    def stop_step(self) -> None:
         """
         停止STDP训练
         """
@@ -49,7 +49,7 @@ class Spatial(nn.Sequential):
                 module.stop_step()
     
 
-    def l_step(self):
+    def l_step(self) -> None:
         """
         一次部署所有结点的STDP学习
         """
@@ -73,7 +73,7 @@ class Temporal(nn.Module):
         self.step_after_process = False
 
 
-    def n_reset(self):
+    def n_reset(self) -> None:
         """
         重置模型
         """
@@ -81,7 +81,7 @@ class Temporal(nn.Module):
             self.model.n_reset()
 
     
-    def start_step(self):
+    def start_step(self) -> None:
         """
         开始STDP训练
         """
@@ -90,7 +90,7 @@ class Temporal(nn.Module):
             self.model.start_step()
     
 
-    def stop_step(self):
+    def stop_step(self) -> None:
         """
         停止STDP训练
         """
@@ -99,7 +99,7 @@ class Temporal(nn.Module):
             self.model.stop_step()
     
 
-    def l_step(self):
+    def l_step(self) -> None:
         """
         部署结点的STDP学习
         """
@@ -138,7 +138,7 @@ class Container(nn.Module):
         self.decoder = decoder
 
 
-    def n_reset(self):
+    def n_reset(self) -> None:
         """
         重置模型
         """
@@ -150,7 +150,7 @@ class Container(nn.Module):
             self.decoder.n_reset()
 
 
-    def start_step(self):
+    def start_step(self) -> None:
         """
         开始STDP训练
         """
@@ -158,7 +158,7 @@ class Container(nn.Module):
             self.snn_model.start_step()
 
 
-    def stop_step(self):
+    def stop_step(self) -> None:
         """
         停止STDP训练
         """
@@ -166,7 +166,7 @@ class Container(nn.Module):
             self.snn_model.stop_step()
     
 
-    def l_step(self):
+    def l_step(self) -> None:
         """
         部署结点的STDP学习
         """

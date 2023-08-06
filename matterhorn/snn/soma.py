@@ -40,7 +40,7 @@ class PFHSkeleton(nn.Module):
         return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
     
 
-    def n_reset(self):
+    def n_reset(self) -> None:
         """
         重置整个神经元
         """
@@ -56,7 +56,7 @@ class PFHSkeleton(nn.Module):
         return u
 
     
-    def n_detach(self):
+    def n_detach(self) -> None:
         """
         将历史电位从计算图中分离，以停止在时间上进行反向传播
         """
@@ -153,14 +153,14 @@ class RFRSkeleton(nn.Module):
         return u
 
 
-    def n_reset(self):
+    def n_reset(self) -> None:
         """
         重置整个神经元
         """
         self.u = self.u_rest
 
     
-    def n_detach(self):
+    def n_detach(self) -> None:
         """
         将历史电位从计算图中分离，以停止在时间上进行反向传播
         """
@@ -424,7 +424,7 @@ class Izhikevich(RFRSkeleton):
         return "a=%.3f, b=%.3f, u_th=%.3f" % (self.a, self.b, self.u_threshold)
 
 
-    def n_reset(self):
+    def n_reset(self) -> None:
         """
         重置整个神经元
         """
@@ -432,7 +432,7 @@ class Izhikevich(RFRSkeleton):
         self.w = 0.0
 
     
-    def n_detach(self):
+    def n_detach(self) -> None:
         """
         将历史电位从计算图中分离，以停止在时间上进行反向传播
         """

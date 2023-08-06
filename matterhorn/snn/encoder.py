@@ -59,7 +59,7 @@ class Poisson(nn.Module):
         return "time_steps=%d, max=%.3f, min=%.3f" % (self.time_steps, self.max_value, self.min_value)
 
 
-    def n_reset(self):
+    def n_reset(self) -> None:
         """
         重置编码器
         """
@@ -142,7 +142,7 @@ class Temporal(nn.Module):
         return "time_steps=%d, max=%.3f, min=%.3f, spike_freq=%.3f" % (self.time_steps, self.max_value, self.min_value, self.prob)
 
 
-    def n_reset(self):
+    def n_reset(self) -> None:
         """
         重置编码器
         """

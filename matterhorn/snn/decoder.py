@@ -16,7 +16,7 @@ class SumSpike(nn.Module):
         super().__init__()
     
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数
         @params:
@@ -36,7 +36,7 @@ class AverageSpike(nn.Module):
         super().__init__()
     
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数
         @params:
