@@ -101,13 +101,13 @@ Discretizing it into a difference equation, we can get:
 
 $$U^{l}(t)=(1-\frac{1}{\tau})H^{l}(t)+\frac{1}{\tau}u_{rest}+X^{l}(t)$$
 
-**Operation 3** uses Heaviside step function and threshold potential $u_{th}$ to decide whether to generate spikes $O^{l}(t)$. We name it **spiking function**.
+**Operation 3** uses Heaviside step function and threshold potential $u_{th}$ to decide whether to generate spikes $O^{l}(t)$. We name it **firing function**.
 
-We use an equation to describe spiking function:
+We use an equation to describe firing function:
 
 $$O^{l}(t)=spiking(U^{l}(t))$$
 
-Generally, spiking function is like this.
+Generally, firing function is like this.
 
 $$O^{l}(t)=Heaviside(U^{l}(t)-u_{th})$$
 
@@ -233,25 +233,29 @@ cd Matterhorn
 python3 examples/2_layer_mlp.py
 ```
 
-In most cases, neurons of SNNs can be divided into 1 synapse operation and 3 soma operations. However, there are always some special cases. SRM0 neuron model is one of them, whose response is calculated in each synapse. We can still use 4 operations to represent SRM0 neuron:
+In most cases, neurons of SNNs can be divided into 1 synapse operation and 3 soma operations. However, there are always some special cases. SRM0 neuron model is one of them, whose response is calculated in each synapse. We can use 5 operations to represent SRM0 neuron, 2 for synapses and 3 for soma:
 
 **Operation 1**: **synapse response function**
 
 $$R_{j}^{l}(t)=(1-\frac{1}{\tau_{m}})R_{j}^{l}(t-1)+O_{j}^{l}(t)$$
 
-**Operation 2**: **potential function**
+**Operation 2**: **synapse function**
 
-$$U_{i}^{l}(t)=H_{i}^{l}(t)\sum_{j}{R_{j}^{l}(t)}$$
+$$X_{i}^{l}(t)=\sum_{j}{w_{ij}R_{j}^{l}(t)}$$
 
-**Operation 3**: **firing function**
+**Operation 3**: **response function**
+
+$$U_{i}^{l}(t)=X_{i}^{l}(t)H_{i}^{l}(t)$$
+
+**Operation 4**: **firing function**
 
 $$O_{i}^{l}(t)=Heaviside(U_{i}^{l}(t))$$
 
-**Operation 4**: **reset function**
+**Operation 5**: **reset function**
 
 $$H_{i}^{l}(t)=1-O_{i}^{l}(t-1)$$
 
-With 4 operations resembled we can build a SRM0 neuron. For further experience, you can refer to [examples/2_layer_mlp_with_SRM0.py](./examples/2_layer_mlp_with_SRM0.py).
+With 5 operations resembled we can build a SRM0 neuron. For further experience, you can refer to [examples/2_layer_mlp_with_SRM0.py](./examples/2_layer_mlp_with_SRM0.py).
 
 ```sh
 cd Matterhorn
@@ -280,7 +284,9 @@ You can inspect all provided surrogate gradient functions in `matterhorn.snn.sur
 
 ### Learning: BPTT Vs. STDP
 
-Training SNNs could be as easy as training ANNs after gradient problem of Heaviside step function is solved. After we unfold SNNs into a spatial-temporal network, back propagation through time (BPTT) could be used in SNNs. On spatial dimension, gradients can be proagated through spiking function and synapse function, thus neurons of previous layer would receive the gradient; On temporal dimension, the gradient of the next time step can be propagated through spiking function and response function, thus soma of previous time would receive the gradient.
+Training SNNs could be as easy as training ANNs after gradient problem of Heaviside step function is solved. After we unfold SNNs into a spatial-temporal network, back propagation through time (BPTT) could be used in SNNs. On spatial dimension, gradients can be proagated through firing function and synapse function, thus neurons of previous layer would receive the gradient; On temporal dimension, the gradient of the next time step can be propagated through firing function and response function, thus soma of previous time would receive the gradient.
+
+![BPTT](./assets/readme_6.png)
 
 Besides BPTT, there is another simple way to train locally in each neuron without supervision, which we call it spike-timing-dependent plasticity (STDP). STDP uses precise time difference of input and output spikes to calculate the weight increment.
 
@@ -301,7 +307,7 @@ A_{+}e^{-\frac{x}{τ_{+}}},x>0 \\\\
 \right .
 $$
 
-![STDP function](./assets/readme_6.png)
+![STDP function](./assets/readme_7.png)
 
 By setting parameters $A_{+}$, $τ_{+}$, $A_{-}$ and $τ_{-}$, we can easily train SNNs unsupervised. For further experience, you can refer to [examples/2_layer_mlp_with_stdp.py](./examples/2_layer_mlp_with_stdp.py).
 
