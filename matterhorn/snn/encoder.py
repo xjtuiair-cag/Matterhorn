@@ -32,22 +32,19 @@ class Direct(nn.Module):
 
 
 class Poisson(nn.Module):
-    def __init__(self, time_steps: int = 1, max_value: float = 1.0, min_value: float = 0.0, reset_after_process: bool = True) -> None:
+    def __init__(self, time_steps: int = 1, max_value: float = 1.0, min_value: float = 0.0) -> None:
         """
         泊松编码（速率编码），将值转化为脉冲发放率（多步）
         @params:
             time_steps: int 生成的时间步长
             max_value: float 最大值
             min_value: float 最小值
-            reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__()
         assert max_value > min_value, "Max value is less than min value."
         self.time_steps = time_steps
         self.max_value = max_value
         self.min_value = min_value
-        self.reset_after_process = reset_after_process
-        self.n_reset()
 
 
     def extra_repr(self) -> str:
@@ -100,8 +97,6 @@ class Poisson(nn.Module):
             y = self.forward_single(x)
         else:
             y = self.forward_multiple(x, self.time_steps)
-        if self.reset_after_process:
-            self.n_reset()
         return y
 
 
