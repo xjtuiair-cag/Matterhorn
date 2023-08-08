@@ -201,7 +201,7 @@ You can use average decoder in Matterhorn by the code below:
 import torch
 import matterhorn.snn as snn
 
-decoder = snn.AvgDecoder()
+decoder = snn.AvgSpikeDecoder()
 ```
 
 It will take first dimension as temporal dimension, and generate statistic result as output. The output can be transported into ANN for further process.
@@ -222,7 +222,7 @@ model = snn.SNNContainer(
             snn.LIF()
         ),
     ),
-    decoder = snn.AvgDecoder()
+    decoder = snn.AvgSpikeDecoder()
 )
 ```
 

@@ -32,7 +32,7 @@ class Direct(nn.Module):
 
 
 class Poisson(nn.Module):
-    def __init__(self, time_steps: int = 64, max_value: float = 1.0, min_value: float = 0.0, reset_after_process: bool = True) -> None:
+    def __init__(self, time_steps: int = 1, max_value: float = 1.0, min_value: float = 0.0, reset_after_process: bool = True) -> None:
         """
         泊松编码（速率编码），将值转化为脉冲发放率（多步）
         @params:
@@ -57,13 +57,6 @@ class Poisson(nn.Module):
             repr_str: str 参数表
         """
         return "time_steps=%d, max=%.3f, min=%.3f" % (self.time_steps, self.max_value, self.min_value)
-
-
-    def n_reset(self) -> None:
-        """
-        重置编码器
-        """
-        self.current_time_step = 0
 
 
     def forward_single(self, x:torch.Tensor) -> torch.Tensor:
@@ -113,7 +106,7 @@ class Poisson(nn.Module):
 
 
 class Temporal(nn.Module):
-    def __init__(self, time_steps: int = 64, max_value: float = 1.0, min_value: float = 0.0, prob: float = 0.75, reset_after_process: bool = True) -> None:
+    def __init__(self, time_steps: int = 1, max_value: float = 1.0, min_value: float = 0.0, prob: float = 0.75, reset_after_process: bool = True) -> None:
         """
         时间编码，在某个时间之前不会产生脉冲，在某个时间之后随机产生脉冲
         @params:

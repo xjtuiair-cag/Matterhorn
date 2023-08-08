@@ -82,7 +82,7 @@ def main():
                 )
             )
         ),
-        decoder = snn.AvgDecoder()
+        decoder = snn.AvgSpikeDecoder()
     )
     model = model.to(device)
 

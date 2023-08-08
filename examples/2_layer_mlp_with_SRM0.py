@@ -67,7 +67,7 @@ def main():
                 snn.SRM0Linear(80, 10, tau_m = tau)
             ),
         ),
-        decoder = snn.AvgDecoder()
+        decoder = snn.AvgSpikeDecoder()
     )
     model = model.to(device)
 
