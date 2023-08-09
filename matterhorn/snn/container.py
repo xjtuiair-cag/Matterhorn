@@ -131,6 +131,10 @@ class Container(nn.Module):
     def __init__(self, encoder: Optional[nn.Module] = None, snn_model: Optional[nn.Module] = None, decoder: Optional[nn.Module] = None) -> None:
         """
         SNN容器，包括编码器、神经网络主体和解码器，将SNN包装起来，以和ANN结合
+        @params:
+            encoder: Optional[nn.Module] 编码器
+            snn_model: Optional[nn.Module] SNN主体
+            decoder: Optional[nn.Module] 解码器
         """
         super().__init__()
         self.encoder = encoder

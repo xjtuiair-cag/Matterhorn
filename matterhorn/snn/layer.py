@@ -14,16 +14,30 @@ torch.autograd.set_detect_anomaly(True)
 class val_to_spike(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x: torch.Tensor) -> torch.Tensor:
+        """
+        模拟值转脉冲的前向传播函数，以0.5为界
+        @params:
+            x: torch.Tensor 模拟值
+        @return:
+            o: torch.Tensor 脉冲值（0、1）
+        """
         return x.ge(0.5).to(x)
     
 
     @staticmethod
     def backward(ctx, grad_output: torch.Tensor) -> torch.Tensor:
+        """
+        模拟值转脉冲的反向传播函数
+        @params:
+            grad_output: torch.Tensor 输出梯度
+        @return:
+            grad_input: torch.Tensor 输入梯度
+        """
         return grad_output
 
 
 class SRM0Linear(nn.Module):
-    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), device=None, dtype=None) -> None:
+    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), device = None, dtype = None) -> None:
         """
         SRM0神经元，突触响应的神经元
         电位公式较为复杂：
@@ -36,6 +50,15 @@ class SRM0Linear(nn.Module):
         H(s)为阶跃函数，当s>0时为1，否则为0。
         在此将其简化为多个突触反应与一个复位反应的叠加，即
         $$U_{i}^{l}(t)=u_{rest}+\sum_{j}{w_{ij}U_{ij}^{l}(t)}+R_{i}^{l}(t)$$
+        @params:
+            in_features: int 输入长度，用法同nn.Linear
+            out_features: int 输出长度，用法同nn.Linear
+            tau_m: float 膜时间常数$τ_{m}$
+            u_threshold: float 阈电位$u_{th}$
+            u_rest: float 静息电位$u_{rest}$
+            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+            device: Optional[torch.device, str] 所使用的设备
+            dtype: Optional[type] 数据类型
         """
         super().__init__()
         self.in_features = in_features
@@ -69,6 +92,11 @@ class SRM0Linear(nn.Module):
     def n_init(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         校正整个电位形状
+        @params:
+            u: torch.Tensor 待校正的电位，可能是张量或浮点值
+            x: torch.Tensor 带有正确数据类型、所在设备和形状的张量
+        @return:
+            u: torch.Tensor 经过校正的电位张量
         """
         if isinstance(u, float):
             u = u * torch.ones_like(x)

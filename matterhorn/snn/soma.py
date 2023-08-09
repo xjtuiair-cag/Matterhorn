@@ -50,6 +50,11 @@ class PFHSkeleton(nn.Module):
     def n_init(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         校正整个电位形状
+        @params:
+            u: torch.Tensor 待校正的电位，可能是张量或浮点值
+            x: torch.Tensor 带有正确数据类型、所在设备和形状的张量
+        @return:
+            u: torch.Tensor 经过校正的电位张量
         """
         if isinstance(u, float):
             u = u * torch.ones_like(x)
@@ -147,6 +152,11 @@ class RFRSkeleton(nn.Module):
     def n_init(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         校正整个电位形状
+        @params:
+            u: torch.Tensor 待校正的电位，可能是张量或浮点值
+            x: torch.Tensor 带有正确数据类型、所在设备和形状的张量
+        @return:
+            u: torch.Tensor 经过校正的电位张量
         """
         if isinstance(u, float):
             u = u * torch.ones_like(x)
