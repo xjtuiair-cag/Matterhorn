@@ -118,7 +118,7 @@ class Temporal(nn.Module):
         self.min_value = min_value
         self.prob = prob
         self.reset_after_process = reset_after_process
-        self.n_reset()
+        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -130,7 +130,7 @@ class Temporal(nn.Module):
         return "time_steps=%d, max=%.3f, min=%.3f, spike_freq=%.3f" % (self.time_steps, self.max_value, self.min_value, self.prob)
 
 
-    def n_reset(self) -> None:
+    def reset(self) -> None:
         """
         重置编码器
         """
@@ -181,5 +181,5 @@ class Temporal(nn.Module):
         else:
             y = self.forward_multiple(x, self.time_steps)
         if self.reset_after_process:
-            self.n_reset()
+            self.reset()
         return y

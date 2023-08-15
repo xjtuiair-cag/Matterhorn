@@ -114,7 +114,7 @@ class STDPLinear(nn.Linear):
         self.tau_pos = tau_pos
         self.a_neg = a_neg
         self.tau_neg = tau_neg
-        self.n_reset()
+        self.reset()
     
 
     def start_step(self) -> None:
@@ -133,17 +133,17 @@ class STDPLinear(nn.Linear):
             self.soma.stop_step()
 
 
-    def n_reset(self) -> None:
+    def reset(self) -> None:
         """
         重置整个神经元
         """
         self.input_spike_seq = []
         self.output_spike_seq = []
-        if hasattr(self.soma, "n_reset"):
-            self.soma.n_reset()
+        if hasattr(self.soma, "reset"):
+            self.soma.reset()
 
 
-    def l_step(self) -> None:
+    def step_once(self) -> None:
         """
         对整个神经元应用STDP使其更新
         """

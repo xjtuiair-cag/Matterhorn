@@ -28,7 +28,7 @@ class PFHSkeleton(nn.Module):
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function
-        self.n_reset()
+        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -40,14 +40,14 @@ class PFHSkeleton(nn.Module):
         return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
     
 
-    def n_reset(self) -> None:
+    def reset(self) -> None:
         """
         重置整个神经元
         """
         self.u = self.u_rest
 
 
-    def n_init(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    def init_tensor(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         校正整个电位形状
         @params:
@@ -61,7 +61,7 @@ class PFHSkeleton(nn.Module):
         return u
 
     
-    def n_detach(self) -> None:
+    def detach(self) -> None:
         """
         将历史电位从计算图中分离，以停止在时间上进行反向传播
         """
@@ -112,7 +112,7 @@ class PFHSkeleton(nn.Module):
         @return:
             o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self.u = self.n_init(self.u, x)
+        self.u = self.init_tensor(self.u, x)
         self.u = self.f_potential(self.u, x)
         o = self.f_firing(self.u)
         self.u = self.f_history(self.u, o)
@@ -137,7 +137,7 @@ class RFRSkeleton(nn.Module):
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function
-        self.n_reset()
+        self.reset()
     
 
     def extra_repr(self) -> str:
@@ -149,7 +149,7 @@ class RFRSkeleton(nn.Module):
         return "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
 
 
-    def n_init(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    def init_tensor(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         校正整个电位形状
         @params:
@@ -163,14 +163,14 @@ class RFRSkeleton(nn.Module):
         return u
 
 
-    def n_reset(self) -> None:
+    def reset(self) -> None:
         """
         重置整个神经元
         """
         self.u = self.u_rest
 
     
-    def n_detach(self) -> None:
+    def detach(self) -> None:
         """
         将历史电位从计算图中分离，以停止在时间上进行反向传播
         """
@@ -224,7 +224,7 @@ class RFRSkeleton(nn.Module):
         @return:
             o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self.u = self.n_init(self.u, x)
+        self.u = self.init_tensor(self.u, x)
         self.u = self.f_response(self.u, x)
         o = self.f_firing(self.u)
         self.u = self.f_reset(self.u, o)
@@ -434,7 +434,7 @@ class Izhikevich(RFRSkeleton):
         return "a=%.3f, b=%.3f, u_th=%.3f" % (self.a, self.b, self.u_threshold)
 
 
-    def n_reset(self) -> None:
+    def reset(self) -> None:
         """
         重置整个神经元
         """
@@ -442,7 +442,7 @@ class Izhikevich(RFRSkeleton):
         self.w = 0.0
 
     
-    def n_detach(self) -> None:
+    def detach(self) -> None:
         """
         将历史电位从计算图中分离，以停止在时间上进行反向传播
         """
@@ -461,7 +461,7 @@ class Izhikevich(RFRSkeleton):
         @return:
             u: torch.Tensor 当前电位$U_{i}^{l}(t)$
         """
-        self.w = self.n_init(self.w, h)
+        self.w = self.init_tensor(self.w, h)
         dw = self.a * (self.b * h - self.w)
         self.w = self.w + dw
         du = 0.04 * h * h + 5.0 * h + 140.0 - self.w + x
@@ -516,7 +516,7 @@ class AnalogRFRSkeleton(RFRSkeleton):
         @return:
             o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self.u = self.n_init(self.u, x)
+        self.u = self.init_tensor(self.u, x)
         self.u = self.f_response(self.u, x)
         o = self.f_firing(self.u)
         y = self.f_activation(self.u)

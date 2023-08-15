@@ -62,7 +62,7 @@ class MinTime(nn.Module):
         super().__init__()
         self.time_steps = time_steps
         self.reset_after_process = reset_after_process
-        self.n_reset()
+        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -74,7 +74,7 @@ class MinTime(nn.Module):
         return "time_steps=%d" % (self.time_steps,)
 
 
-    def n_reset(self) -> None:
+    def reset(self) -> None:
         """
         重置编码器
         """
@@ -92,7 +92,7 @@ class MinTime(nn.Module):
         y = x.mean(dim = 0)
         # TODO: 前向传播具体算法
         if self.reset_after_process:
-            self.n_reset()
+            self.reset()
         return y
 
 
@@ -108,7 +108,7 @@ class AverageTime(nn.Module):
         super().__init__()
         self.time_steps = time_steps
         self.reset_after_process = reset_after_process
-        self.n_reset()
+        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -120,7 +120,7 @@ class AverageTime(nn.Module):
         return "time_steps=%d" % (self.time_steps,)
 
 
-    def n_reset(self) -> None:
+    def reset(self) -> None:
         """
         重置编码器
         """
@@ -138,5 +138,5 @@ class AverageTime(nn.Module):
         y = x.mean(dim = 0)
         # TODO: 前向传播具体算法
         if self.reset_after_process:
-            self.n_reset()
+            self.reset()
         return y

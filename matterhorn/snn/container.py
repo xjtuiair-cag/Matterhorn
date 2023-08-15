@@ -22,13 +22,13 @@ class Spatial(nn.Sequential):
         super().__init__(*args)
     
 
-    def n_reset(self) -> None:
+    def reset(self) -> None:
         """
         一次重置该序列中所有的神经元
         """
         for module in self:
-            if hasattr(module, "n_reset"):
-                module.n_reset()
+            if hasattr(module, "reset"):
+                module.reset()
 
 
     def start_step(self) -> None:
@@ -49,36 +49,36 @@ class Spatial(nn.Sequential):
                 module.stop_step()
     
 
-    def l_step(self) -> None:
+    def step_once(self) -> None:
         """
         一次部署所有结点的STDP学习
         """
         for module in self:
-            if hasattr(module, "l_step"):
-                module.l_step()
+            if hasattr(module, "step_once"):
+                module.step_once()
 
 
 class Temporal(nn.Module):
-    def __init__(self, model: nn.Module, reset_after_process = True) -> None:
+    def __init__(self, module: nn.Module, reset_after_process = True) -> None:
         """
         SNN的时间容器
         在多个时间步之内执行脉冲神经网络
         @params:
-            model: nn.Module 所用来执行的单步模型
+            module: nn.Module 所用来执行的单步模型
             reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__()
-        self.model = model
+        self.module = module
         self.reset_after_process = reset_after_process
         self.step_after_process = False
 
 
-    def n_reset(self) -> None:
+    def reset(self) -> None:
         """
         重置模型
         """
-        if hasattr(self.model, "n_reset"):
-            self.model.n_reset()
+        if hasattr(self.module, "reset"):
+            self.module.reset()
 
     
     def start_step(self) -> None:
@@ -86,8 +86,8 @@ class Temporal(nn.Module):
         开始STDP训练
         """
         self.step_after_process = True
-        if hasattr(self.model, "start_step"):
-            self.model.start_step()
+        if hasattr(self.module, "start_step"):
+            self.module.start_step()
     
 
     def stop_step(self) -> None:
@@ -95,16 +95,16 @@ class Temporal(nn.Module):
         停止STDP训练
         """
         self.step_after_process = False
-        if hasattr(self.model, "stop_step"):
-            self.model.stop_step()
+        if hasattr(self.module, "stop_step"):
+            self.module.stop_step()
     
 
-    def l_step(self) -> None:
+    def step_once(self) -> None:
         """
         部署结点的STDP学习
         """
-        if hasattr(self.model, "l_step"):
-            self.model.l_step()
+        if hasattr(self.module, "step_once"):
+            self.module.step_once()
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -118,12 +118,12 @@ class Temporal(nn.Module):
         time_steps = x.shape[0]
         result = []
         for t in range(time_steps):
-            result.append(self.model(x[t]))
+            result.append(self.module(x[t]))
         y = torch.stack(result)
         if self.step_after_process:
-            self.l_step()
+            self.step_once()
         if self.reset_after_process:
-            self.n_reset()
+            self.reset()
         return y
 
 
@@ -142,16 +142,16 @@ class Container(nn.Module):
         self.decoder = decoder
 
 
-    def n_reset(self) -> None:
+    def reset(self) -> None:
         """
         重置模型
         """
-        if hasattr(self.encoder, "n_reset"):
-            self.encoder.n_reset()
-        if hasattr(self.snn_model, "n_reset"):
-            self.snn_model.n_reset()
-        if hasattr(self.decoder, "n_reset"):
-            self.decoder.n_reset()
+        if hasattr(self.encoder, "reset"):
+            self.encoder.reset()
+        if hasattr(self.snn_model, "reset"):
+            self.snn_model.reset()
+        if hasattr(self.decoder, "reset"):
+            self.decoder.reset()
 
 
     def start_step(self) -> None:
@@ -170,12 +170,12 @@ class Container(nn.Module):
             self.snn_model.stop_step()
     
 
-    def l_step(self) -> None:
+    def step_once(self) -> None:
         """
         部署结点的STDP学习
         """
-        if hasattr(self.snn_model, "l_step"):
-            self.snn_model.l_step()
+        if hasattr(self.snn_model, "step_once"):
+            self.snn_model.step_once()
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

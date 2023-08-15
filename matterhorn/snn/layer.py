@@ -69,7 +69,7 @@ class SRM0Linear(nn.Module):
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function
-        self.n_reset()
+        self.reset()
     
 
     def extra_repr(self) -> str:
@@ -81,7 +81,7 @@ class SRM0Linear(nn.Module):
         return "in_features=%d, out_features=%d, tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest)
 
 
-    def n_reset(self) -> None:
+    def reset(self) -> None:
         """
         重置整个神经元
         """
@@ -89,7 +89,7 @@ class SRM0Linear(nn.Module):
         self.r = 0.0
 
 
-    def n_init(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    def init_tensor(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         校正整个电位形状
         @params:
@@ -189,13 +189,13 @@ class SRM0Linear(nn.Module):
         """
         # 突触函数
         # [batch_size, input_shape] -> [batch_size, output_shape]
-        self.s = self.n_init(self.s, o)
+        self.s = self.init_tensor(self.s, o)
         self.s = self.f_synapse_response(self.s, o)
         x = self.f_synapse_sum(self.weight, self.s)
 
         # 胞体函数，仍旧遵循R-S-R三段式
         # [batch_size, output_shape] -> [batch_size, output_shape]
-        self.r = self.n_init(self.r, x)
+        self.r = self.init_tensor(self.r, x)
         u = self.f_response(self.r, x)
         o = self.f_firing(u)
         self.r = self.f_reset(u, o)
