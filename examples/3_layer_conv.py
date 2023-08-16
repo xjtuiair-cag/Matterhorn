@@ -81,7 +81,7 @@ def main():
     print(Panel(Text("Dataset", justify = "center")))
 
     train_dataset = matterhorn.data.CIFAR10DVS(
-        root = "~/data/cifar10_dvs",
+        root = "./examples/data",
         train = True,
         transform = torchvision.transforms.ToTensor(),
         download = True,
@@ -91,7 +91,7 @@ def main():
         polarity = True
     )
     test_dataset = matterhorn.data.CIFAR10DVS(
-        root = "~/data/cifar10_dvs",
+        root = "./examples/data",
         train = False,
         transform = torchvision.transforms.ToTensor(),
         download = True,

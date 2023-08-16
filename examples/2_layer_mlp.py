@@ -82,13 +82,13 @@ def main():
     print(Panel(Text("Dataset", justify = "center")))
 
     train_dataset = torchvision.datasets.MNIST(
-        root = "~/data/mnist",
+        root = "./examples/data",
         train = True,
         transform = torchvision.transforms.ToTensor(),
         download=True
     )
     test_dataset = torchvision.datasets.MNIST(
-        root = "~/data/mnist",
+        root = "./examples/data",
         train = False,
         transform = torchvision.transforms.ToTensor(),
         download = True

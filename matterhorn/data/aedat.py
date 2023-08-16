@@ -2,10 +2,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 import os
-from torchvision.datasets.utils import  check_integrity, download_and_extract_archive, extract_archive, verify_str_arg
+from torchvision.datasets.utils import  check_integrity, download_url, extract_archive, verify_str_arg
 from torch.utils.data import Dataset, DataLoader
 from typing import Any, List, Tuple, Callable, Optional
 from urllib.error import URLError
+from rich import print
 
 
 class AEDAT(Dataset):
@@ -288,21 +289,23 @@ class CIFAR10DVS(AEDAT):
             return
         os.makedirs(self.raw_folder, exist_ok = True)
         for fileurl, filename, md5 in self.resources:
+            if os.path.isfile(self.raw_folder + os.sep + filename):
+                print("[blue]File %s%s%s has already existed.[/blue]" % (self.raw_folder, os.sep, filename))
+                continue
+            is_downloaded = False
             for mirror in self.mirrors:
-                url = f"{mirror}{fileurl}"
+                url = mirror + fileurl
                 try:
-                    print(f"Downloading {url}")
-                    download_and_extract_archive(url, download_root = self.raw_folder, filename = filename, md5 = md5)
+                    print("[blue]Downloading %s%s%s from %s[/blue]" % (self.raw_folder, os.sep, filename, url))
+                    download_url(url, root = self.raw_folder, filename = filename, md5 = md5)
+                    is_downloaded = True
+                    break
                 except URLError as error:
-                    print(f"Failed to download (trying next):\n{error}")
-                    continue
-                finally:
-                    print()
-                break
-            else:
-                raise RuntimeError(f"Error downloading {filename}")
+                    print("[red]Error in file %s%s%s downloaded from %s:\r\n\r\n%s\r\n\r\nPlease manually download it.[/red]" % (self.raw_folder, os.sep, filename, url, error))
+                    is_downloaded = False
+            if is_downloaded:
+                print("[green]Successfully downloaded %s%s%s[/green]" % (self.raw_folder, os.sep, filename))
     
     
     def load_data(self) -> Any:
         return
-        return super().load_data()
