@@ -1,12 +1,15 @@
+from zipfile import BadZipFile
 import numpy as np
 import torch
 import torch.nn as nn
 import os
+import random
 from torchvision.datasets.utils import  check_integrity, download_url, extract_archive, verify_str_arg
 from torch.utils.data import Dataset, DataLoader
 from typing import Any, List, Tuple, Callable, Optional
 from urllib.error import URLError
 from rich import print
+from rich.progress import track
 
 
 class AEDAT(Dataset):
@@ -14,11 +17,12 @@ class AEDAT(Dataset):
     test_file = "test.pt"
     mirrors = []
     resources = []
-    y_mask = 0x7F00
-    y_shift = 8
-    x_mask = 0x00FE
+    labels = []
+    y_mask = 0x07FF0000
+    y_shift = 16
+    x_mask = 0x0000FFFE
     x_shift = 1
-    p_mask = 0x0001
+    p_mask = 0x00000001
     p_shift = 0
     
     
@@ -49,20 +53,20 @@ class AEDAT(Dataset):
         self.p_size = 2 if polarity else 1
         self.x_size = width
         self.y_size = height
-        if self.check_legacy_exist():
-            self.data, self.targets = self.load_legacy_data()
-            return
         if download:
             self.download()
         if not self.check_exists():
             raise RuntimeError("Dataset not found. You can use download=True to download it")
-        self.data, self.targets = self.load_data()
+        self.data_target = self.load_data()
+        self.data_target = self.data_target[self.data_target[:, 2] == (1 if self.train else 0)][:, :2]
+        self.data_target = self.data_target.tolist()
+        random.shuffle(self.data_target)
 
 
     @property
     def raw_folder(self) -> str:
         """
-        刚下载下来的数据集所存储的地方
+        刚下载下来的数据集所存储的地方。
         @return:
             str 数据集存储位置
         """
@@ -70,34 +74,28 @@ class AEDAT(Dataset):
 
 
     @property
-    def processed_folder(self) -> str:
+    def extracted_folder(self) -> str:
         """
-        处理过后的数据集所存储的地方
+        解压过后的数据集所存储的地方。
         @return:
             str 数据集存储位置
         """
-        return os.path.join(self.root, self.__class__.__name__, "processed_t%d_p%d_h%d_w%d" % (self.t_size, self.p_size, self.y_size, self.x_size))
-
-    
-    def check_legacy_exist(self) -> bool:
-        processed_folder_exists = os.path.exists(self.processed_folder)
-        if not processed_folder_exists:
-            return False
-        return all(
-            check_integrity(os.path.join(self.processed_folder, file)) for file in (self.training_file, self.test_file)
-        )
+        return os.path.join(self.root, self.__class__.__name__, "extracted")
 
 
-    def load_legacy_data(self) -> Any:
-        # This is for BC only. We no longer cache the data in a custom binary, but simply read from the raw data
-        # directly.
-        data_file = self.training_file if self.train else self.test_file
-        return torch.load(os.path.join(self.processed_folder, data_file))
+    @property
+    def processed_folder(self) -> str:
+        """
+        处理过后的数据集所存储的地方。
+        @return:
+            str 数据集存储位置
+        """
+        return os.path.join(self.root, self.__class__.__name__, "processed")
     
     
     def check_exists(self) -> bool:
         """
-        检查是否存在
+        检查是否存在。
         @return:
             if_exist: bool 是否存在
         """
@@ -106,21 +104,23 @@ class AEDAT(Dataset):
     
     def download(self) -> None:
         """
-        下载数据集
+        下载数据集。
         """
-        pass
+        return
 
 
-    def load_data(self) -> Any:
+    def load_data(self) -> np.ndarray:
         """
-        预处理数据集
+        加载数据集。
+        @return:
+            data_label: np.ndarray 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
         """
-        pass
+        return None
 
     
     def extract(self, data: np.ndarray, mask: int, shift: int) -> np.ndarray:
         """
-        从事件数据中提取x,y,p值所用的函数
+        从事件数据中提取x,y,p值所用的函数。
         @params:
             data: np.ndarray 事件数据
             mask: int 对应的掩模
@@ -133,7 +133,7 @@ class AEDAT(Dataset):
     
     def filename_2_data(self, filename: str) -> np.ndarray:
         """
-        输入文件名，读取文件内容
+        输入文件名，读取文件内容。
         @params:
             filename: str 文件名
         @return:
@@ -154,75 +154,81 @@ class AEDAT(Dataset):
     
     def data_2_tpyx(self, data: np.ndarray) -> np.ndarray:
         """
-        将数据分割为t,x,y,p数组
+        将数据分割为t,x,y,p数组。
         @params:
             data: np.ndarray 数据，形状为[2n]
         @return:
             data_tpyx: np.ndarray 分为t,p,y,x的数据，形状为[n, 4]
         """
-        res = np.zeros(data.shape[0] // 2, 4)
+        res = np.zeros((data.shape[0] // 2, 4), dtype = np.int)
         xyp = data[::2]
         t = data[1::2]
-        res[0] = t
-        res[1] = self.extract(xyp, self.x_mask, self.x_shift)
-        res[2] = self.extract(xyp, self.y_mask, self.y_shift)
-        res[3] = self.extract(xyp, self.p_mask, self.p_shift)
+        res[:, 0] = t
+        res[:, 1] = self.extract(xyp, self.x_mask, self.x_shift)
+        res[:, 2] = self.extract(xyp, self.y_mask, self.y_shift)
+        res[:, 3] = self.extract(xyp, self.p_mask, self.p_shift)
         return res
     
     
     def tpyx_2_tensor(self, data: np.ndarray) -> torch.Tensor:
         """
-        将t,p,y,x数组转为最后的PyTorch张量
+        将t,p,y,x数组转为最后的PyTorch张量。
         @params:
             data: np.ndarray 数据，形状为[n, 4]
         @return:
             data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
         """
-        pass
+        return torch.tensor(data)
     
     
-    def label(self, path: str) -> int:
+    def label(self, key: str) -> int:
         """
-        返回该文件对应的标签
+        返回该文件对应的标签。
         @params:
-            path: str 文件的存储路径
+            key: str 关键词
         @return:
             label: int 文件的标签
         """
-        pass
+        if key in self.labels:
+            return self.labels.index(key)
+        return -1
     
     
-    def is_train(self, path: str, index: int = 0) -> bool:
+    def is_train(self, label: int, index: int = 0) -> bool:
         """
-        从路径、文件名和索引判断是否是训练集
+        从路径、文件名和索引判断是否是训练集。
         @params:
-            path: str 文件的存储路径
+            label: int 标签
             index: int 文件的索引
         @return:
             is_train: bool 是否为训练集
         """
-        pass
+        return index < 900
     
     
-    def __sizeof__(self) -> int:
+    def __len__(self) -> int:
         """
-        获取数据集长度
+        获取数据集长度。
         @return:
             len: int 数据集长度
         """
-        return super().__sizeof__()
+        return len(self.data_target)
     
     
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        获取数据集
+        获取数据集。
         @params:
             index: int 索引
         @return:
             x: torch.Tensor 数据
             y: torch.Tensor 标签
         """
-        return super().__getitem__(index)
+        data_idx = self.data_target[index][0]
+        data = np.load(os.path.join(self.processed_folder, "%d.npy" % (data_idx,)))
+        data = self.tpyx_2_tensor(data)
+        target = self.data_target[index][1]
+        return data, target
 
 
 class CIFAR10DVS(AEDAT):
@@ -239,6 +245,13 @@ class CIFAR10DVS(AEDAT):
         ("7712836", "ship.zip", "41c7bd7d6b251be82557c6cce9a7d5c9"),
         ("7712839", "truck.zip", "89f3922fd147d9aeff89e76a2b0b70a7")
     ]
+    labels = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
+    y_mask = 0x7F00
+    y_shift = 8
+    x_mask = 0x00FE
+    x_shift = 1
+    p_mask = 0x0001
+    p_shift = 0
 
 
     def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, time_steps: int = 64, width: int = 128, height: int = 128, polarity: bool = True) -> None:
@@ -276,8 +289,7 @@ class CIFAR10DVS(AEDAT):
             if_exist: bool 是否存在
         """
         return all(
-            check_integrity(os.path.join(self.raw_folder, os.path.splitext(os.path.basename(filename))[0]))
-            for fileurl, filename, md5 in self.resources
+            check_integrity(os.path.join(self.raw_folder, filename)) for fileurl, filename, md5 in self.resources
         )
 
 
@@ -289,23 +301,80 @@ class CIFAR10DVS(AEDAT):
             return
         os.makedirs(self.raw_folder, exist_ok = True)
         for fileurl, filename, md5 in self.resources:
-            if os.path.isfile(self.raw_folder + os.sep + filename):
-                print("[blue]File %s%s%s has already existed.[/blue]" % (self.raw_folder, os.sep, filename))
+            if os.path.isfile(os.path.join(self.raw_folder, filename)):
+                print("[blue]File %s has already existed.[/blue]" % (os.path.join(self.raw_folder, filename),))
                 continue
             is_downloaded = False
             for mirror in self.mirrors:
                 url = mirror + fileurl
                 try:
-                    print("[blue]Downloading %s%s%s from %s[/blue]" % (self.raw_folder, os.sep, filename, url))
+                    print("[blue]Downloading %s from %s.[/blue]" % (os.path.join(self.raw_folder, filename), url))
                     download_url(url, root = self.raw_folder, filename = filename, md5 = md5)
                     is_downloaded = True
                     break
                 except URLError as error:
-                    print("[red]Error in file %s%s%s downloaded from %s:\r\n\r\n%s\r\n\r\nPlease manually download it.[/red]" % (self.raw_folder, os.sep, filename, url, error))
+                    print("[red]Error in file %s downloaded from %s:\r\n\r\n    %s\r\n\r\nPlease manually download it.[/red]" % (os.path.join(self.raw_folder , filename), url, error))
                     is_downloaded = False
             if is_downloaded:
-                print("[green]Successfully downloaded %s%s%s[/green]" % (self.raw_folder, os.sep, filename))
+                print("[green]Successfully downloaded %s.[/green]" % (os.path.join(self.raw_folder, filename),))
     
+
+    def unzip(self) -> None:
+        zip_file_list = os.listdir(self.raw_folder)
+        extracted_folder_list = os.listdir(self.extracted_folder)
+        if len(zip_file_list) == len(extracted_folder_list):
+            print("[blue]Files are already extracted.[/blue]")
+            return
+        error_occured = False
+        for filename in zip_file_list:
+            label = self.label(filename.split(".")[0])
+            if not os.path.isdir(self.extracted_folder):
+                os.makedirs(self.extracted_folder, exist_ok = True)
+            try:
+                extract_archive(os.path.join(self.raw_folder, filename), self.extracted_folder)
+                print("[green]Sussessfully extracted file %s.[/green]" % (filename,))
+            except BadZipFile as e:
+                print("[red]Error in unzipping file %s:\r\n\r\n    %s\r\n\r\nPlease manually fix the problem.[/red]" % (filename, e))
+                error_occured = True
+        if error_occured:
+            raise RuntimeError("There are error(s) in unzipping files.")
+        
     
-    def load_data(self) -> Any:
-        return
+    def load_data(self) -> np.ndarray:
+        """
+        加载数据集。
+        @return:
+            data_label: np.ndarray 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
+        """
+        list_filename = os.path.join(self.processed_folder, "__main__.csv")
+        if os.path.isfile(list_filename):
+            file_list = np.loadtxt(list_filename, dtype = np.int, delimiter = ",")
+            return file_list
+        self.unzip()
+        os.makedirs(self.processed_folder, exist_ok = True)
+        file_list = []
+        file_idx = 0
+        for label_str in self.labels:
+            label = self.label(label_str)
+            aedat_files = os.listdir(os.path.join(self.extracted_folder, label_str))
+            aedat_file_count = len(aedat_files)
+            for filename in track(aedat_files, description = "Processing label %s" % (label_str,)):
+                raw_data = self.filename_2_data(os.path.join(self.extracted_folder, label_str, filename))
+                event_data = self.data_2_tpyx(raw_data)
+                np.save(os.path.join(self.processed_folder, "%d.npy" % (file_idx,)), event_data)
+                file_list.append([file_idx, label, 1 if self.is_train(label, file_idx % aedat_file_count) else 0])
+                file_idx += 1
+        file_list = np.array(file_list, dtype = np.int)
+        np.savetxt(list_filename, file_list, fmt = "%d", delimiter = ",")
+        return file_list
+    
+
+    def tpyx_2_tensor(self, data: np.ndarray) -> torch.Tensor:
+        """
+        将t,p,y,x数组转为最后的PyTorch张量。
+        @params:
+            data: np.ndarray 数据，形状为[n, 4]
+        @return:
+            data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
+        """
+        return torch.tensor(data)

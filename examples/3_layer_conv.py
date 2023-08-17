@@ -100,6 +100,12 @@ def main():
         height = 32,
         polarity = True
     )
+
+    print(len(train_dataset))
+    print(len(test_dataset))
+    demo_data, demo_label = train_dataset[0]
+    print(demo_data)
+    print(demo_label)
     
     return
 
