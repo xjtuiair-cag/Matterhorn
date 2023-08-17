@@ -6,7 +6,7 @@ import os
 import random
 from torchvision.datasets.utils import  check_integrity, download_url, extract_archive, verify_str_arg
 from torch.utils.data import Dataset, DataLoader
-from typing import Any, List, Tuple, Callable, Optional
+from typing import Any, List, Tuple, Union, Callable, Optional
 from urllib.error import URLError
 from rich import print
 from rich.progress import track
@@ -15,6 +15,7 @@ from rich.progress import track
 class AEDAT(Dataset):
     training_file = "training.pt"
     test_file = "test.pt"
+    original_size = (0, 2, 128, 128)
     mirrors = []
     resources = []
     labels = []
@@ -154,7 +155,7 @@ class AEDAT(Dataset):
     
     def data_2_tpyx(self, data: np.ndarray) -> np.ndarray:
         """
-        将数据分割为t,x,y,p数组。
+        将数据分割为t,p,y,x数组。
         @params:
             data: np.ndarray 数据，形状为[2n]
         @return:
@@ -164,9 +165,9 @@ class AEDAT(Dataset):
         xyp = data[::2]
         t = data[1::2]
         res[:, 0] = t
-        res[:, 1] = self.extract(xyp, self.x_mask, self.x_shift)
+        res[:, 1] = self.extract(xyp, self.p_mask, self.p_shift)
         res[:, 2] = self.extract(xyp, self.y_mask, self.y_shift)
-        res[:, 3] = self.extract(xyp, self.p_mask, self.p_shift)
+        res[:, 3] = self.extract(xyp, self.x_mask, self.x_shift)
         return res
     
     
@@ -232,6 +233,7 @@ class AEDAT(Dataset):
 
 
 class CIFAR10DVS(AEDAT):
+    original_size = (0, 2, 128, 128)
     mirrors = ["https://ndownloader.figshare.com/files/"]
     resources = [
         ("7712788", "airplane.zip", "0afd5c4bf9ae06af762a77b180354fdd"),
@@ -254,7 +256,7 @@ class CIFAR10DVS(AEDAT):
     p_shift = 0
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, time_steps: int = 64, width: int = 128, height: int = 128, polarity: bool = True) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, time_steps: int = 64, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
         """
         CIFAR-10 DVS数据集，将CIFAR10数据集投影至LCD屏幕后，用事件相机录制的数据集
         @params:
@@ -266,6 +268,7 @@ class CIFAR10DVS(AEDAT):
             width: int 最终数据集的宽度
             height: int 最终数据集的高度
             polarity: bool 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
+            clipped: bool 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
         """
         super().__init__(
             root = root,
@@ -280,6 +283,9 @@ class CIFAR10DVS(AEDAT):
             endian = ">",
             datatype = "u4"
         )
+        if isinstance(clipped, Tuple):
+            assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
+        self.clipped = clipped
 
 
     def check_exists(self) -> bool:
@@ -377,4 +383,16 @@ class CIFAR10DVS(AEDAT):
         @return:
             data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
         """
-        return torch.tensor(data)
+        res = torch.zeros(self.t_size, self.p_size, self.y_size, self.x_size)
+        if self.clipped is not None:
+            if isinstance(self.clipped, int):
+                data = data[data[:, 0] < self.clipped]
+            elif isinstance(self.clipped, Tuple):
+                data = data[(data[:, 0] >= self.clipped[0]) and (data[:, 0] < self.clipped[1])]
+        data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, 1))
+        data[:, 1] = np.floor(data[:, 1] * self.p_size / self.original_size[1])
+        data[:, 2] = np.floor(data[:, 2] * self.y_size / self.original_size[2])
+        data[:, 3] = np.floor(data[:, 3] * self.x_size / self.original_size[3])
+        data = np.unique(data, axis = 0)
+        res[data.T] = 1
+        return res

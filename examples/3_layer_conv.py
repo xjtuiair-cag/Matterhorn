@@ -34,10 +34,10 @@ def main():
 
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
-    time_steps = 32
-    batch_size = 256
+    time_steps = 128
+    batch_size = 16
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    epochs = 100
+    epochs = 32
     learning_rate = 1e-3
     momentum = 0.9
     tau = 1.1
@@ -61,12 +61,12 @@ def main():
         encoder = snn.DirectEncoder(),
         snn_model = snn.TemporalContainer(
             snn.SpatialContainer(
-                snn.Conv2d(2, 2, 3, stride = 2, padding = 2),
+                snn.Conv2d(in_channels = 2, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 16, 16]
                 snn.LIF(tau_m = tau),
-                snn.Conv2d(2, 2, 3, stride = 2, padding = 2),
+                snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 8, 8]
                 snn.LIF(tau_m = tau),
                 snn.Flatten(),
-                snn.Linear(2048, 10),
+                snn.Linear(4096, 10),
                 snn.LIF(tau_m = tau)
             )
         ),
@@ -85,7 +85,7 @@ def main():
         train = True,
         transform = torchvision.transforms.ToTensor(),
         download = True,
-        time_steps = 128,
+        time_steps = time_steps,
         width = 32,
         height = 32,
         polarity = True
@@ -95,19 +95,11 @@ def main():
         train = False,
         transform = torchvision.transforms.ToTensor(),
         download = True,
-        time_steps = 128,
+        time_steps = time_steps,
         width = 32,
         height = 32,
         polarity = True
     )
-
-    print(len(train_dataset))
-    print(len(test_dataset))
-    demo_data, demo_label = train_dataset[0]
-    print(demo_data)
-    print(demo_label)
-    
-    return
 
     train_data_loader = DataLoader(
         dataset = train_dataset,
