@@ -327,15 +327,14 @@ class CIFAR10DVS(AEDAT):
 
     def unzip(self) -> None:
         zip_file_list = os.listdir(self.raw_folder)
+        if not os.path.isdir(self.extracted_folder):
+            os.makedirs(self.extracted_folder, exist_ok = True)
         extracted_folder_list = os.listdir(self.extracted_folder)
         if len(zip_file_list) == len(extracted_folder_list):
             print("[blue]Files are already extracted.[/blue]")
             return
         error_occured = False
         for filename in zip_file_list:
-            label = self.label(filename.split(".")[0])
-            if not os.path.isdir(self.extracted_folder):
-                os.makedirs(self.extracted_folder, exist_ok = True)
             try:
                 extract_archive(os.path.join(self.raw_folder, filename), self.extracted_folder)
                 print("[green]Sussessfully extracted file %s.[/green]" % (filename,))
