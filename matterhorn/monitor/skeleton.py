@@ -36,7 +36,7 @@ class Monitor(nn.Module):
 
     def record(self, key: str, value: torch.Tensor) -> None:
         """
-        截取数据。
+        通过各个模块主动向监视器中记录数据。
         @params:
             t: int 当前时间步
             key: str 当前数据的标签
@@ -44,34 +44,37 @@ class Monitor(nn.Module):
         """
         if key not in self.records:
             self.records[key] = []
-        self.records[key].append(value.detach())
+        self.records[key].append(value.detach().cpu())
 
 
     def export(self, key: str) -> torch.Tensor:
         """
-        导出数据
+        输入对应的key，导出所需要的数据。
         @params:
             key: str 要导出哪一组数据
         @return:
-            records: torch.Tensor n+1维张量，第一维是时间，其余维与输入的张量相同
+            x: torch.Tensor 时间维度，t轴
+            y: torch.Tensor n+1维张量，第一维是时间，其余维与输入的张量相同
         """
         if key not in self.records:
             return None
-        return torch.stack(self.records[key])
+        x = torch.arange(0, len(self.records[key]))
+        y = torch.stack(self.records[key])
+        return x, y
 
 
-    def show(self, key: Iterable[str] = None) -> None:
+    def show(self, keys: Iterable[str] = None) -> None:
         """
         展示图像。
         @params:
-            key: str 可选，要展示哪些数据，None为全部展示
+            keys: str 可选，要展示哪些数据，None为全部展示
         """
         pass
 
 
     def forward(self, value: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数，记录后返回原值。
+        前向传播函数，可以放在两个module之间记录中间值，记录后返回原值。
         @params:
             value: torch.Tensor 当前数据
         @return:
