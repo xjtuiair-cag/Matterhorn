@@ -1,1 +1,1 @@
-from .aedat import CIFAR10DVS
+from .aedat import CIFAR10DVS, DVS128Gesture
