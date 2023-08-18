@@ -1,6 +1,9 @@
 import math
+from typing import Optional, Union
 import torch
 import torch.nn as nn
+from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
+from torch.types import _size
 from matterhorn.snn import surrogate
 torch.autograd.set_detect_anomaly(True)
 
@@ -183,7 +186,7 @@ class SRM0Linear(nn.Module):
         """
         前向传播函数
         @params:
-            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
+            o: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
         @return:
             o: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
@@ -203,48 +206,253 @@ class SRM0Linear(nn.Module):
 
 
 class MaxPool1d(nn.MaxPool1d):
+    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
+        """
+        一维最大池化。
+        @params:
+            kernel_size: _size_any_t 池化核大小
+            stride: _size_any_t | None 池化步长
+            padding: _size_any_t 边界填充的长度
+            dilation: _size_any_t 输入侧的池化步长
+            return_indices: bool 是否返回带索引的内容
+            ceil_mode: bool 是否向上取整
+        """
+        super().__init__(
+            kernel_size = kernel_size,
+            stride = stride,
+            padding = padding,
+            dilation = dilation,
+            return_indices = return_indices,
+            ceil_mode = ceil_mode
+        )
+
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数
+        @params:
+            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
+        @return:
+            y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
+        """
         y = super().forward(x)
         return val_to_spike.apply(y)
 
 
 class MaxPool2d(nn.MaxPool2d):
+    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
+        """
+        二维最大池化。
+        @params:
+            kernel_size: _size_any_t 池化核大小
+            stride: _size_any_t | None 池化步长
+            padding: _size_any_t 边界填充的长度
+            dilation: _size_any_t 输入侧的池化步长
+            return_indices: bool 是否返回带索引的内容
+            ceil_mode: bool 是否向上取整
+        """
+        super().__init__(
+            kernel_size = kernel_size,
+            stride = stride,
+            padding = padding,
+            dilation = dilation,
+            return_indices = return_indices,
+            ceil_mode = ceil_mode
+        )
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数
+        @params:
+            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
+        @return:
+            y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
+        """
         y = super().forward(x)
         return val_to_spike.apply(y)
 
 
 class MaxPool3d(nn.MaxPool3d):
+    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
+        """
+        三维最大池化。
+        @params:
+            kernel_size: _size_any_t 池化核大小
+            stride: _size_any_t | None 池化步长
+            padding: _size_any_t 边界填充的长度
+            dilation: _size_any_t 输入侧的池化步长
+            return_indices: bool 是否返回带索引的内容
+            ceil_mode: bool 是否向上取整
+        """
+        super().__init__(
+            kernel_size = kernel_size,
+            stride = stride,
+            padding = padding,
+            dilation = dilation,
+            return_indices = return_indices,
+            ceil_mode = ceil_mode
+        )
+
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数
+        @params:
+            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
+        @return:
+            y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
+        """
         y = super().forward(x)
         return val_to_spike.apply(y)
 
 
 class AvgPool1d(nn.AvgPool1d):
+    def __init__(self, kernel_size: _size_1_t, stride: _size_1_t = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True) -> None:
+        """
+        一维平均池化。
+        @params:
+            kernel_size: _size_1_t 池化核大小
+            stride: _size_1_t 池化核步长
+            padding: _size_1_t 边界填充的长度
+            ceil_mode: bool 是否向上取整
+            count_include_pad: bool 是否连带边界一起计算
+        """
+        super().__init__(
+            kernel_size = kernel_size,
+            stride = stride,
+            padding = padding,
+            ceil_mode = ceil_mode,
+            count_include_pad = count_include_pad
+        )
+
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数
+        @params:
+            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
+        @return:
+            y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
+        """
         y = super().forward(x)
         return val_to_spike.apply(y)
 
 
 class AvgPool2d(nn.AvgPool2d):
+    def __init__(self, kernel_size: _size_2_t, stride: Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None) -> None:
+        """
+        二维平均池化。
+        @params:
+            kernel_size: _size_2_t 池化核大小
+            stride: _size_2_t | None 池化核步长
+            padding: _size_2_t 边界填充的长度
+            ceil_mode: bool 是否向上取整
+            count_include_pad: bool 是否连带边界一起计算
+            divisor_override: int | None 是否用某个数取代总和作为除数
+        """
+        super().__init__(
+            kernel_size = kernel_size,
+            stride = stride,
+            padding = padding,
+            ceil_mode = ceil_mode,
+            count_include_pad = count_include_pad,
+            divisor_override = divisor_override
+        )
+
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数
+        @params:
+            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
+        @return:
+            y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
+        """
         y = super().forward(x)
         return val_to_spike.apply(y)
 
 
 class AvgPool3d(nn.AvgPool3d):
+    def __init__(self, kernel_size: _size_3_t, stride: Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None) -> None:
+        """
+        三维平均池化。
+        @params:
+            kernel_size: _size_3_t 池化核大小
+            stride: _size_3_t | None 池化核步长
+            padding: _size_3_t 边界填充的长度
+            ceil_mode: bool 是否向上取整
+            count_include_pad: bool 是否连带边界一起计算
+            divisor_override: int | None 是否用某个数取代总和作为除数
+        """
+        super().__init__(
+            kernel_size = kernel_size,
+            stride = stride,
+            padding = padding,
+            ceil_mode = ceil_mode,
+            count_include_pad = count_include_pad,
+            divisor_override = divisor_override
+        )
+
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数
+        @params:
+            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
+        @return:
+            y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
+        """
         y = super().forward(x)
         return val_to_spike.apply(y)
 
 
 class Flatten(nn.Flatten):
+    def __init__(self, start_dim: int = 1, end_dim: int = -1) -> None:
+        """
+        展平层。
+        @params:
+            start_dim: int 起始维度
+            end_dim: int 终止维度
+        """
+        super().__init__(
+            start_dim = start_dim,
+            end_dim = end_dim
+        )
+
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数
+        @params:
+            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
+        @return:
+            y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
+        """
         y = super().forward(x)
         return val_to_spike.apply(y)
 
 
 class Unflatten(nn.Unflatten):
+    def __init__(self, dim: Union[int, str], unflattened_size: _size) -> None:
+        """
+        反展开层。
+        @params:
+            dim: int | str 在哪个维度反展开
+            unflattened_size: 这个维度上的张量要反展开成什么形状
+        """
+        super().__init__(
+            dim = dim,
+            unflattened_size = unflattened_size
+        )
+
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数
+        @params:
+            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
+        @return:
+            y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
+        """
         y = super().forward(x)
         return val_to_spike.apply(y)

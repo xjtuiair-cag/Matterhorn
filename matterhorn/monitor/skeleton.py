@@ -1,83 +1,81 @@
 import torch
 import torch.nn as nn
-from matplotlib import pyplot as plt
-from typing import Iterable, Callable, Optional, Union
+from typing import Iterable
 
 
 class Monitor(nn.Module):
-    def __init__(self, group: nn.ModuleList, variables: Optional[Iterable] = None, record_at: Optional[Union[Iterable, Callable]] = None) -> None:
+    """
+    监视器有两种记录方式：
+    （1）作为模块插入网络中，记录所经过的脉冲或电位；
+    （2）加入各个神经元中，被动地接受信息（张量）并记录。
+    记录使用record函数，展示图片使用show函数，导出数据使用export函数。
+    """
+
+
+    def __init__(self, name: str, group: nn.ModuleList, key: str = "s") -> None:
         """
-        监视器的框架
+        监视器的框架。
         @params:
+            name: str 该监视器的名字
             group: nn.ModuleList 该监视器属于哪一个组别的
-            module: nn.Module 该监视器所监视的模块
-            variables: List | None 需要监视哪些变量，为None就是全部监视。可选"i"（输入），"o"（输出），"x"（突触后电位）或者"u"（胞体电位）
-            record_at: List | Callable | None: 什么时候应该截取。为List时，当匹配到对应时间时截取数据；为Callable时，输入current_time_step和x，当返回True时截取数据；为None时，截取每一时刻的数据。
         """
         super().__init__()
+        self.name = name
         self.group = group
         self.group.append(self)
-        self.variables = variables
-        self.record_time_steps = record_at
+        self.key = key
+        self.reset
 
 
     def reset(self) -> None:
         """
         重置模型。
         """
+        self.records = {}
 
 
-    def record_at(self, time_steps: Optional[Union[Iterable, Callable]]) -> None:
+    def record(self, key: str, value: torch.Tensor) -> None:
         """
-        设置截取数据的时间。
-        @params:
-            time_steps: List | Callable | None: 什么时候应该截取。为List时，当匹配到对应时间时截取数据；为Callable时，输入current_time_step和x，当返回True时截取数据；为None时，截取每一时刻的数据。
-        """
-        self.record_time_steps = time_steps
-
-
-    def if_record(self, t: int, key: str) -> bool:
-        """
-        判断当前时间步是否需要记录
+        截取数据。
         @params:
             t: int 当前时间步
             key: str 当前数据的标签
             value: torch.Tensor 当前数据
+        """
+        if key not in self.records:
+            self.records[key] = []
+        self.records[key].append(value.detach())
+
+
+    def export(self, key: str) -> torch.Tensor:
+        """
+        导出数据
+        @params:
+            key: str 要导出哪一组数据
         @return:
-            if_record: bool 是否需要记录
+            records: torch.Tensor n+1维张量，第一维是时间，其余维与输入的张量相同
         """
-    
-    
-    def record(self, t: int, key: str, value: torch.Tensor) -> None:
+        if key not in self.records:
+            return None
+        return torch.stack(self.records[key])
+
+
+    def show(self, key: Iterable[str] = None) -> None:
         """
-        截取数据
+        展示图像。
         @params:
-            t: int 当前时间步
-            key: str 当前数据的标签
-            value: torch.Tensor 当前数据
+            key: str 可选，要展示哪些数据，None为全部展示
         """
         pass
 
 
-    def show(self) -> None:
+    def forward(self, value: torch.Tensor) -> torch.Tensor:
         """
-        展示图像
-        """
-        pass
-
-
-    def forward(self, t: int, key: str, value: torch.Tensor) -> torch.Tensor:
-        """
-        前向传播函数，记录后返回原值
+        前向传播函数，记录后返回原值。
         @params:
-            t: int 当前时间步
-            key: str 当前数据的标签
             value: torch.Tensor 当前数据
         @return:
             value: torch.Tensor 当前数据
         """
-        if not self.if_record(t, key):
-            return value
-        self.record(t, key, value.detach())
+        self.record(self.key, value)
         return value
-        

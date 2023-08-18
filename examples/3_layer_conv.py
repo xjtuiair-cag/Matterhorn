@@ -61,7 +61,9 @@ def main():
         encoder = snn.DirectEncoder(),
         snn_model = snn.TemporalContainer(
             snn.SpatialContainer(
-                snn.Conv2d(in_channels = 2, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 16, 16]
+                snn.Conv2d(in_channels = 2, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 32, 32]
+                snn.LIF(tau_m = tau),
+                snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 16, 16]
                 snn.LIF(tau_m = tau),
                 snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 8, 8]
                 snn.LIF(tau_m = tau),
@@ -86,9 +88,10 @@ def main():
         transform = torchvision.transforms.ToTensor(),
         download = True,
         time_steps = time_steps,
-        width = 32,
-        height = 32,
-        polarity = True
+        width = 64,
+        height = 64,
+        polarity = True,
+        clipped = 250000
     )
     test_dataset = matterhorn.data.CIFAR10DVS(
         root = "./examples/data",
@@ -96,9 +99,10 @@ def main():
         transform = torchvision.transforms.ToTensor(),
         download = True,
         time_steps = time_steps,
-        width = 32,
-        height = 32,
-        polarity = True
+        width = 64,
+        height = 64,
+        polarity = True,
+        clipped = 250000
     )
 
     train_data_loader = DataLoader(
