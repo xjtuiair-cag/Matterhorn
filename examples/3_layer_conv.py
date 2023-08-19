@@ -61,14 +61,14 @@ def main():
         encoder = snn.DirectEncoder(),
         snn_model = snn.TemporalContainer(
             snn.SpatialContainer(
-                snn.Conv2d(in_channels = 2, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 32, 32]
+                snn.Conv2d(in_channels = 2, out_channels = 8, kernel_size = 3, stride = 2, padding = 1), # [T, 8, 17, 17]
                 snn.LIF(tau_m = tau),
-                snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 16, 16]
+                snn.Conv2d(in_channels = 8, out_channels = 16, kernel_size = 3, stride = 2, padding = 1), # [T, 16, 9, 9]
                 snn.LIF(tau_m = tau),
-                snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 8, 8]
+                snn.Conv2d(in_channels = 16, out_channels = 32, kernel_size = 3, stride = 2, padding = 1), # [T, 32, 5, 5]
                 snn.LIF(tau_m = tau),
                 snn.Flatten(),
-                snn.Linear(4096, 10),
+                snn.Linear(800, 10),
                 snn.LIF(tau_m = tau)
             )
         ),
@@ -82,27 +82,19 @@ def main():
 
     print(Panel(Text("Dataset", justify = "center")))
 
-    train_dataset = matterhorn.data.CIFAR10DVS(
+    train_dataset = matterhorn.data.NMNIST(
         root = "./examples/data",
         train = True,
         transform = torchvision.transforms.ToTensor(),
         download = True,
-        time_steps = time_steps,
-        width = 64,
-        height = 64,
-        polarity = True,
-        clipped = 250000
+        time_steps = time_steps
     )
-    test_dataset = matterhorn.data.CIFAR10DVS(
+    test_dataset = matterhorn.data.NMNIST(
         root = "./examples/data",
         train = False,
         transform = torchvision.transforms.ToTensor(),
         download = True,
-        time_steps = time_steps,
-        width = 64,
-        height = 64,
-        polarity = True,
-        clipped = 250000
+        time_steps = time_steps
     )
 
     train_data_loader = DataLoader(
