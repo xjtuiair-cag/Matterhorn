@@ -20,8 +20,8 @@ class NMNIST(Dataset):
     original_size = (0, 2, 34, 34)
     mirrors = ["https://data.mendeley.com/public-files/datasets/468j46mzdv/files/"]
     resources = [
-        ("39c25547-014b-4137-a934-9d29fa53c7a0/file_downloaded", "Train.zip"),
-        ("05a4d654-7e03-4c15-bdfa-9bb2bcbea494/file_downloaded", "Test.zip")
+        ("39c25547-014b-4137-a934-9d29fa53c7a0/file_downloaded", "Train.zip", "20959b8e626244a1b502305a9e6e2031"),
+        ("05a4d654-7e03-4c15-bdfa-9bb2bcbea494/file_downloaded", "Test.zip", "69ca8762b2fe404d9b9bad1103e97832")
     ]
     labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     
@@ -100,7 +100,7 @@ class NMNIST(Dataset):
             if_exist: bool 是否存在
         """
         return all(
-            check_integrity(os.path.join(self.raw_folder, filename)) for fileurl, filename in self.resources
+            check_integrity(os.path.join(self.raw_folder, filename)) for fileurl, filename, md5 in self.resources
         )
         
     
@@ -111,7 +111,7 @@ class NMNIST(Dataset):
         if self.check_exists():
             return
         os.makedirs(self.raw_folder, exist_ok = True)
-        for fileurl, filename in self.resources:
+        for fileurl, filename, md5 in self.resources:
             if os.path.isfile(os.path.join(self.raw_folder, filename)):
                 print("[blue]File %s has already existed.[/blue]" % (os.path.join(self.raw_folder, filename),))
                 continue
@@ -120,7 +120,7 @@ class NMNIST(Dataset):
                 url = mirror + fileurl
                 try:
                     print("[blue]Downloading %s from %s.[/blue]" % (os.path.join(self.raw_folder, filename), url))
-                    download_url(url, root = self.raw_folder, filename = filename)
+                    download_url(url, root = self.raw_folder, filename = filename, md5 = md5)
                     is_downloaded = True
                     break
                 except URLError as error:
