@@ -24,7 +24,7 @@ class HDF5(Dataset):
 
     def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 128) -> None:
         """
-        原始数据后缀名为.aedat的数据集
+        原始数据后缀名为.hdf5的数据集
         @params:
             root: str 数据集的存储位置
             train: bool 是否为训练集
@@ -178,6 +178,10 @@ class HDF5(Dataset):
         data = np.load(os.path.join(self.processed_folder, "%d.npy" % (data_idx,)))
         data = self.data_2_tensor(data)
         target = self.data_target[index][1]
+        if self.transform is not None:
+            data = self.transform(data)
+        if self.target_transform is not None:
+            target = self.target_transform(data)
         return data, target
 
 
@@ -194,7 +198,7 @@ class SpikingHeidelbergDigits(HDF5):
     
     def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 700, clipped: Optional[Union[Tuple, float]] = None) -> None:
         """
-        NMNIST数据集，将MNIST数据集动态变换后，转为事件的形式。
+        Spiking Heidelberg Digits数据集，记录下英文和德语的0-9（总共20类），并转换成长度为700的脉冲。
         @params:
             root: str 数据集的存储位置
             train: bool 是否为训练集

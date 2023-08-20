@@ -231,6 +231,10 @@ class AEDAT(Dataset):
         data = np.load(os.path.join(self.processed_folder, "%d.npy" % (data_idx,)))
         data = self.tpyx_2_tensor(data)
         target = self.data_target[index][1]
+        if self.transform is not None:
+            data = self.transform(data)
+        if self.target_transform is not None:
+            target = self.target_transform(data)
         return data, target
 
 
