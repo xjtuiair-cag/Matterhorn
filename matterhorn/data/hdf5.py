@@ -1,14 +1,13 @@
-from zipfile import BadZipFile
 import numpy as np
 import torch
-import torch.nn as nn
 import os
 import random
 import h5py
-from torchvision.datasets.utils import  check_integrity, download_url, extract_archive, verify_str_arg
-from torch.utils.data import Dataset, DataLoader
+from torchvision.datasets.utils import  check_integrity, download_url, extract_archive
+from torch.utils.data import Dataset
 from typing import Any, List, Tuple, Union, Callable, Optional
 from urllib.error import URLError
+from zipfile import BadZipFile
 from rich import print
 from rich.progress import track
 
@@ -124,11 +123,11 @@ class HDF5(Dataset):
         """
         将t,p,y,x数组转为最后的PyTorch张量。
         @params:
-            data: np.ndarray 数据，形状为[n, 4]
+            data: np.ndarray 数据，形状为[n, 2]
         @return:
-            data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
+            data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, L]
         """
-        return torch.tensor(data)
+        return torch.tensor(data, dtype = torch.float)
     
     
     def label(self, key: str) -> int:
@@ -263,6 +262,9 @@ class SpikingHeidelbergDigits(HDF5):
 
 
     def unzip(self) -> None:
+        """
+        解压下载下来的压缩包。
+        """
         zip_file_list = os.listdir(self.raw_folder)
         if not os.path.isdir(self.extracted_folder):
             os.makedirs(self.extracted_folder, exist_ok = True)
@@ -319,11 +321,11 @@ class SpikingHeidelbergDigits(HDF5):
         """
         将t,p,y,x数组转为最后的PyTorch张量。
         @params:
-            data: np.ndarray 数据，形状为[n, 4]
+            data: np.ndarray 数据，形状为[n, 2]
         @return:
-            data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
+            data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, L]
         """
-        res = torch.zeros(self.t_size, self.x_size)
+        res = torch.zeros(self.t_size, self.x_size, dtype = torch.float)
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]

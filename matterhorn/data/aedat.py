@@ -1,4 +1,3 @@
-from zipfile import BadZipFile
 import numpy as np
 import torch
 import torch.nn as nn
@@ -6,10 +5,11 @@ import os
 import re
 import shutil
 import random
-from torchvision.datasets.utils import  check_integrity, download_url, extract_archive, verify_str_arg
-from torch.utils.data import Dataset, DataLoader
+from torchvision.datasets.utils import  check_integrity, download_url, extract_archive
+from torch.utils.data import Dataset
 from typing import Any, List, Tuple, Union, Callable, Optional
 from urllib.error import URLError
+from zipfile import BadZipFile
 from rich import print
 from rich.progress import track
 
@@ -181,7 +181,7 @@ class AEDAT(Dataset):
         @return:
             data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
         """
-        return torch.tensor(data)
+        return torch.tensor(data, dtype = torch.float)
     
     
     def label(self, key: str) -> int:
@@ -333,6 +333,9 @@ class CIFAR10DVS(AEDAT):
     
 
     def unzip(self) -> None:
+        """
+        解压下载下来的压缩包。
+        """
         zip_file_list = os.listdir(self.raw_folder)
         if not os.path.isdir(self.extracted_folder):
             os.makedirs(self.extracted_folder, exist_ok = True)
@@ -401,7 +404,7 @@ class CIFAR10DVS(AEDAT):
         @return:
             data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
         """
-        res = torch.zeros(self.t_size, self.p_size, self.y_size, self.x_size)
+        res = torch.zeros(self.t_size, self.p_size, self.y_size, self.x_size, dtype = torch.float)
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
@@ -507,6 +510,9 @@ class DVS128Gesture(AEDAT):
 
 
     def unzip(self) -> None:
+        """
+        解压下载下来的压缩包。
+        """
         if os.path.isdir(self.extracted_folder):
             print("[blue]Files are already extracted.[/blue]")
             return
@@ -586,7 +592,7 @@ class DVS128Gesture(AEDAT):
         @return:
             data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
         """
-        res = torch.zeros(self.t_size, self.p_size, self.y_size, self.x_size)
+        res = torch.zeros(self.t_size, self.p_size, self.y_size, self.x_size, dtype = torch.float)
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]

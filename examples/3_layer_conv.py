@@ -85,14 +85,12 @@ def main():
     train_dataset = matterhorn.data.NMNIST(
         root = "./examples/data",
         train = True,
-        transform = torchvision.transforms.ToTensor(),
         download = True,
         time_steps = time_steps
     )
     test_dataset = matterhorn.data.NMNIST(
         root = "./examples/data",
         train = False,
-        transform = torchvision.transforms.ToTensor(),
         download = True,
         time_steps = time_steps
     )
