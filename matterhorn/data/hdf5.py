@@ -3,7 +3,7 @@ import torch
 import os
 import random
 import h5py
-from torchvision.datasets.utils import  check_integrity, download_url, extract_archive
+from torchvision.datasets.utils import check_integrity, download_url, extract_archive
 from torch.utils.data import Dataset
 from typing import Any, List, Tuple, Union, Callable, Optional
 from urllib.error import URLError
