@@ -3,9 +3,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import os
-import re
-import shutil
 import random
+import h5py
 from torchvision.datasets.utils import  check_integrity, download_url, extract_archive, verify_str_arg
 from torch.utils.data import Dataset, DataLoader
 from typing import Any, List, Tuple, Union, Callable, Optional
@@ -14,45 +13,36 @@ from rich import print
 from rich.progress import track
 
 
-class NMNIST(Dataset):
+class HDF5(Dataset):
     training_file = "training.pt"
     test_file = "test.pt"
-    original_size = (0, 2, 34, 34)
-    mirrors = ["https://data.mendeley.com/public-files/datasets/468j46mzdv/files/"]
-    resources = [
-        ("39c25547-014b-4137-a934-9d29fa53c7a0/file_downloaded", "Train.zip", "20959b8e626244a1b502305a9e6e2031"),
-        ("05a4d654-7e03-4c15-bdfa-9bb2bcbea494/file_downloaded", "Test.zip", "69ca8762b2fe404d9b9bad1103e97832")
-    ]
-    labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-    
-    
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, time_steps: int = 128, width: int = 34, height: int = 34, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
+    original_size = (0, 2, 128, 128)
+    mirrors = []
+    resources = []
+    labels = []
+
+
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 128) -> None:
         """
-        NMNIST数据集，将MNIST数据集动态变换后，转为事件的形式。
+        原始数据后缀名为.aedat的数据集
         @params:
             root: str 数据集的存储位置
             train: bool 是否为训练集
             transform: Callable | None 数据如何变换
             target_transform: Callable | None 标签如何变换
             download: bool 如果数据集不存在，是否应该下载
+            precision: int 最终数据集的时间精度
             time_steps: int 最终的数据集总共含有多少个时间步
-            width: int 最终数据集的宽度
-            height: int 最终数据集的高度
-            polarity: bool 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            clipped: bool 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+            length: int 最终数据集的空间精度
         """
         super().__init__()
         self.root = root
         self.transform = transform
         self.target_transform = target_transform
         self.train = train
+        self.precision = precision
         self.t_size = time_steps
-        self.p_size = 2 if polarity else 1
-        self.x_size = width
-        self.y_size = height
-        if isinstance(clipped, Tuple):
-            assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
-        self.clipped = clipped
+        self.x_size = length
         if download:
             self.download()
         if not self.check_exists():
@@ -91,6 +81,144 @@ class NMNIST(Dataset):
             str 数据集存储位置
         """
         return os.path.join(self.root, self.__class__.__name__, "processed")
+    
+    
+    def check_exists(self) -> bool:
+        """
+        检查是否存在。
+        @return:
+            if_exist: bool 是否存在
+        """
+        return False
+        
+    
+    def download(self) -> None:
+        """
+        下载数据集。
+        """
+        return
+
+
+    def load_data(self) -> np.ndarray:
+        """
+        加载数据集。
+        @return:
+            data_label: np.ndarray 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
+        """
+        return None
+
+
+    def filename_2_data(self, filename: str) -> h5py.File:
+        """
+        输入文件名，读取文件内容。
+        @params:
+            filename: str 文件名
+        @return:
+            data: np.ndarray 文件内容（数据）
+        """
+        data = h5py.File(filename, "r")
+        return data
+    
+    
+    def data_2_tensor(self, data: np.ndarray) -> torch.Tensor:
+        """
+        将t,p,y,x数组转为最后的PyTorch张量。
+        @params:
+            data: np.ndarray 数据，形状为[n, 4]
+        @return:
+            data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
+        """
+        return torch.tensor(data)
+    
+    
+    def label(self, key: str) -> int:
+        """
+        返回该文件对应的标签。
+        @params:
+            key: str 关键词
+        @return:
+            label: int 文件的标签
+        """
+        if key in self.labels:
+            return self.labels.index(key)
+        return -1
+    
+    
+    def is_train(self, label: int, index: int = 0) -> bool:
+        """
+        从路径、文件名和索引判断是否是训练集。
+        @params:
+            label: int 标签
+            index: int 文件的索引
+        @return:
+            is_train: bool 是否为训练集
+        """
+        return True
+    
+    
+    def __len__(self) -> int:
+        """
+        获取数据集长度。
+        @return:
+            len: int 数据集长度
+        """
+        return len(self.data_target)
+    
+    
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        获取数据集。
+        @params:
+            index: int 索引
+        @return:
+            x: torch.Tensor 数据
+            y: torch.Tensor 标签
+        """
+        data_idx = self.data_target[index][0]
+        data = np.load(os.path.join(self.processed_folder, "%d.npy" % (data_idx,)))
+        data = self.data_2_tensor(data)
+        target = self.data_target[index][1]
+        return data, target
+
+
+
+class SpikingHeidelbergDigits(HDF5):
+    original_size = (0, 700)
+    mirrors = ["https://zenkelab.org/datasets/"]
+    resources = [
+        ('shd_train.h5.zip', 'shd_train.h5.zip', 'f3252aeb598ac776c1b526422d90eecb'),
+        ('shd_test.h5.zip', 'shd_test.h5.zip', '1503a5064faa34311c398fb0a1ed0a6f')
+    ]
+    labels = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun"]
+    
+    
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 700, clipped: Optional[Union[Tuple, float]] = None) -> None:
+        """
+        NMNIST数据集，将MNIST数据集动态变换后，转为事件的形式。
+        @params:
+            root: str 数据集的存储位置
+            train: bool 是否为训练集
+            transform: Callable | None 数据如何变换
+            target_transform: Callable | None 标签如何变换
+            download: bool 如果数据集不存在，是否应该下载
+            precision: int 最终数据集的时间精度
+            time_steps: int 最终的数据集总共含有多少个时间步
+            length: int 最终数据集的空间精度
+            clipped: bool 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+        """
+        super().__init__(
+            root = root,
+            train = train,
+            transform = transform,
+            target_transform = target_transform,
+            download = download,
+            precision = precision,
+            time_steps = time_steps,
+            length = length
+        )
+        if isinstance(clipped, Tuple):
+            assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
+        self.clipped = clipped
     
     
     def check_exists(self) -> bool:
@@ -150,36 +278,6 @@ class NMNIST(Dataset):
             raise RuntimeError("There are error(s) in unzipping files.")
 
 
-    def filename_2_data(self, filename: str) -> np.ndarray:
-        """
-        输入文件名，读取文件内容。
-        @params:
-            filename: str 文件名
-        @return:
-            data: np.ndarray 文件内容（数据）
-        """
-        data_str = ""
-        with open(filename, 'rb') as f:
-            data_str = f.read()
-        data = np.fromstring(data_str, dtype = ">u1")
-        return data
-
-
-    def data_2_tpyx(self, data: np.ndarray) -> np.ndarray:
-        """
-        将数据分割为t,p,y,x数组。
-        @params:
-            data: np.ndarray 数据，形状为[5n]
-        @return:
-            data_tpyx: np.ndarray 分为t,p,y,x的数据，形状为[n, 4]
-        """
-        res = np.zeros((data.shape[0] // 5, 4), dtype = np.int)
-        res[:, 0] = ((data[2::5] & 0x7f) << 16) + (data[3::5] << 8) + data[4::5]
-        res[:, 1] = data[2::5] >> 7
-        res[:, 2] = data[1::5]
-        res[:, 3] = data[::5]
-        return res
-
     def load_data(self) -> np.ndarray:
         """
         加载数据集。
@@ -195,23 +293,25 @@ class NMNIST(Dataset):
         file_list = []
         file_idx = 0
         for is_train in range(2):
-            is_train_str = "Train" if is_train else "Test"
-            for label in track(range(len(self.labels)), description = "Processing %sing set" % (is_train_str.lower(),)):
-                label_str = self.labels[label]
-                raw_file_dir = os.path.join(self.extracted_folder, is_train_str, label_str)
-                raw_file_list = os.listdir(raw_file_dir)
-                for raw_filename in raw_file_list:
-                    raw_data = self.filename_2_data(os.path.join(raw_file_dir, raw_filename))
-                    event_data = self.data_2_tpyx(raw_data)
-                    np.save(os.path.join(self.processed_folder, "%d.npy" % (file_idx,)), event_data)
-                    file_list.append([file_idx, label, is_train])
-                    file_idx += 1
+            is_train_str = "train" if is_train else "test"
+            raw_data = self.filename_2_data(os.path.join(self.extracted_folder, "shd_%s.h5" % (is_train_str,)))
+            label_list = raw_data["labels"][:]
+            for idx in track(range(len(label_list)), description = "Processing %sing set" % (is_train_str,)):
+                t = np.floor(raw_data["spikes"]["times"][idx] * self.precision).astype(np.int)
+                x = raw_data["spikes"]["units"][idx]
+                event_data = np.zeros((len(x), 2), dtype = np.int)
+                event_data[:, 0] = t
+                event_data[:, 1] = x
+                label = label_list[idx]
+                np.save(os.path.join(self.processed_folder, "%d.npy" % (file_idx,)), event_data)
+                file_list.append([file_idx, label, is_train])
+                file_idx += 1
         file_list = np.array(file_list, dtype = np.int)
         np.savetxt(list_filename, file_list, fmt = "%d", delimiter = ",")
         return file_list
 
 
-    def tpyx_2_tensor(self, data: np.ndarray) -> torch.Tensor:
+    def data_2_tensor(self, data: np.ndarray) -> torch.Tensor:
         """
         将t,p,y,x数组转为最后的PyTorch张量。
         @params:
@@ -219,54 +319,14 @@ class NMNIST(Dataset):
         @return:
             data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
         """
-        res = torch.zeros(self.t_size, self.p_size, self.y_size, self.x_size)
+        res = torch.zeros(self.t_size, self.x_size)
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
             elif isinstance(self.clipped, Tuple):
                 data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
         data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, 1))
-        data[:, 1] = np.floor(data[:, 1] * self.p_size / self.original_size[1])
-        data[:, 2] = np.floor(data[:, 2] * self.y_size / self.original_size[2])
-        data[:, 3] = np.floor(data[:, 3] * self.x_size / self.original_size[3])
+        data[:, 1] = np.floor(data[:, 1] * self.x_size / self.original_size[1])
         data = np.unique(data, axis = 0)
         res[data.T] = 1
         return res
-
-
-    def label(self, key: str) -> int:
-        """
-        返回该文件对应的标签。
-        @params:
-            key: str 关键词
-        @return:
-            label: int 文件的标签
-        """
-        if key in self.labels:
-            return self.labels.index(key)
-        return -1
-
-
-    def __len__(self) -> int:
-        """
-        获取数据集长度。
-        @return:
-            len: int 数据集长度
-        """
-        return len(self.data_target)
-    
-    
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        获取数据集。
-        @params:
-            index: int 索引
-        @return:
-            x: torch.Tensor 数据
-            y: torch.Tensor 标签
-        """
-        data_idx = self.data_target[index][0]
-        data = np.load(os.path.join(self.processed_folder, "%d.npy" % (data_idx,)))
-        data = self.tpyx_2_tensor(data)
-        target = self.data_target[index][1]
-        return data, target
