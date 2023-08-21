@@ -40,25 +40,25 @@ Don't forget to add `sudo` if you are not the root user.
 
 ### Neurons in SNN
 
-As we're all known, the image below describes what an ANN be like.
+As we're all known, the image below describes what an ANN looks like.
 
 ![ANN Structure](./assets/readme_1.png)
 
-**Operation 1** is **synapse function**, which uses weights and bias to calculate those values from previous layer to current layer. Commonly used synapse functions are including full connection layer `nn.Linear`, convolution layer `nn.Conv2D`, etc.
+**Operation 1** is **synapse function**, which uses weights and bias to calculate those values from the previous layer to the current layer. Commonly used synapse functions are including full connection layer `nn.Linear`, convolution layer `nn.Conv2D`, etc.
 
-We use an equation to describe synapse function:
+We use an equation to describe the synapse function:
 
 $$Y^{l}=synapse(X^{l-1})$$
 
-Where $l$ here means the number of current layer.
+Where $l$ here means the number of current layers.
 
-**Operation 2** is **activation function**, which filters information from synapses and send the filtered information to next layer. Commonly used activation functions are including `nn.ReLU`, `nn.Sigmoid`, etc.
+**Operation 2** is **activation function**, which filters information from synapses and sends the filtered information to the next layer. Commonly used activation functions are including `nn.ReLU`, `nn.Sigmoid`, etc.
 
-We use an equation to describe activation function:
+We use an equation to describe the activation function:
 
 $$X^{l}=activation(Y^{l})$$
 
-This is what an ANN be like. Each of layers in ANN has 2 functions. We can build our ANN model in PyTorch by the code below:
+In conclusion, each of the layers in ANN has 2 functions. We can build our ANN model in PyTorch by the code below:
 
 ```python
 import torch.nn as nn
@@ -69,31 +69,31 @@ model = nn.Sequential(
 )
 ```
 
-This is an 1-layer MLP. It can take an image with the size of 28x28 as input and classify it into 10 classes. In this example, two equations of ANN can be represented as below:
+This is a 1-layer MLP. It can take an image with the size of 28x28 as input and classify it into 10 classes. In this example, two equations of ANN can be represented as below:
 
 $$Y^{l}=W^{l}X^{l-1}+\vec{b}$$
 
 $$X^{l}=ReLU(Y^{l})$$
 
-In SNN, the synapse equation is same as which in ANN. However, the functions in soma is no longer like what in ANN. In the soma of SNN, there exists a loop in time. The image below describes what a SNN be like.
+In SNN, the synapse equation is the same as which in ANN. However, the functions in soma are no longer like what is in ANN. In the soma of SNN, there exists a loop in time. The image below describes what an SNN looks like.
 
 ![SNN Structure](./assets/readme_2.png)
 
 **Operation 1**, the **synapse function**, calculates spikes from previous layer $O^{l-1}(t)$ thus generates the input potential $X^{l}(t)$.
 
-We use an equation to describe synapse function:
+We use an equation to describe the synapse function:
 
 $$X^{l}(t)=synapse(O^{l-1}(t))$$
 
-By **operation 2**, the input potential, with the history potential, is calculated based on 1-order differential equation, thus generate the soma potential $U^{l}(t)$. We name it **response function**.
+By **operation 2**, the input potential, with the history potential, is calculated based on a 1-order differential equation, thus generating the soma potential $U^{l}(t)$. We name it **response function**.
 
-We use an equation to describe response function:
+We use an equation to describe the response function:
 
 $$U^{l}(t)=response(H^{l}(t),X^{l}(t))$$
 
 Each spiking neuron model has its unique response differential equation.
 
-For example, in LIF neuron:
+For example, in a LIF neuron:
 
 $$\tau \frac{du}{dt}=-(u-u_{rest})+RI$$
 
@@ -103,11 +103,11 @@ $$U^{l}(t)=(1-\frac{1}{\tau})H^{l}(t)+\frac{1}{\tau}u_{rest}+X^{l}(t)$$
 
 **Operation 3** uses Heaviside step function and threshold potential $u_{th}$ to decide whether to generate spikes $O^{l}(t)$. We name it **firing function**.
 
-We use an equation to describe firing function:
+We use an equation to describe the firing function:
 
 $$O^{l}(t)=spiking(U^{l}(t))$$
 
-Generally, firing function is like this.
+Generally, the firing function is like this.
 
 $$O^{l}(t)=Heaviside(U^{l}(t)-u_{th})$$
 
