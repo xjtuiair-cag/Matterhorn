@@ -89,7 +89,7 @@ class AEDAT(EventDataset2d):
         @return:
             data_tpyx: np.ndarray 分为t,p,y,x的数据，形状为[n, 4]
         """
-        res = np.zeros((data.shape[0] // 2, 4), dtype = "uint32")
+        res = np.zeros((data.shape[0] // 2, 4), dtype = np.int)
         xyp = data[::2]
         t = data[1::2]
         res[:, 0] = t
@@ -136,7 +136,6 @@ class AEDAT(EventDataset2d):
         res[:, 0] = self.extract(data[:, 0], 0xFFFF, 16)
         res[:, 1] = self.extract(data[:, 0], 0xFFFF, 0)
         res[:, 2] = (data[:, 2] << 8) + (data[:, 3] << 1) + data[:, 1]
-        print(res)
         return res
 
 
@@ -148,11 +147,11 @@ class AEDAT(EventDataset2d):
         @return:
             decompressed_data: np.ndarray 已被解压的数据
         """
-        res = np.zeros((data.shape[0], 4), dtype = "uint32")
-        res[:, 0] = (data[:, 0] << 16) + data[:, 1]
+        res = np.zeros((data.shape[0], 4), dtype = np.int)
+        res[:, 0] = (data[:, 0].astype(np.int) << 16) + data[:, 1]
         res[:, 1] = self.extract(data[:, 2], 0x0001, 0)
         res[:, 2] = self.extract(data[:, 2], 0x007F, 8)
-        res[:, 2] = self.extract(data[:, 2], 0x007F, 1)
+        res[:, 3] = self.extract(data[:, 2], 0x007F, 1)
         return res
 
 
@@ -283,7 +282,7 @@ class CIFAR10DVS(AEDAT):
         """
         list_filename = os.path.join(self.processed_folder, "__main__.csv")
         if os.path.isfile(list_filename):
-            file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
+            file_list = np.loadtxt(list_filename, dtype = np.int, delimiter = ",")
             return file_list
         self.unzip()
         os.makedirs(self.processed_folder, exist_ok = True)
@@ -299,7 +298,7 @@ class CIFAR10DVS(AEDAT):
                 self.save_event_data(file_idx, event_data)
                 file_list.append([file_idx, label, 1 if self.is_train(label, file_idx % aedat_file_count) else 0])
                 file_idx += 1
-        file_list = np.array(file_list, dtype = "uint32")
+        file_list = np.array(file_list, dtype = np.int)
         np.savetxt(list_filename, file_list, fmt = "%d", delimiter = ",")
         return file_list
 
@@ -424,7 +423,7 @@ class DVS128Gesture(AEDAT):
         """
         list_filename = os.path.join(self.processed_folder, "__main__.csv")
         if os.path.isfile(list_filename):
-            file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
+            file_list = np.loadtxt(list_filename, dtype = np.int, delimiter = ",")
             return file_list
         self.unzip()
         aedat_file_dir = os.path.join(self.extracted_folder, "DvsGesture")
@@ -443,7 +442,7 @@ class DVS128Gesture(AEDAT):
             raw_data_list.append(raw_data[idx_list[len(idx_list) - 1] + 7:])
             raw_data = np.concatenate(raw_data_list, axis = 0)
             event_data = self.data_2_tpyx(raw_data)
-            class_info = np.loadtxt(os.path.join(aedat_file_dir, filename.replace(".aedat", "_labels.csv")), dtype = "uint32", delimiter = ",", skiprows = 1)
+            class_info = np.loadtxt(os.path.join(aedat_file_dir, filename.replace(".aedat", "_labels.csv")), dtype = np.int, delimiter = ",", skiprows = 1)
             for label, start, end in class_info:
                 data = event_data[(event_data[:, 0] >= start) & (event_data[:, 0] < end)]
                 data[:, 0] = data[:, 0] - start
@@ -453,6 +452,6 @@ class DVS128Gesture(AEDAT):
                 self.save_event_data(file_idx, event_data)
                 file_list.append([file_idx, label - 1, 1 if is_train else 0])
                 file_idx += 1
-        file_list = np.array(file_list, dtype = "uint32")
+        file_list = np.array(file_list, dtype = np.int)
         np.savetxt(list_filename, file_list, fmt = "%d", delimiter = ",")
         return file_list

@@ -111,7 +111,6 @@ def main():
     )
 
     print(test_dataset[0][0].shape)
-    exit()
 
     # 设置学习率，优化器，学习率衰减机制等等
 

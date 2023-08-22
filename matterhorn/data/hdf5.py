@@ -180,8 +180,8 @@ class SpikingHeidelbergDigits(HDF5):
         @return:
             decompressed_data: np.ndarray 已被解压的数据
         """
-        res = np.zeros((data.shape[0], 4), dtype = "uint32")
-        res[:, 0] = (data[:, 0] << 16) + data[:, 1]
+        res = np.zeros((data.shape[0], 4), dtype = np.int)
+        res[:, 0] = (data[:, 0].astype(np.int) << 16) + data[:, 1]
         res[:, 1] = data[:, 2]
         return res
 
@@ -194,7 +194,7 @@ class SpikingHeidelbergDigits(HDF5):
         """
         list_filename = os.path.join(self.processed_folder, "__main__.csv")
         if os.path.isfile(list_filename):
-            file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
+            file_list = np.loadtxt(list_filename, dtype = np.int, delimiter = ",")
             return file_list
         self.unzip()
         os.makedirs(self.processed_folder, exist_ok = True)
@@ -205,15 +205,15 @@ class SpikingHeidelbergDigits(HDF5):
             raw_data = self.filename_2_data(os.path.join(self.extracted_folder, "shd_%s.h5" % (is_train_str,)))
             label_list = raw_data["labels"][:]
             for idx in track(range(len(label_list)), description = "Processing %sing set" % (is_train_str,)):
-                t = np.floor(raw_data["spikes"]["times"][idx] * self.precision).astype("uint32")
+                t = np.floor(raw_data["spikes"]["times"][idx] * self.precision).astype(np.int)
                 x = raw_data["spikes"]["units"][idx]
-                event_data = np.zeros((len(x), 2), dtype = "uint32")
+                event_data = np.zeros((len(x), 2), dtype = np.int)
                 event_data[:, 0] = t
                 event_data[:, 1] = x
                 label = label_list[idx]
                 self.save_event_data(file_idx, event_data)
                 file_list.append([file_idx, label, is_train])
                 file_idx += 1
-        file_list = np.array(file_list, dtype = "uint32")
+        file_list = np.array(file_list, dtype = np.int)
         np.savetxt(list_filename, file_list, fmt = "%d", delimiter = ",")
         return file_list
