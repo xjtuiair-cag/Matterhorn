@@ -44,7 +44,7 @@ As we're all known, the image below describes what an ANN looks like.
 
 ![ANN Structure](./assets/readme_1.png)
 
-**Operation 1** is **synapse function**, which uses weights and bias to calculate those values from the previous layer to the current layer. Commonly used synapse functions are including full connection layer `nn.Linear`, convolution layer `nn.Conv2D`, etc.
+**Operation 1** is **synapse function**, which uses weights and bias to calculate those values from previous layer to current layer. Commonly used synapse functions are including full connection layer `nn.Linear`, convolution layer `nn.Conv2D`, etc.
 
 We use an equation to describe the synapse function:
 
@@ -52,13 +52,13 @@ $$Y^{l}=synapse(X^{l-1})$$
 
 Where $l$ here means the number of current layers.
 
-**Operation 2** is **activation function**, which filters information from synapses and sends the filtered information to the next layer. Commonly used activation functions are including `nn.ReLU`, `nn.Sigmoid`, etc.
+**Operation 2** is **activation function**, which filters information from synapses and sends the filtered information to next layer. Commonly used activation functions are including `nn.ReLU`, `nn.Sigmoid`, etc.
 
 We use an equation to describe the activation function:
 
 $$X^{l}=activation(Y^{l})$$
 
-In conclusion, each of the layers in ANN has 2 functions. We can build our ANN model in PyTorch by the code below:
+In conclusion, each of layers in ANN has 2 functions. We can build our ANN model in PyTorch by the code below:
 
 ```python
 import torch.nn as nn
@@ -75,7 +75,7 @@ $$Y^{l}=W^{l}X^{l-1}+\vec{b}$$
 
 $$X^{l}=ReLU(Y^{l})$$
 
-In SNN, the synapse equation is the same as which in ANN. However, the functions in soma are no longer like what is in ANN. In the soma of SNN, there exists a loop in time. The image below describes what an SNN looks like.
+In SNN, the synapse equation is the same as that in ANN. However, functions in soma are no longer like what is in ANN. In the soma of SNN, there exists a loop in time. The image below describes what an SNN looks like.
 
 ![SNN Structure](./assets/readme_2.png)
 
@@ -107,7 +107,7 @@ We use an equation to describe the firing function:
 
 $$O^{l}(t)=spiking(U^{l}(t))$$
 
-Generally, the firing function is like this.
+Generally, the firing function looks like this.
 
 $$O^{l}(t)=Heaviside(U^{l}(t)-u_{th})$$
 
@@ -123,9 +123,9 @@ Under most occasions we use equation below to reset potential:
 
 $$H^{l}(t)=U^{l}(t-1)[1-O^{l}(t-1)]+u_{rest}O^{l}(t-1)$$
 
-In brief, we use 4 equations to describe SNN neurons. This is what a SNN be like. The shape of a SNN neuron is like a trumpet. Its synapses transforms those spikes from last neuron and pass the input response to soma, in which there is a time loop awaits.
+In brief, we use 4 equations to describe SNN neurons. This is what an SNN looks like. The shape of an SNN neuron is like a trumpet. Its synapses transform those spikes from last neuron and pass the input response to soma, in which there is a time loop awaits.
 
-By unfolding SNN neuron on temporal dimension, we can get the spatial-temporal topology network of SNN.
+By unfolding SNN neurons on temporal dimension, we can get the spatial-temporal topology network of SNN.
 
 ![Spatial-temporal Topology Network of SNN](./assets/readme_3.png)
 
@@ -143,9 +143,9 @@ snn_model = snn.TemporalContainer(
 )
 ```
 
-In the code, `SpatialContainer` is one Matterhorn's container to represent sequential SNN layers on spatial dimension, and `TemporalContainer` is another Matterhorn's container to repeat calculating potential and spikes on temporal dimension. By using `SpatialContainer` and `TemporalContainer`, an SNN spatial-temporal topology network is built thus used for training and evaluating.
+In the code, `SpatialContainer` is one of Matterhorn's containers to represent sequential SNN layers on spatial dimension, and `TemporalContainer` is another Matterhorn's container to repeat calculating potential and spikes on temporal dimension. By using `SpatialContainer` and `TemporalContainer`, an SNN spatial-temporal topology network is built and thus used for training and evaluating.
 
-The built network takes an $n+1$ dimensional `torch.Tensor` as input spike train. It will take the first dimension as time steps, thus claculate through each time step. after that, it will generate a `torch.Tensor` as output spike train, just like what an ANN takes and generates in PyTorch. The only difference, which is also a key point, is that we should encode our information into spike train and decode the output spike train.
+The built network takes an $n+1$ dimensional `torch.Tensor` as input spike train. It will take the first dimension as time steps, thus calculating through each time step. after that, it will generate a `torch.Tensor` as output spike train, just like what an ANN takes and generates in PyTorch. The only difference, which is also a key point, is that we should encode our information into spike train and decode the output spike train.
 
 ### Encoding and Decoding
 
@@ -191,7 +191,7 @@ spike_train = encoder(image)
 
 An image with the shape of `[H, W, C]` would be encoded into a spike train with the shape of `[T, H, W, C]`. For example, a MNIST image which shape is `[28, 28]` would be encoded (`T=32`) into a spike train with the shape of `[32, 28, 28]`.
 
-After encoding and processing, the network would generate an output spike train. To get the information, we need to decode. Commonly used decoding method is to count average spikes each output neuron has generated.
+After encoding and processing, the network would generate an output spike train. To get the information, we need to decode. A commonly used decoding method is to count average spikes each output neuron has generated.
 
 $$o_{i}=\frac{1}{T}\sum_{t=1}^{T}{O_{i}^{K}(t)}$$
 
@@ -204,7 +204,7 @@ import matterhorn.snn as snn
 decoder = snn.AvgSpikeDecoder()
 ```
 
-It will take first dimension as temporal dimension, and generate statistic result as output. The output can be transported into ANN for further process.
+It will take first dimension as temporal dimension, and generate statistical results as output. The output can be transported into ANN for further processes.
 
 Matterhorn provides a convenient container `matterhorn.snn.SNNContainer` to bind your encoder, network and decoder. By using that, your SNN model will be packed and can easily interact with ANN models.
 
@@ -226,14 +226,14 @@ model = snn.SNNContainer(
 )
 ```
 
-By now, you have experienced how a SNN look like and how to build it by Matterhorn. For further experience, you can refer to [examples/2_layer_mlp.py](./examples/2_layer_mlp.py).
+By now, you have experienced what an SNN looks like and how to build it by Matterhorn. For further experience, you can refer to [examples/2_layer_mlp.py](./examples/2_layer_mlp.py).
 
 ```sh
 cd Matterhorn
 python3 examples/2_layer_mlp.py
 ```
 
-In most cases, neurons of SNNs can be divided into 1 synapse operation and 3 soma operations. However, there are always some special cases. SRM0 neuron model is one of them, whose response is calculated in each synapse. We can use 5 operations to represent SRM0 neuron, 2 for synapses and 3 for soma:
+In most cases, neurons of SNNs can be divided into 1 synapse operation and 3 soma operations. However, there are always some special cases. SRM0 neuron model is one of them, whose response is calculated in each synapse. We can use 5 operations to represent SRM0 neurons, 2 for synapses and 3 for soma:
 
 **Operation 1**: **synapse response function**
 
@@ -270,9 +270,9 @@ $$O^{l}(t)=u(U^{l}(t)-u_{th})$$
 
 ![Heaviside step function and its derivative, Dirac impulse function](./assets/readme_4.png)
 
-However, Heaviside step function has a derivative that can make everyone headache. Its derivative is Dirac impulse function $\delta (t)$. Dirac impulse function is infinity when x equals to 0, and 0 otherwise. If it is directly used for back propagation, the gradient must be all damned.
+However, Heaviside step function has a derivative that can make everyone headache. Its derivative is Dirac impulse function $\delta (t)$. Dirac impulse function is infinity when x equals to 0, and 0 otherwise. If it is directly used for backpropagation, the gradient must be all damned.
 
-Therefore, some functions must be there to replace Dirac impulse function to join the back propagation. We call those functions surrogate gradient.
+Therefore, some functions must be there to replace Dirac impulse function to join the backpropagation. We call those functions surrogate gradients.
 
 One of the most common surrogate gradients is rectangular function. It is a positive constant when absolute value of x is small enough, and 0 otherwise.
 
@@ -284,13 +284,13 @@ You can inspect all provided surrogate gradient functions in `matterhorn.snn.sur
 
 ### Learning: BPTT Vs. STDP
 
-Training SNNs could be as easy as training ANNs after gradient problem of Heaviside step function is solved. After we unfold SNNs into a spatial-temporal network, back propagation through time (BPTT) could be used in SNNs. On spatial dimension, gradients can be proagated through firing function and synapse function, thus neurons of previous layer would receive the gradient; On temporal dimension, the gradient of the next time step can be propagated through firing function and response function, thus soma of previous time would receive the gradient.
+Training SNNs could be as easy as training ANNs after gradient problem of Heaviside step function is solved. After we unfold SNNs into a spatial-temporal network, backpropagation through time (BPTT) could be used in SNNs. On spatial dimension, gradients can be propagated through firing function and synapse function, thus neurons of previous layer would receive the gradient; On temporal dimension, the gradient of the next time step can be propagated through firing function and response function, thus soma of previous time would receive the gradient.
 
 ![BPTT](./assets/readme_6.png)
 
-Besides BPTT, there is another simple way to train locally in each neuron without supervision, which we call it spike-timing-dependent plasticity (STDP). STDP uses precise time difference of input and output spikes to calculate the weight increment.
+Besides BPTT, there is another simple way to train locally in each neuron without supervision, which we call spike-timing-dependent plasticity (STDP). STDP uses precise time differences between input and output spikes to calculate the weight increment.
 
-STDP follows equation as below:
+STDP follows equation below:
 
 $$Δw_{ij}=\sum_{t_{j}}{\sum_{t_{i}}W(t_{i}-t_{j})}$$
 
@@ -304,7 +304,7 @@ A_{+}e^{-\frac{x}{τ_{+}}},x>0 \\\\
 0,x=0 \\\\
 -A_{-}e^{\frac{x}{τ_{-}}},x<0
 \end{aligned}
-\right .
+\right \}.
 $$
 
 ![STDP function](./assets/readme_7.png)
