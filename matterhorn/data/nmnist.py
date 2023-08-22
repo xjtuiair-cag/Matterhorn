@@ -100,37 +100,6 @@ class NMNIST(EventDataset2d):
             raise RuntimeError("There are error(s) in unzipping files.")
 
 
-    def compress_event_data(self, data: np.ndarray) -> np.ndarray:
-        """
-        压缩事件数据。
-        @params:
-            data: np.ndarray 未被压缩的数据
-        @return:
-            compressed_data: np.ndarray 已被压缩的数据
-        """
-        res = np.zeros((data.shape[0], 3), dtype = "uint16")
-        res[:, 0] = self.extract(data[:, 0], 0xFFFF, 16)
-        res[:, 1] = self.extract(data[:, 0], 0xFFFF, 0)
-        res[:, 2] = (data[:, 2] << 8) + (data[:, 3] << 1) + data[:, 1]
-        return res
-
-
-    def decompress_event_data(self, data: np.ndarray) -> np.ndarray:
-        """
-        解压事件数据。
-        @params:
-            data: np.ndarray 未被解压的数据
-        @return:
-            decompressed_data: np.ndarray 已被解压的数据
-        """
-        res = np.zeros((data.shape[0], 4), dtype = np.int)
-        res[:, 0] = (data[:, 0].astype(np.int) << 16) + data[:, 1]
-        res[:, 1] = self.extract(data[:, 2], 0x0001, 0)
-        res[:, 2] = self.extract(data[:, 2], 0x007F, 8)
-        res[:, 3] = self.extract(data[:, 2], 0x007F, 1)
-        return res
-
-
     def filename_2_data(self, filename: str) -> np.ndarray:
         """
         输入文件名，读取文件内容。

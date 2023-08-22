@@ -35,7 +35,7 @@ def main():
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
     time_steps = 128
-    batch_size = 16
+    batch_size = 128
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 32
     learning_rate = 1e-3
@@ -77,18 +77,19 @@ def main():
     model = model.to(device)
 
     print(model)
+    print(device)
 
     # 调取数据集，本次使用的数据集为MNIST
 
     print(Panel(Text("Dataset", justify = "center")))
 
-    train_dataset = matterhorn.data.CIFAR10DVS(
+    train_dataset = matterhorn.data.NMNIST(
         root = "./examples/data",
         train = True,
         download = True,
         time_steps = time_steps
     )
-    test_dataset = matterhorn.data.CIFAR10DVS(
+    test_dataset = matterhorn.data.NMNIST(
         root = "./examples/data",
         train = False,
         download = True,
