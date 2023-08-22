@@ -82,13 +82,13 @@ def main():
 
     print(Panel(Text("Dataset", justify = "center")))
 
-    train_dataset = matterhorn.data.NMNIST(
+    train_dataset = matterhorn.data.CIFAR10DVS(
         root = "./examples/data",
         train = True,
         download = True,
         time_steps = time_steps
     )
-    test_dataset = matterhorn.data.NMNIST(
+    test_dataset = matterhorn.data.CIFAR10DVS(
         root = "./examples/data",
         train = False,
         download = True,
@@ -111,6 +111,7 @@ def main():
     )
 
     print(test_dataset[0][0].shape)
+    exit()
 
     # 设置学习率，优化器，学习率衰减机制等等
 

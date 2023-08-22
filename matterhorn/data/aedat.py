@@ -6,30 +6,29 @@ import re
 import shutil
 import random
 from torchvision.datasets.utils import check_integrity, download_url, extract_archive
-from torch.utils.data import Dataset
 from typing import Any, List, Tuple, Union, Callable, Optional
 from urllib.error import URLError
 from zipfile import BadZipFile
 from rich import print
 from rich.progress import track
+from matterhorn.data.skeleton import EventDataset2d
 
 
-class AEDAT(Dataset):
-    training_file = "training.pt"
-    test_file = "test.pt"
-    original_size = (0, 2, 128, 128)
+class AEDAT(EventDataset2d):
+    original_data_polarity_exists = True
+    original_size = (1, 2, 128, 128)
     mirrors = []
     resources = []
     labels = []
-    y_mask = 0x07FF0000
+    y_mask = 0x000007FF
     y_shift = 16
-    x_mask = 0x0000FFFE
+    x_mask = 0x000007FF
     x_shift = 1
     p_mask = 0x00000001
     p_shift = 0
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4") -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4", clipped: Optional[Union[Tuple, int]] = None) -> None:
         """
         原始数据后缀名为.aedat的数据集
         @params:
@@ -45,95 +44,22 @@ class AEDAT(Dataset):
             endian: str 大端还是小端，">"代表大端存储，"<"代表小端存储
             datatype: str 数据类型，如u4表示uint32
         """
-        super().__init__()
-        self.root = root
-        self.transform = transform
-        self.target_transform = target_transform
-        self.train = train
+        super().__init__(
+            root = root,
+            train = train,
+            transform = transform,
+            target_transform = target_transform,
+            download = download,
+            t_size = time_steps,
+            y_size = height,
+            x_size = width,
+            polarity = polarity,
+            clipped = clipped 
+        )
         self.endian = endian
         self.datatype = datatype
-        self.t_size = time_steps
-        self.p_size = 2 if polarity else 1
-        self.x_size = width
-        self.y_size = height
-        if download:
-            self.download()
-        if not self.check_exists():
-            raise RuntimeError("Dataset not found. You can use download=True to download it")
-        self.data_target = self.load_data()
-        self.data_target = self.data_target[self.data_target[:, 2] == (1 if self.train else 0)][:, :2]
-        self.data_target = self.data_target.tolist()
-        random.shuffle(self.data_target)
 
 
-    @property
-    def raw_folder(self) -> str:
-        """
-        刚下载下来的数据集所存储的地方。
-        @return:
-            str 数据集存储位置
-        """
-        return os.path.join(self.root, self.__class__.__name__, "raw")
-
-
-    @property
-    def extracted_folder(self) -> str:
-        """
-        解压过后的数据集所存储的地方。
-        @return:
-            str 数据集存储位置
-        """
-        return os.path.join(self.root, self.__class__.__name__, "extracted")
-
-
-    @property
-    def processed_folder(self) -> str:
-        """
-        处理过后的数据集所存储的地方。
-        @return:
-            str 数据集存储位置
-        """
-        return os.path.join(self.root, self.__class__.__name__, "processed")
-    
-    
-    def check_exists(self) -> bool:
-        """
-        检查是否存在。
-        @return:
-            if_exist: bool 是否存在
-        """
-        return False
-        
-    
-    def download(self) -> None:
-        """
-        下载数据集。
-        """
-        return
-
-
-    def load_data(self) -> np.ndarray:
-        """
-        加载数据集。
-        @return:
-            data_label: np.ndarray 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
-        """
-        return None
-
-    
-    def extract(self, data: np.ndarray, mask: int, shift: int) -> np.ndarray:
-        """
-        从事件数据中提取x,y,p值所用的函数。
-        @params:
-            data: np.ndarray 事件数据
-            mask: int 对应的掩模
-            shift: int 对应的偏移量
-        @return:
-            data: np.ndarray 处理后的数据（x,y,p）
-        """
-        return (data & mask) >> shift
-        
-    
     def filename_2_data(self, filename: str) -> np.ndarray:
         """
         输入文件名，读取文件内容。
@@ -163,7 +89,7 @@ class AEDAT(Dataset):
         @return:
             data_tpyx: np.ndarray 分为t,p,y,x的数据，形状为[n, 4]
         """
-        res = np.zeros((data.shape[0] // 2, 4), dtype = np.int)
+        res = np.zeros((data.shape[0] // 2, 4), dtype = "uint32")
         xyp = data[::2]
         t = data[1::2]
         res[:, 0] = t
@@ -171,17 +97,6 @@ class AEDAT(Dataset):
         res[:, 2] = self.extract(xyp, self.y_mask, self.y_shift)
         res[:, 3] = self.extract(xyp, self.x_mask, self.x_shift)
         return res
-    
-    
-    def tpyx_2_tensor(self, data: np.ndarray) -> torch.Tensor:
-        """
-        将t,p,y,x数组转为最后的PyTorch张量。
-        @params:
-            data: np.ndarray 数据，形状为[n, 4]
-        @return:
-            data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
-        """
-        return torch.tensor(data, dtype = torch.float)
     
     
     def label(self, key: str) -> int:
@@ -208,38 +123,42 @@ class AEDAT(Dataset):
         """
         return True
     
-    
-    def __len__(self) -> int:
+
+    def compress_event_data(self, data: np.ndarray) -> np.ndarray:
         """
-        获取数据集长度。
-        @return:
-            len: int 数据集长度
-        """
-        return len(self.data_target)
-    
-    
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        获取数据集。
+        压缩事件数据。
         @params:
-            index: int 索引
+            data: np.ndarray 未被压缩的数据
         @return:
-            x: torch.Tensor 数据
-            y: torch.Tensor 标签
+            compressed_data: np.ndarray 已被压缩的数据
         """
-        data_idx = self.data_target[index][0]
-        data = np.load(os.path.join(self.processed_folder, "%d.npy" % (data_idx,)))
-        data = self.tpyx_2_tensor(data)
-        target = self.data_target[index][1]
-        if self.transform is not None:
-            data = self.transform(data)
-        if self.target_transform is not None:
-            target = self.target_transform(data)
-        return data, target
+        res = np.array((data.shape[0], 3), dtype = "uint16")
+        res[:, 0] = self.extract(data[:, 0], 0xFFFF, 16)
+        res[:, 1] = self.extract(data[:, 0], 0xFFFF, 0)
+        res[:, 2] = (data[:, 2] << 8) + (data[:, 3] << 1) + data[:, 1]
+        print(res)
+        return res
+
+
+    def decompress_event_data(self, data: np.ndarray) -> np.ndarray:
+        """
+        解压事件数据。
+        @params:
+            data: np.ndarray 未被解压的数据
+        @return:
+            decompressed_data: np.ndarray 已被解压的数据
+        """
+        res = np.array((data.shape[0], 4), dtype = "uint32")
+        res[:, 0] = (data[:, 0] << 16) + data[:, 1]
+        res[:, 1] = self.extract(data[:, 2], 0x0001, 0)
+        res[:, 2] = self.extract(data[:, 2], 0x007F, 8)
+        res[:, 2] = self.extract(data[:, 2], 0x007F, 1)
+        return res
 
 
 class CIFAR10DVS(AEDAT):
-    original_size = (0, 2, 128, 128)
+    original_data_polarity_exists = True
+    original_size = (1, 2, 128, 128)
     mirrors = ["https://ndownloader.figshare.com/files/"]
     resources = [
         ("7712788", "airplane.zip", "0afd5c4bf9ae06af762a77b180354fdd"),
@@ -254,9 +173,9 @@ class CIFAR10DVS(AEDAT):
         ("7712839", "truck.zip", "89f3922fd147d9aeff89e76a2b0b70a7")
     ]
     labels = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-    y_mask = 0x7F00
+    y_mask = 0x007F
     y_shift = 8
-    x_mask = 0x00FE
+    x_mask = 0x007F
     x_shift = 1
     p_mask = 0x0001
     p_shift = 0
@@ -293,17 +212,6 @@ class CIFAR10DVS(AEDAT):
         if isinstance(clipped, Tuple):
             assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
         self.clipped = clipped
-
-
-    def check_exists(self) -> bool:
-        """
-        检查是否存在
-        @return:
-            if_exist: bool 是否存在
-        """
-        return all(
-            check_integrity(os.path.join(self.raw_folder, filename)) for fileurl, filename, md5 in self.resources
-        )
 
 
     def download(self) -> None:
@@ -375,7 +283,7 @@ class CIFAR10DVS(AEDAT):
         """
         list_filename = os.path.join(self.processed_folder, "__main__.csv")
         if os.path.isfile(list_filename):
-            file_list = np.loadtxt(list_filename, dtype = np.int, delimiter = ",")
+            file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
             return file_list
         self.unzip()
         os.makedirs(self.processed_folder, exist_ok = True)
@@ -388,39 +296,17 @@ class CIFAR10DVS(AEDAT):
             for filename in track(aedat_files, description = "Processing label %s" % (label_str,)):
                 raw_data = self.filename_2_data(os.path.join(self.extracted_folder, label_str, filename))
                 event_data = self.data_2_tpyx(raw_data)
-                np.save(os.path.join(self.processed_folder, "%d.npy" % (file_idx,)), event_data)
+                self.save_event_data(file_idx, event_data)
                 file_list.append([file_idx, label, 1 if self.is_train(label, file_idx % aedat_file_count) else 0])
                 file_idx += 1
-        file_list = np.array(file_list, dtype = np.int)
+        file_list = np.array(file_list, dtype = "uint32")
         np.savetxt(list_filename, file_list, fmt = "%d", delimiter = ",")
         return file_list
 
 
-    def tpyx_2_tensor(self, data: np.ndarray) -> torch.Tensor:
-        """
-        将t,p,y,x数组转为最后的PyTorch张量。
-        @params:
-            data: np.ndarray 数据，形状为[n, 4]
-        @return:
-            data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
-        """
-        res = torch.zeros(self.t_size, self.p_size, self.y_size, self.x_size, dtype = torch.float)
-        if self.clipped is not None:
-            if isinstance(self.clipped, int):
-                data = data[data[:, 0] < self.clipped]
-            elif isinstance(self.clipped, Tuple):
-                data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
-        data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, 1))
-        data[:, 1] = np.floor(data[:, 1] * self.p_size / self.original_size[1])
-        data[:, 2] = np.floor(data[:, 2] * self.y_size / self.original_size[2])
-        data[:, 3] = np.floor(data[:, 3] * self.x_size / self.original_size[3])
-        data = np.unique(data, axis = 0)
-        res[data.T] = 1
-        return res
-
-
 class DVS128Gesture(AEDAT):
-    original_size = (0, 2, 128, 128)
+    original_data_polarity_exists = True
+    original_size = (1, 2, 128, 128)
     mirrors = ["https://public.boxcloud.com/d/1/"]
     resources = [
         ("b1!6RC4cE5cm0PrbRhQeTXuS96wG5z7ScLzlCbaTBHMZ0nP1ec3P-NwYIaFhlO_e275BKS0h_vaxU_a1VZ-vMNxfrGMvCuyD9Qb2L5qjyALlIBrFCODa_bCjOnX1IC47noyVjkoFK_i0F5eEDjjfjo58pSn-4-nzJ1eGxjbVvxRxxAVQzEhOqi3JezM2vkP_VT7gMUmObnhWOS02SgbXH8Aet4a1Lup4FMEA7RaQMUPFEOTRmcF54srarRQm7srTDWmu5GgE4mjRyBGcudExqoTKpgWfZBpzGA_c1j9f9h8HhquVQmcyiAtz4XBpI8Jsnca3Q2x5yuxreRDYxW9yrXLKikTOiUtDRxp0R75yk88Jtv_Af74Sf7hZI5U5GzpgJEsi6GObfXV_QTtWPurQ0O7Pr9wgMJSq6OvRn09Ei2PoNjgWnyj1nVR_2FL_s2PBOKMvx1A1d1KGF_BYdBhJcf1aewA09gNERRUHlw80TQoANFszTxOJ4wb8DuE4hYQ6k22m4l6SWTApMXtO-E4k8Apxwc5WqBZo_9pRdJc4W9XgTl3jTvgNvYAa95yifG4d_5vJnxbhdciVfsBBnHr-Xj3cyAS6NYL1wt_9A4z5KG0i1WizpRzTut1wwxA0t08qnMFZJHcsg2opVmvIKF1i9IG8TWBTHnbuZ25HjiZ3ogJX-dpBA9OPllpoEDLTMwVEjMvx3gGMiUgmF-TxKesMRSE8qnQx37mLXsc38rlBs6z-aPTR3P_1QTHIZTiLsZR4StnkuZB9RXaizj0d7PMN68QGi4_QEOW_c4bujAt_fXxbB1Grcvk57rl_MdfRFSH6qEYXHeYjngHFzBcomX0BVfwAjCNDWYp2kEiDe8YhxU3i44bDK3wG3yJG4Ia6dNKv7xzKWGPu3Wn-DSJB4Km0h9Vd7bCBQnV2Hp7kTPYuv8_UHcYtSOGgyqR_EkfWtejUAOG-FsKmLUs3Hx_YUePWIDgiYASSAzVFpr0T4qcWxl_Z-FksIpgjxDghyj6mepIrfHkEbY3Hi7HUgXOmaDQyO8tM3edHJIbyxtbHVbwdngy9jK-3uR4xzT5OSSzbTdOZFN_cwepwTZIslCrTfoxjGXnkMKE_4ldsGUszr5HbC2IRv1r1CQrHg7OORWJV4MyayfAyePNcPyo0x9w9BMCP13BZIS4SOxuHwYVjsCWYTpVE8Q4MbDT3ULIZ851vbeUSTWuAUSnhG98ByLC84vEAADuPbt3hnx_BnD6_fYtA7tWuiFqYZrbopIrTwKfo5L7FFj6usDf-mg3SD-V9PaMZM-qM-O6ZZLriUgpRfhkh78WlBU./download", "DvsGesture.tar.gz", "8a5c71fb11e24e5ca5b11866ca6c00a1"),
@@ -429,11 +315,11 @@ class DVS128Gesture(AEDAT):
         ("b1!0qorL_bz0q1mFjUK3_5eUQEG36l3-xxn2ahncEIaiPy0zuc238nf796Q7LUysNXYerX8LM_VPBAbqqwPxsAT6IdZtO3zAX2S4poHvangqpjMGw6Yez9dOD8rh--lhc5TSv7aQezqeMhOI-VS_Zf4PkxWMUXfmhzVY0kyo3rbhMvnVA5rAW4QciBazWLGQheSweM3iTOare3_P6OF830lGOge_1M26nzUTES56Sm19h_4sqb9_tgRzFOYRE5mk2IGUr5V3AOEm33CgZAuwh6RkKMqJeCXtwgyW3wz2t4oJE3suKisOWiPazmDLKpcgVhj2lssbMTeZKF6_MK6iNl_JabWxXi3X_4h-HxTH6iOzfXJd_Z76EU5YJWEyCKjc0sXp9-RirfcVua1dRtrnlPkd35rVOeOQvZzoc3i7Q9ftoR0sfJg3jA1inkTuuWULt5R4VBcJuVuIBzVT6dLI232yORqeA5MgoQCRjH_kGbQySEMWoFv8EP2xplhQRr6RkNuCx2_lMrPpiZYcrfbmxKhD_R9IsQ4XPRd-GNB_xBwfwuK9zrz4qnYHKqGjZf_F2jLpHLQMQVrFE7-LJZTRYQR2RkqWFHllJkKsnq6UmXvd7tAojv4p3LouiHdOar-yot3s8oNScLCcS_SM634d4sTyS-isGbzOKTw6l39rwzWOWnh0tVhyhpsqJJUVZvHzjYTs-VfD_RjLkFqGSkQvY9ChQxEC5mqUloRzq8fPYt__HqaBRXRFabvTp4jVIpFCNGYMtIaXJKsheovqtZ0OyqBFbsOKfXT9LLRuUuc73PXe0FO3u20WA3zyvWrdsobTQB078MUmOFAa15fJWjutIZ17XEvZovkNosI55cQ3RgRw_Fi05WVmT7ufWs-BPrQWvk7rnNNolChfHoW69DzjYTIPPK_aKOkljUSnf6MwRnZtf97xHxfsY-QWI0azcnMBkR6he2NdMaki5MryN3B1Yv3QsJSbyitASLxDUsN19ATPLnkrvxsXeF3bR7ATF4Rwcsf0fbiH_3EDnS1kE7PYUfeOUG6kV6QdlyqwTZOgjEicwpWYFZPvusUzWbifbhSrOY1fKuDO4aSfmum9TlXTMV2nFukKuEXhGKaFwj3Mpmva50VntJE5NHnpjzNfjCRC_vndQrCNRqvHJExIDsdVpBvOTsqctfwe5bGjBwaOEG5rwodQmPhcCx8HVGJho8scdByrorcz-9En8KjL-kTqnYkh0BY4tO9-GaQvtf3qAWS1I7EjZjVV8T3RmXn6TYocMGeuW6J04sMn5rLMGU./download", "gesture_mapping.csv", "109b2ae64a0e1f3ef535b18ad7367fd1")
     ]
     labels = ["hand_clapping", "right_hand_wave", "left_hand_wave", "right_hand_clockwise", "right_hand_counter_clockwise", "left_hand_clockwise", "left_hand_counter_clockwise", "forearm_roll_forward", "forearm_roll_backward", "drums", "guitar", "random_other_gestures"]
-    y_mask = 0x00007FFC
+    y_mask = 0x1FFF
     y_shift = 2
-    x_mask = 0x3FFE0000
+    x_mask = 0x1FFF
     x_shift = 17
-    p_mask = 0x00000002
+    p_mask = 0x0001
     p_shift = 1
 
 
@@ -468,18 +354,6 @@ class DVS128Gesture(AEDAT):
         if isinstance(clipped, Tuple):
             assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
         self.clipped = clipped
-
-
-
-    def check_exists(self) -> bool:
-        """
-        检查是否存在
-        @return:
-            if_exist: bool 是否存在
-        """
-        return all(
-            check_integrity(os.path.join(self.raw_folder, filename)) for fileurl, filename, md5 in self.resources
-        )
 
 
     def download(self) -> None:
@@ -550,7 +424,7 @@ class DVS128Gesture(AEDAT):
         """
         list_filename = os.path.join(self.processed_folder, "__main__.csv")
         if os.path.isfile(list_filename):
-            file_list = np.loadtxt(list_filename, dtype = np.int, delimiter = ",")
+            file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
             return file_list
         self.unzip()
         aedat_file_dir = os.path.join(self.extracted_folder, "DvsGesture")
@@ -569,39 +443,16 @@ class DVS128Gesture(AEDAT):
             raw_data_list.append(raw_data[idx_list[len(idx_list) - 1] + 7:])
             raw_data = np.concatenate(raw_data_list, axis = 0)
             event_data = self.data_2_tpyx(raw_data)
-            class_info = np.loadtxt(os.path.join(aedat_file_dir, filename.replace(".aedat", "_labels.csv")), dtype = np.int, delimiter = ",", skiprows = 1)
+            class_info = np.loadtxt(os.path.join(aedat_file_dir, filename.replace(".aedat", "_labels.csv")), dtype = "uint32", delimiter = ",", skiprows = 1)
             for label, start, end in class_info:
                 data = event_data[(event_data[:, 0] >= start) & (event_data[:, 0] < end)]
                 data[:, 0] = data[:, 0] - start
                 user_id = re.search(r"user([0-9]+)", filename)
                 user_id = user_id.group(1)
                 is_train = self.is_train(label, int(user_id))
-                np.save(os.path.join(self.processed_folder, "%d.npy" % (file_idx,)), event_data)
+                self.save_event_data(file_idx, event_data)
                 file_list.append([file_idx, label - 1, 1 if is_train else 0])
                 file_idx += 1
-        file_list = np.array(file_list, dtype = np.int)
+        file_list = np.array(file_list, dtype = "uint32")
         np.savetxt(list_filename, file_list, fmt = "%d", delimiter = ",")
         return file_list
-
-
-    def tpyx_2_tensor(self, data: np.ndarray) -> torch.Tensor:
-        """
-        将t,p,y,x数组转为最后的PyTorch张量。
-        @params:
-            data: np.ndarray 数据，形状为[n, 4]
-        @return:
-            data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
-        """
-        res = torch.zeros(self.t_size, self.p_size, self.y_size, self.x_size, dtype = torch.float)
-        if self.clipped is not None:
-            if isinstance(self.clipped, int):
-                data = data[data[:, 0] < self.clipped]
-            elif isinstance(self.clipped, Tuple):
-                data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
-        data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, 1))
-        data[:, 1] = np.floor(data[:, 1] * self.p_size / self.original_size[1])
-        data[:, 2] = np.floor(data[:, 2] * self.y_size / self.original_size[2])
-        data[:, 3] = np.floor(data[:, 3] * self.x_size / self.original_size[3])
-        data = np.unique(data, axis = 0)
-        res[data.T] = 1
-        return res

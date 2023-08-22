@@ -4,24 +4,25 @@ import os
 import random
 import h5py
 from torchvision.datasets.utils import check_integrity, download_url, extract_archive
-from torch.utils.data import Dataset
 from typing import Any, List, Tuple, Union, Callable, Optional
 from urllib.error import URLError
 from zipfile import BadZipFile
 from rich import print
 from rich.progress import track
+from matterhorn.data.skeleton import EventDataset1d
 
 
-class HDF5(Dataset):
+class HDF5(EventDataset1d):
+    original_data_polarity_exists = True
     training_file = "training.pt"
     test_file = "test.pt"
-    original_size = (0, 2, 128, 128)
+    original_size = (1, 2, 128)
     mirrors = []
     resources = []
     labels = []
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 128) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 128, clipped: Optional[Union[Tuple, float]] = None) -> None:
         """
         原始数据后缀名为.hdf5的数据集
         @params:
@@ -34,68 +35,18 @@ class HDF5(Dataset):
             time_steps: int 最终的数据集总共含有多少个时间步
             length: int 最终数据集的空间精度
         """
-        super().__init__()
-        self.root = root
-        self.transform = transform
-        self.target_transform = target_transform
-        self.train = train
+        super().__init__(
+            root = root,
+            train = train,
+            transform = transform,
+            target_transform = target_transform,
+            download = download,
+            t_size = time_steps,
+            x_size = length,
+            polarity = False,
+            clipped = clipped
+        )
         self.precision = precision
-        self.t_size = time_steps
-        self.x_size = length
-        if download:
-            self.download()
-        if not self.check_exists():
-            raise RuntimeError("Dataset not found. You can use download=True to download it")
-        self.data_target = self.load_data()
-        self.data_target = self.data_target[self.data_target[:, 2] == (1 if self.train else 0)][:, :2]
-        self.data_target = self.data_target.tolist()
-        random.shuffle(self.data_target)
-
-
-    @property
-    def raw_folder(self) -> str:
-        """
-        刚下载下来的数据集所存储的地方。
-        @return:
-            str 数据集存储位置
-        """
-        return os.path.join(self.root, self.__class__.__name__, "raw")
-
-
-    @property
-    def extracted_folder(self) -> str:
-        """
-        解压过后的数据集所存储的地方。
-        @return:
-            str 数据集存储位置
-        """
-        return os.path.join(self.root, self.__class__.__name__, "extracted")
-
-
-    @property
-    def processed_folder(self) -> str:
-        """
-        处理过后的数据集所存储的地方。
-        @return:
-            str 数据集存储位置
-        """
-        return os.path.join(self.root, self.__class__.__name__, "processed")
-    
-    
-    def check_exists(self) -> bool:
-        """
-        检查是否存在。
-        @return:
-            if_exist: bool 是否存在
-        """
-        return False
-        
-    
-    def download(self) -> None:
-        """
-        下载数据集。
-        """
-        return
 
 
     def load_data(self) -> np.ndarray:
@@ -117,76 +68,11 @@ class HDF5(Dataset):
         """
         data = h5py.File(filename, "r")
         return data
-    
-    
-    def data_2_tensor(self, data: np.ndarray) -> torch.Tensor:
-        """
-        将t,p,y,x数组转为最后的PyTorch张量。
-        @params:
-            data: np.ndarray 数据，形状为[n, 2]
-        @return:
-            data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, L]
-        """
-        return torch.tensor(data, dtype = torch.float)
-    
-    
-    def label(self, key: str) -> int:
-        """
-        返回该文件对应的标签。
-        @params:
-            key: str 关键词
-        @return:
-            label: int 文件的标签
-        """
-        if key in self.labels:
-            return self.labels.index(key)
-        return -1
-    
-    
-    def is_train(self, label: int, index: int = 0) -> bool:
-        """
-        从路径、文件名和索引判断是否是训练集。
-        @params:
-            label: int 标签
-            index: int 文件的索引
-        @return:
-            is_train: bool 是否为训练集
-        """
-        return True
-    
-    
-    def __len__(self) -> int:
-        """
-        获取数据集长度。
-        @return:
-            len: int 数据集长度
-        """
-        return len(self.data_target)
-    
-    
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        获取数据集。
-        @params:
-            index: int 索引
-        @return:
-            x: torch.Tensor 数据
-            y: torch.Tensor 标签
-        """
-        data_idx = self.data_target[index][0]
-        data = np.load(os.path.join(self.processed_folder, "%d.npy" % (data_idx,)))
-        data = self.data_2_tensor(data)
-        target = self.data_target[index][1]
-        if self.transform is not None:
-            data = self.transform(data)
-        if self.target_transform is not None:
-            target = self.target_transform(data)
-        return data, target
-
 
 
 class SpikingHeidelbergDigits(HDF5):
-    original_size = (0, 700)
+    original_data_polarity_exists = False
+    original_size = (1, 1, 700)
     mirrors = ["https://zenkelab.org/datasets/"]
     resources = [
         ('shd_train.h5.zip', 'shd_train.h5.zip', 'f3252aeb598ac776c1b526422d90eecb'),
@@ -222,17 +108,6 @@ class SpikingHeidelbergDigits(HDF5):
         if isinstance(clipped, Tuple):
             assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
         self.clipped = clipped
-    
-    
-    def check_exists(self) -> bool:
-        """
-        检查是否存在。
-        @return:
-            if_exist: bool 是否存在
-        """
-        return all(
-            check_integrity(os.path.join(self.raw_folder, filename)) for fileurl, filename, md5 in self.resources
-        )
         
     
     def download(self) -> None:
@@ -284,6 +159,35 @@ class SpikingHeidelbergDigits(HDF5):
             raise RuntimeError("There are error(s) in unzipping files.")
 
 
+    def compress_event_data(self, data: np.ndarray) -> np.ndarray:
+        """
+        压缩事件数据。
+        @params:
+            data: np.ndarray 未被压缩的数据
+        @return:
+            compressed_data: np.ndarray 已被压缩的数据
+        """
+        res = np.array((data.shape[0], 3), dtype = "uint16")
+        res[:, 0] = self.extract(data[:, 0], 0xFFFF, 16)
+        res[:, 1] = self.extract(data[:, 0], 0xFFFF, 0)
+        res[:, 2] = data[:, 1]
+        return res
+
+
+    def decompress_event_data(self, data: np.ndarray) -> np.ndarray:
+        """
+        解压事件数据。
+        @params:
+            data: np.ndarray 未被解压的数据
+        @return:
+            decompressed_data: np.ndarray 已被解压的数据
+        """
+        res = np.array((data.shape[0], 4), dtype = "uint32")
+        res[:, 0] = (data[:, 0] << 16) + data[:, 1]
+        res[:, 1] = data[:, 2]
+        return res
+
+
     def load_data(self) -> np.ndarray:
         """
         加载数据集。
@@ -292,7 +196,7 @@ class SpikingHeidelbergDigits(HDF5):
         """
         list_filename = os.path.join(self.processed_folder, "__main__.csv")
         if os.path.isfile(list_filename):
-            file_list = np.loadtxt(list_filename, dtype = np.int, delimiter = ",")
+            file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
             return file_list
         self.unzip()
         os.makedirs(self.processed_folder, exist_ok = True)
@@ -303,36 +207,15 @@ class SpikingHeidelbergDigits(HDF5):
             raw_data = self.filename_2_data(os.path.join(self.extracted_folder, "shd_%s.h5" % (is_train_str,)))
             label_list = raw_data["labels"][:]
             for idx in track(range(len(label_list)), description = "Processing %sing set" % (is_train_str,)):
-                t = np.floor(raw_data["spikes"]["times"][idx] * self.precision).astype(np.int)
+                t = np.floor(raw_data["spikes"]["times"][idx] * self.precision).astype("uint32")
                 x = raw_data["spikes"]["units"][idx]
-                event_data = np.zeros((len(x), 2), dtype = np.int)
+                event_data = np.zeros((len(x), 2), dtype = "uint32")
                 event_data[:, 0] = t
                 event_data[:, 1] = x
                 label = label_list[idx]
-                np.save(os.path.join(self.processed_folder, "%d.npy" % (file_idx,)), event_data)
+                self.save_event_data(file_idx, event_data)
                 file_list.append([file_idx, label, is_train])
                 file_idx += 1
-        file_list = np.array(file_list, dtype = np.int)
+        file_list = np.array(file_list, dtype = "uint32")
         np.savetxt(list_filename, file_list, fmt = "%d", delimiter = ",")
         return file_list
-
-
-    def data_2_tensor(self, data: np.ndarray) -> torch.Tensor:
-        """
-        将t,p,y,x数组转为最后的PyTorch张量。
-        @params:
-            data: np.ndarray 数据，形状为[n, 2]
-        @return:
-            data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, L]
-        """
-        res = torch.zeros(self.t_size, self.x_size, dtype = torch.float)
-        if self.clipped is not None:
-            if isinstance(self.clipped, int):
-                data = data[data[:, 0] < self.clipped]
-            elif isinstance(self.clipped, Tuple):
-                data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
-        data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, 1))
-        data[:, 1] = np.floor(data[:, 1] * self.x_size / self.original_size[1])
-        data = np.unique(data, axis = 0)
-        res[data.T] = 1
-        return res
