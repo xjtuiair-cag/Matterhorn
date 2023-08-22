@@ -35,6 +35,7 @@ class HDF5(EventDataset1d):
             time_steps: int 最终的数据集总共含有多少个时间步
             length: int 最终数据集的空间精度
         """
+        self.precision = precision
         super().__init__(
             root = root,
             train = train,
@@ -46,7 +47,6 @@ class HDF5(EventDataset1d):
             polarity = False,
             clipped = clipped
         )
-        self.precision = precision
 
 
     def load_data(self) -> np.ndarray:
@@ -103,11 +103,9 @@ class SpikingHeidelbergDigits(HDF5):
             download = download,
             precision = precision,
             time_steps = time_steps,
-            length = length
+            length = length,
+            clipped = clipped
         )
-        if isinstance(clipped, Tuple):
-            assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
-        self.clipped = clipped
         
     
     def download(self) -> None:
@@ -167,7 +165,7 @@ class SpikingHeidelbergDigits(HDF5):
         @return:
             compressed_data: np.ndarray 已被压缩的数据
         """
-        res = np.array((data.shape[0], 3), dtype = "uint16")
+        res = np.zeros((data.shape[0], 3), dtype = "uint16")
         res[:, 0] = self.extract(data[:, 0], 0xFFFF, 16)
         res[:, 1] = self.extract(data[:, 0], 0xFFFF, 0)
         res[:, 2] = data[:, 1]
@@ -182,7 +180,7 @@ class SpikingHeidelbergDigits(HDF5):
         @return:
             decompressed_data: np.ndarray 已被解压的数据
         """
-        res = np.array((data.shape[0], 4), dtype = "uint32")
+        res = np.zeros((data.shape[0], 4), dtype = "uint32")
         res[:, 0] = (data[:, 0] << 16) + data[:, 1]
         res[:, 1] = data[:, 2]
         return res

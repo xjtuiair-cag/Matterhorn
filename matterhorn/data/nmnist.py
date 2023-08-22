@@ -108,7 +108,7 @@ class NMNIST(EventDataset2d):
         @return:
             compressed_data: np.ndarray 已被压缩的数据
         """
-        res = np.array((data.shape[0], 3), dtype = "uint16")
+        res = np.zeros((data.shape[0], 3), dtype = "uint16")
         res[:, 0] = self.extract(data[:, 0], 0xFFFF, 16)
         res[:, 1] = self.extract(data[:, 0], 0xFFFF, 0)
         res[:, 2] = (data[:, 2] << 8) + (data[:, 3] << 1) + data[:, 1]
@@ -123,7 +123,7 @@ class NMNIST(EventDataset2d):
         @return:
             decompressed_data: np.ndarray 已被解压的数据
         """
-        res = np.array((data.shape[0], 4), dtype = "uint32")
+        res = np.zeros((data.shape[0], 4), dtype = "uint32")
         res[:, 0] = (data[:, 0] << 16) + data[:, 1]
         res[:, 1] = self.extract(data[:, 2], 0x0001, 0)
         res[:, 2] = self.extract(data[:, 2], 0x007F, 8)

@@ -44,6 +44,8 @@ class AEDAT(EventDataset2d):
             endian: str 大端还是小端，">"代表大端存储，"<"代表小端存储
             datatype: str 数据类型，如u4表示uint32
         """
+        self.endian = endian
+        self.datatype = datatype
         super().__init__(
             root = root,
             train = train,
@@ -56,8 +58,6 @@ class AEDAT(EventDataset2d):
             polarity = polarity,
             clipped = clipped 
         )
-        self.endian = endian
-        self.datatype = datatype
 
 
     def filename_2_data(self, filename: str) -> np.ndarray:
@@ -132,7 +132,7 @@ class AEDAT(EventDataset2d):
         @return:
             compressed_data: np.ndarray 已被压缩的数据
         """
-        res = np.array((data.shape[0], 3), dtype = "uint16")
+        res = np.zeros((data.shape[0], 3), dtype = "uint16")
         res[:, 0] = self.extract(data[:, 0], 0xFFFF, 16)
         res[:, 1] = self.extract(data[:, 0], 0xFFFF, 0)
         res[:, 2] = (data[:, 2] << 8) + (data[:, 3] << 1) + data[:, 1]
@@ -148,7 +148,7 @@ class AEDAT(EventDataset2d):
         @return:
             decompressed_data: np.ndarray 已被解压的数据
         """
-        res = np.array((data.shape[0], 4), dtype = "uint32")
+        res = np.zeros((data.shape[0], 4), dtype = "uint32")
         res[:, 0] = (data[:, 0] << 16) + data[:, 1]
         res[:, 1] = self.extract(data[:, 2], 0x0001, 0)
         res[:, 2] = self.extract(data[:, 2], 0x007F, 8)

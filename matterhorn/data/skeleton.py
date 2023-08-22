@@ -201,6 +201,12 @@ class EventDataset1d(EventDataset):
 
 
     def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, t_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, float]] = None) -> None:
+        self.t_size = t_size
+        self.p_size = 2 if polarity else 1
+        self.x_size = x_size
+        if isinstance(clipped, Tuple):
+            assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
+        self.clipped = clipped
         super().__init__(
             root = root,
             train = train,
@@ -208,12 +214,6 @@ class EventDataset1d(EventDataset):
             target_transform = target_transform,
             download = download
         )
-        self.t_size = t_size
-        self.p_size = 2 if polarity else 1
-        self.x_size = x_size
-        if isinstance(clipped, Tuple):
-            assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
-        self.clipped = clipped
     
 
     def tx_2_tensor(self, data: np.ndarray) -> torch.Tensor:
@@ -277,13 +277,6 @@ class EventDataset2d(EventDataset):
 
 
     def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, t_size: int = 128, y_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, float]] = None) -> None:
-        super().__init__(
-            root = root,
-            train = train,
-            transform = transform,
-            target_transform = target_transform,
-            download = download
-        )
         self.t_size = t_size
         self.p_size = 2 if polarity else 1
         self.y_size = y_size
@@ -291,6 +284,13 @@ class EventDataset2d(EventDataset):
         if isinstance(clipped, Tuple):
             assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
         self.clipped = clipped
+        super().__init__(
+            root = root,
+            train = train,
+            transform = transform,
+            target_transform = target_transform,
+            download = download
+        )
 
 
     def tyx_2_tensor(self, data: np.ndarray) -> torch.Tensor:
