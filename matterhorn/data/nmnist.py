@@ -126,7 +126,7 @@ class NMNIST(EventDataset2d):
         res = np.zeros((data.shape[0] // 5, 4), dtype = np.int)
         res[:, 0] = ((data[2::5] & 0x7f) << 16) + (data[3::5] << 8) + data[4::5]
         res[:, 1] = data[2::5] >> 7
-        res[:, 2] = data[1::5]
+        res[:, 2] = self.original_size[2] - 1 - data[1::5]
         res[:, 3] = data[::5]
         return res
 

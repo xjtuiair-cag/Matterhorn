@@ -120,7 +120,8 @@ def main():
         pin_memory = True
     )
 
-    print(test_dataset[0][0].shape)
+    demo_data, demo_label = test_dataset[0]
+    print(demo_data.shape)
 
     # 设置学习率，优化器，学习率衰减机制等等
 

@@ -35,7 +35,7 @@ def main():
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
     time_steps = 128
-    batch_size = 128
+    batch_size = 32
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 32
     learning_rate = 1e-3
@@ -57,22 +57,24 @@ def main():
 
     print(Panel(Text("Model", justify = "center")))
 
-    model = snn.SNNContainer(
-        encoder = snn.DirectEncoder(),
-        snn_model = snn.TemporalContainer(
-            snn.SpatialContainer(
-                snn.Conv2d(in_channels = 2, out_channels = 8, kernel_size = 3, stride = 2, padding = 1), # [T, 8, 17, 17]
-                snn.LIF(tau_m = tau),
-                snn.Conv2d(in_channels = 8, out_channels = 16, kernel_size = 3, stride = 2, padding = 1), # [T, 16, 9, 9]
-                snn.LIF(tau_m = tau),
-                snn.Conv2d(in_channels = 16, out_channels = 32, kernel_size = 3, stride = 2, padding = 1), # [T, 32, 5, 5]
-                snn.LIF(tau_m = tau),
-                snn.Flatten(),
-                snn.Linear(800, 10),
-                snn.LIF(tau_m = tau)
-            )
+    model = nn.Sequential(
+        snn.SNNContainer(
+            encoder = snn.DirectEncoder(),
+            snn_model = snn.TemporalContainer(
+                snn.SpatialContainer(
+                    snn.Conv2d(in_channels = 2, out_channels = 8, kernel_size = 3, stride = 2, padding = 1), # [T, 8, 17, 17]
+                    snn.LIF(tau_m = tau),
+                    snn.Conv2d(in_channels = 8, out_channels = 16, kernel_size = 3, stride = 2, padding = 1), # [T, 16, 9, 9]
+                    snn.LIF(tau_m = tau),
+                    snn.Conv2d(in_channels = 16, out_channels = 32, kernel_size = 3, stride = 2, padding = 1), # [T, 32, 5, 5]
+                    snn.LIF(tau_m = tau),
+                )
+            ),
+            decoder = snn.AvgSpikeDecoder()
         ),
-        decoder = snn.AvgSpikeDecoder()
+        nn.Flatten(),
+        nn.Linear(800, 10),
+        nn.ReLU()
     )
     model = model.to(device)
 
@@ -111,9 +113,16 @@ def main():
         pin_memory = True
     )
 
-    print(test_dataset[0][0].shape)
+    demo_data, demo_label = test_dataset[0]
+    print(demo_data.shape)
+
 
     # 设置学习率，优化器，学习率衰减机制等等
+
+    print(Panel(Text("Prepare for Training", justify = "center")))
+
+    optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
+    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
 
     # 开始训练
 
@@ -121,39 +130,40 @@ def main():
 
     max_test_acc = 0.0
 
-    with torch.no_grad():
-        for e in range(epochs):
-            start_time = time.time()
+    for e in range(epochs):
+        start_time = time.time()
 
-            # 使用训练集进行训练
+        # 使用训练集进行训练
 
-            model.train()
-            model.start_step()
-            train_loss = 0.0
-            train_acc = 0.0
-            train_samples = 0
-            for x, y in track(train_data_loader, description = "Training at epoch %d" % (e,)):
-                x = x.to(device)
-                y = y.to(device)
-                y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
+        model.train()
+        train_loss = 0.0
+        train_acc = 0.0
+        train_samples = 0
+        for x, y in track(train_data_loader, description = "Training at epoch %d" % (e,)):
+            optimizer.zero_grad()
+            x = x.to(device)
+            y = y.to(device)
+            y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
 
-                o = model(x)
-                loss = torch.nn.functional.mse_loss(o, y0)
+            o = model(x)
+            loss = torch.nn.functional.mse_loss(o, y0)
+            loss.backward()
+            optimizer.step()
 
-                train_samples += y.numel()
-                train_loss += loss.item() * y.numel()
-                train_acc += (o.argmax(1) == y).float().sum().item()
+            train_samples += y.numel()
+            train_loss += loss.item() * y.numel()
+            train_acc += (o.argmax(1) == y).float().sum().item()
 
-            train_loss /= train_samples
-            train_acc /= train_samples
+        train_loss /= train_samples
+        train_acc /= train_samples
         
-            # 使用测试集进行评估
+        # 使用测试集进行评估
 
-            model.eval()
-            model.stop_step()
-            test_loss = 0.0
-            test_acc = 0.0
-            test_samples = 0
+        model.eval()
+        test_loss = 0.0
+        test_acc = 0.0
+        test_samples = 0
+        with torch.no_grad():
             for x, y in track(test_data_loader, description = "Testing at epoch %d" % (e,)):
                 x = x.to(device)
                 y = y.to(device)
@@ -166,27 +176,29 @@ def main():
                 test_loss += loss.item() * y.numel()
                 test_acc += (o.argmax(1) == y).float().sum().item()
         
-            test_loss /= test_samples
-            test_acc /= test_samples
-            if test_acc > max_test_acc:
-                max_test_acc = test_acc
+        test_loss /= test_samples
+        test_acc /= test_samples
+        if test_acc > max_test_acc:
+            max_test_acc = test_acc
         
-            end_time = time.time()
+        end_time = time.time()
 
-            # 打印测试结果
+        # 打印测试结果
 
-            result_table = Table(show_header = True, header_style = "bold blue")
-            result_table.add_column("Name", justify = "center")
-            result_table.add_column("Value", justify = "center")
-            result_table.add_row("Epoch", str(e))
-            result_table.add_row("Training Loss", "%.6f" % (train_loss,))
-            result_table.add_row("Training Accuracy", "%.2f%%" % (100 * train_acc,))
-            result_table.add_row("Testing Loss", "%.6f" % (test_loss,))
-            result_table.add_row("Testing Accuracy", "%.2f%%" % (100 * test_acc,))
-            result_table.add_row("Maximum Testing Accuracy", "%.2f%%" % (100 * max_test_acc,))
-            result_table.add_row("Duration", "%.3fs" %(end_time - start_time,))
-            print(result_table)
+        result_table = Table(show_header = True, header_style = "bold blue")
+        result_table.add_column("Name", justify = "center")
+        result_table.add_column("Value", justify = "center")
+        result_table.add_row("Epoch", str(e))
+        result_table.add_row("Learning Rate", "%.6f" % (lr_scheduler.get_last_lr()[0],))
+        result_table.add_row("Training Loss", "%.6f" % (train_loss,))
+        result_table.add_row("Training Accuracy", "%.2f%%" % (100 * train_acc,))
+        result_table.add_row("Testing Loss", "%.6f" % (test_loss,))
+        result_table.add_row("Testing Accuracy", "%.2f%%" % (100 * test_acc,))
+        result_table.add_row("Maximum Testing Accuracy", "%.2f%%" % (100 * max_test_acc,))
+        result_table.add_row("Duration", "%.3fs" %(end_time - start_time,))
+        print(result_table)
 
+        lr_scheduler.step()
 
 if __name__ == "__main__":
     main()
