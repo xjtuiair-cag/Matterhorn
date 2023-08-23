@@ -35,7 +35,7 @@ def main():
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
     time_steps = 128
-    batch_size = 32
+    batch_size = 128
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 32
     learning_rate = 1e-3
@@ -65,15 +65,13 @@ def main():
                     snn.Conv2d(in_channels = 2, out_channels = 8, kernel_size = 3, stride = 2, padding = 1), # [T, 8, 17, 17]
                     snn.LIF(tau_m = tau),
                     snn.Conv2d(in_channels = 8, out_channels = 16, kernel_size = 3, stride = 2, padding = 1), # [T, 16, 9, 9]
-                    snn.LIF(tau_m = tau),
-                    snn.Conv2d(in_channels = 16, out_channels = 32, kernel_size = 3, stride = 2, padding = 1), # [T, 32, 5, 5]
-                    snn.LIF(tau_m = tau),
+                    snn.LIF(tau_m = tau)
                 )
             ),
             decoder = snn.AvgSpikeDecoder()
         ),
         nn.Flatten(),
-        nn.Linear(800, 10),
+        nn.Linear(1296, 10),
         nn.ReLU()
     )
     model = model.to(device)
