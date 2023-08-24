@@ -16,24 +16,23 @@ class EventDataset(Dataset):
     data_target = []
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1) -> None:
         """
-        原始数据后缀名为.hdf5的数据集
+        事件数据集框架
         @params:
             root: str 数据集的存储位置
             train: bool 是否为训练集
             transform: Callable | None 数据如何变换
             target_transform: Callable | None 标签如何变换
             download: bool 如果数据集不存在，是否应该下载
-            precision: int 最终数据集的时间精度
-            time_steps: int 最终的数据集总共含有多少个时间步
-            length: int 最终数据集的空间精度
+            sampling: bool 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
         """
         super().__init__()
         self.root = root
         self.transform = transform
         self.target_transform = target_transform
         self.train = train
+        self.sampling = sampling
         if download:
             self.download()
         self.pre_process()
@@ -66,7 +65,7 @@ class EventDataset(Dataset):
         @return:
             str 数据集存储位置
         """
-        return os.path.join(self.root, self.__class__.__name__, "processed")
+        return os.path.join(self.root, self.__class__.__name__, "processed", "%d" % (self.sampling,))
 
 
     def check_exists(self) -> bool:
@@ -200,7 +199,21 @@ class EventDataset1d(EventDataset):
     original_size = (1, 2, 128)
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, t_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, t_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, float]] = None) -> None:
+        """
+        一维事件数据集框架
+        @params:
+            root: str 数据集的存储位置
+            train: bool 是否为训练集
+            transform: Callable | None 数据如何变换
+            target_transform: Callable | None 标签如何变换
+            download: bool 如果数据集不存在，是否应该下载
+            sampling: bool 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            t_size: int 时间维度的大小
+            x_size: int 空间维度的大小
+            polarity: bool 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
+            clipped: bool 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+        """
         self.t_size = t_size
         self.p_size = 2 if polarity else 1
         self.x_size = x_size
@@ -212,7 +225,8 @@ class EventDataset1d(EventDataset):
             train = train,
             transform = transform,
             target_transform = target_transform,
-            download = download
+            download = download,
+            sampling = sampling
         )
     
 
@@ -276,7 +290,22 @@ class EventDataset2d(EventDataset):
     original_size = (1, 2, 128, 128)
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, t_size: int = 128, y_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, t_size: int = 128, y_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, float]] = None) -> None:
+        """
+        二维事件数据集框架
+        @params:
+            root: str 数据集的存储位置
+            train: bool 是否为训练集
+            transform: Callable | None 数据如何变换
+            target_transform: Callable | None 标签如何变换
+            download: bool 如果数据集不存在，是否应该下载
+            sampling: bool 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            t_size: int 时间维度的大小
+            y_size: int 第一个空间维度的大小
+            x_size: int 第二个空间维度的大小
+            polarity: bool 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
+            clipped: bool 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+        """
         self.t_size = t_size
         self.p_size = 2 if polarity else 1
         self.y_size = y_size
@@ -289,7 +318,8 @@ class EventDataset2d(EventDataset):
             train = train,
             transform = transform,
             target_transform = target_transform,
-            download = download
+            download = download,
+            sampling = sampling
         )
 
 

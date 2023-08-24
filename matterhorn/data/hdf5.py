@@ -22,7 +22,7 @@ class HDF5(EventDataset1d):
     labels = []
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 128, clipped: Optional[Union[Tuple, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, precision: int = 1e9, time_steps: int = 128, length: int = 128, clipped: Optional[Union[Tuple, float]] = None) -> None:
         """
         原始数据后缀名为.hdf5的数据集
         @params:
@@ -31,6 +31,7 @@ class HDF5(EventDataset1d):
             transform: Callable | None 数据如何变换
             target_transform: Callable | None 标签如何变换
             download: bool 如果数据集不存在，是否应该下载
+            sampling: bool 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             precision: int 最终数据集的时间精度
             time_steps: int 最终的数据集总共含有多少个时间步
             length: int 最终数据集的空间精度
@@ -42,6 +43,7 @@ class HDF5(EventDataset1d):
             transform = transform,
             target_transform = target_transform,
             download = download,
+            sampling = sampling,
             t_size = time_steps,
             x_size = length,
             polarity = False,
@@ -81,7 +83,7 @@ class SpikingHeidelbergDigits(HDF5):
     labels = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun"]
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 700, clipped: Optional[Union[Tuple, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, precision: int = 1e9, time_steps: int = 128, length: int = 700, clipped: Optional[Union[Tuple, float]] = None) -> None:
         """
         Spiking Heidelberg Digits数据集，记录下英文和德语的0-9（总共20类），并转换成长度为700的脉冲。
         @params:
@@ -90,6 +92,7 @@ class SpikingHeidelbergDigits(HDF5):
             transform: Callable | None 数据如何变换
             target_transform: Callable | None 标签如何变换
             download: bool 如果数据集不存在，是否应该下载
+            sampling: bool 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             precision: int 最终数据集的时间精度
             time_steps: int 最终的数据集总共含有多少个时间步
             length: int 最终数据集的空间精度
@@ -101,6 +104,7 @@ class SpikingHeidelbergDigits(HDF5):
             transform = transform,
             target_transform = target_transform,
             download = download,
+            sampling = sampling,
             precision = precision,
             time_steps = time_steps,
             length = length,
@@ -181,6 +185,8 @@ class SpikingHeidelbergDigits(HDF5):
                 event_data = np.zeros((len(x), 2), dtype = np.int)
                 event_data[:, 0] = t
                 event_data[:, 1] = x
+                if self.sampling > 1:
+                    event_data = event_data[::self.sampling]
                 label = label_list[idx]
                 self.save_event_data(file_idx, event_data)
                 file_list.append([file_idx, label, is_train])

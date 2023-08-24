@@ -22,7 +22,7 @@ class NMNIST(EventDataset2d):
     labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, time_steps: int = 128, width: int = 34, height: int = 34, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, time_steps: int = 128, width: int = 34, height: int = 34, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
         """
         NMNIST数据集，将MNIST数据集动态变换后，转为事件的形式。
         @params:
@@ -31,6 +31,7 @@ class NMNIST(EventDataset2d):
             transform: Callable | None 数据如何变换
             target_transform: Callable | None 标签如何变换
             download: bool 如果数据集不存在，是否应该下载
+            sampling: bool 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             time_steps: int 最终的数据集总共含有多少个时间步
             width: int 最终数据集的宽度
             height: int 最终数据集的高度
@@ -43,6 +44,7 @@ class NMNIST(EventDataset2d):
             transform = transform,
             target_transform = target_transform,
             download = download,
+            sampling = sampling,
             t_size = time_steps,
             y_size = height,
             x_size = width,
@@ -128,6 +130,8 @@ class NMNIST(EventDataset2d):
         res[:, 1] = data[2::5] >> 7
         res[:, 2] = self.original_size[2] - 1 - data[1::5]
         res[:, 3] = data[::5]
+        if self.sampling > 1:
+            res = res[::self.sampling]
         return res
 
 

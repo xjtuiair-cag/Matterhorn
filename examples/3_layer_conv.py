@@ -87,13 +87,17 @@ def main():
         root = "./examples/data",
         train = True,
         download = True,
-        time_steps = time_steps
+        time_steps = time_steps,
+        width = 34,
+        height = 34
     )
     test_dataset = matterhorn.data.NMNIST(
         root = "./examples/data",
         train = False,
         download = True,
-        time_steps = time_steps
+        time_steps = time_steps,
+        width = 34,
+        height = 34
     )
 
     train_data_loader = DataLoader(
@@ -113,7 +117,6 @@ def main():
 
     demo_data, demo_label = test_dataset[0]
     print(demo_data.shape)
-
 
     # 设置学习率，优化器，学习率衰减机制等等
 
