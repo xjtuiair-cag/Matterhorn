@@ -136,6 +136,11 @@ def main():
     print(Panel(Text("Training", justify = "center")))
 
     max_test_acc = 0.0
+    last_train_loss = torch.inf
+    last_train_acc = 0.0
+    last_test_loss = torch.inf
+    last_test_acc = 0.0
+    get_color = lambda x, y: "green" if x > y else ("red" if x < y else "blue")
 
     for e in range(epochs):
         start_time = time.time()
@@ -197,14 +202,18 @@ def main():
         result_table.add_column("Value", justify = "center")
         result_table.add_row("Epoch", str(e))
         result_table.add_row("Learning Rate", "%.6f" % (lr_scheduler.get_last_lr()[0],))
-        result_table.add_row("Training Loss", "%.6f" % (train_loss,))
-        result_table.add_row("Training Accuracy", "%.2f%%" % (100 * train_acc,))
-        result_table.add_row("Testing Loss", "%.6f" % (test_loss,))
-        result_table.add_row("Testing Accuracy", "%.2f%%" % (100 * test_acc,))
+        result_table.add_row("Training Loss", "[%s]%.6f%%[/%s]" % (get_color(last_train_loss, train_loss), train_loss, get_color(last_train_loss, train_loss)))
+        result_table.add_row("Training Accuracy", "[%s]%.2f%%[/%s]" % (get_color(train_acc, last_train_acc), 100 * train_acc,get_color(train_acc, last_train_acc)))
+        result_table.add_row("Testing Loss", "[%s]%.6f%%[/%s]" % (get_color(last_test_loss, test_loss), test_loss, get_color(last_test_loss, test_loss)))
+        result_table.add_row("Testing Accuracy", "[%s]%.2f%%[/%s]" % (get_color(test_acc, last_test_acc), 100 * test_acc, get_color(test_acc, last_test_acc)))
         result_table.add_row("Maximum Testing Accuracy", "%.2f%%" % (100 * max_test_acc,))
         result_table.add_row("Duration", "%.3fs" %(end_time - start_time,))
         print(result_table)
 
+        last_train_loss = train_loss
+        last_train_acc = train_acc
+        last_test_loss = test_loss
+        last_test_acc = test_acc
         lr_scheduler.step()
 
 if __name__ == "__main__":

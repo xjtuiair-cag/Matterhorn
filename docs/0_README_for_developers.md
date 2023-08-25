@@ -199,8 +199,8 @@ sudo apt install git python3-pip
 
 ```sh
 git --help
-python --help
-pip --help
+python3 --help
+pip3 --help
 ```
 
 分别查看是否安装成功。若无报错，则表明安装成功。
