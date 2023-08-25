@@ -34,8 +34,10 @@ def main():
 
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
-    time_steps = 128
-    batch_size = 128
+    width = 34
+    height = 34
+    time_steps = 64
+    batch_size = 64
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 32
     learning_rate = 1e-3
@@ -62,16 +64,18 @@ def main():
             encoder = snn.DirectEncoder(),
             snn_model = snn.TemporalContainer(
                 snn.SpatialContainer(
-                    snn.Conv2d(in_channels = 2, out_channels = 8, kernel_size = 3, stride = 2, padding = 1), # [T, 8, 17, 17]
+                    snn.Conv2d(in_channels = 2, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 17, 17]
                     snn.LIF(tau_m = tau),
-                    snn.Conv2d(in_channels = 8, out_channels = 16, kernel_size = 3, stride = 2, padding = 1), # [T, 16, 9, 9]
+                    snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 9, 9]
+                    snn.LIF(tau_m = tau),
+                    snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 5, 5]
                     snn.LIF(tau_m = tau)
                 )
             ),
             decoder = snn.AvgSpikeDecoder()
         ),
         nn.Flatten(),
-        nn.Linear(1296, 10),
+        nn.Linear(1600, 10),
         nn.ReLU()
     )
     model = model.to(device)
@@ -88,16 +92,16 @@ def main():
         train = True,
         download = True,
         time_steps = time_steps,
-        width = 34,
-        height = 34
+        width = width,
+        height = height
     )
     test_dataset = matterhorn.data.NMNIST(
         root = "./examples/data",
         train = False,
         download = True,
         time_steps = time_steps,
-        width = 34,
-        height = 34
+        width = width,
+        height = height
     )
 
     train_data_loader = DataLoader(
@@ -117,6 +121,8 @@ def main():
 
     demo_data, demo_label = test_dataset[0]
     print(demo_data.shape)
+    # from matterhorn.plotter.functional import event_plot_2d
+    # event_plot_2d(demo_data, titles = ["label %d" % demo_label])
 
     # 设置学习率，优化器，学习率衰减机制等等
 
@@ -144,7 +150,7 @@ def main():
             optimizer.zero_grad()
             x = x.to(device)
             y = y.to(device)
-            y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
+            y0 = torch.nn.functional.one_hot(y, num_classes = len(train_dataset.labels)).float()
 
             o = model(x)
             loss = torch.nn.functional.mse_loss(o, y0)
@@ -168,7 +174,7 @@ def main():
             for x, y in track(test_data_loader, description = "Testing at epoch %d" % (e,)):
                 x = x.to(device)
                 y = y.to(device)
-                y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
+                y0 = torch.nn.functional.one_hot(y, num_classes = len(train_dataset.labels)).float()
                 
                 o = model(x)
                 loss = torch.nn.functional.mse_loss(o, y0)
