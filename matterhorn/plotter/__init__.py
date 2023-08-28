@@ -1,1 +1,1 @@
-from .functional import event_plot_1d, event_plot_2d
+from .functional import event_plot_tx, event_plot_tyx
