@@ -407,6 +407,8 @@ class DVS128Gesture(AEDAT):
             raw_data_list.append(raw_data[idx_list[len(idx_list) - 1] + 7:])
             raw_data = np.concatenate(raw_data_list, axis = 0)
             event_data = self.data_2_tpyx(raw_data)
+            event_data[:, 2] = self.original_size[2] - 1 - event_data[:, 2]
+            event_data[:, 3] = self.original_size[3] - 1 - event_data[:, 3]
             class_info = np.loadtxt(os.path.join(aedat_file_dir, filename.replace(".aedat", "_labels.csv")), dtype = np.int, delimiter = ",", skiprows = 1)
             for label, start, end in class_info:
                 data = event_data[(event_data[:, 0] >= start) & (event_data[:, 0] < end)]

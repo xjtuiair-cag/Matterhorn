@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
-import torchvision
-from torchvision.datasets import MNIST
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 
 
 import time
@@ -34,10 +32,8 @@ def main():
 
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
-    width = 34
-    height = 34
-    time_steps = 64
-    batch_size = 64
+    time_steps = 128
+    batch_size = 128
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 32
     learning_rate = 1e-3
@@ -87,6 +83,8 @@ def main():
 
     print(Panel(Text("Dataset", justify = "center")))
 
+    width = 34
+    height = 34
     train_dataset = matterhorn.data.NMNIST(
         root = "./examples/data",
         train = True,
@@ -121,8 +119,7 @@ def main():
 
     demo_data, demo_label = test_dataset[0]
     print(demo_data.shape)
-    # from matterhorn.plotter.functional import event_plot_2d
-    # event_plot_2d(demo_data, titles = ["label %d" % demo_label])
+    # matterhorn.plotter.event_plot_2d(demo_data, titles = ["%s Label %s" % (test_dataset.__class__.__name__, test_dataset.labels[demo_label])])
 
     # 设置学习率，优化器，学习率衰减机制等等
 

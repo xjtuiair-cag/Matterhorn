@@ -330,6 +330,132 @@ cd matterhorn_cuda_extensions
 python3 setup.py install
 ```
 
+### Neuromorphic Datasets
+
+Matterhorn provides several neuromorphic datasets for training spiking neural networks.
+
+#### NMNIST
+
+We know MNIST. MNIST dataset is for training image classification, consisting of a set of 28x28 pixel grayscale images of handwritten digits (0-9). NMNIST is like MNIST, which is different is that it distorts images and record them into events. The shape of events in NMNIST Dataset is Tx2x34x34.
+
+![NMNIST Dataset](./assets/readme_8.png)
+
+You can use NMNIST dataset in Matterhorn by the code below:
+
+```python
+from matterhorn.data import NMNIST
+
+time_steps = 128
+
+train_dataset = NMNIST(
+    root = "your/data/path",
+    train = True,
+    download = True,
+    time_steps = time_steps
+)
+test_dataset = NMNIST(
+    root = "your/data/path",
+    train = False,
+    download = True,
+    time_steps = time_steps
+)
+```
+
+#### CIFAR10-DVS
+
+CIFAR10-DVS dataset records distorted CIFAR-10 image by a DVS camera. The shape of events in CIFAR10-DVS Dataset is Tx2x128x128.
+
+![CIFAR10-DVS Dataset](./assets/readme_9.png)
+
+You can use CIFAR10-DVS Dataset in Matterhorn by the code below:
+
+```python
+from matterhorn.data import CIFAR10DVS
+
+time_steps = 128
+
+train_dataset = CIFAR10DVS(
+    root = "your/data/path",
+    train = True,
+    download = True,
+    time_steps = time_steps
+)
+test_dataset = CIFAR10DVS(
+    root = "your/data/path",
+    train = False,
+    download = True,
+    time_steps = time_steps
+)
+```
+
+#### DVS128 Gesture
+
+DVS128 Gesture dataset records gestures from 29 different people under 3 different illuminating conditions by DVS camera. The shape of events in DVS128 Gesture dataset is Tx2x128x128.
+
+![DVS128 Gesture Dataset](./assets/readme_10.png)
+
+You can use DVS128 Gesture dataset in Matterhorn by the code below:
+
+```python
+from matterhorn.data import DVS128Gesture
+
+time_steps = 128
+
+train_dataset = DVS128Gesture(
+    root = "your/data/path",
+    train = True,
+    download = True,
+    time_steps = time_steps
+)
+test_dataset = DVS128Gesture(
+    root = "your/data/path",
+    train = False,
+    download = True,
+    time_steps = time_steps
+)
+```
+
+**Warning:** You may have to set parameter `sampling` to save the disk space in your device.
+
+```python
+train_dataset = DVS128Gesture(
+    root = "your/data/path",
+    train = True,
+    download = True,
+    sampling = 600,
+    time_steps = time_steps
+)
+```
+
+Recommended sampling ratio is more than 100 (which means choose one from `sampling` events).
+
+#### Spiking Heidelberg Digits (SHD)
+
+SHD dataset records vocal number from 1 to 10 in both English and German and turns them into events. The shape of events in SHD dataset is Tx700.
+
+![SHD Dataset](./assets/readme_11.png)
+
+You can use SHD dataset in Matterhorn by the code below:
+
+```python
+from matterhorn.data import SpikingHeidelbergDigits
+
+time_steps = 128
+
+train_dataset = SpikingHeidelbergDigits(
+    root = "your/data/path",
+    train = True,
+    download = True,
+    time_steps = time_steps
+)
+test_dataset = SpikingHeidelbergDigits(
+    root = "your/data/path",
+    train = False,
+    download = True,
+    time_steps = time_steps
+)
+```
+
 ## 4 Neuromorphic Hardware Support
 
 Will come out soon, but not today.
