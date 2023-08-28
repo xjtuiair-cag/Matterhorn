@@ -3,7 +3,7 @@ from torch import Tensor
 import torch.nn as nn
 
 
-from matterhorn.snn import container
+from matterhorn.snn.skeleton import Module
 
 
 @torch.jit.script
@@ -88,7 +88,7 @@ def stdp(delta_weight: torch.Tensor, input_shape: int, output_shape: int, time_s
     return stdp_py(delta_weight, input_shape, output_shape, time_steps, input_spike_train, output_spike_train, a_pos, tau_pos, a_neg, tau_neg)
 
 
-class STDPLinear(nn.Linear):
+class STDPLinear(Module, nn.Linear):
     def __init__(self, in_features: int, out_features: int, soma: nn.Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, device = None, dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层
@@ -101,7 +101,9 @@ class STDPLinear(nn.Linear):
             a_neg: float STDP参数A-
             tau_neg: float STDP参数tau-
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.Linear.__init__(
+            self,
             in_features = in_features, 
             out_features = out_features,
             bias = False,

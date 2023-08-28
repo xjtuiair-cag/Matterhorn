@@ -6,13 +6,16 @@ from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 from torch.nn.modules.normalization import _shape_t
 
 
+from matterhorn.snn.skeleton import Module
+
+
 """
 脉冲神经网络神经元的突触，一层的前半段。输入为脉冲，输出为模拟电位值。
 由突触将来自上一层神经元的脉冲信号$O_{j}^{l-1}(t)$整合成为突触后电位$X_{i}^{l}(t)$后，在胞体中进行突触后电位的累积和发放。
 """
 
 
-class Linear(nn.Linear):
+class Linear(Module, nn.Linear):
     def __init__(self, in_features: int, out_features: int, bias: bool = True, device = None, dtype = None) -> None:
         """
         全连接操作，输入一个大小为[B, L_{in}]的张量，输出一个大小为[B, L_{out}]的张量。
@@ -23,7 +26,9 @@ class Linear(nn.Linear):
             device: torch.device 所计算的设备
             dtype: 所计算的数据类型
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.Linear.__init__(
+            self,
             in_features = in_features,
             out_features = out_features,
             bias = bias,
@@ -44,7 +49,7 @@ class Linear(nn.Linear):
         return x
 
 
-class Conv1d(nn.Conv1d):
+class Conv1d(Module, nn.Conv1d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: Union[_size_1_t, str] = 0, dilation: _size_1_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", device = None, dtype = None) -> None:
         """
         一维卷积操作，输入一个大小为[B, C_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, L_{out}]的张量。
@@ -61,7 +66,9 @@ class Conv1d(nn.Conv1d):
             device: torch.device 所计算的设备
             dtype: 所计算的数据类型
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.Conv1d.__init__(
+            self,
             in_channels = in_channels,
             out_channels = out_channels,
             kernel_size = kernel_size,
@@ -88,7 +95,7 @@ class Conv1d(nn.Conv1d):
         return x
 
 
-class Conv2d(nn.Conv2d):
+class Conv2d(Module, nn.Conv2d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: Union[_size_2_t, str] = 0, dilation: _size_2_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", device = None, dtype = None) -> None:
         """
         二维卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}]的张量。
@@ -105,7 +112,9 @@ class Conv2d(nn.Conv2d):
             device: torch.device 所计算的设备
             dtype: 所计算的数据类型
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.Conv2d.__init__(
+            self,
             in_channels = in_channels,
             out_channels = out_channels,
             kernel_size = kernel_size,
@@ -132,7 +141,7 @@ class Conv2d(nn.Conv2d):
         return x
 
 
-class Conv3d(nn.Conv3d):
+class Conv3d(Module, nn.Conv3d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: Union[_size_3_t, str] = 0, dilation: _size_3_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", device = None, dtype = None) -> None:
         """
         三维卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}, L_{out}]的张量。
@@ -149,7 +158,9 @@ class Conv3d(nn.Conv3d):
             device: torch.device 所计算的设备
             dtype: 所计算的数据类型
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.Conv3d.__init__(
+            self,
             in_channels = in_channels,
             out_channels = out_channels,
             kernel_size = kernel_size,
@@ -176,7 +187,7 @@ class Conv3d(nn.Conv3d):
         return x
 
 
-class ConvTranspose1d(nn.ConvTranspose1d):
+class ConvTranspose1d(Module, nn.ConvTranspose1d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: _size_1_t = 0, output_padding: _size_1_t = 0, groups: int = 1, bias: bool = True, dilation: _size_1_t = 1, padding_mode: str = "zeros", device = None, dtype = None) -> None:
         """
         一维逆卷积操作，输入一个大小为[B, C_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, L_{out}]的张量。
@@ -194,7 +205,9 @@ class ConvTranspose1d(nn.ConvTranspose1d):
             device: torch.device 所计算的设备
             dtype: 所计算的数据类型
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.ConvTranspose1d.__init__(
+            self,
             in_channels = in_channels,
             out_channels = out_channels,
             kernel_size = kernel_size,
@@ -222,7 +235,7 @@ class ConvTranspose1d(nn.ConvTranspose1d):
         return x
 
 
-class ConvTranspose2d(nn.ConvTranspose2d):
+class ConvTranspose2d(Module, nn.ConvTranspose2d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, output_padding: _size_2_t = 0, groups: int = 1, bias: bool = True, dilation: _size_2_t = 1, padding_mode: str = "zeros", device = None, dtype = None) -> None:
         """
         二维逆卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}]的张量。
@@ -240,7 +253,9 @@ class ConvTranspose2d(nn.ConvTranspose2d):
             device: torch.device 所计算的设备
             dtype: 所计算的数据类型
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.ConvTranspose2d.__init__(
+            self,
             in_channels = in_channels,
             out_channels = out_channels,
             kernel_size = kernel_size,
@@ -268,7 +283,7 @@ class ConvTranspose2d(nn.ConvTranspose2d):
         return x
 
 
-class ConvTranspose3d(nn.ConvTranspose3d):
+class ConvTranspose3d(Module, nn.ConvTranspose3d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _size_3_t = 0, output_padding: _size_3_t = 0, groups: int = 1, bias: bool = True, dilation: _size_3_t = 1, padding_mode: str = "zeros", device = None, dtype = None) -> None:
         """
         三维逆卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}, L_{out}]的张量。
@@ -286,7 +301,9 @@ class ConvTranspose3d(nn.ConvTranspose3d):
             device: torch.device 所计算的设备
             dtype: 所计算的数据类型
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.ConvTranspose3d.__init__(
+            self,
             in_channels = in_channels,
             out_channels = out_channels,
             kernel_size = kernel_size,
@@ -314,7 +331,7 @@ class ConvTranspose3d(nn.ConvTranspose3d):
         return x
 
 
-class BatchNorm1d(nn.BatchNorm1d):
+class BatchNorm1d(Module, nn.BatchNorm1d):
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, device = None, dtype = None) -> None:
         """
         一维批归一化。
@@ -327,7 +344,9 @@ class BatchNorm1d(nn.BatchNorm1d):
             device: torch.device 所计算的设备
             dtype: 所计算的数据类型
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.BatchNorm1d.__init__(
+            self,
             num_features = num_features,
             eps = eps,
             momentum = momentum,
@@ -350,7 +369,7 @@ class BatchNorm1d(nn.BatchNorm1d):
         return x
 
 
-class BatchNorm2d(nn.BatchNorm2d):
+class BatchNorm2d(Module, nn.BatchNorm2d):
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, device = None, dtype = None) -> None:
         """
         二维批归一化。
@@ -363,7 +382,9 @@ class BatchNorm2d(nn.BatchNorm2d):
             device: torch.device 所计算的设备
             dtype: 所计算的数据类型
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.BatchNorm2d.__init__(
+            self,
             num_features = num_features,
             eps = eps,
             momentum = momentum,
@@ -386,7 +407,7 @@ class BatchNorm2d(nn.BatchNorm2d):
         return x
 
 
-class BatchNorm3d(nn.BatchNorm3d):
+class BatchNorm3d(Module, nn.BatchNorm3d):
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, device = None, dtype = None) -> None:
         """
         三维批归一化。
@@ -399,7 +420,9 @@ class BatchNorm3d(nn.BatchNorm3d):
             device: torch.device 所计算的设备
             dtype: 所计算的数据类型
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.BatchNorm3d.__init__(
+            self,
             num_features = num_features,
             eps = eps,
             momentum = momentum,
@@ -422,7 +445,7 @@ class BatchNorm3d(nn.BatchNorm3d):
         return x
 
 
-class LayerNorm(nn.LayerNorm):
+class LayerNorm(Module, nn.LayerNorm):
     def __init__(self, normalized_shape: _shape_t, eps: float = 0.00001, elementwise_affine: bool = True, device=None, dtype=None) -> None:
         """
         数据归一化。
@@ -433,7 +456,9 @@ class LayerNorm(nn.LayerNorm):
             device: torch.device 所计算的设备
             dtype: 所计算的数据类型
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.LayerNorm.__init__(
+            self,
             normalized_shape = normalized_shape,
             eps = eps,
             elementwise_affine = elementwise_affine,

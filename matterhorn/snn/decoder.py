@@ -2,13 +2,16 @@ import torch
 import torch.nn as nn
 
 
+from matterhorn.snn.skeleton import Module
+
+
 """
 脉冲神经网络的解码机制。
 注意：此单元可能会改变张量形状。
 """
 
 
-class SumSpike(nn.Module):
+class SumSpike(Module):
     def __init__(self) -> None:
         """
         取张量在时间维度上的总值（总脉冲）
@@ -29,7 +32,7 @@ class SumSpike(nn.Module):
         return y
 
 
-class AverageSpike(nn.Module):
+class AverageSpike(Module):
     def __init__(self) -> None:
         """
         取张量在时间维度上的平均值（平均脉冲）
@@ -50,7 +53,7 @@ class AverageSpike(nn.Module):
         return y
 
 
-class MinTime(nn.Module):
+class MinTime(Module):
     def __init__(self, time_steps: int = 1, reset_after_process: bool = True) -> None:
         """
         取张量在时间维度上的时间加权平均值
@@ -67,7 +70,7 @@ class MinTime(nn.Module):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -96,7 +99,7 @@ class MinTime(nn.Module):
         return y
 
 
-class AverageTime(nn.Module):
+class AverageTime(Module):
     def __init__(self, time_steps: int = 1, reset_after_process: bool = True) -> None:
         """
         取张量在时间维度上的时间加权平均值
@@ -113,7 +116,7 @@ class AverageTime(nn.Module):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """

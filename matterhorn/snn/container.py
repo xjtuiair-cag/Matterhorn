@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 
 
+from matterhorn.snn.skeleton import Module
+
+
 from typing import Optional
 
 
@@ -11,20 +14,20 @@ from typing import Optional
 """
 
 
-class Spatial(nn.Sequential):
+class Spatial(Module, nn.Sequential):
     def __init__(self, *args) -> None:
         """
-        SNN的空间容器
-        用法同nn.Sequential，加入一些特殊的作用于SNN的函数
+        SNN的空间容器，用法同nn.Sequential，加入一些特殊的作用于SNN的函数。
         @params:
             *args: [nn.Module] 按空间顺序传入的各个模块
         """
-        super().__init__(*args)
+        Module.__init__(self)
+        nn.Sequential.__init__(self, *args)
     
 
     def reset(self) -> None:
         """
-        一次重置该序列中所有的神经元
+        一次重置该序列中所有的神经元。
         """
         for module in self:
             if hasattr(module, "reset"):
@@ -33,7 +36,7 @@ class Spatial(nn.Sequential):
 
     def start_step(self) -> None:
         """
-        开始STDP训练
+        开始STDP训练。
         """
         for module in self:
             if hasattr(module, "start_step"):
@@ -42,7 +45,7 @@ class Spatial(nn.Sequential):
 
     def stop_step(self) -> None:
         """
-        停止STDP训练
+        停止STDP训练。
         """
         for module in self:
             if hasattr(module, "stop_step"):
@@ -51,18 +54,17 @@ class Spatial(nn.Sequential):
 
     def step_once(self) -> None:
         """
-        一次部署所有结点的STDP学习
+        一次部署所有结点的STDP训练。
         """
         for module in self:
             if hasattr(module, "step_once"):
                 module.step_once()
 
 
-class Temporal(nn.Module):
+class Temporal(Module):
     def __init__(self, module: nn.Module, reset_after_process = True) -> None:
         """
-        SNN的时间容器
-        在多个时间步之内执行脉冲神经网络
+        SNN的时间容器，在多个时间步之内执行脉冲神经网络。
         @params:
             module: nn.Module 所用来执行的单步模型
             reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
@@ -75,7 +77,7 @@ class Temporal(nn.Module):
 
     def reset(self) -> None:
         """
-        重置模型
+        重置模型。
         """
         if hasattr(self.module, "reset"):
             self.module.reset()
@@ -83,7 +85,7 @@ class Temporal(nn.Module):
     
     def start_step(self) -> None:
         """
-        开始STDP训练
+        开始STDP训练。
         """
         self.step_after_process = True
         if hasattr(self.module, "start_step"):
@@ -92,7 +94,7 @@ class Temporal(nn.Module):
 
     def stop_step(self) -> None:
         """
-        停止STDP训练
+        停止STDP训练。
         """
         self.step_after_process = False
         if hasattr(self.module, "stop_step"):
@@ -101,7 +103,7 @@ class Temporal(nn.Module):
 
     def step_once(self) -> None:
         """
-        部署结点的STDP学习
+        部署结点的STDP训练。
         """
         if hasattr(self.module, "step_once"):
             self.module.step_once()
@@ -127,10 +129,10 @@ class Temporal(nn.Module):
         return y
 
 
-class Container(nn.Module):
+class Container(Module):
     def __init__(self, encoder: Optional[nn.Module] = None, snn_model: Optional[nn.Module] = None, decoder: Optional[nn.Module] = None) -> None:
         """
-        SNN容器，包括编码器、神经网络主体和解码器，将SNN包装起来，以和ANN结合
+        SNN容器，包括编码器、神经网络主体和解码器，将SNN包装起来，以和ANN结合。
         @params:
             encoder: Optional[nn.Module] 编码器
             snn_model: Optional[nn.Module] SNN主体
@@ -144,7 +146,7 @@ class Container(nn.Module):
 
     def reset(self) -> None:
         """
-        重置模型
+        重置模型。
         """
         if hasattr(self.encoder, "reset"):
             self.encoder.reset()
@@ -156,7 +158,7 @@ class Container(nn.Module):
 
     def start_step(self) -> None:
         """
-        开始STDP训练
+        开始STDP训练。
         """
         if hasattr(self.snn_model, "start_step"):
             self.snn_model.start_step()
@@ -164,7 +166,7 @@ class Container(nn.Module):
 
     def stop_step(self) -> None:
         """
-        停止STDP训练
+        停止STDP训练。
         """
         if hasattr(self.snn_model, "stop_step"):
             self.snn_model.stop_step()
@@ -172,7 +174,7 @@ class Container(nn.Module):
 
     def step_once(self) -> None:
         """
-        部署结点的STDP学习
+        部署结点的STDP训练。
         """
         if hasattr(self.snn_model, "step_once"):
             self.snn_model.step_once()
@@ -180,7 +182,7 @@ class Container(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数，根据所传入的编解码器判断SNN中的张量形态
+        前向传播函数，根据所传入的编解码器判断SNN中的张量形态。
         @params:
             x: torch.Tensor 输入张量
         @return:

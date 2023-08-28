@@ -4,8 +4,10 @@ import torch
 import torch.nn as nn
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
+
+
+from matterhorn.snn.skeleton import Module
 from matterhorn.snn import surrogate
-torch.autograd.set_detect_anomaly(True)
 
 
 """
@@ -39,7 +41,7 @@ class val_to_spike(torch.autograd.Function):
         return grad_output
 
 
-class SRM0Linear(nn.Module):
+class SRM0Linear(Module):
     def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), device = None, dtype = None) -> None:
         """
         SRM0神经元，突触响应的神经元
@@ -77,7 +79,7 @@ class SRM0Linear(nn.Module):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -205,7 +207,7 @@ class SRM0Linear(nn.Module):
         return o
 
 
-class MaxPool1d(nn.MaxPool1d):
+class MaxPool1d(Module, nn.MaxPool1d):
     def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
         """
         一维最大池化。
@@ -217,7 +219,9 @@ class MaxPool1d(nn.MaxPool1d):
             return_indices: bool 是否返回带索引的内容
             ceil_mode: bool 是否向上取整
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.MaxPool1d.__init__(
+            self,
             kernel_size = kernel_size,
             stride = stride,
             padding = padding,
@@ -239,7 +243,7 @@ class MaxPool1d(nn.MaxPool1d):
         return val_to_spike.apply(y)
 
 
-class MaxPool2d(nn.MaxPool2d):
+class MaxPool2d(Module, nn.MaxPool2d):
     def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
         """
         二维最大池化。
@@ -251,7 +255,9 @@ class MaxPool2d(nn.MaxPool2d):
             return_indices: bool 是否返回带索引的内容
             ceil_mode: bool 是否向上取整
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.MaxPool2d.__init__(
+            self,
             kernel_size = kernel_size,
             stride = stride,
             padding = padding,
@@ -272,7 +278,7 @@ class MaxPool2d(nn.MaxPool2d):
         return val_to_spike.apply(y)
 
 
-class MaxPool3d(nn.MaxPool3d):
+class MaxPool3d(Module, nn.MaxPool3d):
     def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
         """
         三维最大池化。
@@ -284,7 +290,9 @@ class MaxPool3d(nn.MaxPool3d):
             return_indices: bool 是否返回带索引的内容
             ceil_mode: bool 是否向上取整
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.MaxPool3d.__init__(
+            self,
             kernel_size = kernel_size,
             stride = stride,
             padding = padding,
@@ -306,7 +314,7 @@ class MaxPool3d(nn.MaxPool3d):
         return val_to_spike.apply(y)
 
 
-class AvgPool1d(nn.AvgPool1d):
+class AvgPool1d(Module, nn.AvgPool1d):
     def __init__(self, kernel_size: _size_1_t, stride: _size_1_t = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True) -> None:
         """
         一维平均池化。
@@ -317,7 +325,9 @@ class AvgPool1d(nn.AvgPool1d):
             ceil_mode: bool 是否向上取整
             count_include_pad: bool 是否连带边界一起计算
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.AvgPool1d.__init__(
+            self,
             kernel_size = kernel_size,
             stride = stride,
             padding = padding,
@@ -338,7 +348,7 @@ class AvgPool1d(nn.AvgPool1d):
         return val_to_spike.apply(y)
 
 
-class AvgPool2d(nn.AvgPool2d):
+class AvgPool2d(Module, nn.AvgPool2d):
     def __init__(self, kernel_size: _size_2_t, stride: Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None) -> None:
         """
         二维平均池化。
@@ -350,7 +360,9 @@ class AvgPool2d(nn.AvgPool2d):
             count_include_pad: bool 是否连带边界一起计算
             divisor_override: int | None 是否用某个数取代总和作为除数
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.AvgPool2d.__init__(
+            self,
             kernel_size = kernel_size,
             stride = stride,
             padding = padding,
@@ -372,7 +384,7 @@ class AvgPool2d(nn.AvgPool2d):
         return val_to_spike.apply(y)
 
 
-class AvgPool3d(nn.AvgPool3d):
+class AvgPool3d(Module, nn.AvgPool3d):
     def __init__(self, kernel_size: _size_3_t, stride: Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None) -> None:
         """
         三维平均池化。
@@ -384,7 +396,9 @@ class AvgPool3d(nn.AvgPool3d):
             count_include_pad: bool 是否连带边界一起计算
             divisor_override: int | None 是否用某个数取代总和作为除数
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.AvgPool3d.__init__(
+            self,
             kernel_size = kernel_size,
             stride = stride,
             padding = padding,
@@ -406,7 +420,7 @@ class AvgPool3d(nn.AvgPool3d):
         return val_to_spike.apply(y)
 
 
-class Flatten(nn.Flatten):
+class Flatten(Module, nn.Flatten):
     def __init__(self, start_dim: int = 1, end_dim: int = -1) -> None:
         """
         展平层。
@@ -414,7 +428,9 @@ class Flatten(nn.Flatten):
             start_dim: int 起始维度
             end_dim: int 终止维度
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.Flatten.__init__(
+            self,
             start_dim = start_dim,
             end_dim = end_dim
         )
@@ -432,7 +448,7 @@ class Flatten(nn.Flatten):
         return val_to_spike.apply(y)
 
 
-class Unflatten(nn.Unflatten):
+class Unflatten(Module, nn.Unflatten):
     def __init__(self, dim: Union[int, str], unflattened_size: _size) -> None:
         """
         反展开层。
@@ -440,7 +456,9 @@ class Unflatten(nn.Unflatten):
             dim: int | str 在哪个维度反展开
             unflattened_size: 这个维度上的张量要反展开成什么形状
         """
-        super().__init__(
+        Module.__init__(self)
+        nn.Unflatten.__init__(
+            self,
             dim = dim,
             unflattened_size = unflattened_size
         )

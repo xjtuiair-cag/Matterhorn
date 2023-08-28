@@ -1,5 +1,8 @@
 import torch
 import torch.nn as nn
+
+
+from matterhorn.snn.skeleton import Module
 from matterhorn.snn import surrogate
 
 
@@ -9,7 +12,7 @@ from matterhorn.snn import surrogate
 """
 
 
-class PFHSkeleton(nn.Module):
+class PFHSkeleton(Module):
     def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
         """
         Potential-Firing-History三段式神经元胞体骨架，分别为：
@@ -33,7 +36,7 @@ class PFHSkeleton(nn.Module):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -63,7 +66,7 @@ class PFHSkeleton(nn.Module):
     
     def detach(self) -> None:
         """
-        将历史电位从计算图中分离，以停止在时间上进行反向传播
+        将历史电位从计算图中分离，以停止在时间上进行反向传播。
         """
         if isinstance(self.u, torch.Tensor):
             self.u = self.u.detach()
@@ -119,7 +122,7 @@ class PFHSkeleton(nn.Module):
         return o
 
 
-class RFRSkeleton(nn.Module):
+class RFRSkeleton(Module):
     def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
@@ -142,7 +145,7 @@ class RFRSkeleton(nn.Module):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -172,7 +175,7 @@ class RFRSkeleton(nn.Module):
     
     def detach(self) -> None:
         """
-        将历史电位从计算图中分离，以停止在时间上进行反向传播
+        将历史电位从计算图中分离，以停止在时间上进行反向传播。
         """
         if isinstance(self.u, torch.Tensor):
             self.u = self.u.detach()
@@ -252,7 +255,7 @@ class IF(RFRSkeleton):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -332,7 +335,7 @@ class QIF(RFRSkeleton):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -379,7 +382,7 @@ class EIF(RFRSkeleton):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -427,7 +430,7 @@ class Izhikevich(RFRSkeleton):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -444,7 +447,7 @@ class Izhikevich(RFRSkeleton):
     
     def detach(self) -> None:
         """
-        将历史电位从计算图中分离，以停止在时间上进行反向传播
+        将历史电位与权重从计算图中分离，以停止在时间上进行反向传播。
         """
         if isinstance(self.u, torch.Tensor):
             self.u = self.u.detach()
@@ -490,7 +493,7 @@ class AnalogRFRSkeleton(RFRSkeleton):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -540,7 +543,7 @@ class LIAF(AnalogRFRSkeleton):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """

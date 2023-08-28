@@ -2,13 +2,16 @@ import torch
 import torch.nn as nn
 
 
+from matterhorn.snn.skeleton import Module
+
+
 """
 脉冲神经网络的编码机制。
 注意：此单元可能会改变张量形状。
 """
 
 
-class Direct(nn.Module):
+class Direct(Module):
     def __init__(self) -> None:
         """
         直接编码，直接对传入的脉冲（事件）数据进行编码
@@ -31,7 +34,7 @@ class Direct(nn.Module):
         return y
 
 
-class Poisson(nn.Module):
+class Poisson(Module):
     def __init__(self, time_steps: int = 1, max_value: float = 1.0, min_value: float = 0.0) -> None:
         """
         泊松编码（速率编码），将值转化为脉冲发放率（多步）
@@ -49,7 +52,7 @@ class Poisson(nn.Module):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -100,7 +103,7 @@ class Poisson(nn.Module):
         return y
 
 
-class Temporal(nn.Module):
+class Temporal(Module):
     def __init__(self, time_steps: int = 1, max_value: float = 1.0, min_value: float = 0.0, prob: float = 0.75, reset_after_process: bool = True) -> None:
         """
         时间编码，在某个时间之前不会产生脉冲，在某个时间之后随机产生脉冲
@@ -123,7 +126,7 @@ class Temporal(nn.Module):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """

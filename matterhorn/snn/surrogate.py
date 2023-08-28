@@ -84,7 +84,7 @@ class Rectangular(nn.Module):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -164,7 +164,7 @@ class Polynomial(nn.Module):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -245,7 +245,7 @@ class Sigmoid(nn.Module):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
@@ -325,7 +325,7 @@ class Gaussian(nn.Module):
 
     def extra_repr(self) -> str:
         """
-        额外的表达式，把参数之类的放进来
+        额外的表达式，把参数之类的放进来。
         @return:
             repr_str: str 参数表
         """
