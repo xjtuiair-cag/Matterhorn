@@ -319,3 +319,277 @@ git push origin main
 ```
 
 将您的代码提交至远端仓库。
+
+## 2 代码规范
+
+除非特殊情况，该章中所有的“代码”均指代Python代码。
+
+### 2.1 变量名、类名、文件名
+
+首先介绍3种命名格式：大驼峰、小驼峰和下划线命名。
+
+```python
+# 大驼峰，所有单词的首字母均大写，其余字母小写（除非原本就需要大写，如缩写），单词之间无空格
+BigCamelCase = True
+VariableA = 1
+Numpy2Tensor3D = lambda x: torch.tensor(x)
+
+# 小驼峰，首字母小写（除非原本就需要大写，如缩写），每个单词的第一个字母大写，其余字母小写（除非原本就需要大写，如缩写），单词之间无空格
+smallCamelCase = True
+variableA = 1
+numpy2Tensor3D = lambda x: torch.tensor(x)
+
+# 下划线，所有字母均小写（除非原本就需要大写，如缩写），单词之间以下划线作为空格
+underline_case = True
+variable_A = 1
+numpy_2_tensor_3D = lambda x: torch.tensor(x)
+```
+
+在Matterhorn的命名中，变量名、函数名、参数名与文件名均需为下划线格式：
+
+```python
+# 变量命名采用下划线格式
+root_dir = "~/data"
+
+# 函数名、函数参数的命名采用下划线格式
+def add_tensor_in_row(mat_add: torch.Tensor, vec_add: torch.Tensor) -> torch.Tensor:
+   return (mat.T + vec).T
+```
+
+```sh
+# 文件的命名采用下划线格式
+cd matterhorn/snn
+touch test_1.py
+rm test_1.py
+```
+
+类的命名使用大驼峰格式：
+
+```python
+# 类的命名采用大驼峰格式
+class WhateverItWillBe(nn.Module):
+   def __init__(self) -> None:
+      super().__init__()
+   
+   # 类内函数的命名采用下划线格式
+   def forward(x: torch.Tensor) -> torch.Tensor:
+      return x
+```
+
+常量的命名使用下划线格式，但所有字母均大写：
+
+```python
+# 常量的命名使用全大写下划线格式
+CONSTANT_X = 16
+```
+
+所有变量或函数的命名均要体现其功能，切不可随意使用`a`、`b`、`c`等单个字母命名（除非通过单个字母即可了解其功能）：
+
+```python
+# 错误示范（写完不出3个月就不知道a是什么了，而且太容易重名）
+def a(m: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
+   return (m.T + v).T
+
+# 正确示范（一看就知道是矩阵行相加）
+def add_tensor_in_row(mat_add: torch.Tensor, vec_add: torch.Tensor) -> torch.Tensor:
+   return (mat.T + vec).T
+```
+
+变量或函数的命名不可过于冗长，以简明扼要为主：
+
+```python
+# 错误示范（函数名贼长，小屏幕一眼只能看到函数名，分辨出是什么函数还要好半天）
+def add_a_vector_tensor_into_a_mat_by_its_row_and_get_result(mat_add: torch.Tensor, vec_add: torch.Tensor) -> torch.Tensor:
+   return (mat.T + vec).T
+
+# 正确示范（函数名简短而且一眼知道其含义）
+def add_tensor_in_row(mat_add: torch.Tensor, vec_add: torch.Tensor) -> torch.Tensor:
+   return (mat.T + vec).T
+```
+
+涉及到空间维度的遍历，计数单位以如下顺序嵌套命名：
+
+```python
+i, j, m, n, p, q, r, s
+```
+
+例如：
+
+```python
+mat = torch.Tensor(3, 5)
+rows = mat.shape[0]
+cols = mat.shape[1]
+for i in range(rows):
+   for j in range(cols):
+      print(mat[i, j])
+```
+
+涉及到时间维度的遍历，计数单位统一以`t`命名。若涉及到多个时间计数单位（如STDP需要同时考虑`t_i`和`t_j`），以简明扼要的形式指定下标，和`t`之间用下划线隔开：
+
+```python
+for i in range(output_shape):
+   for j in range(input_shape):
+      for t_i in range(time_steps):
+         for t_j in range(time_steps):
+            w += stdp_weight_delta(output_spike_train[i, t_i], input_spike_train[j, t_j])
+```
+
+### 2.2 代码注释规范
+
+在文件最开头的位置，用多行注释的形式写上该文件的简介：
+
+```python
+"""
+解析AEDAT文件，并将其转化为事件张量。
+"""
+```
+
+在函数头与函数体之间，用多行注释的形式写上该函数的简介、参数表及返回值表；参数表的开头用`@params:`表示，并且每个参数单独一行；返回值表的开头用`@return`表示，并且每个返回值单独一行：
+
+```python
+def add_tensor_in_row(mat_add: torch.Tensor, vec_add: torch.Tensor) -> torch.Tensor:
+   """
+   将向量加到矩阵的行上。
+   @params:
+      mat_add: torch.Tensor 被加的矩阵，一个形状为mxn的矩阵
+      vec_add: torch.Tensor 用于相加的向量，一个形状为m的向量
+   @return:
+      torch.Tensor 相加后的结果，一个形状为mxn的矩阵
+   """
+   return (mat.T + vec).T
+```
+
+该方法对全局函数和类内函数均适用。
+
+其余注释应当在合适的时机以单行或多行的形式标出，切不可乱加注释。
+
+### 2.3 代码间距规范
+
+函数与函数（类外和类内都是）、类与类、类与函数之间均空两行：
+
+```python
+def demo_func_a() -> None:
+   return
+
+
+def demo_func_b() -> None:
+   print("函数之间空两行")
+   return
+
+
+class DemoClassA:
+   def __init__(self) -> None:
+      print("函数与类之间空两行")
+      return
+
+
+   def func_a(self) -> None:
+      print("类内函数之间空两行")
+      return
+
+
+class DemoClassB:
+   def __init__(self) -> None:
+      print("类与类之间空两行")
+      return
+```
+
+默认的缩进为4个空格。如果您的IDE默认缩进不是4个空格，请修改其配置。
+
+```python
+def a() -> None:
+   """
+   1个缩进 = 4个空格
+   """
+   return
+```
+
+操作符（除取下标中的`:`操作符、点号与括号等特殊操作符之外）与变量之间使用一个空格隔开：
+
+```python
+c = a + b
+print(c * 3)
+```
+
+当函数中的参数大于一个需要用逗号隔开时，逗号左边紧邻变量，右边与下一个变量之间使用一个空格隔开：
+
+```python
+def add_tensor_in_row(mat_add: torch.Tensor, vec_add: torch.Tensor) -> torch.Tensor:
+   """
+   参考"mat_add: torch.Tensor, vec_add: torch.Tensor"这段的规范
+   """
+   return (mat.T + vec).T
+```
+
+函数的参数名与其类型之间用冒号隔开，冒号左边紧邻参数名，右边与参数类型之间使用一个空格隔开：
+
+```python
+def add_tensor_in_row(mat_add: torch.Tensor, vec_add: torch.Tensor) -> torch.Tensor:
+   """
+   参考"mat_add: torch.Tensor"这段的规范
+   """
+   return (mat.T + vec).T
+```
+
+### 2.4 其它规范
+
+所有函数的参数与返回值必须指明其类型，参数用`var: type`指定，返回值用` -> type`指定：
+
+```python
+def add(num_1: int, num_2: int = 0) -> int:
+   return num_1 + num_2
+```
+
+Python的`typing`类中含有很多类型的定义：
+
+```python
+# int、float和str是可以直接使用作类型的
+demo_var: int = 1
+demo_var: float = 1.5
+demo_var: str = "Hello, world"
+# 列表类型不能直接用list表示，应当先引用后再用typing的List表示，以下同理
+from typing import List
+demo_var: List = [1, 2, 3]
+# 元组类型
+from typing import Tuple
+demo_var: Tuple = (1, 2, 3)
+# 字典类型
+from typing import Dict
+demo_var: Dict = {"a": 1, "b": 2}
+# 列表、元组、字典或其它可遍历的类型统称
+from typing import Iterable
+demo_var: Iterable
+# 当参数或返回值有多个类型的时候，使用Union
+from typing import Union
+demo_var: Union[int, float]
+# 当参数有可能为None时，使用Optional
+from typing import Optional
+demo_var: Optional[int] = None
+# 若您不知道是什么类型，请使用Any，尽量少用
+from typing import Any
+demo_var: Any
+```
+
+其余变量可以选择性指明类型。
+
+需要注意：类中非静态函数的第一个变量`self`不必指定其类型。
+
+在参数传递时，尽量使用按引用传参：
+
+```python
+def add_tensor_in_row(mat_add: torch.Tensor, vec_add: torch.Tensor) -> torch.Tensor:
+   """
+   将向量加到矩阵的行上。
+   @params:
+      mat_add: torch.Tensor 被加的矩阵，一个形状为mxn的矩阵
+      vec_add: torch.Tensor 用于相加的向量，一个形状为m的向量
+   @return:
+      torch.Tensor 相加后的结果，一个形状为mxn的矩阵
+   """
+   return (mat.T + vec).T
+
+
+demo_mat = torch.Tensor(3, 5)
+demo_vec = torch.Tensor(3)
+demo_res = add_tensor_in_row(mat_add = demo_mat, vec_add = demo_vec)
+```
