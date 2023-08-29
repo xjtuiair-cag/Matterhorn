@@ -119,7 +119,7 @@ def main():
 
     demo_data, demo_label = test_dataset[0]
     print(demo_data.shape)
-    # matterhorn.plotter.event_plot_tyx(demo_data, titles = ["%s Label %s" % (test_dataset.__class__.__name__, test_dataset.labels[demo_label])])
+    # matterhorn.util.plotter.event_plot_tyx(demo_data, titles = ["%s Label %s" % (test_dataset.__class__.__name__, test_dataset.labels[demo_label])])
 
     # 设置学习率，优化器，学习率衰减机制等等
 
