@@ -169,7 +169,7 @@ class SpikingHeidelbergDigits(HDF5):
         """
         list_filename = os.path.join(self.processed_folder, "__main__.csv")
         if os.path.isfile(list_filename):
-            file_list = np.loadtxt(list_filename, dtype = np.int, delimiter = ",")
+            file_list = np.loadtxt(list_filename, dtype = "int32", delimiter = ",")
             return file_list
         self.unzip()
         os.makedirs(self.processed_folder, exist_ok = True)
@@ -180,9 +180,9 @@ class SpikingHeidelbergDigits(HDF5):
             raw_data = self.filename_2_data(os.path.join(self.extracted_folder, "shd_%s.h5" % (is_train_str,)))
             label_list = raw_data["labels"][:]
             for idx in track(range(len(label_list)), description = "Processing %sing set" % (is_train_str,)):
-                t = np.floor(raw_data["spikes"]["times"][idx] * self.precision).astype(np.int)
+                t = np.floor(raw_data["spikes"]["times"][idx] * self.precision).astype("int32")
                 x = raw_data["spikes"]["units"][idx]
-                event_data = np.zeros((len(x), 2), dtype = np.int)
+                event_data = np.zeros((len(x), 2), dtype = "int32")
                 event_data[:, 0] = t
                 event_data[:, 1] = x
                 if self.sampling > 1:
@@ -191,6 +191,6 @@ class SpikingHeidelbergDigits(HDF5):
                 self.save_event_data(file_idx, event_data)
                 file_list.append([file_idx, label, is_train])
                 file_idx += 1
-        file_list = np.array(file_list, dtype = np.int)
+        file_list = np.array(file_list, dtype = "int32")
         np.savetxt(list_filename, file_list, fmt = "%d", delimiter = ",")
         return file_list

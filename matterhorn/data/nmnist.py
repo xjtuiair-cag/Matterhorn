@@ -125,7 +125,7 @@ class NMNIST(EventDataset2d):
         @return:
             data_tpyx: np.ndarray 分为t,p,y,x的数据，形状为[n, 4]
         """
-        res = np.zeros((data.shape[0] // 5, 4), dtype = np.int)
+        res = np.zeros((data.shape[0] // 5, 4), dtype = "int32")
         res[:, 0] = ((data[2::5] & 0x7f) << 16) + (data[3::5] << 8) + data[4::5]
         res[:, 1] = data[2::5] >> 7
         res[:, 2] = self.original_size[2] - 1 - data[1::5]
@@ -143,7 +143,7 @@ class NMNIST(EventDataset2d):
         """
         list_filename = os.path.join(self.processed_folder, "__main__.csv")
         if os.path.isfile(list_filename):
-            file_list = np.loadtxt(list_filename, dtype = np.int, delimiter = ",")
+            file_list = np.loadtxt(list_filename, dtype = "int32", delimiter = ",")
             return file_list
         self.unzip()
         os.makedirs(self.processed_folder, exist_ok = True)
@@ -161,6 +161,6 @@ class NMNIST(EventDataset2d):
                     self.save_event_data(file_idx, event_data)
                     file_list.append([file_idx, label, is_train])
                     file_idx += 1
-        file_list = np.array(file_list, dtype = np.int)
+        file_list = np.array(file_list, dtype = "int32")
         np.savetxt(list_filename, file_list, fmt = "%d", delimiter = ",")
         return file_list
