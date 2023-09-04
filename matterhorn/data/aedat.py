@@ -1,3 +1,9 @@
+# -*- coding: UTF-8 -*-
+"""
+AEDAT类数据集（后缀名为.aedat）。
+"""
+
+
 import numpy as np
 import torch
 import torch.nn as nn

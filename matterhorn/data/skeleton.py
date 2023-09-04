@@ -1,3 +1,9 @@
+# -*- coding: UTF-8 -*-
+"""
+数据集的基本框架，定义了常见的数据集参数和处理方式。参考torchvision的MNIST数据集。
+"""
+
+
 import numpy as np
 import torch
 from torch.utils.data import Dataset

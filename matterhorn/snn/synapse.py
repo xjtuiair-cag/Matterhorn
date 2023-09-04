@@ -1,18 +1,16 @@
-from typing import Union
-import torch
-from torch import Tensor
-import torch.nn as nn
-from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
-from torch.nn.modules.normalization import _shape_t
-
-
-from matterhorn.snn.skeleton import Module
-
-
+# -*- coding: UTF-8 -*-
 """
 脉冲神经网络神经元的突触，一层的前半段。输入为脉冲，输出为模拟电位值。
 由突触将来自上一层神经元的脉冲信号$O_{j}^{l-1}(t)$整合成为突触后电位$X_{i}^{l}(t)$后，在胞体中进行突触后电位的累积和发放。
 """
+
+
+from typing import Union
+import torch
+import torch.nn as nn
+from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
+from torch.nn.modules.normalization import _shape_t
+from matterhorn.snn.skeleton import Module
 
 
 class Linear(Module, nn.Linear):
@@ -37,7 +35,7 @@ class Linear(Module, nn.Linear):
         )
     
     
-    def forward(self, o: Tensor) -> Tensor:
+    def forward(self, o: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -83,7 +81,7 @@ class Conv1d(Module, nn.Conv1d):
         )
     
     
-    def forward(self, o: Tensor) -> Tensor:
+    def forward(self, o: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -129,7 +127,7 @@ class Conv2d(Module, nn.Conv2d):
         )
     
     
-    def forward(self, o: Tensor) -> Tensor:
+    def forward(self, o: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -175,7 +173,7 @@ class Conv3d(Module, nn.Conv3d):
         )
     
 
-    def forward(self, o: Tensor) -> Tensor:
+    def forward(self, o: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -223,7 +221,7 @@ class ConvTranspose1d(Module, nn.ConvTranspose1d):
         )
     
     
-    def forward(self, o: Tensor) -> Tensor:
+    def forward(self, o: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -271,7 +269,7 @@ class ConvTranspose2d(Module, nn.ConvTranspose2d):
         )
     
     
-    def forward(self, o: Tensor) -> Tensor:
+    def forward(self, o: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -319,7 +317,7 @@ class ConvTranspose3d(Module, nn.ConvTranspose3d):
         )
     
     
-    def forward(self, o: Tensor) -> Tensor:
+    def forward(self, o: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -357,7 +355,7 @@ class BatchNorm1d(Module, nn.BatchNorm1d):
         )
     
     
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -395,7 +393,7 @@ class BatchNorm2d(Module, nn.BatchNorm2d):
         )
     
     
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -433,7 +431,7 @@ class BatchNorm3d(Module, nn.BatchNorm3d):
         )
     
     
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -467,7 +465,7 @@ class LayerNorm(Module, nn.LayerNorm):
         )    
     
     
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:

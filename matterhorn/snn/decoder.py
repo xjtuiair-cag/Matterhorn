@@ -1,14 +1,13 @@
-import torch
-import torch.nn as nn
-
-
-from matterhorn.snn.skeleton import Module
-
-
+# -*- coding: UTF-8 -*-
 """
 脉冲神经网络的解码机制。
 注意：此单元可能会改变张量形状。
 """
+
+
+import torch
+import torch.nn as nn
+from matterhorn.snn.skeleton import Module
 
 
 class SumSpike(Module):

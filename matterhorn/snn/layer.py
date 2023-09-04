@@ -1,19 +1,18 @@
+# -*- coding: UTF-8 -*-
+"""
+脉冲神经网络的整个神经元层，输入为脉冲，输出为脉冲。
+由突触将来自上一层神经元的脉冲信号$O_{j}^{l-1}(t)$整合成为突触后电位$X_{i}^{l}(t)$后，在胞体中进行突触后电位的累积和发放。
+"""
+
+
 import math
 from typing import Optional, Union
 import torch
 import torch.nn as nn
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
-
-
 from matterhorn.snn.skeleton import Module
 from matterhorn.snn import surrogate
-
-
-"""
-脉冲神经网络的整个神经元层，输入为脉冲，输出为脉冲。
-由突触将来自上一层神经元的脉冲信号$O_{j}^{l-1}(t)$整合成为突触后电位$X_{i}^{l}(t)$后，在胞体中进行突触后电位的累积和发放。
-"""
 
 
 class val_to_spike(torch.autograd.Function):

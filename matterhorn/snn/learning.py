@@ -1,8 +1,11 @@
+# -*- coding: UTF-8 -*-
+"""
+自定义SNN的学习机制，以STDP作为样例。
+"""
+
+
 import torch
-from torch import Tensor
 import torch.nn as nn
-
-
 from matterhorn.snn.skeleton import Module
 
 

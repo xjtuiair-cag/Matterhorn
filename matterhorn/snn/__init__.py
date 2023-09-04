@@ -1,3 +1,9 @@
+# -*- coding: UTF-8 -*-
+"""
+此文件夹放置SNN的一些基本模块。
+"""
+
+
 from .container import Spatial as SpatialContainer, Temporal as TemporalContainer, Container as SNNContainer
 from .decoder import SumSpike as SumSpikeDecoder, AverageSpike as AvgSpikeDecoder, MinTime as MinTimeDecoder, AverageTime as AvgTimeDecoder
 from .encoder import Direct as DirectEncoder, Poisson as PoissonEncoder, Temporal as TemporalEncoder

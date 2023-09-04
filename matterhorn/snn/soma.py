@@ -1,15 +1,14 @@
-import torch
-import torch.nn as nn
-
-
-from matterhorn.snn.skeleton import Module
-from matterhorn.snn import surrogate
-
-
+# -*- coding: UTF-8 -*-
 """
 脉冲神经网络神经元的胞体，一层的后半段。输入为模拟电位值，输出为脉冲。
 由突触将来自上一层神经元的脉冲信号$O_{j}^{l-1}(t)$整合成为突触后电位$X_{i}^{l}(t)$后，在胞体中进行突触后电位的累积和发放。
 """
+
+
+import torch
+import torch.nn as nn
+from matterhorn.snn.skeleton import Module
+from matterhorn.snn import surrogate
 
 
 class PFHSkeleton(Module):

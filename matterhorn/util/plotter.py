@@ -1,3 +1,9 @@
+# -*- coding: UTF-8 -*-
+"""
+画图小工具，利用matplotlib库，将数据（事件、电位等）以图片的形式打印下来。
+"""
+
+
 import numpy as np
 import torch
 from matplotlib import pyplot as plt

@@ -1,13 +1,12 @@
-from typing import Any
-
-
-import torch
-import torch.nn as nn
-
-
+# -*- coding: UTF-8 -*-
 """
 阶跃函数及其替代导数。
 """
+
+
+from typing import Any
+import torch
+import torch.nn as nn
 
 
 @torch.jit.script

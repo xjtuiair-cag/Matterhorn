@@ -1,3 +1,9 @@
+# -*- coding: UTF-8 -*-
+"""
+NMNIST数据集。
+"""
+
+
 import numpy as np
 import torch
 import os

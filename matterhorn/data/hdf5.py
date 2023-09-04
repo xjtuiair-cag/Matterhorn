@@ -1,3 +1,9 @@
+# -*- coding: UTF-8 -*-
+"""
+HDF5类数据集（后缀名为.h5）。
+"""
+
+
 import numpy as np
 import torch
 import os

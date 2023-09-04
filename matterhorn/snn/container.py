@@ -1,17 +1,14 @@
-import torch
-import torch.nn as nn
-
-
-from matterhorn.snn.skeleton import Module
-
-
-from typing import Optional
-
-
+# -*- coding: UTF-8 -*-
 """
 脉冲神经网络的容器，用来容纳时间和空间维度的脉冲神经网络集合。
 建议先在空间维度上构建完整的脉冲神经网络结构，再在多个时间步之内进行模拟。
 """
+
+
+import torch
+import torch.nn as nn
+from matterhorn.snn.skeleton import Module
+from typing import Optional
 
 
 class Spatial(Module, nn.Sequential):
