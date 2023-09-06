@@ -11,6 +11,10 @@ from torchvision.datasets.utils import check_integrity
 from typing import Tuple, Union, Callable, Optional
 import os
 import random
+try:
+    from rich import print
+except:
+    pass
 
 
 class EventDataset(Dataset):

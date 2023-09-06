@@ -9,6 +9,10 @@ import torch
 import torch.nn as nn
 from matterhorn.snn.skeleton import Module
 from matterhorn.snn import surrogate
+try:
+    from rich import print
+except:
+    pass
 
 
 class Soma(Module):
@@ -26,6 +30,7 @@ class Soma(Module):
         """
         super().__init__()
         self.tau_m = tau_m
+        self.u = 0.0
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function
@@ -59,6 +64,7 @@ class Soma(Module):
         """
         重置整个神经元
         """
+        self.detach()
         self.u = self.u_rest
 
     
@@ -307,14 +313,15 @@ class Izhikevich(Soma):
             delta_t: float 参数$Δ_{T}$
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
         """
+        self.a = a
+        self.b = b
+        self.w = 0.0
         super().__init__(
             tau_m = 1.0,
             u_threshold = u_threshold,
             u_rest = 0.0,
             spiking_function = spiking_function
         )
-        self.a = a
-        self.b = b
     
 
     def extra_repr(self) -> str:
@@ -330,6 +337,7 @@ class Izhikevich(Soma):
         """
         重置整个神经元
         """
+        self.detach()
         self.u = 0.0
         self.w = 0.0
 

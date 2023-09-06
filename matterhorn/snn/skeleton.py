@@ -6,6 +6,10 @@ SNN模块的框架，在torch.nn的基础上，定义了几个SNN的基本函数
 
 import torch
 import torch.nn as nn
+try:
+    from rich import print
+except:
+    pass
 
 
 class Module(nn.Module):

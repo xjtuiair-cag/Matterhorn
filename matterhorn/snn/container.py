@@ -9,6 +9,10 @@ import torch
 import torch.nn as nn
 from matterhorn.snn.skeleton import Module
 from typing import Optional
+try:
+    from rich import print
+except:
+    pass
 
 
 class Spatial(Module, nn.Sequential):

@@ -7,6 +7,10 @@
 import torch
 import torch.nn as nn
 from matterhorn.snn.skeleton import Module
+try:
+    from rich import print
+except:
+    pass
 
 
 @torch.jit.script

@@ -18,6 +18,10 @@ from zipfile import BadZipFile
 from rich import print
 from rich.progress import track
 from matterhorn.data.skeleton import EventDataset2d
+try:
+    from rich import print
+except:
+    pass
 
 
 class AEDAT(EventDataset2d):

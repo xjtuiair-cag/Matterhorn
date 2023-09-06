@@ -13,6 +13,10 @@ from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
 from matterhorn.snn.skeleton import Module
 from matterhorn.snn import surrogate
+try:
+    from rich import print
+except:
+    pass
 
 
 class val_to_spike(torch.autograd.Function):

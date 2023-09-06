@@ -7,6 +7,10 @@
 from typing import Any
 import torch
 import torch.nn as nn
+try:
+    from rich import print
+except:
+    pass
 
 
 @torch.jit.script

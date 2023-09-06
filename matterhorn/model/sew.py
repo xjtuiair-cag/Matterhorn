@@ -10,21 +10,25 @@ Reference:
 import torch
 import torch.nn as nn
 import matterhorn.snn as snn
-import math
+torch.autograd.set_detect_anomaly(True)
+try:
+    from rich import print
+except:
+    pass
 
 
 class ResADD(snn.Module):
-    def forward(a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+    def forward(self, a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
         return a + s
 
 
 class ResAND(snn.Module):
-    def forward(a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+    def forward(self, a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
         return a * s
 
 
 class ResIAND(snn.Module):
-    def forward(a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+    def forward(self, a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
         return (1.0 - a) * s
 
 
@@ -101,96 +105,105 @@ class SEWBlock(snn.Module):
 class SEWRes18(snn.Module):
     def __init__(self, input_h_w = (128, 128), tau_m = 2.0, spiking_function: snn.Module = snn.Rectangular(), residual_connection: snn.Module = ResADD()) -> None:
         super().__init__()
-        self.snn_model = snn.TemporalContainer(
-            snn.SpatialContainer(
-                ConvLIF(
-                    in_channels = 2,
-                    out_channels = 64,
-                    kernel_size = 3,
-                    stride = 2,
-                    tau_m = tau_m,
-                    spiking_function = spiking_function
-                ), # 1, [T, 64, 64, 64]
-                snn.MaxPool2d(
-                    kernel_size = 2
-                ), # 2, [T, 64, 32, 32]
-                SEWBlock(
-                    in_channels = 64,
-                    out_channels = 64,
-                    tau_m = tau_m,
-                    spiking_function = spiking_function,
-                    residual_connection = residual_connection
-                ), # 3, 4, [T, 64, 32, 32]
-                SEWBlock(
-                    in_channels = 64,
-                    out_channels = 64,
-                    tau_m = tau_m,
-                    spiking_function = spiking_function,
-                    residual_connection = residual_connection
-                ), # 5, 6, [T, 64, 32, 32]
-                SEWBlock(
-                    in_channels = 64,
-                    out_channels = 128,
-                    tau_m = tau_m,
-                    spiking_function = spiking_function,
-                    residual_connection = residual_connection,
-                    down_sampling = True
-                ), # 7, 8, [T, 128, 16, 16]
-                SEWBlock(
-                    in_channels = 128,
-                    out_channels = 128,
-                    tau_m = tau_m,
-                    spiking_function = spiking_function,
-                    residual_connection = residual_connection
-                ), # 9, 10, [T, 128, 16, 16]
-                SEWBlock(
-                    in_channels = 128,
-                    out_channels = 256,
-                    tau_m = tau_m,
-                    spiking_function = spiking_function,
-                    residual_connection = residual_connection,
-                    down_sampling = True
-                ), # 11, 12, [T, 256, 8, 8]
-                SEWBlock(
-                    in_channels = 256,
-                    out_channels = 256,
-                    tau_m = tau_m,
-                    spiking_function = spiking_function,
-                    residual_connection = residual_connection
-                ), # 13, 14, [T, 256, 8, 8]
-                SEWBlock(
-                    in_channels = 256,
-                    out_channels = 512,
-                    tau_m = tau_m,
-                    spiking_function = spiking_function,
-                    residual_connection = residual_connection,
-                    down_sampling = True
-                ), # 15, 16, [T, 512, 4, 4]
-                SEWBlock(
-                    in_channels = 512,
-                    out_channels = 512,
-                    tau_m = tau_m,
-                    spiking_function = spiking_function,
-                    residual_connection = residual_connection
-                ), # 17, 18, [T, 512, 4, 4]
-            )
-        )
-        self.decoder = snn.AvgSpikeDecoder()
+        self.snn_model = snn.SNNContainer(
+            encoder = snn.DirectEncoder(),
+            snn_model = snn.TemporalContainer(
+                snn.SpatialContainer(
+                    ConvLIF(
+                        in_channels = 2,
+                        out_channels = 64,
+                        kernel_size = 3,
+                        stride = 2,
+                        tau_m = tau_m,
+                        spiking_function = spiking_function
+                    ), # 1, [T, 64, 64, 64]
+                    snn.MaxPool2d(
+                        kernel_size = 2
+                    ), # 2, [T, 64, 32, 32]
+                    SEWBlock(
+                        in_channels = 64,
+                        out_channels = 64,
+                        tau_m = tau_m,
+                        spiking_function = spiking_function,
+                        residual_connection = residual_connection
+                    ), # 3, 4, [T, 64, 32, 32]
+                    SEWBlock(
+                        in_channels = 64,
+                        out_channels = 64,
+                        tau_m = tau_m,
+                        spiking_function = spiking_function,
+                        residual_connection = residual_connection
+                    ), # 5, 6, [T, 64, 32, 32]
+                    SEWBlock(
+                        in_channels = 64,
+                        out_channels = 128,
+                        tau_m = tau_m,
+                        spiking_function = spiking_function,
+                        residual_connection = residual_connection,
+                        down_sampling = True
+                    ), # 7, 8, [T, 128, 16, 16]
+                    SEWBlock(
+                        in_channels = 128,
+                        out_channels = 128,
+                        tau_m = tau_m,
+                        spiking_function = spiking_function,
+                        residual_connection = residual_connection
+                    ), # 9, 10, [T, 128, 16, 16]
+                    SEWBlock(
+                        in_channels = 128,
+                        out_channels = 256,
+                        tau_m = tau_m,
+                        spiking_function = spiking_function,
+                        residual_connection = residual_connection,
+                        down_sampling = True
+                    ), # 11, 12, [T, 256, 8, 8]
+                    SEWBlock(
+                        in_channels = 256,
+                        out_channels = 256,
+                        tau_m = tau_m,
+                        spiking_function = spiking_function,
+                        residual_connection = residual_connection
+                    ), # 13, 14, [T, 256, 8, 8]
+                    SEWBlock(
+                        in_channels = 256,
+                        out_channels = 512,
+                        tau_m = tau_m,
+                        spiking_function = spiking_function,
+                        residual_connection = residual_connection,
+                        down_sampling = True
+                    ), # 15, 16, [T, 512, 4, 4]
+                    SEWBlock(
+                        in_channels = 512,
+                        out_channels = 512,
+                        tau_m = tau_m,
+                        spiking_function = spiking_function,
+                        residual_connection = residual_connection
+                    ) # 17, 18, [T, 512, 4, 4]
+                ),
+                reset_after_process = False
+            ),
+            decoder = snn.AvgSpikeDecoder()
+        ) # [512, 4, 4]
         self.ann_model = nn.Sequential(
             nn.AvgPool2d(
-                kernel_size = 4
-            ),
-            nn.Flatten(),
+                kernel_size = (input_h_w[0] >> 5, input_h_w[1] >> 5)
+            ), # [512, 1, 1]
+            nn.Flatten(), # [512]
             nn.Linear(
                 in_features = 512,
                 out_features = 10
             ),
-            nn.ReLU()
+            nn.ReLU() # [10]
         )
     
 
+    def reset(self) -> None:
+        self.snn_model.reset()
+
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.snn_model(x)
-        x = self.decoder(x)
+        print("1", x.shape)
         x = self.ann_model(x)
+        print("2", x.shape)
         return x
