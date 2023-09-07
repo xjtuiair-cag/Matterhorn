@@ -96,7 +96,7 @@ class Rectangular(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 输入张量
         @return:
@@ -176,7 +176,7 @@ class Polynomial(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 输入张量
         @return:
@@ -257,7 +257,7 @@ class Sigmoid(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 输入张量
         @return:
@@ -337,7 +337,7 @@ class Gaussian(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 输入张量
         @return:

@@ -189,7 +189,7 @@ class SRM0Linear(Module):
 
     def forward(self, o: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             o: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
         @return:
@@ -236,7 +236,7 @@ class MaxPool1d(Module, nn.MaxPool1d):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
         @return:
@@ -271,7 +271,7 @@ class MaxPool2d(Module, nn.MaxPool2d):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
         @return:
@@ -307,7 +307,7 @@ class MaxPool3d(Module, nn.MaxPool3d):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
         @return:
@@ -341,7 +341,7 @@ class AvgPool1d(Module, nn.AvgPool1d):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
         @return:
@@ -377,7 +377,7 @@ class AvgPool2d(Module, nn.AvgPool2d):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
         @return:
@@ -413,7 +413,7 @@ class AvgPool3d(Module, nn.AvgPool3d):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
         @return:
@@ -441,7 +441,7 @@ class Flatten(Module, nn.Flatten):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
         @return:
@@ -469,7 +469,7 @@ class Unflatten(Module, nn.Unflatten):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
         @return:

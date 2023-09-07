@@ -10,7 +10,7 @@ Reference:
 import torch
 import torch.nn as nn
 import matterhorn.snn as snn
-from typing import Callable
+from typing import Tuple, Callable
 try:
     from rich import print
 except:
@@ -19,20 +19,54 @@ except:
 
 class ResADD(snn.Module):
     def forward(self, a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数，ADD连接函数。
+        @params:
+            a: torch.Tensor 经过两层卷积处理后的脉冲张量
+            s: torch.Tensor 原始脉冲张量
+        @return:
+            o: torch.Tensor 输出脉冲张量
+        """
         return a + s
 
 
 class ResAND(snn.Module):
     def forward(self, a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数，AND连接函数。
+        @params:
+            a: torch.Tensor 经过两层卷积处理后的脉冲张量
+            s: torch.Tensor 原始脉冲张量
+        @return:
+            o: torch.Tensor 输出脉冲张量
+        """
         return a * s
 
 
 class ResIAND(snn.Module):
     def forward(self, a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数，IAND连接函数。
+        @params:
+            a: torch.Tensor 经过两层卷积处理后的脉冲张量
+            s: torch.Tensor 原始脉冲张量
+        @return:
+            o: torch.Tensor 输出脉冲张量
+        """
         return (1.0 - a) * s
 
 
 def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: int = 1, tau_m: float = 2.0, spiking_function: snn.Module = snn.Rectangular()):
+    """
+    绑定卷积神经元（突触）和LIF神经元（胞体）
+    @params:
+        in_channels: int 输入脉冲通道数
+        out_channels: int 输出脉冲通道数
+        kernel_size: int 卷积核的大小
+        stride: int 卷积步长
+        tau_m: float 参数τ_{m}，神经元时间常数
+        spiking_function: snn.Module 脉冲函数
+    """
     return snn.SpatialContainer(
         snn.Conv2d(
             in_channels = in_channels,
@@ -50,6 +84,16 @@ def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: i
 
 class SEWBlock(snn.Module):
     def __init__(self, in_channels: int, out_channels: int, tau_m: float = 2.0, spiking_function: snn.Module = snn.Rectangular(), residual_connection: snn.Module = ResADD(), down_sampling: bool = False) -> None:
+        """
+        Spiking Element-Wise Block， SEW ResNet的单元。
+        @params:
+            in_channels: int 输入脉冲通道数
+            out_channels: int 输出脉冲通道数
+            tau_m: float 参数τ_{m}，神经元时间常数
+            spiking_function: snn.Module 脉冲函数
+            residual_connection: snn.Module 脉冲连接方式
+            down_sampling: bool 是否进行下采样（出来的图像大小是原大小的一半）
+        """
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -70,25 +114,48 @@ class SEWBlock(snn.Module):
             spiking_function = spiking_function
         )
         self.down_sampling = down_sampling
-        self.down_sampling_block = ConvLIF(
-            in_channels = in_channels,
-            out_channels = out_channels,
-            kernel_size = 1,
-            stride = 2,
-            tau_m = tau_m,
-            spiking_function = spiking_function
-        )
+        if self.down_sampling:
+            self.down_sampling_block = ConvLIF(
+                in_channels = in_channels,
+                out_channels = out_channels,
+                kernel_size = 1,
+                stride = 2,
+                tau_m = tau_m,
+                spiking_function = spiking_function
+            )
+        else:
+            self.down_sampling = None
         self.residual_connection = residual_connection
     
 
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return super().extra_repr()
+    
+
     def reset(self) -> None:
+        """
+        重置模型。
+        """
         self.conv1.reset()
         self.conv2.reset()
-        self.down_sampling_block.reset()
+        if self.down_sampling:
+            self.down_sampling_block.reset()
         self.residual_connection.reset()
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数。
+        @params:
+            x: torch.Tensor 输入脉冲张量
+        @return:
+            o: torch.Tensor 输出脉冲张量
+        """
         a = self.conv2(self.conv1(x))
         if self.down_sampling:
             s = self.down_sampling_block(x)
@@ -99,7 +166,16 @@ class SEWBlock(snn.Module):
 
 
 class SEWRes18(snn.Module):
-    def __init__(self, input_h_w = (128, 128), tau_m = 2.0, spiking_function: snn.Module = snn.Rectangular(), residual_connection: snn.Module = ResADD()) -> None:
+    def __init__(self, input_h_w: Tuple[int] = (128, 128), classes: int = 10, tau_m: float = 2.0, spiking_function: snn.Module = snn.Rectangular(), residual_connection: snn.Module = ResADD()) -> None:
+        """
+        Spiking Element-Wise Block， SEW ResNet的单元。
+        @params:
+            input_h_w: Tuple[int] 输出脉冲通道数
+            classes: int 输出类别数
+            tau_m: float 参数τ_{m}，神经元时间常数
+            spiking_function: snn.Module 脉冲函数
+            residual_connection: snn.Module 脉冲连接方式
+        """
         super().__init__()
         self.snn_model = snn.SNNContainer(
             encoder = snn.DirectEncoder(),
@@ -186,17 +262,27 @@ class SEWRes18(snn.Module):
             nn.Flatten(), # [512]
             nn.Linear(
                 in_features = 512,
-                out_features = 10
+                out_features = classes
             ),
             nn.ReLU() # [10]
         )
     
 
     def reset(self) -> None:
+        """
+        重置模型。
+        """
         self.snn_model.reset()
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数。
+        @params:
+            x: torch.Tensor 输入脉冲张量
+        @return:
+            x: torch.Tensor 输出张量
+        """
         x = self.snn_model(x)
         x = self.ann_model(x)
         return x

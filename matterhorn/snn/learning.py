@@ -174,7 +174,7 @@ class STDPLinear(Module, nn.Linear):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
         @return:

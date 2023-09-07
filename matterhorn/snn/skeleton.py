@@ -18,6 +18,15 @@ class Module(nn.Module):
         脉冲神经网络模块的骨架。
         """
         nn.Module.__init__(self)
+    
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return super().extra_repr()
 
 
     def reset(self) -> None:

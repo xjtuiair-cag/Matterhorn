@@ -25,7 +25,7 @@ class SumSpike(Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 输入张量，形状为[T,B,...]
         @return:
@@ -46,7 +46,7 @@ class AverageSpike(Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 输入张量，形状为[T,B,...]
         @return:
@@ -89,7 +89,7 @@ class MinTime(Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 输入张量，形状为[T,B,...]
         @return:
@@ -135,7 +135,7 @@ class AverageTime(Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 输入张量，形状为[T,B,...]
         @return:

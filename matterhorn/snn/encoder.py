@@ -64,7 +64,7 @@ class Poisson(Module):
 
     def forward_single(self, x:torch.Tensor) -> torch.Tensor:
         """
-        单步前向传播函数
+        单步前向传播函数。
         @params:
             x: torch.Tensor 输入张量，形状为[B,...]
         @return:
@@ -77,7 +77,7 @@ class Poisson(Module):
 
     def forward_multiple(self, x: torch.Tensor, time_steps: int) -> torch.Tensor:
         """
-        多步前向传播函数
+        多步前向传播函数。
         @params:
             x: torch.Tensor 输入张量，形状为[B,...]
         @return:
@@ -145,7 +145,7 @@ class Temporal(Module):
 
     def forward_single(self, x:torch.Tensor) -> torch.Tensor:
         """
-        单步前向传播函数
+        单步前向传播函数。
         @params:
             x: torch.Tensor 输入张量，形状为[B,...]
         @return:
@@ -160,7 +160,7 @@ class Temporal(Module):
 
     def forward_multiple(self, x: torch.Tensor, time_steps: int) -> torch.Tensor:
         """
-        多步前向传播函数
+        多步前向传播函数。
         @params:
             x: torch.Tensor 输入张量，形状为[B,...]
         @return:

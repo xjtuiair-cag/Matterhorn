@@ -117,7 +117,7 @@ class Soma(Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 来自突触的输入电位$X_{i}^{l}(t)$
         @return:
@@ -411,7 +411,7 @@ class AnalogSoma(Soma):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数
+        前向传播函数。
         @params:
             x: torch.Tensor 来自突触的输入电位$X_{i}^{l}(t)$
         @return:
