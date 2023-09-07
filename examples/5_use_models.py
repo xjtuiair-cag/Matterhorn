@@ -35,10 +35,10 @@ def main():
 
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
-    time_steps = 8
+    time_steps = 64
     batch_size = 8
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    epochs = 32
+    epochs = 64
     learning_rate = 1e-3
     momentum = 0.9
     tau = 1.1
@@ -115,6 +115,11 @@ def main():
 
     optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
+
+    log_dir = "./examples/logs"
+    os.makedirs(log_dir, exist_ok = True)
+    with open(log_dir + os.sep + model.__module__ + "_" + train_dataset.__module__ + ".csv", "w") as f:
+        f.write("Epoch,Training Loss,Training Accuracy,Testing Loss,Testing Accuracy,Duration\n")
 
     # 开始训练
 
@@ -194,6 +199,8 @@ def main():
         result_table.add_row("Maximum Testing Accuracy", "%.2f%%" % (100 * max_test_acc,))
         result_table.add_row("Duration", "%.3fs" %(end_time - start_time,))
         print(result_table)
+        with open(log_dir + os.sep + model.__module__ + "_" + train_dataset.__module__ + ".csv", "a") as f:
+            f.write("%d, %.6f, %.4f, %.6f, %.4f, %.3f\n", (e, train_loss, train_acc, test_loss, test_acc, end_time - start_time))
 
         last_train_loss = train_loss
         last_train_acc = train_acc

@@ -75,6 +75,9 @@ def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: i
             stride = stride,
             padding = kernel_size // 2
         ),
+        snn.BatchNorm2d(
+            num_features = out_channels
+        ),
         snn.LIF(
             tau_m = tau_m,
             spiking_function = spiking_function
