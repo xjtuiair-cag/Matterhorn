@@ -23,17 +23,19 @@ from rich.table import Table
 def main():
     # 欢迎语，客套话
 
-    print(Panel(Text("EXAMPLE 4: CONVOLUTIONAL SPIKING NEURAL NETWORKS", justify = "center", style = "bold blue")))
+    print(Panel(Text("EXAMPLE 5: USING SPIKING MODELS", justify = "center", style = "bold blue")))
 
-    print("This is your fourth example. You'll learn to use event datasets and convolution operation on [green]Matterhorn[/green].")
+    print("This is your fifth example. You'll learn to use the models pre-defined on [green]Matterhorn[/green].")
 
-    print("In this demo, we're about to build a 3-layer convolutional network.")
+    print("In this demo, we're about to build a Spiking Element-Wise ResNet (SEW ResNet).")
+
+    print("The paper could be achieved on [blue]https://proceedings.neurips.cc/paper_files/paper/2021/file/afe434653a898da20044041262b3ac74-Paper.pdf[/blue]")
 
     # 设置参数
 
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
-    time_steps = 64
+    time_steps = 8
     batch_size = 8
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 32
@@ -135,7 +137,6 @@ def main():
         train_acc = 0.0
         train_samples = 0
         for x, y in track(train_data_loader, description = "Training at epoch %d" % (e,)):
-            print(x, y)
             optimizer.zero_grad()
             x = x.to(device)
             y = y.to(device)
@@ -143,10 +144,8 @@ def main():
 
             o = model(x)
             loss = torch.nn.functional.mse_loss(o, y0)
-            print(loss)
-            loss.backward()
+            loss.backward(retain_graph = True)
             optimizer.step()
-            model.reset()
 
             train_samples += y.numel()
             train_loss += loss.item() * y.numel()

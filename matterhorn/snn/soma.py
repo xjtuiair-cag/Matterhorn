@@ -56,7 +56,8 @@ class Soma(Module):
             u: torch.Tensor 经过校正的电位张量
         """
         if isinstance(u, float):
-            u = u * torch.ones_like(x)
+            u = torch.full_like(x, u)
+            u = u.detach()
         return u
 
 

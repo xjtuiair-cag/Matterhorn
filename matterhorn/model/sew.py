@@ -10,7 +10,7 @@ Reference:
 import torch
 import torch.nn as nn
 import matterhorn.snn as snn
-torch.autograd.set_detect_anomaly(True)
+from typing import Callable
 try:
     from rich import print
 except:
@@ -41,9 +41,6 @@ def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: i
             stride = stride,
             padding = kernel_size // 2
         ),
-        snn.BatchNorm2d(
-            num_features = out_channels
-        ),
         snn.LIF(
             tau_m = tau_m,
             spiking_function = spiking_function
@@ -72,23 +69,22 @@ class SEWBlock(snn.Module):
             tau_m = tau_m,
             spiking_function = spiking_function
         )
-        self.residual_connection = residual_connection
         self.down_sampling = down_sampling
-        if down_sampling:
-            self.down_sampling_block = ConvLIF(
-                in_channels = in_channels,
-                out_channels = out_channels,
-                kernel_size = 1,
-                stride = 2,
-                tau_m = tau_m
-            )
-        else:
-            self.down_sampling_block = None
+        self.down_sampling_block = ConvLIF(
+            in_channels = in_channels,
+            out_channels = out_channels,
+            kernel_size = 1,
+            stride = 2,
+            tau_m = tau_m,
+            spiking_function = spiking_function
+        )
+        self.residual_connection = residual_connection
     
 
     def reset(self) -> None:
         self.conv1.reset()
         self.conv2.reset()
+        self.down_sampling_block.reset()
         self.residual_connection.reset()
     
 
@@ -98,8 +94,8 @@ class SEWBlock(snn.Module):
             s = self.down_sampling_block(x)
         else:
             s = x
-        s = self.residual_connection(a, s)
-        return s
+        o = self.residual_connection(a, s)
+        return o
 
 
 class SEWRes18(snn.Module):
@@ -179,8 +175,7 @@ class SEWRes18(snn.Module):
                         spiking_function = spiking_function,
                         residual_connection = residual_connection
                     ) # 17, 18, [T, 512, 4, 4]
-                ),
-                reset_after_process = False
+                )
             ),
             decoder = snn.AvgSpikeDecoder()
         ) # [512, 4, 4]
@@ -203,7 +198,5 @@ class SEWRes18(snn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.snn_model(x)
-        print("1", x.shape)
         x = self.ann_model(x)
-        print("2", x.shape)
         return x
