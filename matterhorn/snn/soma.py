@@ -376,13 +376,14 @@ class Response(Soma):
         """
         可以自定义反应函数的胞体。
         @params:
-            tau_m: float 膜时间常数$τ_{m}$
+            response_function: Callable 自定义的反应函数，接受3个参数：历史电位$H^{l}(t)$、输入电位$X^{l}(t)$和模型的可训练参数列表
+            param_list: Iterable 可训练参数列表的初始化值，类型都是Number。固定参数请固定地写在反应函数中
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
         """
         self.response_function = response_function
-        self.param_list = param_list
+        self.param_list = [nn.Parameter(torch.tensor(x), requires_grad = True) for x in param_list]
         super().__init__(
             tau_m = 1.0,
             u_threshold = u_threshold,
