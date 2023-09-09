@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 from matterhorn.snn.skeleton import Module
 from matterhorn.snn import surrogate
+from typing import Callable, Iterable
 try:
     from rich import print
 except:
@@ -370,8 +371,40 @@ class Izhikevich(Soma):
         return u
 
 
+class Response(Soma):
+    def __init__(self, response_function: Callable, param_list: Iterable = [], u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: Module = surrogate.Rectangular()) -> None:
+        """
+        可以自定义反应函数的胞体。
+        @params:
+            tau_m: float 膜时间常数$τ_{m}$
+            u_threshold: float 阈电位$u_{th}$
+            u_rest: float 静息电位$u_{rest}$
+            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+        """
+        self.response_function = response_function
+        self.param_list = param_list
+        super().__init__(
+            tau_m = 1.0,
+            u_threshold = u_threshold,
+            u_rest = u_rest,
+            spiking_function = spiking_function
+        )
+
+
+    def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        """
+        通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
+        @params:
+            h: torch.Tensor 上一时刻的电位$U_{i}^{l}(t-1)$
+            x: torch.Tensor 输入电位$X_{i}^{l}(t)$
+        @return:
+            u: torch.Tensor 当前电位$U_{i}^{l}(t)$
+        """
+        return self.response_function(h, x, self.param_list)
+
+
 class AnalogSoma(Soma):
-    def __init__(self, tau_m: float = 1, u_threshold: float = 1, u_rest: float = 0, spiking_function: nn.Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU()) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU()) -> None:
         """
         带有模拟输出的Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -426,7 +459,7 @@ class AnalogSoma(Soma):
 
 
 class LIAF(AnalogSoma):
-    def __init__(self, tau_m: float = 1, u_threshold: float = 1, u_rest: float = 0, spiking_function: nn.Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU()) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU()) -> None:
         """
         Leaky Integrate-and-Analog-Fire(LIAF)神经元
         @params:
