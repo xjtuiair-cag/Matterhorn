@@ -110,7 +110,7 @@ def main():
 
     # 设置学习率，优化器，学习率衰减机制等等
 
-    print(Panel(Text("Prepare for Training", justify = "center")))
+    print(Panel(Text("Preparations for Training", justify = "center")))
 
     optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
