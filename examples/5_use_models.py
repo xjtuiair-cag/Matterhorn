@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torch.cuda.amp import autocast as autocast
 
 
 import time
@@ -35,8 +36,8 @@ def main():
 
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
-    time_steps = 64
-    batch_size = 8
+    time_steps = 32
+    batch_size = 16
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 64
     learning_rate = 1e-3
@@ -147,10 +148,11 @@ def main():
             y = y.to(device)
             y0 = torch.nn.functional.one_hot(y, num_classes = len(train_dataset.labels)).float()
 
-            o = model(x)
-            loss = torch.nn.functional.mse_loss(o, y0)
-            loss.backward(retain_graph = True)
-            optimizer.step()
+            with autocast():
+                o = model(x)
+                loss = torch.nn.functional.mse_loss(o, y0)
+                loss.backward(retain_graph = True)
+                optimizer.step()
 
             train_samples += y.numel()
             train_loss += loss.item() * y.numel()
@@ -200,7 +202,7 @@ def main():
         result_table.add_row("Duration", "%.3fs" %(end_time - start_time,))
         print(result_table)
         with open(log_dir + os.sep + model.__module__ + "_" + train_dataset.__module__ + ".csv", "a") as f:
-            f.write("%d, %.6f, %.4f, %.6f, %.4f, %.3f\n", (e, train_loss, train_acc, test_loss, test_acc, end_time - start_time))
+            f.write("%d, %.6f, %.4f, %.6f, %.4f, %.3f\n" % (e, train_loss, train_acc, test_loss, test_acc, end_time - start_time))
 
         last_train_loss = train_loss
         last_train_acc = train_acc
