@@ -75,9 +75,9 @@ def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: i
             stride = stride,
             padding = kernel_size // 2
         ),
-        snn.BatchNorm2d(
-            num_features = out_channels
-        ),
+        # snn.BatchNorm2d(
+        #     num_features = out_channels
+        # ),
         snn.LIF(
             tau_m = tau_m,
             spiking_function = spiking_function
@@ -169,12 +169,12 @@ class SEWBlock(snn.Module):
 
 
 class SEWRes18(snn.Module):
-    def __init__(self, input_h_w: Tuple[int] = (128, 128), classes: int = 10, tau_m: float = 2.0, spiking_function: snn.Module = snn.Rectangular(), residual_connection: snn.Module = ResADD()) -> None:
+    def __init__(self, input_h_w: Tuple[int] = (128, 128), num_classes: int = 10, tau_m: float = 2.0, spiking_function: snn.Module = snn.Rectangular(), residual_connection: snn.Module = ResADD()) -> None:
         """
         Spiking Element-Wise Block， SEW ResNet的单元。
         @params:
             input_h_w: Tuple[int] 输出脉冲通道数
-            classes: int 输出类别数
+            num_classes: int 输出类别数
             tau_m: float 参数τ_{m}，神经元时间常数
             spiking_function: snn.Module 脉冲函数
             residual_connection: snn.Module 脉冲连接方式
@@ -265,7 +265,7 @@ class SEWRes18(snn.Module):
             nn.Flatten(), # [512]
             nn.Linear(
                 in_features = 512,
-                out_features = classes
+                out_features = num_classes
             ),
             nn.ReLU() # [10]
         )
