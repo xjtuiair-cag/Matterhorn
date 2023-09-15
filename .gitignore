@@ -135,6 +135,7 @@ dmypy.json
 .history/
 
 examples/data/
+examples/logs/
 *.pyc
 
 # Apple computer
