@@ -248,15 +248,18 @@ class EventDataset1d(EventDataset):
         @return:
             data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, L]
         """
+        data = data.astype("float32")
         res = torch.zeros(self.t_size, self.x_size, dtype = torch.float)
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
             elif isinstance(self.clipped, Tuple):
                 data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
+        data[:, 0] -= np.min(data[:, 0])
         data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
         data[:, 1] = np.floor(data[:, 1] * self.x_size / self.original_size[2])
         data = np.unique(data, axis = 0)
+        data = data[(data[:, 0] >= 0) & (data[:, 0] < self.t_size)].astype("int32")
         res[data.T] = 1
         return res
     
@@ -269,16 +272,19 @@ class EventDataset1d(EventDataset):
         @return:
             data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), L]
         """
+        data = data.astype("float32")
         res = torch.zeros(self.t_size, self.p_size, self.x_size, dtype = torch.float)
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
             elif isinstance(self.clipped, Tuple):
                 data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
+        data[:, 0] -= np.min(data[:, 0])
         data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
         data[:, 1] = np.floor(data[:, 1] * self.p_size / self.original_size[1])
         data[:, 2] = np.floor(data[:, 2] * self.x_size / self.original_size[2])
         data = np.unique(data, axis = 0)
+        data = data[(data[:, 0] >= 0) & (data[:, 0] < self.t_size)].astype("int32")
         res[data.T] = 1
         return res
 
@@ -341,16 +347,19 @@ class EventDataset2d(EventDataset):
         @return:
             data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, H, W]
         """
+        data = data.astype("float32")
         res = torch.zeros(self.t_size, self.y_size, self.x_size, dtype = torch.float)
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
             elif isinstance(self.clipped, Tuple):
                 data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
+        data[:, 0] -= np.min(data[:, 0])
         data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
         data[:, 1] = np.floor(data[:, 1] * self.y_size / self.original_size[2])
         data[:, 2] = np.floor(data[:, 2] * self.x_size / self.original_size[3])
         data = np.unique(data, axis = 0)
+        data = data[(data[:, 0] >= 0) & (data[:, 0] < self.t_size)].astype("int32")
         res[data.T] = 1
         return res
 
@@ -363,17 +372,21 @@ class EventDataset2d(EventDataset):
         @return:
             data_tensor: torch.Tensor 渲染成事件的张量，形状为[T, C(P), H, W]
         """
+        data = data.astype("float32")
         res = torch.zeros(self.t_size, self.p_size, self.y_size, self.x_size, dtype = torch.float)
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
             elif isinstance(self.clipped, Tuple):
                 data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
+        data[:, 0] -= np.min(data[:, 0])
+        np.set_printoptions(threshold = np.inf)
         data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
         data[:, 1] = np.floor(data[:, 1] * self.p_size / self.original_size[1])
         data[:, 2] = np.floor(data[:, 2] * self.y_size / self.original_size[2])
         data[:, 3] = np.floor(data[:, 3] * self.x_size / self.original_size[3])
         data = np.unique(data, axis = 0)
+        data = data[(data[:, 0] >= 0) & (data[:, 0] < self.t_size)].astype("int32")
         res[data.T] = 1
         return res
 
