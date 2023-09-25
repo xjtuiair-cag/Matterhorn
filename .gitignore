@@ -137,6 +137,7 @@ dmypy.json
 examples/data/
 examples/logs/
 *.pyc
+test
 
 # Apple computer
 .DS_Store
