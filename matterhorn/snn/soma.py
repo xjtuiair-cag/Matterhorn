@@ -58,7 +58,7 @@ class Soma(Module):
         """
         if isinstance(u, float):
             u = torch.full_like(x, u)
-            u = u.detach()
+            u = u.detach().requires_grad_(True)
         return u
 
 
@@ -75,7 +75,7 @@ class Soma(Module):
         将历史电位从计算图中分离，以停止在时间上进行反向传播。
         """
         if isinstance(self.u, torch.Tensor):
-            self.u = self.u.detach()
+            self.u = self.u.detach().requires_grad_(True)
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -349,9 +349,9 @@ class Izhikevich(Soma):
         将历史电位与权重从计算图中分离，以停止在时间上进行反向传播。
         """
         if isinstance(self.u, torch.Tensor):
-            self.u = self.u.detach()
+            self.u = self.u.detach().requires_grad_(True)
         if isinstance(self.w, torch.Tensor):
-            self.w = self.w.detach()
+            self.w = self.w.detach().requires_grad_(True)
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:

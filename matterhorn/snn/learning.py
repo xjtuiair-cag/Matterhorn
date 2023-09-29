@@ -180,8 +180,8 @@ class STDPLinear(Module, nn.Linear):
         @return:
             o: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
-        self.input_spike_seq.append(x.clone().detach())
+        self.input_spike_seq.append(x.clone().detach().requires_grad_(True))
         x = super().forward(x)
         x = self.soma(x)
-        self.output_spike_seq.append(x.clone().detach())
+        self.output_spike_seq.append(x.clone().detach().requires_grad_(True))
         return x
