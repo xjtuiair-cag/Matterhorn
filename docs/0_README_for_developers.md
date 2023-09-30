@@ -188,7 +188,7 @@ sudo apt update
 更新，随后，在命令行中输入
 
 ```sh
-sudo apt install git python3-pip
+sudo apt install git python3-pip python-is-python3
 ```
 
 安装GIT和PIP。 **注意：** Ubuntu 20.04自带的Python版本为3.8，因此不必重新安装Anaconda；但自带的Python是没有PIP的，需要手动安装。
@@ -268,6 +268,17 @@ True
 ### 1.6 在本地部署Matterhorn的GIT仓库
 
 不同于`README`中所述`git clone`的方式，若希望进一步开发，我们需要在本地初始化GIT仓库，随后与远端同步。输入
+
+```sh
+# MacOS 和 Linux
+cd ~
+# Windows
+cd c:\\Users\\[用户名]
+mkdir matterhorn
+cd matterhorn
+```
+
+在主文件夹下创建工作目录，随后输入
 
 ```sh
 git init
