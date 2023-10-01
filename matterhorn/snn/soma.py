@@ -459,6 +459,37 @@ class AnalogSoma(Soma):
         return y
 
 
+class KLIF(AnalogSoma):
+    def __init__(self, tau_m: float = 1, u_threshold: float = 1, u_rest: float = 0, k: float = 0.2) -> None:
+        self.k = k
+        super().__init__(tau_m, u_threshold, u_rest, self.f_kspiking, self.f_kspiking)
+
+
+    def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        """
+        通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
+        @params:
+            h: torch.Tensor 上一时刻的电位$U_{i}^{l}(t-1)$
+            x: torch.Tensor 输入电位$X_{i}^{l}(t)$
+        @return:
+            u: torch.Tensor 当前电位$U_{i}^{l}(t)$
+        """
+        du = (1.0 / self.tau_m) * (-(h - self.u_rest) + x)
+        u = h + du
+        return u
+
+
+    def f_kspiking(self, u: torch.Tensor) -> torch.Tensor:
+        """
+        通过当前电位$U_{i}^{l}(t)$计算当前脉冲$O_{i}^{l}(t)$。
+        @params:
+            u: torch.Tensor 当前电位$U_{i}^{l}(t)$
+        @return:
+            o: torch.Tensor 当前脉冲$O_{i}^{l}(t)$
+        """
+        return nn.functional.relu(self.k * u)
+
+
 class LIAF(AnalogSoma):
     def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU()) -> None:
         """

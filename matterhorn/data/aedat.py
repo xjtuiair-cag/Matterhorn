@@ -38,7 +38,7 @@ class AEDAT(EventDataset2d):
     p_shift = 0
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4", clipped: Optional[Union[Tuple, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4", clipped: Optional[Union[Tuple, int]] = None) -> None:
         """
         原始数据后缀名为.aedat的数据集
         @params:
@@ -47,7 +47,8 @@ class AEDAT(EventDataset2d):
             transform: Callable | None 数据如何变换
             target_transform: Callable | None 标签如何变换
             download: bool 如果数据集不存在，是否应该下载
-            sampling: bool 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            sampling: int 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            count: bool 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             time_steps: int 最终的数据集总共含有多少个时间步
             width: int 最终数据集的宽度
             height: int 最终数据集的高度
@@ -64,6 +65,7 @@ class AEDAT(EventDataset2d):
             target_transform = target_transform,
             download = download,
             sampling = sampling,
+            count = count,
             t_size = time_steps,
             y_size = height,
             x_size = width,
@@ -163,7 +165,7 @@ class CIFAR10DVS(AEDAT):
     p_shift = 0
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
         """
         CIFAR-10 DVS数据集，将CIFAR10数据集投影至LCD屏幕后，用事件相机录制的数据集
         @params:
@@ -172,7 +174,8 @@ class CIFAR10DVS(AEDAT):
             transform: Callable | None 数据如何变换
             target_transform: Callable | None 标签如何变换
             download: bool 如果数据集不存在，是否应该下载
-            sampling: bool 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            sampling: int 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            count: bool 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             time_steps: int 最终的数据集总共含有多少个时间步
             width: int 最终数据集的宽度
             height: int 最终数据集的高度
@@ -186,6 +189,7 @@ class CIFAR10DVS(AEDAT):
             target_transform = target_transform,
             download = download,
             sampling = sampling,
+            count = count,
             time_steps = time_steps,
             width = width,
             height = height,
@@ -305,7 +309,7 @@ class DVS128Gesture(AEDAT):
     p_shift = 1
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
         """
         DVS128 Gesture数据集，用事件相机录制手势形成的数据集
         @params:
@@ -314,7 +318,8 @@ class DVS128Gesture(AEDAT):
             transform: Callable | None 数据如何变换
             target_transform: Callable | None 标签如何变换
             download: bool 如果数据集不存在，是否应该下载
-            sampling: bool 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            sampling: int 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            count: bool 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             time_steps: int 最终的数据集总共含有多少个时间步
             width: int 最终数据集的宽度
             height: int 最终数据集的高度
@@ -328,6 +333,7 @@ class DVS128Gesture(AEDAT):
             target_transform = target_transform,
             download = download,
             sampling = sampling,
+            count = count,
             time_steps = time_steps,
             width = width,
             height = height,

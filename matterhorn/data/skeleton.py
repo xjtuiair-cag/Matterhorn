@@ -26,7 +26,7 @@ class EventDataset(Dataset):
     data_target = []
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False) -> None:
         """
         事件数据集框架
         @params:
@@ -35,7 +35,8 @@ class EventDataset(Dataset):
             transform: Callable | None 数据如何变换
             target_transform: Callable | None 标签如何变换
             download: bool 如果数据集不存在，是否应该下载
-            sampling: bool 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            sampling: int 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            count: bool 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
         """
         super().__init__()
         self.root = root
@@ -43,6 +44,7 @@ class EventDataset(Dataset):
         self.target_transform = target_transform
         self.train = train
         self.sampling = sampling
+        self.count = count
         if download:
             self.download()
         self.pre_process()
@@ -209,7 +211,7 @@ class EventDataset1d(EventDataset):
     original_size = (1, 2, 128)
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, t_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, t_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, float]] = None) -> None:
         """
         一维事件数据集框架
         @params:
@@ -218,7 +220,8 @@ class EventDataset1d(EventDataset):
             transform: Callable | None 数据如何变换
             target_transform: Callable | None 标签如何变换
             download: bool 如果数据集不存在，是否应该下载
-            sampling: bool 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            sampling: int 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            count: bool 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             t_size: int 时间维度的大小
             x_size: int 空间维度的大小
             polarity: bool 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
@@ -236,7 +239,8 @@ class EventDataset1d(EventDataset):
             transform = transform,
             target_transform = target_transform,
             download = download,
-            sampling = sampling
+            sampling = sampling,
+            count = count
         )
     
 
@@ -250,6 +254,8 @@ class EventDataset1d(EventDataset):
         """
         data = data.astype("float32")
         res = torch.zeros(self.t_size, self.x_size, dtype = torch.float)
+        if not data.shape[0]:
+            return res
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
@@ -258,9 +264,9 @@ class EventDataset1d(EventDataset):
         data[:, 0] -= np.min(data[:, 0])
         data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
         data[:, 1] = np.floor(data[:, 1] * self.x_size / self.original_size[2])
-        data = np.unique(data, axis = 0)
+        data, counts = np.unique(data, axis = 0, return_counts = True)
         data = data[(data[:, 0] >= 0) & (data[:, 0] < self.t_size)].astype("int32")
-        res[data.T] = 1
+        res[data.T] = torch.tensor(counts, dtype = torch.float) if self.count else 1
         return res
     
 
@@ -274,6 +280,8 @@ class EventDataset1d(EventDataset):
         """
         data = data.astype("float32")
         res = torch.zeros(self.t_size, self.p_size, self.x_size, dtype = torch.float)
+        if not data.shape[0]:
+            return res
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
@@ -283,9 +291,9 @@ class EventDataset1d(EventDataset):
         data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
         data[:, 1] = np.floor(data[:, 1] * self.p_size / self.original_size[1])
         data[:, 2] = np.floor(data[:, 2] * self.x_size / self.original_size[2])
-        data = np.unique(data, axis = 0)
+        data, counts = np.unique(data, axis = 0, return_counts = True)
         data = data[(data[:, 0] >= 0) & (data[:, 0] < self.t_size)].astype("int32")
-        res[data.T] = 1
+        res[data.T] = torch.tensor(counts, dtype = torch.float) if self.count else 1
         return res
 
 
@@ -306,7 +314,7 @@ class EventDataset2d(EventDataset):
     original_size = (1, 2, 128, 128)
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, t_size: int = 128, y_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, t_size: int = 128, y_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, float]] = None) -> None:
         """
         二维事件数据集框架
         @params:
@@ -315,7 +323,8 @@ class EventDataset2d(EventDataset):
             transform: Callable | None 数据如何变换
             target_transform: Callable | None 标签如何变换
             download: bool 如果数据集不存在，是否应该下载
-            sampling: bool 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            sampling: int 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            count: bool 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             t_size: int 时间维度的大小
             y_size: int 第一个空间维度的大小
             x_size: int 第二个空间维度的大小
@@ -335,7 +344,8 @@ class EventDataset2d(EventDataset):
             transform = transform,
             target_transform = target_transform,
             download = download,
-            sampling = sampling
+            sampling = sampling,
+            count = count
         )
 
 
@@ -349,6 +359,8 @@ class EventDataset2d(EventDataset):
         """
         data = data.astype("float32")
         res = torch.zeros(self.t_size, self.y_size, self.x_size, dtype = torch.float)
+        if not data.shape[0]:
+            return res
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
@@ -358,9 +370,9 @@ class EventDataset2d(EventDataset):
         data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
         data[:, 1] = np.floor(data[:, 1] * self.y_size / self.original_size[2])
         data[:, 2] = np.floor(data[:, 2] * self.x_size / self.original_size[3])
-        data = np.unique(data, axis = 0)
+        data, counts = np.unique(data, axis = 0, return_counts = True)
         data = data[(data[:, 0] >= 0) & (data[:, 0] < self.t_size)].astype("int32")
-        res[data.T] = 1
+        res[data.T] = torch.tensor(counts, dtype = torch.float) if self.count else 1
         return res
 
 
@@ -374,6 +386,8 @@ class EventDataset2d(EventDataset):
         """
         data = data.astype("float32")
         res = torch.zeros(self.t_size, self.p_size, self.y_size, self.x_size, dtype = torch.float)
+        if not data.shape[0]:
+            return res
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
@@ -385,9 +399,9 @@ class EventDataset2d(EventDataset):
         data[:, 1] = np.floor(data[:, 1] * self.p_size / self.original_size[1])
         data[:, 2] = np.floor(data[:, 2] * self.y_size / self.original_size[2])
         data[:, 3] = np.floor(data[:, 3] * self.x_size / self.original_size[3])
-        data = np.unique(data, axis = 0)
+        data, counts = np.unique(data, axis = 0, return_counts = True)
         data = data[(data[:, 0] >= 0) & (data[:, 0] < self.t_size)].astype("int32")
-        res[data.T] = 1
+        res[data.T] = torch.tensor(counts, dtype = torch.float) if self.count else 1
         return res
 
 
