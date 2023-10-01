@@ -126,8 +126,16 @@ class SEWBlock(snn.Module):
                 tau_m = tau_m,
                 spiking_function = spiking_function
             )
+        elif in_channels != out_channels:
+            self.down_sampling_block = ConvLIF(
+                in_channels = in_channels,
+                out_channels = out_channels,
+                kernel_size = 1,
+                tau_m = tau_m,
+                spiking_function = spiking_function
+            )
         else:
-            self.down_sampling = None
+            self.down_sampling_block = None
         self.residual_connection = residual_connection
     
 
@@ -146,7 +154,7 @@ class SEWBlock(snn.Module):
         """
         self.conv1.reset()
         self.conv2.reset()
-        if self.down_sampling:
+        if self.down_sampling_block is not None:
             self.down_sampling_block.reset()
         self.residual_connection.reset()
     
@@ -160,7 +168,7 @@ class SEWBlock(snn.Module):
             o: torch.Tensor 输出脉冲张量
         """
         a = self.conv2(self.conv1(x))
-        if self.down_sampling:
+        if self.down_sampling_block is not None:
             s = self.down_sampling_block(x)
         else:
             s = x

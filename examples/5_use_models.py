@@ -36,7 +36,7 @@ def main():
 
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
-    time_steps = 64
+    time_steps = 16
     batch_size = 16
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 64
@@ -60,8 +60,8 @@ def main():
     print(Panel(Text("Model", justify = "center")))
 
     model = SEWRes18(
-        input_h_w = (128, 128),
-        num_classes = 12,
+        input_h_w = (64, 64),
+        num_classes = 10,
         tau_m = tau
     )
     model = model.to(device)
@@ -73,25 +73,23 @@ def main():
 
     print(Panel(Text("Dataset", justify = "center")))
 
-    width = 128
-    height = 128
-    train_dataset = matterhorn.data.DVS128Gesture(
+    width = 64
+    height = 64
+    train_dataset = matterhorn.data.NMNIST(
         root = "./examples/data",
         train = True,
         download = True,
         time_steps = time_steps,
         width = width,
-        height = height,
-        sampling = 600
+        height = height
     )
-    test_dataset = matterhorn.data.DVS128Gesture(
+    test_dataset = matterhorn.data.NMNIST(
         root = "./examples/data",
         train = False,
         download = True,
         time_steps = time_steps,
         width = width,
-        height = height,
-        sampling = 600
+        height = height
     )
 
     train_data_loader = DataLoader(
@@ -111,8 +109,6 @@ def main():
 
     demo_data, demo_label = test_dataset[0]
     print(demo_data.shape)
-    matterhorn.util.plotter.event_plot_tyx(demo_data, titles = ["%s Label %s" % (test_dataset.__class__.__name__, test_dataset.labels[demo_label])])
-    exit()
 
     # 设置学习率，优化器，学习率衰减机制等等
 
