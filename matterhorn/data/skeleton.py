@@ -254,6 +254,8 @@ class EventDataset1d(EventDataset):
         """
         data = data.astype("float32")
         res = torch.zeros(self.t_size, self.x_size, dtype = torch.float)
+        if not data.shape[0]:
+            return res
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
@@ -278,6 +280,8 @@ class EventDataset1d(EventDataset):
         """
         data = data.astype("float32")
         res = torch.zeros(self.t_size, self.p_size, self.x_size, dtype = torch.float)
+        if not data.shape[0]:
+            return res
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
@@ -355,6 +359,8 @@ class EventDataset2d(EventDataset):
         """
         data = data.astype("float32")
         res = torch.zeros(self.t_size, self.y_size, self.x_size, dtype = torch.float)
+        if not data.shape[0]:
+            return res
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
@@ -380,6 +386,8 @@ class EventDataset2d(EventDataset):
         """
         data = data.astype("float32")
         res = torch.zeros(self.t_size, self.p_size, self.y_size, self.x_size, dtype = torch.float)
+        if not data.shape[0]:
+            return res
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
