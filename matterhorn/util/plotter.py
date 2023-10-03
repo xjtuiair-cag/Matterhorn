@@ -102,6 +102,7 @@ def event_plot_yx(data: torch.Tensor, polarity: bool = True, show: bool = True, 
         plt.show()
     if save is not None:
         plt.savefig(save)
+        plt.close()
 
 
 def event_plot_tx(data: torch.Tensor, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None) -> None:
@@ -149,6 +150,7 @@ def event_plot_tx(data: torch.Tensor, polarity: bool = True, show: bool = True, 
         plt.show()
     if save is not None:
         plt.savefig(save)
+        plt.close()
 
 
 def event_plot_3d(ax: Axes3D, indices_pos: np.ndarray, indices_neg: np.ndarray = None, color_pos: str = "#ff0000", color_neg: str = "#0000ff", title: str = None, index_0: str = "t", index_1: str = "y", index_2: str = "x") -> None:
@@ -228,3 +230,4 @@ def event_plot_tyx(data: torch.Tensor, polarity: bool = True, show: bool = True,
         plt.show()
     if save is not None:
         plt.savefig(save)
+        plt.close()
