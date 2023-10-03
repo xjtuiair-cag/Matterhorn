@@ -9,7 +9,7 @@ from .decoder import SumSpike as SumSpikeDecoder, AverageSpike as AvgSpikeDecode
 from .encoder import Direct as DirectEncoder, Poisson as PoissonEncoder, Temporal as TemporalEncoder
 from .layer import SRM0Linear, MaxPool1d, MaxPool2d, MaxPool3d, AvgPool1d, AvgPool2d, AvgPool3d, Flatten, Unflatten
 from .skeleton import Module
-from .soma import IF, LIF, QIF, EIF, Izhikevich, LIAF
+from .soma import Soma, IF, LIF, QIF, EIF, Izhikevich, KLIF, LIAF
 from .surrogate import Rectangular, Polynomial, Sigmoid, Gaussian
 from .synapse import Linear, Conv1d, Conv2d, Conv3d, ConvTranspose1d, ConvTranspose2d, ConvTranspose3d, BatchNorm1d, BatchNorm2d, BatchNorm3d, LayerNorm
 try:
