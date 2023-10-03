@@ -129,6 +129,7 @@ class AverageTime(Module):
         xTt = xT * t
         xTt /= x.shape[0]
         y = self.time_mul(xTt) + self.current_time_step
+        y = y.mean(dim = 0)
         mask = x.mean(dim = 0).le(0).to(x).detach().requires_grad_(True)
         y -= mask
         self.current_time_step += x.shape[0]
