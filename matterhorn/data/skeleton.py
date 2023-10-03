@@ -265,7 +265,9 @@ class EventDataset1d(EventDataset):
         data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
         data[:, 1] = np.floor(data[:, 1] * self.x_size / self.original_size[2])
         data, counts = np.unique(data, axis = 0, return_counts = True)
-        data = data[(data[:, 0] >= 0) & (data[:, 0] < self.t_size)].astype("int32")
+        t_filter = (data[:, 0] >= 0) & (data[:, 0] < self.t_size)
+        data = data[t_filter].astype("int32")
+        counts = counts[t_filter].astype("float32")
         res[data.T] = torch.tensor(counts, dtype = torch.float) if self.count else 1
         return res
     
@@ -292,7 +294,9 @@ class EventDataset1d(EventDataset):
         data[:, 1] = np.floor(data[:, 1] * self.p_size / self.original_size[1])
         data[:, 2] = np.floor(data[:, 2] * self.x_size / self.original_size[2])
         data, counts = np.unique(data, axis = 0, return_counts = True)
-        data = data[(data[:, 0] >= 0) & (data[:, 0] < self.t_size)].astype("int32")
+        t_filter = (data[:, 0] >= 0) & (data[:, 0] < self.t_size)
+        data = data[t_filter].astype("int32")
+        counts = counts[t_filter].astype("float32")
         res[data.T] = torch.tensor(counts, dtype = torch.float) if self.count else 1
         return res
 
@@ -371,7 +375,9 @@ class EventDataset2d(EventDataset):
         data[:, 1] = np.floor(data[:, 1] * self.y_size / self.original_size[2])
         data[:, 2] = np.floor(data[:, 2] * self.x_size / self.original_size[3])
         data, counts = np.unique(data, axis = 0, return_counts = True)
-        data = data[(data[:, 0] >= 0) & (data[:, 0] < self.t_size)].astype("int32")
+        t_filter = (data[:, 0] >= 0) & (data[:, 0] < self.t_size)
+        data = data[t_filter].astype("int32")
+        counts = counts[t_filter].astype("float32")
         res[data.T] = torch.tensor(counts, dtype = torch.float) if self.count else 1
         return res
 
@@ -400,7 +406,9 @@ class EventDataset2d(EventDataset):
         data[:, 2] = np.floor(data[:, 2] * self.y_size / self.original_size[2])
         data[:, 3] = np.floor(data[:, 3] * self.x_size / self.original_size[3])
         data, counts = np.unique(data, axis = 0, return_counts = True)
-        data = data[(data[:, 0] >= 0) & (data[:, 0] < self.t_size)].astype("int32")
+        t_filter = (data[:, 0] >= 0) & (data[:, 0] < self.t_size)
+        data = data[t_filter].astype("int32")
+        counts = counts[t_filter].astype("float32")
         res[data.T] = torch.tensor(counts, dtype = torch.float) if self.count else 1
         return res
 
