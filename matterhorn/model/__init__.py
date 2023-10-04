@@ -4,6 +4,7 @@
 """
 
 from .sew import ResADD, ResAND, ResIAND, SEWBlock, SEWRes18
+from .ta import TemporalWiseAttention
 try:
     from rich import print
 except:

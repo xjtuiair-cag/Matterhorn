@@ -2,7 +2,7 @@
 """
 Spiking Element-Wise (SEW) ResNet。
 Reference:
-[Fang W, Yu Z, Chen Y, et al. Deep residual learning in spiking neural networks[J]. Advances in Neural Information Processing Systems, 2021, 34: 21056-21069.]
+[Fang W, Yu Z, Chen Y, et al. Deep residual learning in spiking neural networks\[J\]. Advances in Neural Information Processing Systems, 2021, 34: 21056-21069.]
 (https://proceedings.neurips.cc/paper/2021/hash/afe434653a898da20044041262b3ac74-Abstract.html)
 """
 
