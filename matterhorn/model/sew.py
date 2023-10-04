@@ -88,7 +88,7 @@ def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: i
 
 
 class SEWBlock(snn.Module):
-    def __init__(self, in_channels: int, out_channels: int, tau_m: float = 2.0, spiking_function: snn.Module = snn.Rectangular(), residual_connection: snn.Module = ResADD(), down_sampling: bool = False, trainbale: bool = False) -> None:
+    def __init__(self, in_channels: int, out_channels: int, tau_m: float = 2.0, spiking_function: snn.Module = snn.Rectangular(), residual_connection: snn.Module = ResADD(), down_sampling: bool = False, trainable: bool = False) -> None:
         """
         Spiking Element-Wise Block， SEW ResNet的单元。
         @params:
@@ -110,7 +110,7 @@ class SEWBlock(snn.Module):
             stride = 2 if down_sampling else 1,
             tau_m = tau_m,
             spiking_function = spiking_function,
-            trainable = trainbale
+            trainable = trainable
         )
         self.conv2 = ConvLIF(
             in_channels = out_channels,
@@ -119,7 +119,7 @@ class SEWBlock(snn.Module):
             stride = 1,
             tau_m = tau_m,
             spiking_function = spiking_function,
-            trainable = trainbale
+            trainable = trainable
         )
         self.down_sampling = down_sampling
         if self.down_sampling:
@@ -130,7 +130,7 @@ class SEWBlock(snn.Module):
                 stride = 2,
                 tau_m = tau_m,
                 spiking_function = spiking_function,
-                trainable = trainbale
+                trainable = trainable
             )
         elif in_channels != out_channels:
             self.down_sampling_block = ConvLIF(
@@ -139,7 +139,7 @@ class SEWBlock(snn.Module):
                 kernel_size = 1,
                 tau_m = tau_m,
                 spiking_function = spiking_function,
-                trainable = trainbale
+                trainable = trainable
             )
         else:
             self.down_sampling_block = None
