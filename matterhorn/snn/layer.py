@@ -45,7 +45,7 @@ class val_to_spike(torch.autograd.Function):
 
 
 class SRM0Linear(Module):
-    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), device = None, dtype = None) -> None:
+    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), trainable: bool = False, device = None, dtype = None) -> None:
         """
         SRM0神经元，突触响应的神经元
         电位公式较为复杂：
@@ -65,6 +65,7 @@ class SRM0Linear(Module):
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+            trainable: bool 参数是否可以训练
             device: Optional[torch.device, str] 所使用的设备
             dtype: Optional[type] 数据类型
         """
@@ -73,7 +74,7 @@ class SRM0Linear(Module):
         self.out_features = out_features
         self.weight = nn.Parameter(torch.empty((out_features, in_features), device = device, dtype = dtype))
         nn.init.kaiming_uniform_(self.weight, a = math.sqrt(5))
-        self.tau_m = tau_m
+        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function

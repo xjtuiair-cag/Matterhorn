@@ -17,7 +17,7 @@ with open(os.path.join(os.path.abspath("."), "README.md"), "r", encoding="utf-8"
 setup(
     install_requires = install_requires,
     name = "matterhorn",
-    version = "0.1.0",
+    version = "1.0.0",
     author = "CAG, IAIR, XJTU, Xi'an, China",
     author_email = "ericwang017@stu.xjtu.edu.cn",
     description = "A neuromorphic framework based on PyTorch.",

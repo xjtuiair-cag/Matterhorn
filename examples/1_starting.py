@@ -66,9 +66,9 @@ def main():
             snn.SpatialContainer(
                 snn.Flatten(),
                 snn.Linear(28 * 28, 80, bias = False),
-                snn.LIF(tau_m = tau),
+                snn.LIF(tau_m = tau, trainable = True),
                 snn.Linear(80, 10, bias = False),
-                snn.LIF(tau_m = tau)
+                snn.LIF(tau_m = tau, trainable = True)
             ),
         ),
         decoder = snn.AvgSpikeDecoder()
