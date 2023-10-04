@@ -91,7 +91,7 @@ class TemporalWiseAttention(snn.Module):
         """
         is_train = x.requires_grad
         dim = len(x.shape)
-        s = x.clone().detach().requires_grad_(True)
+        s = x.clone().detach().requires_grad_(is_train)
         pre_permute = []
         post_permute = []
         # 获取统计向量$s^{n-1}$
