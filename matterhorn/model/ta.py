@@ -55,7 +55,12 @@ class TemporalWiseAttention(snn.Module):
         @return:
             d: torch.Tensor 分数向量$d^{n-1}$
         """
+        dim = len(s.shape)
+        if dim > 1:
+            s = s.permute(1, 0) # 将形状[T, B]翻转为[B, T]
         d = self.sigmoid(self.fc2(self.relu(self.fc1(s))))
+        if dim > 1:
+            d = d.permute(1, 0) # 将形状[B, T]翻转为[T, B]
         return d
 
 
@@ -67,7 +72,12 @@ class TemporalWiseAttention(snn.Module):
         @return:
             d: torch.Tensor 分数向量$d^{n-1}$，形状为[B, T]
         """
+        dim = len(s.shape)
+        if dim > 1:
+            s = s.permute(1, 0) # 将形状[T, B]翻转为[B, T]
         d = self.heaviside(self.sigmoid(self.fc2(self.relu(self.fc1(s)))) - self.d_threshold)
+        if dim > 1:
+            d = d.permute(1, 0) # 将形状[B, T]翻转为[T, B]
         return d
 
 
