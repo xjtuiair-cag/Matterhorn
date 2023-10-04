@@ -17,7 +17,7 @@ except:
 
 
 class Soma(Module):
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), trainable: bool = False) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -28,9 +28,10 @@ class Soma(Module):
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+            trainable: bool 参数是否可以训练
         """
         super().__init__()
-        self.tau_m = tau_m
+        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
         self.u = 0.0
         self.u_threshold = u_threshold
         self.u_rest = u_rest
@@ -173,7 +174,7 @@ class IF(Soma):
 
 
 class LIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), trainable: bool = False) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
@@ -183,12 +184,14 @@ class LIF(Soma):
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+            trainable: bool 参数是否可以训练
         """
         super().__init__(
             tau_m = tau_m,
             u_threshold = u_threshold,
             u_rest = u_rest,
-            spiking_function = spiking_function
+            spiking_function = spiking_function,
+            trainable = trainable
         )
 
 
@@ -207,7 +210,7 @@ class LIF(Soma):
 
 
 class QIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_c: float = 0.8, a_0: float = 1.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_c: float = 0.8, a_0: float = 1.0, spiking_function: nn.Module = surrogate.Rectangular(), trainable: bool = False) -> None:
         """
         Quadratic Integrate-and-Fire(QIF)神经元。
         一阶电位变换公式为：
@@ -219,15 +222,17 @@ class QIF(Soma):
             u_c: float 参数$u_{c}$
             a_0: float 参数$a_{0}$
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+            trainable: bool 参数是否可以训练
         """
+        self.a_0 = nn.Parameter(torch.tensor(a_0), requires_grad = trainable)
+        self.u_c = nn.Parameter(torch.tensor(u_c), requires_grad = trainable)
         super().__init__(
             tau_m = tau_m,
             u_threshold = u_threshold,
             u_rest = u_rest,
-            spiking_function = spiking_function
+            spiking_function = spiking_function,
+            trainable = trainable
         )
-        self.a_0 = a_0
-        self.u_c = u_c
     
 
     def extra_repr(self) -> str:
@@ -254,7 +259,7 @@ class QIF(Soma):
 
 
 class EIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_t: float = 8.0, delta_t: float = 1.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, u_t: float = 8.0, delta_t: float = 1.0, spiking_function: nn.Module = surrogate.Rectangular(), trainable: bool = False) -> None:
         """
         Exponential Integrate-and-Fire(EIF)神经元。
         一阶电位变换公式为：
@@ -266,15 +271,17 @@ class EIF(Soma):
             u_t: float 参数$u_{T}$
             delta_t: float 参数$Δ_{T}$
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+            trainable: bool 参数是否可以训练
         """
+        self.delta_t = nn.Parameter(torch.tensor(delta_t), requires_grad = trainable)
+        self.u_t = nn.Parameter(torch.tensor(u_t), requires_grad = trainable)
         super().__init__(
             tau_m = tau_m,
             u_threshold = u_threshold,
             u_rest = u_rest,
-            spiking_function = spiking_function
+            spiking_function = spiking_function,
+            trainable = trainable
         )
-        self.delta_t = delta_t
-        self.u_t = u_t
     
 
     def extra_repr(self) -> str:
@@ -301,7 +308,7 @@ class EIF(Soma):
 
 
 class Izhikevich(Soma):
-    def __init__(self, a: float = 1.0, b: float = 1.0, u_threshold: float = 1.0, spiking_function: nn.Module = surrogate.Rectangular()) -> None:
+    def __init__(self, a: float = 1.0, b: float = 1.0, u_threshold: float = 1.0, spiking_function: nn.Module = surrogate.Rectangular(), trainable = False) -> None:
         """
         Izhikevich神经元。
         一阶电位变换公式为：
@@ -314,15 +321,17 @@ class Izhikevich(Soma):
             u_t: float 参数$u_{T}$
             delta_t: float 参数$Δ_{T}$
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+            trainable: bool 参数是否可以训练
         """
-        self.a = a
-        self.b = b
+        self.a = nn.Parameter(torch.tensor(a), requires_grad = trainable)
+        self.b = nn.Parameter(torch.tensor(b), requires_grad = trainable)
         self.w = 0.0
         super().__init__(
             tau_m = 1.0,
             u_threshold = u_threshold,
             u_rest = 0.0,
-            spiking_function = spiking_function
+            spiking_function = spiking_function,
+            trainable = trainable
         )
     
 
@@ -372,7 +381,7 @@ class Izhikevich(Soma):
 
 
 class Response(Soma):
-    def __init__(self, response_function: Callable, param_list: Iterable = [], u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: Module = surrogate.Rectangular()) -> None:
+    def __init__(self, response_function: Callable, param_list: Iterable = [], u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: Module = surrogate.Rectangular(), trainable: bool = False) -> None:
         """
         可以自定义反应函数的胞体。
         @params:
@@ -381,14 +390,16 @@ class Response(Soma):
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+            trainable: bool 参数是否可以训练
         """
         self.response_function = response_function
-        self.param_list = [nn.Parameter(torch.tensor(x), requires_grad = True) for x in param_list]
+        self.param_list = [nn.Parameter(torch.tensor(x), requires_grad = trainable) for x in param_list]
         super().__init__(
             tau_m = 1.0,
             u_threshold = u_threshold,
             u_rest = u_rest,
-            spiking_function = spiking_function
+            spiking_function = spiking_function,
+            trainable = trainable
         )
 
 
@@ -405,7 +416,7 @@ class Response(Soma):
 
 
 class AnalogSoma(Soma):
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU()) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU(), trainable: bool = False) -> None:
         """
         带有模拟输出的Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -418,8 +429,15 @@ class AnalogSoma(Soma):
             u_rest: float 静息电位$u_{rest}$
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
             activation_function: nn.Module 激活函数
+            trainable: bool 参数是否可以训练
         """
-        super().__init__(tau_m, u_threshold, u_rest, spiking_function)
+        super().__init__(
+            tau_m = tau_m,
+            u_threshold = u_threshold,
+            u_rest = u_rest,
+            spiking_function = spiking_function,
+            trainable = trainable
+        )
         self.activation_function = activation_function
     
 
@@ -460,9 +478,25 @@ class AnalogSoma(Soma):
 
 
 class KLIF(AnalogSoma):
-    def __init__(self, tau_m: float = 1, u_threshold: float = 1, u_rest: float = 0, k: float = 0.2) -> None:
-        self.k = k
-        super().__init__(tau_m, u_threshold, u_rest, self.f_kspiking, self.f_kspiking)
+    def __init__(self, tau_m: float = 1, u_threshold: float = 1, u_rest: float = 0, k: float = 0.2, trainable: bool = False) -> None:
+        """
+        KLIF神经元
+        @params:
+            tau_m: float 膜时间常数$τ_{m}$
+            u_threshold: float 阈电位$u_{th}$
+            u_rest: float 静息电位$u_{rest}$
+            k: float 参数k
+            trainable: bool 参数是否可以训练
+        """
+        self.k = nn.Parameter(torch.tensor(k), requires_grad = trainable)
+        super().__init__(
+            tau_m = tau_m,
+            u_threshold = u_threshold,
+            u_rest = u_rest,
+            spiking_function = self.f_kspiking,
+            activation_function = self.f_kspiking,
+            trainable = trainable
+        )
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -491,7 +525,7 @@ class KLIF(AnalogSoma):
 
 
 class LIAF(AnalogSoma):
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU()) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU(), trainable: bool = False) -> None:
         """
         Leaky Integrate-and-Analog-Fire(LIAF)神经元
         @params:
@@ -500,8 +534,16 @@ class LIAF(AnalogSoma):
             u_rest: float 静息电位$u_{rest}$
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
             activation_function: nn.Module 激活函数
+            trainable: bool 参数是否可以训练
         """
-        super().__init__(tau_m, u_threshold, u_rest, spiking_function, activation_function)
+        super().__init__(
+            tau_m = tau_m,
+            u_threshold = u_threshold,
+            u_rest = u_rest,
+            spiking_function = spiking_function,
+            activation_function = activation_function,
+            trainable = trainable
+        )
     
 
     def extra_repr(self) -> str:
