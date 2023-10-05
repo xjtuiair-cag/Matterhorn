@@ -121,7 +121,7 @@ def main():
 
     log_dir = "./examples/logs"
     sub_dir = model.__class__.__name__ + "_" + train_dataset.__class__.__name__ + "_" + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
-    os.makedirs(log_dir, exist_ok = True)
+    os.makedirs(os.path.join(log_dir, sub_dir), exist_ok = True)
     with open(os.path.join(log_dir, sub_dir, "result.csv"), "w") as f:
         f.write("Epoch,Training Loss,Training Accuracy,Testing Loss,Testing Accuracy,Duration\n")
 
