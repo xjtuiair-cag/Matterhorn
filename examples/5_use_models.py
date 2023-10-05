@@ -5,6 +5,7 @@ from torch.cuda.amp import autocast as autocast
 
 
 import time
+import datetime
 import os, sys
 sys.path.append(os.path.abspath("."))
 
@@ -119,8 +120,9 @@ def main():
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
 
     log_dir = "./examples/logs"
+    sub_dir = model.__class__.__name__ + "_" + train_dataset.__class__.__name__ + "_" + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
     os.makedirs(log_dir, exist_ok = True)
-    with open(log_dir + os.sep + model.__class__.__name__ + "_" + train_dataset.__class__.__name__ + ".csv", "w") as f:
+    with open(os.path.join(log_dir, sub_dir, "result.csv"), "w") as f:
         f.write("Epoch,Training Loss,Training Accuracy,Testing Loss,Testing Accuracy,Duration\n")
 
     # 开始训练
@@ -184,6 +186,7 @@ def main():
         test_acc /= test_samples
         if test_acc > max_test_acc:
             max_test_acc = test_acc
+            torch.save(model, os.path.join(log_dir, sub_dir, "best.pt"))
         
         end_time = time.time()
 
@@ -201,7 +204,7 @@ def main():
         result_table.add_row("Maximum Testing Accuracy", "%.2f%%" % (100 * max_test_acc,))
         result_table.add_row("Duration", "%.3fs" %(end_time - start_time,))
         print(result_table)
-        with open(log_dir + os.sep + model.__module__ + "_" + train_dataset.__module__ + ".csv", "a") as f:
+        with open(os.path.join(log_dir, sub_dir, "result.csv"), "a") as f:
             f.write("%d, %.6f, %.4f, %.6f, %.4f, %.3f\n" % (e, train_loss, train_acc, test_loss, test_acc, end_time - start_time))
 
         last_train_loss = train_loss
@@ -209,6 +212,9 @@ def main():
         last_test_loss = test_loss
         last_test_acc = test_acc
         lr_scheduler.step()
+        
+    torch.save(model, os.path.join(log_dir, sub_dir, "last.pt"))
+
 
 if __name__ == "__main__":
     main()
