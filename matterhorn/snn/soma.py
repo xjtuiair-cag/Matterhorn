@@ -224,8 +224,6 @@ class QIF(Soma):
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
             trainable: bool 参数是否可以训练
         """
-        self.a_0 = nn.Parameter(torch.tensor(a_0), requires_grad = trainable)
-        self.u_c = nn.Parameter(torch.tensor(u_c), requires_grad = trainable)
         super().__init__(
             tau_m = tau_m,
             u_threshold = u_threshold,
@@ -233,6 +231,8 @@ class QIF(Soma):
             spiking_function = spiking_function,
             trainable = trainable
         )
+        self.a_0 = nn.Parameter(torch.tensor(a_0), requires_grad = trainable)
+        self.u_c = nn.Parameter(torch.tensor(u_c), requires_grad = trainable)
     
 
     def extra_repr(self) -> str:
@@ -273,8 +273,6 @@ class EIF(Soma):
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
             trainable: bool 参数是否可以训练
         """
-        self.delta_t = nn.Parameter(torch.tensor(delta_t), requires_grad = trainable)
-        self.u_t = nn.Parameter(torch.tensor(u_t), requires_grad = trainable)
         super().__init__(
             tau_m = tau_m,
             u_threshold = u_threshold,
@@ -282,6 +280,8 @@ class EIF(Soma):
             spiking_function = spiking_function,
             trainable = trainable
         )
+        self.delta_t = nn.Parameter(torch.tensor(delta_t), requires_grad = trainable)
+        self.u_t = nn.Parameter(torch.tensor(u_t), requires_grad = trainable)
     
 
     def extra_repr(self) -> str:
@@ -323,9 +323,6 @@ class Izhikevich(Soma):
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
             trainable: bool 参数是否可以训练
         """
-        self.a = nn.Parameter(torch.tensor(a), requires_grad = trainable)
-        self.b = nn.Parameter(torch.tensor(b), requires_grad = trainable)
-        self.w = 0.0
         super().__init__(
             tau_m = 1.0,
             u_threshold = u_threshold,
@@ -333,6 +330,9 @@ class Izhikevich(Soma):
             spiking_function = spiking_function,
             trainable = trainable
         )
+        self.w = 0.0
+        self.a = nn.Parameter(torch.tensor(a), requires_grad = trainable)
+        self.b = nn.Parameter(torch.tensor(b), requires_grad = trainable)
     
 
     def extra_repr(self) -> str:
@@ -392,8 +392,6 @@ class Response(Soma):
             spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
             trainable: bool 参数是否可以训练
         """
-        self.response_function = response_function
-        self.param_list = [nn.Parameter(torch.tensor(x), requires_grad = trainable) for x in param_list]
         super().__init__(
             tau_m = 1.0,
             u_threshold = u_threshold,
@@ -401,6 +399,8 @@ class Response(Soma):
             spiking_function = spiking_function,
             trainable = trainable
         )
+        self.response_function = response_function
+        self.param_list = [nn.Parameter(torch.tensor(x), requires_grad = trainable) for x in param_list]
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -488,7 +488,6 @@ class KLIF(AnalogSoma):
             k: float 参数k
             trainable: bool 参数是否可以训练
         """
-        self.k = nn.Parameter(torch.tensor(k), requires_grad = trainable)
         super().__init__(
             tau_m = tau_m,
             u_threshold = u_threshold,
@@ -497,6 +496,7 @@ class KLIF(AnalogSoma):
             activation_function = self.f_kspiking,
             trainable = trainable
         )
+        self.k = nn.Parameter(torch.tensor(k), requires_grad = trainable)
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
