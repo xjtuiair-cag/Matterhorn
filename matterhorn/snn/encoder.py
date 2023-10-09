@@ -14,7 +14,35 @@ except:
     pass
 
 
-class Direct(Module):
+class Encoder(Module):
+    def __init__(self) -> None:
+        """
+        编码器的基类。编码器是一个多时间步模型。
+        """
+        super().__init__(
+            multi_time_step = True
+        )
+
+
+    def supports_single_time_step(self) -> bool:
+        """
+        是否支持单个时间步。
+        @return:
+            if_support: bool 是否支持单个时间步
+        """
+        return False
+
+
+    def supports_multi_time_step(self) -> bool:
+        """
+        是否支持多个时间步。
+        @return:
+            if_support: bool 是否支持多个时间步
+        """
+        return True
+
+
+class Direct(Encoder):
     def __init__(self) -> None:
         """
         直接编码，直接对传入的脉冲（事件）数据进行编码
@@ -37,7 +65,7 @@ class Direct(Module):
         return y
 
 
-class Poisson(Module):
+class Poisson(Encoder):
     def __init__(self, time_steps: int = 1, max_value: float = 1.0, min_value: float = 0.0) -> None:
         """
         泊松编码（速率编码），将值转化为脉冲发放率（多步）
@@ -106,7 +134,7 @@ class Poisson(Module):
         return y
 
 
-class Temporal(Module):
+class Temporal(Encoder):
     def __init__(self, time_steps: int = 1, max_value: float = 1.0, min_value: float = 0.0, prob: float = 0.75, reset_after_process: bool = True) -> None:
         """
         时间编码，在某个时间之前不会产生脉冲，在某个时间之后随机产生脉冲

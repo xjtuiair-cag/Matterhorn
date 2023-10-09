@@ -164,7 +164,6 @@ class STDPLinear(Module, nn.Linear):
             for b in range(batch_size):
                 delta_weight = torch.zeros_like(self.weight)
                 delta_weight = stdp(delta_weight, self.in_features, self.out_features, time_steps, input_spike_train[:, b], output_spike_train[:, b], self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
-                # print(delta_weight)
                 self.weight += delta_weight
         else:
             delta_weight = torch.zeros_like(self.weight)

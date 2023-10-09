@@ -37,7 +37,25 @@ class Soma(Module):
         self.u_rest = u_rest
         self.spiking_function = spiking_function
         self.reset()
-    
+
+
+    def supports_single_time_step(self) -> bool:
+        """
+        是否支持单个时间步。
+        @return:
+            if_support: bool 是否支持单个时间步
+        """
+        return True
+
+
+    def supports_multi_time_step(self) -> bool:
+        """
+        是否支持多个时间步。
+        @return:
+            if_support: bool 是否支持多个时间步
+        """
+        return False
+
 
     def extra_repr(self) -> str:
         """

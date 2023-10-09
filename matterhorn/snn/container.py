@@ -24,7 +24,43 @@ class Spatial(Module, nn.Sequential):
         """
         Module.__init__(self)
         nn.Sequential.__init__(self, *args)
-    
+        self.multi_time_step__ = False
+        for module in self:
+            if hasattr(module, "multi_time_step"):
+                self.multi_time_step__ = self.multi_time_step__ or module.multi_time_step
+
+
+    def supports_single_time_step(self) -> bool:
+        """
+        是否支持单个时间步。
+        @return:
+            if_support: bool 是否支持单个时间步
+        """
+        return True
+
+
+    def supports_multi_time_step(self) -> bool:
+        """
+        是否支持多个时间步。
+        @return:
+            if_support: bool 是否支持多个时间步
+        """
+        return True
+
+
+    def multi_time_step_(self, if_on: bool) -> bool:
+        """
+        调整模型的多时间步模式。
+        @params
+            if_on: bool 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
+        """
+        self.multi_time_step__ = False
+        for module in self:
+            if hasattr(module, "multi_time_step") and hasattr(module, "multi_time_step_"):
+                res = module.multi_time_step_()
+                self.multi_time_step__ = self.multi_time_step__ or module.multi_time_step
+        return True
+
 
     def reset(self) -> None:
         """
@@ -70,10 +106,32 @@ class Temporal(Module):
             module: nn.Module 所用来执行的单步模型
             reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
         """
-        super().__init__()
+        if hasattr(module, "multi_time_step"):
+            assert module.multi_time_step == False, "You cannot put a multi time step module %s into temporal container" % (module.__class__.__name__,)
+        super().__init__(
+            multi_time_step = True
+        )
         self.module = module
         self.reset_after_process = reset_after_process
         self.step_after_process = False
+
+
+    def supports_single_time_step(self) -> bool:
+        """
+        是否支持单个时间步。
+        @return:
+            if_support: bool 是否支持单个时间步
+        """
+        return False
+
+
+    def supports_multi_time_step(self) -> bool:
+        """
+        是否支持多个时间步。
+        @return:
+            if_support: bool 是否支持多个时间步
+        """
+        return True
 
 
     def reset(self) -> None:
@@ -139,10 +197,31 @@ class Container(Module):
             snn_model: Optional[nn.Module] SNN主体
             decoder: Optional[nn.Module] 解码器
         """
-        super().__init__()
+        assert (snn_model is None) or (isinstance(snn_model, Module) and snn_model.multi_time_step == True), "Your SNN Module must be multi time step model."
+        super().__init__(
+            multi_time_step = True
+        )
         self.encoder = encoder
         self.snn_model = snn_model
         self.decoder = decoder
+
+
+    def supports_single_time_step(self) -> bool:
+        """
+        是否支持单个时间步。
+        @return:
+            if_support: bool 是否支持单个时间步
+        """
+        return False
+
+
+    def supports_multi_time_step(self) -> bool:
+        """
+        是否支持多个时间步。
+        @return:
+            if_support: bool 是否支持多个时间步
+        """
+        return True
 
 
     def reset(self) -> None:

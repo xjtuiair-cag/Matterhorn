@@ -14,10 +14,38 @@ except:
     pass
 
 
-class SumSpike(Module):
+class Decoder(Module):
     def __init__(self) -> None:
         """
-        取张量在时间维度上的总值（总脉冲）
+        解码器的基类。解码器是一个多时间步模型。
+        """
+        super().__init__(
+            multi_time_step = True
+        )
+
+
+    def supports_single_time_step(self) -> bool:
+        """
+        是否支持单个时间步。
+        @return:
+            if_support: bool 是否支持单个时间步
+        """
+        return False
+
+
+    def supports_multi_time_step(self) -> bool:
+        """
+        是否支持多个时间步。
+        @return:
+            if_support: bool 是否支持多个时间步
+        """
+        return True
+
+
+class SumSpike(Decoder):
+    def __init__(self) -> None:
+        """
+        取张量在时间维度上的总值（总脉冲）。
         $$o_{i}=\sum_{t=1}^{T}{O_{i}^{K}(t)}$$
         """
         super().__init__()
@@ -35,10 +63,10 @@ class SumSpike(Module):
         return y
 
 
-class AverageSpike(Module):
+class AverageSpike(Decoder):
     def __init__(self) -> None:
         """
-        取张量在时间维度上的平均值（平均脉冲）
+        取张量在时间维度上的平均值（平均脉冲）。
         $$o_{i}=\frac{1}{T}\sum_{t=1}^{T}{O_{i}^{K}(t)}$$
         """
         super().__init__()
@@ -56,10 +84,10 @@ class AverageSpike(Module):
         return y
 
 
-class MinTime(Module):
+class MinTime(Decoder):
     def __init__(self, reset_after_process: bool = True) -> None:
         """
-        取张量在时间维度上的时间加权平均值
+        取张量在时间维度上的时间加权平均值。
         $$o_{i}=\frac{1}{T}\sum_{t=1}^{T}{tO_{i}^{K}(t)}$$
         @params:
             reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
@@ -72,7 +100,7 @@ class MinTime(Module):
 
     def reset(self) -> None:
         """
-        重置编码器
+        重置编码器。
         """
         self.current_time_step = 0
     
@@ -94,7 +122,7 @@ class MinTime(Module):
         return y
 
 
-class AverageTime(Module):
+class AverageTime(Decoder):
     def __init__(self, reset_after_process: bool = True) -> None:
         """
         取张量在时间维度上的时间加权平均值
@@ -111,7 +139,7 @@ class AverageTime(Module):
 
     def reset(self) -> None:
         """
-        重置编码器
+        重置编码器。
         """
         self.current_time_step = 0
     
