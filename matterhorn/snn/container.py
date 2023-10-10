@@ -255,9 +255,12 @@ class Sequential(Container, nn.Sequential):
                     reset_after_process = reset_after_process
                 )
             else:
+                module_list = []
+                for module_idx in indices[1:]:
+                    module_list.append(self[module_idx])
                 self[indices[0]] = Temporal(
                     Spatial(
-                        *self[indices[1:]],
+                        *module_list,
                         reset_after_process = reset_after_process
                     )
                 )
