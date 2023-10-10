@@ -228,8 +228,8 @@ class Sequential(Container, nn.Sequential):
             module = self[module_idx]
             is_snn_module = isinstance(module, Module)
             if is_snn_module:
-                if last_snn_idx != module_idx - 1:
-                    assert isinstance(module, Encoder), "You must connect SNN with ANN by an encoder."
+                if module_idx and last_snn_idx != module_idx - 1:
+                    assert isinstance(module, Encoder), "For ANNs(%s) -> SNNs(%s) you must add an encoder." % (self[module_idx - 1].__class__.__name__, module.__class__.__name__)
                 is_multi_time_step = module.multi_time_step
                 if not is_multi_time_step:
                     if module.supports_multi_time_step():
@@ -247,7 +247,7 @@ class Sequential(Container, nn.Sequential):
                 last_snn_idx = module_idx
             else:
                 if last_snn_idx == module_idx - 1:
-                    assert isinstance(self[last_snn_idx], Decoder), "You must connect ANN with SNN by a decoder."
+                    assert isinstance(self[last_snn_idx], Decoder), "For SNNs(%s) -> ANNs(%s) you must add an encoder." % (self[module_idx - 1].__class__.__name__, module.__class__.__name__)
         for indices in convert_indices:
             if len(indices) == 2:
                 self[indices[0]] = Temporal(
