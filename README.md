@@ -135,15 +135,15 @@ Like building ANN in PyTorch, we can build our SNN model in Matterhorn by the co
 import torch
 import matterhorn.snn as snn
 
-snn_model = snn.TemporalContainer(
-    snn.SpatialContainer(
+snn_model = snn.Temporal(
+    snn.Spatial(
         snn.Linear(28 * 28, 10),
         snn.LIF()
     )
 )
 ```
 
-In the code, `SpatialContainer` is one of Matterhorn's containers to represent sequential SNN layers on spatial dimension, and `TemporalContainer` is another Matterhorn's container to repeat calculating potential and spikes on temporal dimension. By using `SpatialContainer` and `TemporalContainer`, an SNN spatial-temporal topology network is built and thus used for training and evaluating.
+In the code, `Spatial` is one of Matterhorn's containers to represent sequential SNN layers on spatial dimension, and `Temporal` is another Matterhorn's container to repeat calculating potential and spikes on temporal dimension. By using `Spatial` and `Temporal`, an SNN spatial-temporal topology network is built and thus used for training and evaluating.
 
 The built network takes an $n+1$ dimensional `torch.Tensor` as input spike train. It will take the first dimension as time steps, thus calculating through each time step. after that, it will generate a `torch.Tensor` as output spike train, just like what an ANN takes and generates in PyTorch. The only difference, which is also a key point, is that we should encode our information into spike train and decode the output spike train.
 
@@ -206,23 +206,20 @@ decoder = snn.AvgSpikeDecoder()
 
 It will take first dimension as temporal dimension, and generate statistical results as output. The output can be transported into ANN for further processes.
 
-Matterhorn provides a convenient container `matterhorn.snn.SNNContainer` to bind your encoder, network and decoder. By using that, your SNN model will be packed and can easily interact with ANN models.
+Matterhorn provides a convenient container `matterhorn.snn.Sequential` to connect all your SNN and ANN models.
 
 ```python
 import torch
 import matterhorn.snn as snn
 
-model = snn.SNNContainer(
-    encoder = snn.PoissonEncoder(
-        time_steps = 32
+model = snn.Sequential(
+    snn.PoissonEncoder(
+        time_steps = time_steps,
     ),
-    snn_model = snn.TemporalContainer(
-        snn.SpatialContainer(
-            snn.Linear(28 * 28, 10),
-            snn.LIF()
-        ),
-    ),
-    decoder = snn.AvgSpikeDecoder()
+    snn.Flatten(),
+    snn.Linear(28 * 28, 10, bias = False),
+    snn.LIF(tau_m = tau, trainable = True),
+    snn.AvgSpikeDecoder()
 )
 ```
 

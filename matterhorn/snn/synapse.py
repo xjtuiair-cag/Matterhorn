@@ -557,7 +557,7 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
         @return:
             x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
         """
-        x = nn.BatchNorm3d.forward(x)
+        x = nn.BatchNorm3d.forward(self, x)
         return x
 
 
@@ -595,5 +595,5 @@ class LayerNorm(Synapse, nn.LayerNorm):
         @return:
             x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
         """
-        x = nn.LayerNorm.forward(x)
+        x = nn.LayerNorm.forward(self, x)
         return x

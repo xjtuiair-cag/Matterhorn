@@ -58,20 +58,16 @@ def main():
 
     print(Panel(Text("Model", justify = "center")))
 
-    model = snn.SNNContainer(
-        encoder = snn.PoissonEncoder(
+    model = snn.Sequential(
+        snn.PoissonEncoder(
             time_steps = time_steps,
         ),
-        snn_model = snn.TemporalContainer(
-            snn.SpatialContainer(
-                snn.Flatten(),
-                snn.Linear(28 * 28, 80, bias = False),
-                snn.LIF(tau_m = tau, trainable = True),
-                snn.Linear(80, 10, bias = False),
-                snn.LIF(tau_m = tau, trainable = True)
-            ),
-        ),
-        decoder = snn.AvgSpikeDecoder()
+        snn.Flatten(),
+        snn.Linear(28 * 28, 80, bias = False),
+        snn.LIF(tau_m = tau, trainable = True),
+        snn.Linear(80, 10, bias = False),
+        snn.LIF(tau_m = tau, trainable = True),
+        snn.AvgSpikeDecoder()
     )
     model = model.to(device)
 

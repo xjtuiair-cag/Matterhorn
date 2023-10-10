@@ -87,7 +87,7 @@ class SRM0Linear(Module):
         @return:
             repr_str: str 参数表
         """
-        return "in_features=%d, out_features=%d, tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest)
+        return super().extra_repr() + "in_features=%d, out_features=%d, tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest)
 
 
     def reset(self) -> None:
@@ -211,8 +211,83 @@ class SRM0Linear(Module):
         return o
 
 
-class MaxPool1d(Module, nn.MaxPool1d):
-    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
+class Layer(Module):
+    def __init__(self, multi_time_step = False) -> None:
+        """
+        突触函数的骨架，定义突触最基本的函数。
+        @params:
+            multi_time_step: bool 是否调整为多个时间步模式
+        """
+        super().__init__(
+            multi_time_step = multi_time_step
+        )
+    
+
+    def supports_single_time_step(self) -> bool:
+        """
+        是否支持单个时间步。
+        @return:
+            if_support: bool 是否支持单个时间步
+        """
+        return True
+
+
+    def supports_multi_time_step(self) -> bool:
+        """
+        是否支持多个时间步。
+        @return:
+            if_support: bool 是否支持多个时间步
+        """
+        return True
+    
+
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        单个时间步的前向传播函数。
+        @params:
+            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$，形状为[B, ...]
+        @return:
+            y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$，形状为[B, ...]
+        """
+        y = x
+        return y
+
+
+    def forward_multi_time_step(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        @params:
+            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$，形状为[T, B, ...]
+        @return:
+            y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$，形状为[T, B, ...]
+        """
+        time_steps = x.shape[0]
+        batch_size = x.shape[1]
+        x = x.flatten(0, 1)
+        y = self.forward_single_time_step(x)
+        output_shape = [time_steps, batch_size] + list(y.shape[1:])
+        y = y.reshape(output_shape)
+        return y
+
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数。
+        @params:
+            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
+        @return:
+            y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
+        """
+        if self.multi_time_step:
+            y = self.forward_multi_time_step(x)
+        else:
+            y = self.forward_single_time_step(x)
+        y = val_to_spike.apply(y)
+        return y
+
+
+class MaxPool1d(Layer, nn.MaxPool1d):
+    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step = False) -> None:
         """
         一维最大池化。
         @params:
@@ -222,8 +297,12 @@ class MaxPool1d(Module, nn.MaxPool1d):
             dilation: _size_any_t 输入侧的池化步长
             return_indices: bool 是否返回带索引的内容
             ceil_mode: bool 是否向上取整
+            multi_time_step: bool 是否调整为多个时间步模式
         """
-        Module.__init__(self)
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
         nn.MaxPool1d.__init__(
             self,
             kernel_size = kernel_size,
@@ -235,7 +314,7 @@ class MaxPool1d(Module, nn.MaxPool1d):
         )
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -243,12 +322,12 @@ class MaxPool1d(Module, nn.MaxPool1d):
         @return:
             y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
-        y = super().forward(x)
-        return val_to_spike.apply(y)
+        y = nn.MaxPool1d.forward(self, x)
+        return y
 
 
-class MaxPool2d(Module, nn.MaxPool2d):
-    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
+class MaxPool2d(Layer, nn.MaxPool2d):
+    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step = False) -> None:
         """
         二维最大池化。
         @params:
@@ -258,8 +337,12 @@ class MaxPool2d(Module, nn.MaxPool2d):
             dilation: _size_any_t 输入侧的池化步长
             return_indices: bool 是否返回带索引的内容
             ceil_mode: bool 是否向上取整
+            multi_time_step: bool 是否调整为多个时间步模式
         """
-        Module.__init__(self)
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
         nn.MaxPool2d.__init__(
             self,
             kernel_size = kernel_size,
@@ -270,7 +353,7 @@ class MaxPool2d(Module, nn.MaxPool2d):
             ceil_mode = ceil_mode
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -278,12 +361,12 @@ class MaxPool2d(Module, nn.MaxPool2d):
         @return:
             y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
-        y = super().forward(x)
-        return val_to_spike.apply(y)
+        y = nn.MaxPool2d.forward(self, x)
+        return y
 
 
-class MaxPool3d(Module, nn.MaxPool3d):
-    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
+class MaxPool3d(Layer, nn.MaxPool3d):
+    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step = False) -> None:
         """
         三维最大池化。
         @params:
@@ -293,8 +376,12 @@ class MaxPool3d(Module, nn.MaxPool3d):
             dilation: _size_any_t 输入侧的池化步长
             return_indices: bool 是否返回带索引的内容
             ceil_mode: bool 是否向上取整
+            multi_time_step: bool 是否调整为多个时间步模式
         """
-        Module.__init__(self)
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
         nn.MaxPool3d.__init__(
             self,
             kernel_size = kernel_size,
@@ -306,7 +393,7 @@ class MaxPool3d(Module, nn.MaxPool3d):
         )
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -314,12 +401,12 @@ class MaxPool3d(Module, nn.MaxPool3d):
         @return:
             y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
-        y = super().forward(x)
-        return val_to_spike.apply(y)
+        y = nn.MaxPool3d.forward(self, x)
+        return y
 
 
-class AvgPool1d(Module, nn.AvgPool1d):
-    def __init__(self, kernel_size: _size_1_t, stride: _size_1_t = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True) -> None:
+class AvgPool1d(Layer, nn.AvgPool1d):
+    def __init__(self, kernel_size: _size_1_t, stride: _size_1_t = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, multi_time_step = False) -> None:
         """
         一维平均池化。
         @params:
@@ -328,8 +415,12 @@ class AvgPool1d(Module, nn.AvgPool1d):
             padding: _size_1_t 边界填充的长度
             ceil_mode: bool 是否向上取整
             count_include_pad: bool 是否连带边界一起计算
+            multi_time_step: bool 是否调整为多个时间步模式
         """
-        Module.__init__(self)
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
         nn.AvgPool1d.__init__(
             self,
             kernel_size = kernel_size,
@@ -340,7 +431,7 @@ class AvgPool1d(Module, nn.AvgPool1d):
         )
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -348,12 +439,12 @@ class AvgPool1d(Module, nn.AvgPool1d):
         @return:
             y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
-        y = super().forward(x)
-        return val_to_spike.apply(y)
+        y = nn.AvgPool1d.forward(self, x)
+        return y
 
 
-class AvgPool2d(Module, nn.AvgPool2d):
-    def __init__(self, kernel_size: _size_2_t, stride: Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None) -> None:
+class AvgPool2d(Layer, nn.AvgPool2d):
+    def __init__(self, kernel_size: _size_2_t, stride: Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None, multi_time_step = False) -> None:
         """
         二维平均池化。
         @params:
@@ -363,8 +454,12 @@ class AvgPool2d(Module, nn.AvgPool2d):
             ceil_mode: bool 是否向上取整
             count_include_pad: bool 是否连带边界一起计算
             divisor_override: int | None 是否用某个数取代总和作为除数
+            multi_time_step: bool 是否调整为多个时间步模式
         """
-        Module.__init__(self)
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
         nn.AvgPool2d.__init__(
             self,
             kernel_size = kernel_size,
@@ -376,7 +471,7 @@ class AvgPool2d(Module, nn.AvgPool2d):
         )
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -384,12 +479,12 @@ class AvgPool2d(Module, nn.AvgPool2d):
         @return:
             y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
-        y = super().forward(x)
-        return val_to_spike.apply(y)
+        y = nn.AvgPool2d.forward(self, x)
+        return y
 
 
-class AvgPool3d(Module, nn.AvgPool3d):
-    def __init__(self, kernel_size: _size_3_t, stride: Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None) -> None:
+class AvgPool3d(Layer, nn.AvgPool3d):
+    def __init__(self, kernel_size: _size_3_t, stride: Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None, multi_time_step = False) -> None:
         """
         三维平均池化。
         @params:
@@ -399,8 +494,12 @@ class AvgPool3d(Module, nn.AvgPool3d):
             ceil_mode: bool 是否向上取整
             count_include_pad: bool 是否连带边界一起计算
             divisor_override: int | None 是否用某个数取代总和作为除数
+            multi_time_step: bool 是否调整为多个时间步模式
         """
-        Module.__init__(self)
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
         nn.AvgPool3d.__init__(
             self,
             kernel_size = kernel_size,
@@ -412,7 +511,7 @@ class AvgPool3d(Module, nn.AvgPool3d):
         )
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -420,19 +519,23 @@ class AvgPool3d(Module, nn.AvgPool3d):
         @return:
             y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
-        y = super().forward(x)
-        return val_to_spike.apply(y)
+        y = nn.AvgPool3d.forward(self, x)
+        return y
 
 
-class Flatten(Module, nn.Flatten):
-    def __init__(self, start_dim: int = 1, end_dim: int = -1) -> None:
+class Flatten(Layer, nn.Flatten):
+    def __init__(self, start_dim: int = 1, end_dim: int = -1, multi_time_step = False) -> None:
         """
         展平层。
         @params:
             start_dim: int 起始维度
             end_dim: int 终止维度
+            multi_time_step: bool 是否调整为多个时间步模式
         """
-        Module.__init__(self)
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
         nn.Flatten.__init__(
             self,
             start_dim = start_dim,
@@ -440,7 +543,7 @@ class Flatten(Module, nn.Flatten):
         )
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -448,19 +551,23 @@ class Flatten(Module, nn.Flatten):
         @return:
             y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
-        y = super().forward(x)
-        return val_to_spike.apply(y)
+        y = nn.Flatten.forward(self, x)
+        return y
 
 
-class Unflatten(Module, nn.Unflatten):
-    def __init__(self, dim: Union[int, str], unflattened_size: _size) -> None:
+class Unflatten(Layer, nn.Unflatten):
+    def __init__(self, dim: Union[int, str], unflattened_size: _size, multi_time_step = False) -> None:
         """
         反展开层。
         @params:
             dim: int | str 在哪个维度反展开
             unflattened_size: 这个维度上的张量要反展开成什么形状
+            multi_time_step: bool 是否调整为多个时间步模式
         """
-        Module.__init__(self)
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
         nn.Unflatten.__init__(
             self,
             dim = dim,
@@ -468,7 +575,7 @@ class Unflatten(Module, nn.Unflatten):
         )
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         @params:
@@ -476,5 +583,5 @@ class Unflatten(Module, nn.Unflatten):
         @return:
             y: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
         """
-        y = super().forward(x)
-        return val_to_spike.apply(y)
+        y = nn.Unflatten.forward(self, x)
+        return y

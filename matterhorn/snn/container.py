@@ -8,6 +8,8 @@
 import torch
 import torch.nn as nn
 from matterhorn.snn.skeleton import Module
+from matterhorn.snn.encoder import Encoder
+from matterhorn.snn.decoder import Decoder
 from typing import Optional
 try:
     from rich import print
@@ -15,7 +17,17 @@ except:
     pass
 
 
-class Spatial(Module, nn.Sequential):
+class Container(Module):
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return ""
+
+
+class Spatial(Container, nn.Sequential):
     def __init__(self, *args) -> None:
         """
         SNN的空间容器，用法同nn.Sequential，加入一些特殊的作用于SNN的函数。
@@ -26,7 +38,8 @@ class Spatial(Module, nn.Sequential):
         nn.Sequential.__init__(self, *args)
         self.multi_time_step__ = False
         for module in self:
-            if hasattr(module, "multi_time_step"):
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
                 self.multi_time_step__ = self.multi_time_step__ or module.multi_time_step
 
 
@@ -56,7 +69,8 @@ class Spatial(Module, nn.Sequential):
         """
         self.multi_time_step__ = False
         for module in self:
-            if hasattr(module, "multi_time_step") and hasattr(module, "multi_time_step_"):
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
                 res = module.multi_time_step_()
                 self.multi_time_step__ = self.multi_time_step__ or module.multi_time_step
         return True
@@ -67,7 +81,8 @@ class Spatial(Module, nn.Sequential):
         一次重置该序列中所有的神经元。
         """
         for module in self:
-            if hasattr(module, "reset"):
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
                 module.reset()
 
 
@@ -76,7 +91,8 @@ class Spatial(Module, nn.Sequential):
         开始STDP训练。
         """
         for module in self:
-            if hasattr(module, "start_step"):
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
                 module.start_step()
 
 
@@ -85,7 +101,8 @@ class Spatial(Module, nn.Sequential):
         停止STDP训练。
         """
         for module in self:
-            if hasattr(module, "stop_step"):
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
                 module.stop_step()
     
 
@@ -94,11 +111,12 @@ class Spatial(Module, nn.Sequential):
         一次部署所有结点的STDP训练。
         """
         for module in self:
-            if hasattr(module, "step_once"):
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
                 module.step_once()
 
 
-class Temporal(Module):
+class Temporal(Container):
     def __init__(self, module: nn.Module, reset_after_process = True) -> None:
         """
         SNN的时间容器，在多个时间步之内执行脉冲神经网络。
@@ -106,7 +124,8 @@ class Temporal(Module):
             module: nn.Module 所用来执行的单步模型
             reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
         """
-        if hasattr(module, "multi_time_step"):
+        is_snn_module = isinstance(module, Module)
+        if is_snn_module:
             assert module.multi_time_step == False, "You cannot put a multi time step module %s into temporal container" % (module.__class__.__name__,)
         super().__init__(
             multi_time_step = True
@@ -138,7 +157,8 @@ class Temporal(Module):
         """
         重置模型。
         """
-        if hasattr(self.module, "reset"):
+        is_snn_module = isinstance(self.module, Module)
+        if is_snn_module:
             self.module.reset()
 
     
@@ -147,7 +167,8 @@ class Temporal(Module):
         开始STDP训练。
         """
         self.step_after_process = True
-        if hasattr(self.module, "start_step"):
+        is_snn_module = isinstance(self.module, Module)
+        if is_snn_module:
             self.module.start_step()
     
 
@@ -156,7 +177,8 @@ class Temporal(Module):
         停止STDP训练。
         """
         self.step_after_process = False
-        if hasattr(self.module, "stop_step"):
+        is_snn_module = isinstance(self.module, Module)
+        if is_snn_module:
             self.module.stop_step()
     
 
@@ -164,7 +186,8 @@ class Temporal(Module):
         """
         部署结点的STDP训练。
         """
-        if hasattr(self.module, "step_once"):
+        is_snn_module = isinstance(self.module, Module)
+        if is_snn_module:
             self.module.step_once()
 
 
@@ -188,22 +211,59 @@ class Temporal(Module):
         return y
 
 
-class Container(Module):
-    def __init__(self, encoder: Optional[nn.Module] = None, snn_model: Optional[nn.Module] = None, decoder: Optional[nn.Module] = None) -> None:
+class Sequential(Container, nn.Sequential):
+    def __init__(self, *args, reset_after_process = True) -> None:
         """
-        SNN容器，包括编码器、神经网络主体和解码器，将SNN包装起来，以和ANN结合。
+        对Sequential进行重写，涵盖ANN与SNN的网络。
         @params:
-            encoder: Optional[nn.Module] 编码器
-            snn_model: Optional[nn.Module] SNN主体
-            decoder: Optional[nn.Module] 解码器
+            *args: [nn.Module] 按空间顺序传入的各个模块
         """
-        assert (snn_model is None) or (isinstance(snn_model, Module) and snn_model.multi_time_step == True), "Your SNN Module must be multi time step model."
-        super().__init__(
-            multi_time_step = True
-        )
-        self.encoder = encoder
-        self.snn_model = snn_model
-        self.decoder = decoder
+        Module.__init__(self, multi_time_step = True)
+        nn.Sequential.__init__(self, *args)
+        convert_indices = []
+        remove_indices = []
+        last_single_step_idx = -2
+        last_snn_idx = -2
+        for module_idx in range(len(self)):
+            module = self[module_idx]
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
+                if last_snn_idx != module_idx - 1:
+                    assert isinstance(module, Encoder), "You must connect SNN with ANN by an encoder."
+                is_multi_time_step = module.multi_time_step
+                if not is_multi_time_step:
+                    if module.supports_multi_time_step():
+                        module.multi_time_step_(True)
+                        self[module_idx] = module
+                    else:
+                        if last_single_step_idx == module_idx - 1:
+                            convert_indices[-1].append(module_idx)
+                            remove_indices.append(module_idx)
+                        else:
+                            convert_indices.append([module_idx, module_idx])
+                        last_single_step_idx = module_idx
+                else:
+                    pass
+                last_snn_idx = module_idx
+            else:
+                if last_snn_idx == module_idx - 1:
+                    assert isinstance(self[last_snn_idx], Decoder), "You must connect ANN with SNN by a decoder."
+        for indices in convert_indices:
+            if len(indices) == 2:
+                self[indices[0]] = Temporal(
+                    self[indices[1]],
+                    reset_after_process = reset_after_process
+                )
+            else:
+                self[indices[0]] = Temporal(
+                    Spatial(
+                        *self[indices[1:]],
+                        reset_after_process = reset_after_process
+                    )
+                )
+        remove_indices = remove_indices[::-1]
+        for idx in remove_indices:
+            del self[idx]
 
 
     def supports_single_time_step(self) -> bool:
@@ -226,52 +286,39 @@ class Container(Module):
 
     def reset(self) -> None:
         """
-        重置模型。
+        一次重置该序列中所有的神经元。
         """
-        if hasattr(self.encoder, "reset"):
-            self.encoder.reset()
-        if hasattr(self.snn_model, "reset"):
-            self.snn_model.reset()
-        if hasattr(self.decoder, "reset"):
-            self.decoder.reset()
+        for module in self:
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
+                module.reset()
 
 
     def start_step(self) -> None:
         """
         开始STDP训练。
         """
-        if hasattr(self.snn_model, "start_step"):
-            self.snn_model.start_step()
+        for module in self:
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
+                module.start_step()
 
 
     def stop_step(self) -> None:
         """
         停止STDP训练。
         """
-        if hasattr(self.snn_model, "stop_step"):
-            self.snn_model.stop_step()
+        for module in self:
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
+                module.stop_step()
     
 
     def step_once(self) -> None:
         """
-        部署结点的STDP训练。
+        一次部署所有结点的STDP训练。
         """
-        if hasattr(self.snn_model, "step_once"):
-            self.snn_model.step_once()
-
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        前向传播函数，根据所传入的编解码器判断SNN中的张量形态。
-        @params:
-            x: torch.Tensor 输入张量
-        @return:
-            y: torch.Tensor 输出张量
-        """
-        if self.encoder is not None:
-            x = self.encoder(x)
-        if self.snn_model is not None:
-            x = self.snn_model(x)
-        if self.decoder is not None:
-            x = self.decoder(x)
-        return x
+        for module in self:
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
+                module.step_once()

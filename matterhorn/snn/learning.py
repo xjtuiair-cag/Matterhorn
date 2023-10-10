@@ -130,7 +130,8 @@ class STDPLinear(Module, nn.Linear):
         """
         开始训练
         """
-        if hasattr(self.soma, "start_step"):
+        is_snn_module = isinstance(self.soma, Module)
+        if is_snn_module:
             self.soma.start_step()
     
 
@@ -138,7 +139,8 @@ class STDPLinear(Module, nn.Linear):
         """
         停止训练
         """
-        if hasattr(self.soma, "stop_step"):
+        is_snn_module = isinstance(self.soma, Module)
+        if is_snn_module:
             self.soma.stop_step()
 
 
@@ -148,7 +150,8 @@ class STDPLinear(Module, nn.Linear):
         """
         self.input_spike_seq = []
         self.output_spike_seq = []
-        if hasattr(self.soma, "reset"):
+        is_snn_module = isinstance(self.soma, Module)
+        if is_snn_module:
             self.soma.reset()
 
 

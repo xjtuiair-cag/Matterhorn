@@ -31,7 +31,7 @@ class Module(nn.Module):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr()
+        return "multi_time_step=%s, " % ("True" if self.multi_time_step else "False") + super().extra_repr()
 
 
     def supports_single_time_step(self) -> bool:

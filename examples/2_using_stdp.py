@@ -59,30 +59,26 @@ def main():
 
     print(Panel(Text("Model", justify = "center")))
 
-    model = snn.SNNContainer(
-        encoder = snn.PoissonEncoder(
+    model = snn.Sequential(
+        snn.PoissonEncoder(
             time_steps = time_steps,
         ),
-        snn_model = snn.TemporalContainer(
-            snn.SpatialContainer(
-                snn.Flatten(),
-                learning.STDPLinear(
-                    in_features = 28 * 28,
-                    out_features = 80,
-                    soma = snn.LIF(
-                        tau_m = tau,
-                    )
-                ),
-                learning.STDPLinear(
-                    in_features = 80,
-                    out_features = 10,
-                    soma = snn.LIF(
-                        tau_m = tau,
-                    )
-                )
+        snn.Flatten(),
+        learning.STDPLinear(
+            in_features = 28 * 28,
+            out_features = 80,
+            soma = snn.LIF(
+                tau_m = tau,
             )
         ),
-        decoder = snn.AvgSpikeDecoder()
+        learning.STDPLinear(
+            in_features = 80,
+            out_features = 10,
+            soma = snn.LIF(
+                tau_m = tau,
+            )
+        ),
+        snn.AvgSpikeDecoder()
     )
     model = model.to(device)
 

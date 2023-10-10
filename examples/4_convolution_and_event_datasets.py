@@ -55,21 +55,15 @@ def main():
 
     print(Panel(Text("Model", justify = "center")))
 
-    model = nn.Sequential(
-        snn.SNNContainer(
-            encoder = snn.DirectEncoder(),
-            snn_model = snn.TemporalContainer(
-                snn.SpatialContainer(
-                    snn.Conv2d(in_channels = 2, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 17, 17]
-                    snn.LIF(tau_m = tau),
-                    snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 9, 9]
-                    snn.LIF(tau_m = tau),
-                    snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 5, 5]
-                    snn.LIF(tau_m = tau)
-                )
-            ),
-            decoder = snn.AvgSpikeDecoder()
-        ),
+    model = snn.Sequential(
+        snn.DirectEncoder(),
+        snn.Conv2d(in_channels = 2, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 17, 17]
+        snn.LIF(tau_m = tau),
+        snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 9, 9]
+        snn.LIF(tau_m = tau),
+        snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 5, 5]
+        snn.LIF(tau_m = tau),
+        snn.AvgSpikeDecoder(),
         nn.Flatten(),
         nn.Linear(1600, 10),
         nn.ReLU()
