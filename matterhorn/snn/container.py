@@ -34,7 +34,7 @@ class Spatial(Container, nn.Sequential):
         @params:
             *args: [nn.Module] 按空间顺序传入的各个模块
         """
-        Module.__init__(self)
+        Container.__init__(self)
         nn.Sequential.__init__(self, *args)
         self.multi_time_step__ = False
         for module in self:
@@ -218,7 +218,7 @@ class Sequential(Container, nn.Sequential):
         @params:
             *args: [nn.Module] 按空间顺序传入的各个模块
         """
-        Module.__init__(self, multi_time_step = True)
+        Container.__init__(self, multi_time_step = True)
         nn.Sequential.__init__(self, *args)
         convert_indices = []
         remove_indices = []
