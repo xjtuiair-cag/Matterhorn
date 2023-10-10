@@ -260,9 +260,9 @@ class Sequential(Container, nn.Sequential):
                     module_list.append(self[module_idx])
                 self[indices[0]] = Temporal(
                     Spatial(
-                        *module_list,
-                        reset_after_process = reset_after_process
-                    )
+                        *module_list
+                    ),
+                    reset_after_process = reset_after_process
                 )
         remove_indices = remove_indices[::-1]
         for idx in remove_indices:
