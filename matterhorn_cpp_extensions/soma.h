@@ -8,7 +8,7 @@ int lif_response_fp(at::Tensor u,
                     at::Tensor x,
                     at::Tensor h,
                     int shape,
-                    float tau_m,
+                    at::Tensor tau_m,
                     float u_rest);
 
 int lif_spiking_fp(at::Tensor o,
@@ -26,7 +26,7 @@ int lif_response_bp(at::Tensor grad_u,
                     at::Tensor grad_x,
                     at::Tensor grad_h,
                     int shape,
-                    float tau_m,
+                    at::Tensor tau_m,
                     float u_rest);
 
 int lif_spiking_bp(at::Tensor grad_o,
@@ -45,7 +45,7 @@ int lif_fp(at::Tensor o,
            at::Tensor x,
            int shape,
            int time_steps,
-           float tau_m,
+           at::Tensor tau_m,
            float u_rest,
            float u_threshold);
 
@@ -54,7 +54,7 @@ int lif_bp(at::Tensor grad_o,
            at::Tensor grad_x,
            int shape,
            int time_steps,
-           float tau_m,
+           at::Tensor tau_m,
            float u_rest,
            float u_threshold);
 

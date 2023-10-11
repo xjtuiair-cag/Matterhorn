@@ -31,7 +31,7 @@ class Module(nn.Module):
         @return:
             repr_str: str 参数表
         """
-        return "multi_time_step=%s, " % ("True" if self.multi_time_step else "False") + super().extra_repr()
+        return super().extra_repr()
 
 
     def supports_single_time_step(self) -> bool:
@@ -40,7 +40,7 @@ class Module(nn.Module):
         @return:
             if_support: bool 是否支持单个时间步
         """
-        return False
+        return True
 
 
     def supports_multi_time_step(self) -> bool:
@@ -49,7 +49,7 @@ class Module(nn.Module):
         @return:
             if_support: bool 是否支持多个时间步
         """
-        return False
+        return True
     
 
     @property

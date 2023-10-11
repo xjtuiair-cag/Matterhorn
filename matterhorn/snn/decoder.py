@@ -33,15 +33,6 @@ class Decoder(Module):
         return False
 
 
-    def supports_multi_time_step(self) -> bool:
-        """
-        是否支持多个时间步。
-        @return:
-            if_support: bool 是否支持多个时间步
-        """
-        return True
-
-
 class SumSpike(Decoder):
     def __init__(self) -> None:
         """

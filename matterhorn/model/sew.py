@@ -146,15 +146,6 @@ class SEWBlock(snn.Module):
         self.residual_connection = residual_connection
     
 
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
-        """
-        return super().extra_repr()
-    
-
     def reset(self) -> None:
         """
         重置模型。

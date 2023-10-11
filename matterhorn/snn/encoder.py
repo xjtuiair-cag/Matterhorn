@@ -33,15 +33,6 @@ class Encoder(Module):
         return False
 
 
-    def supports_multi_time_step(self) -> bool:
-        """
-        是否支持多个时间步。
-        @return:
-            if_support: bool 是否支持多个时间步
-        """
-        return True
-
-
 class Direct(Encoder):
     def __init__(self) -> None:
         """
@@ -87,7 +78,7 @@ class Poisson(Encoder):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr() + "time_steps=%d, max=%.3f, min=%.3f" % (self.time_steps, self.max_value, self.min_value)
+        return "time_steps=%d, max=%.3f, min=%.3f" % (self.time_steps, self.max_value, self.min_value)
 
 
     def forward_single(self, x:torch.Tensor) -> torch.Tensor:
@@ -161,7 +152,7 @@ class Temporal(Encoder):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr() + "time_steps=%d, max=%.3f, min=%.3f, spike_freq=%.3f" % (self.time_steps, self.max_value, self.min_value, self.prob)
+        return "time_steps=%d, max=%.3f, min=%.3f, spike_freq=%.3f" % (self.time_steps, self.max_value, self.min_value, self.prob)
 
 
     def reset(self) -> None:

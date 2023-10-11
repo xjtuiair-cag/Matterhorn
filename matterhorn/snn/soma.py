@@ -39,15 +39,6 @@ class Soma(Module):
         self.reset()
 
 
-    def supports_single_time_step(self) -> bool:
-        """
-        是否支持单个时间步。
-        @return:
-            if_support: bool 是否支持单个时间步
-        """
-        return True
-
-
     def supports_multi_time_step(self) -> bool:
         """
         是否支持多个时间步。
@@ -63,7 +54,7 @@ class Soma(Module):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr() + "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
+        return "multi_time_step=%s, " % ("True" if self.multi_time_step else "False")
 
 
     def init_tensor(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -211,6 +202,15 @@ class LIF(Soma):
             spiking_function = spiking_function,
             trainable = trainable
         )
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return super().extra_repr() + "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -459,15 +459,6 @@ class AnalogSoma(Soma):
         self.activation_function = activation_function
     
 
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
-        """
-        return super().extra_repr() + "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
-    
-
     def f_activation(self, u: torch.Tensor) -> torch.Tensor:
         """
         通过当前电位$U_{i}^{l}(t)$计算当前模拟输出$Y_{i}^{l}(t)$。
@@ -515,6 +506,15 @@ class KLIF(AnalogSoma):
             trainable = trainable
         )
         self.k = nn.Parameter(torch.tensor(k), requires_grad = trainable)
+        
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return super().extra_repr() + "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
