@@ -10,10 +10,6 @@ void fp_response_lif(at::Tensor u,
                     at::Tensor tau_m,
                     float u_rest);
 
-void fp_spiking_heaviside(at::Tensor o, at::Tensor u, float u_threshold);
-
-void fp_reset_hard(at::Tensor h, at::Tensor u, at::Tensor o, float u_rest);
-
 void bp_response_lif(at::Tensor grad_u,
                     at::Tensor grad_x,
                     at::Tensor grad_h,
@@ -24,11 +20,15 @@ void bp_response_lif(at::Tensor grad_u,
                     at::Tensor tau_m,
                     float u_rest);
 
+void fp_spiking_heaviside(at::Tensor o, at::Tensor u, float u_threshold);
+
 void bp_spiking_rectangular(at::Tensor grad_o,
                            at::Tensor grad_u,
                            at::Tensor o,
                            at::Tensor u,
                            float u_threshold);
+
+void fp_reset_hard(at::Tensor h, at::Tensor u, at::Tensor o, float u_rest);
 
 void bp_reset_hard(at::Tensor grad_h,
                   at::Tensor grad_u,

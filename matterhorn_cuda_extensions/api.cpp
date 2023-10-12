@@ -1,5 +1,4 @@
 #include <torch/extension.h>
-#include <torch/serialize/tensor.h>
 
 #include "stdp.h"
 

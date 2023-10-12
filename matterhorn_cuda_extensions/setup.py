@@ -13,7 +13,7 @@ setup(
                 "stdp_cuda.cu"
             ],
             extra_compile_args = {
-                "cxx": ["-g"],
+                "cxx": ["-g", "-w"],
                 "nvcc": ["-O2"]
             }
         ),
