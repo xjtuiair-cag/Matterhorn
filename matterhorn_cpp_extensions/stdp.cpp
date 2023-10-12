@@ -1,5 +1,5 @@
 #include "stdp.h"
-#include <torch/serialize/tensor.h>
+#include <ATen/ATen.h>
 #include <cmath>
 #include <vector>
 
@@ -17,7 +17,7 @@ floatSTDP参数A- tau_neg: float STDP参数tau-
 @return:
     int 不重要
 */
-int stdp(at::Tensor weight_mat,
+void stdp(at::Tensor weight_mat,
          int input_shape,
          int output_shape,
          int time_steps,
@@ -54,6 +54,4 @@ int stdp(at::Tensor weight_mat,
             weight_mat[i][j] += weight;
         }
     }
-
-    return 1;
 }
