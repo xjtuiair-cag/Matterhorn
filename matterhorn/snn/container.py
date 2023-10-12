@@ -71,7 +71,7 @@ class Spatial(Container, nn.Sequential):
         for module in self:
             is_snn_module = isinstance(module, Module)
             if is_snn_module:
-                res = module.multi_time_step_()
+                res = module.multi_time_step_(if_on)
                 self.multi_time_step__ = self.multi_time_step__ or module.multi_time_step
         return True
 
