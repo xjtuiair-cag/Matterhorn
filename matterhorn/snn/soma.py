@@ -36,6 +36,7 @@ class Soma(Module):
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function
+        self.trainable = trainable
         self.reset()
 
 
@@ -54,7 +55,7 @@ class Soma(Module):
         @return:
             repr_str: str 参数表
         """
-        return "multi_time_step=%s, " % ("True" if self.multi_time_step else "False")
+        return "multi_time_step=%s, trainable=%s, " % ("True" if self.multi_time_step else "False", "True" if self.trainable else "False")
 
 
     def init_tensor(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
