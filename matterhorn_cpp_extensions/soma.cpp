@@ -30,6 +30,13 @@ int bp_response_lif(at::Tensor grad_u,
                     at::Tensor h,
                     at::Tensor tau_m,
                     float u_rest) {
+    /*
+    $$U_{i}^{l}(t)=H_{i}^{l}(t-1)+\frac{1}{τ_{m}}[-[H_{i}^{l}(t-1)-u_{rest}]+X_{i}^{l}(t)]$$
+    =>
+    $$\frac{\partial U_{i}^{l}(t)}{\partial H_{i}^{l}(t-1)}=1-\frac{1}{τ_{m}}$$
+    $$\frac{\partial U_{i}^{l}(t)}{\partial X_{i}^{l}(t)}=\frac{1}{τ_{m}}$$
+    $$\frac{\partial U_{i}^{l}(t)}{\partial τ_{m}}=-\frac{1}{τ_{m}^{2}}[-[H_{i}^{l}(t-1)-u_{rest}]+X_{i}^{l}(t)]$$
+    */
     float tau_m_val = tau_m.data<float>()[0];
     grad_x += grad_u * (1.0 / tau_m_val);
     grad_h += grad_u * (1.0 - (1.0 / tau_m_val));
@@ -41,7 +48,12 @@ int bp_spiking_rectangular(at::Tensor grad_o,
                            at::Tensor o,
                            at::Tensor u,
                            float u_threshold) {
-    grad_u = grad_o * ((u >= u_threshold - 1) & (u <= u_threshold + 1));
+    /*
+    $$O_{i}^{l}(t)=u[U_{i}^{l}(t)]$$
+    =>
+    $$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
+    */
+    grad_u += grad_o * 0.5 * ((u >= u_threshold - 1) & (u <= u_threshold + 1));
 }
 
 int bp_reset_hard(at::Tensor grad_h,
@@ -51,7 +63,13 @@ int bp_reset_hard(at::Tensor grad_h,
                   at::Tensor u,
                   at::Tensor o,
                   float u_rest) {
-    grad_u += grad_h * 1 - o;
+    /*
+    $$H_{i}^{l}(t)=U_{i}^{l}(t)[1-O_{i}^{l}(t)]+u_{rest}O_{i}^{l}(t)$$
+    =>
+    $$\frac{\partial H_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=1-O_{i}^{l}(t)$$
+    $$\frac{\partial H_{i}^{l}(t)}{\partial O_{i}^{l}(t)}=-U_{i}^{l}(t)+u_{rest}$$
+    */
+    grad_u += grad_h * (1 - o);
     grad_o += grad_h * (u_rest - u);
 }
 

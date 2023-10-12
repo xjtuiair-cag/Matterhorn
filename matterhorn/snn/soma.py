@@ -124,7 +124,7 @@ class Soma(Module):
         """
         h = u * (1.0 - o) + self.u_rest * o
         return h
-    
+
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
