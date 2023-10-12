@@ -126,15 +126,19 @@ class multi_time_step_lif(torch.autograd.Function):
         @return:
             y: torch.Tensor 输出
         """
+        device = x.device
         time_steps = x.shape[0]
+        x = x.to(device = torch.device("cpu"))
+        u_init = u_init.to(device = torch.device("cpu"))
+        tau_m = tau_m.to(device = torch.device("cpu"))
         o = torch.zeros_like(x)
         u = torch.zeros_like(x)
         h = torch.zeros_like(x)
         fp_lif(o, u, h, x, time_steps, u_init, tau_m, u_rest, u_threshold)
-        if x.requires_grad:
-            ctx.save_for_backward(o, u, h, x, u_init, tau_m)
-            ctx.u_threshold = u_threshold
-            ctx.u_rest = u_rest
+        ctx.save_for_backward(o, u, h, x, u_init, tau_m)
+        ctx.u_threshold = u_threshold
+        ctx.u_rest = u_rest
+        o = o.to(device = device)
         return o
     
 
@@ -148,7 +152,9 @@ class multi_time_step_lif(torch.autograd.Function):
         @return:
             grad_x: torch.Tensor 输入梯度
         """
+        device = grad_o.device
         o, u, h, x, u_init, tau_m = ctx.saved_tensors
+        grad_o = grad_o.to(device = torch.device("cpu"))
         time_steps = grad_o.shape[0]
         grad_u = torch.zeros_like(u)
         grad_h = torch.zeros_like(h)
@@ -157,7 +163,10 @@ class multi_time_step_lif(torch.autograd.Function):
         grad_tau_m = torch.zeros_like(u_init)
         bp_lif(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, o, u, h, x, u_init, tau_m, ctx.u_rest, ctx.u_threshold)
         grad_tau_m = torch.sum(grad_tau_m)
-        return grad_x, grad_u, grad_tau_m, None, None
+        grad_x = grad_x.to(device = device)
+        grad_u_init = grad_u_init.to(device = device)
+        grad_tau_m = grad_tau_m.to(device = device)
+        return grad_x, grad_u_init, grad_tau_m, None, None
 
 
 class LIF(SomaCPP):
