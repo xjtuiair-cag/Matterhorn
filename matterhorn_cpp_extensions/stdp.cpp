@@ -11,11 +11,9 @@ STDP主函数。
     output_shape: int 输出向量长度
     time_steps: int 时间步长
     input_spike_train: at::Tensor 输入脉冲序列，形状为[time_steps, input_shape]
-    output_spike_train: at::Tensor 输出脉冲序列，形状为[time_steps, output_shape]
-    a_pos: float STDP参数A+
-    tau_pos: float STDP参数tau+
-    a_neg: floatSTDP参数A-
-    tau_neg: float STDP参数tau-
+    output_spike_train: at::Tensor 输出脉冲序列，形状为[time_steps,
+output_shape] a_pos: float STDP参数A+ tau_pos: float STDP参数tau+ a_neg:
+floatSTDP参数A- tau_neg: float STDP参数tau-
 @return:
     int 不重要
 */
@@ -29,7 +27,6 @@ int stdp(at::Tensor weight_mat,
          float tau_pos,
          float a_neg,
          float tau_neg) {
-
     for (int i = 0; i < output_shape; i++) {
         for (int j = 0; j < input_shape; j++) {
             // 去遍历时间，更新权重

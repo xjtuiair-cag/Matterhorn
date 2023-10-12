@@ -9,10 +9,11 @@ setup(
             "matterhorn_cpp_extensions",
             [
                 "api.cpp",
-                "stdp.cpp"
+                "stdp.cpp",
+                "soma.cpp"
             ],
             extra_compile_args = {
-                "cxx": ["-g"]
+                "cxx": ["-g", "-w"]
             }
         ),
     ],

@@ -27,25 +27,16 @@ class Synapse(Module):
         super().__init__(
             multi_time_step = multi_time_step
         )
-    
 
-    def supports_single_time_step(self) -> bool:
+
+    def extra_repr(self) -> str:
         """
-        是否支持单个时间步。
+        额外的表达式，把参数之类的放进来。
         @return:
-            if_support: bool 是否支持单个时间步
+            repr_str: str 参数表
         """
-        return True
+        return "multi_time_step=%s, " % ("True" if self.multi_time_step else "False")
 
-
-    def supports_multi_time_step(self) -> bool:
-        """
-        是否支持多个时间步。
-        @return:
-            if_support: bool 是否支持多个时间步
-        """
-        return True
-    
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
@@ -115,7 +106,16 @@ class Linear(Synapse, nn.Linear):
             device = device,
             dtype = dtype
         )
-    
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Synapse.extra_repr(self) + nn.Linear.extra_repr(self)
+
     
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
@@ -165,8 +165,17 @@ class Conv1d(Synapse, nn.Conv1d):
             device = device,
             dtype = dtype
         )
-    
-    
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Synapse.extra_repr(self) + nn.Conv1d.extra_repr(self)
+
+
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
@@ -215,8 +224,17 @@ class Conv2d(Synapse, nn.Conv2d):
             device = device,
             dtype = dtype
         )
-    
-    
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Synapse.extra_repr(self) + nn.Conv2d.extra_repr(self)
+
+
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
@@ -265,7 +283,16 @@ class Conv3d(Synapse, nn.Conv3d):
             device = device,
             dtype = dtype
         )
-    
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Synapse.extra_repr(self) + nn.Conv3d.extra_repr(self)
+
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
@@ -317,8 +344,17 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
             device = device,
             dtype = dtype
         )
-    
-    
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Synapse.extra_repr(self) + nn.ConvTranspose1d.extra_repr(self)
+
+
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
@@ -369,8 +405,17 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
             device = device,
             dtype = dtype
         )
-    
-    
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Synapse.extra_repr(self) + nn.ConvTranspose2d.extra_repr(self)
+
+
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
@@ -421,8 +466,17 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
             device = device,
             dtype = dtype
         )
-    
-    
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Synapse.extra_repr(self) + nn.ConvTranspose3d.extra_repr(self)
+
+
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
@@ -463,8 +517,17 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
             device = device,
             dtype = dtype
         )
-    
-    
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Synapse.extra_repr(self) + nn.BatchNorm1d.extra_repr(self)
+
+
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
@@ -505,8 +568,17 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
             device = device,
             dtype = dtype
         )
-    
-    
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Synapse.extra_repr(self) + nn.BatchNorm2d.extra_repr(self)
+
+
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
@@ -547,8 +619,17 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
             device = device,
             dtype = dtype
         )
-    
-    
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Synapse.extra_repr(self) + nn.BatchNorm3d.extra_repr(self)
+
+
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
@@ -584,9 +665,18 @@ class LayerNorm(Synapse, nn.LayerNorm):
             elementwise_affine = elementwise_affine,
             device = device,
             dtype = dtype
-        )    
-    
-    
+        )
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Synapse.extra_repr(self) + nn.LayerNorm.extra_repr(self)
+
+
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。

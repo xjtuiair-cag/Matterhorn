@@ -87,7 +87,7 @@ class SRM0Linear(Module):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr() + "in_features=%d, out_features=%d, tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest)
+        return "multi_time_step=%s, in_features=%d, out_features=%d, tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % ("True" if self.multi_time_step else "False", self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest)
 
 
     def reset(self) -> None:
@@ -221,25 +221,16 @@ class Layer(Module):
         super().__init__(
             multi_time_step = multi_time_step
         )
-    
 
-    def supports_single_time_step(self) -> bool:
+
+    def extra_repr(self) -> str:
         """
-        是否支持单个时间步。
+        额外的表达式，把参数之类的放进来。
         @return:
-            if_support: bool 是否支持单个时间步
+            repr_str: str 参数表
         """
-        return True
+        return "multi_time_step=%s, " % ("True" if self.multi_time_step else "False")
 
-
-    def supports_multi_time_step(self) -> bool:
-        """
-        是否支持多个时间步。
-        @return:
-            if_support: bool 是否支持多个时间步
-        """
-        return True
-    
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -314,6 +305,15 @@ class MaxPool1d(Layer, nn.MaxPool1d):
         )
 
 
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Layer.extra_repr(self) + nn.MaxPool1d.extra_repr(self)
+
+
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
@@ -352,6 +352,16 @@ class MaxPool2d(Layer, nn.MaxPool2d):
             return_indices = return_indices,
             ceil_mode = ceil_mode
         )
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Layer.extra_repr(self) + nn.MaxPool2d.extra_repr(self)
+
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -393,6 +403,15 @@ class MaxPool3d(Layer, nn.MaxPool3d):
         )
 
 
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Layer.extra_repr(self) + nn.MaxPool3d.extra_repr(self)
+
+
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
@@ -429,6 +448,15 @@ class AvgPool1d(Layer, nn.AvgPool1d):
             ceil_mode = ceil_mode,
             count_include_pad = count_include_pad
         )
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Layer.extra_repr(self) + nn.AvgPool1d.extra_repr(self)
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -471,6 +499,15 @@ class AvgPool2d(Layer, nn.AvgPool2d):
         )
 
 
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Layer.extra_repr(self) + nn.AvgPool2d.extra_repr(self)
+
+
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
@@ -511,6 +548,15 @@ class AvgPool3d(Layer, nn.AvgPool3d):
         )
 
 
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Layer.extra_repr(self) + nn.AvgPool3d.extra_repr(self)
+
+
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
@@ -543,6 +589,15 @@ class Flatten(Layer, nn.Flatten):
         )
 
 
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Layer.extra_repr(self) + nn.Flatten.extra_repr(self)
+
+
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
@@ -573,6 +628,15 @@ class Unflatten(Layer, nn.Unflatten):
             dim = dim,
             unflattened_size = unflattened_size
         )
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return Layer.extra_repr(self) + nn.Unflatten.extra_repr(self)
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
