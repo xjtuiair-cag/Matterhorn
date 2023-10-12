@@ -20,7 +20,7 @@
 @return:
     int 不重要
 */
-int stdp(at::Tensor weight_mat,
+void stdp(at::Tensor weight_mat,
          int input_shape,
          int output_shape,
          int time_steps,
@@ -37,5 +37,4 @@ int stdp(at::Tensor weight_mat,
     stdp_cuda(weight_mat_head, input_shape, output_shape, time_steps,
               input_spike_train_head, output_spike_train_head, a_pos, tau_pos,
               a_neg, tau_neg);
-    return 1;
 }

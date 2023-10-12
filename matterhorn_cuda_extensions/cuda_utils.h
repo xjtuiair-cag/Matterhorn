@@ -1,5 +1,5 @@
-#ifndef _CUDA_UTILS_H
-#define _CUDA_UTILS_H
+#ifndef _MATTERHORN_CUDA_UTILS_H
+#define _MATTERHORN_CUDA_UTILS_H
 
 #include <cmath>
 

@@ -1,9 +1,10 @@
 #include "soma.h"
-#include <torch/serialize/tensor.h>
+#include <ATen/ATen.h>
+#include <iostream>
 #include <cmath>
 #include <vector>
 
-int fp_response_lif(at::Tensor u,
+void fp_response_lif(at::Tensor u,
                     at::Tensor x,
                     at::Tensor h,
                     at::Tensor tau_m,
@@ -13,15 +14,15 @@ int fp_response_lif(at::Tensor u,
     u += h + du;
 }
 
-int fp_spiking_heaviside(at::Tensor o, at::Tensor u, float u_threshold) {
+void fp_spiking_heaviside(at::Tensor o, at::Tensor u, float u_threshold) {
     o += (u >= u_threshold);
 }
 
-int fp_reset_hard(at::Tensor h, at::Tensor u, at::Tensor o, float u_rest) {
+void fp_reset_hard(at::Tensor h, at::Tensor u, at::Tensor o, float u_rest) {
     h += u * (1.0 - o) + u_rest * o;
 }
 
-int bp_response_lif(at::Tensor grad_u,
+void bp_response_lif(at::Tensor grad_u,
                     at::Tensor grad_x,
                     at::Tensor grad_h,
                     at::Tensor grad_tau_m,
@@ -43,7 +44,7 @@ int bp_response_lif(at::Tensor grad_u,
     grad_tau_m += grad_u * (-(1 / tau_m_val / tau_m_val) * (-(h - u_rest) + x));
 }
 
-int bp_spiking_rectangular(at::Tensor grad_o,
+void bp_spiking_rectangular(at::Tensor grad_o,
                            at::Tensor grad_u,
                            at::Tensor o,
                            at::Tensor u,
@@ -56,7 +57,7 @@ int bp_spiking_rectangular(at::Tensor grad_o,
     grad_u += grad_o * 0.5 * ((u >= u_threshold - 1) & (u <= u_threshold + 1));
 }
 
-int bp_reset_hard(at::Tensor grad_h,
+void bp_reset_hard(at::Tensor grad_h,
                   at::Tensor grad_u,
                   at::Tensor grad_o,
                   at::Tensor h,
@@ -79,7 +80,7 @@ LIF神经元的前向传播函数
     o: at::Tensor 脉冲输出o
 
 */
-int fp_lif(at::Tensor o,
+void fp_lif(at::Tensor o,
            at::Tensor u,
            at::Tensor h,
            at::Tensor x,
@@ -95,7 +96,7 @@ int fp_lif(at::Tensor o,
     }
 }
 
-int bp_lif(at::Tensor grad_o,
+void bp_lif(at::Tensor grad_o,
            at::Tensor grad_u,
            at::Tensor grad_h,
            at::Tensor grad_x,
