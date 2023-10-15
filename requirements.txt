@@ -1,6 +1,6 @@
 numpy
 matplotlib
-scipy
+numba
 h5py
 tqdm
 rich

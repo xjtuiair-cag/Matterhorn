@@ -100,13 +100,14 @@ class NMNIST(EventDataset2d):
             os.makedirs(self.extracted_folder, exist_ok = True)
         extracted_folder_list = os.listdir(self.extracted_folder)
         if len(zip_file_list) == len(extracted_folder_list):
-            print("[blue]Files are already extracted.[/blue]")
+            print("[blue]Files are already unzipped.[/blue]")
             return
         error_occured = False
         for filename in zip_file_list:
+            print("[blue]Trying to unzip file %s ...[/blue]" % (filename,))
             try:
                 extract_archive(os.path.join(self.raw_folder, filename), self.extracted_folder)
-                print("[green]Sussessfully extracted file %s.[/green]" % (filename,))
+                print("[green]Sussessfully unzipped file %s.[/green]" % (filename,))
             except BadZipFile as e:
                 print("[red]Error in unzipping file %s:\r\n\r\n    %s\r\n\r\nPlease manually fix the problem.[/red]" % (filename, e))
                 error_occured = True
@@ -142,6 +143,7 @@ class NMNIST(EventDataset2d):
         res[:, 1] = data[2::5] >> 7
         res[:, 2] = self.original_size[2] - 1 - data[1::5]
         res[:, 3] = data[::5]
+        res = res[np.argsort(res[:, 0])]
         if self.sampling > 1:
             res = res[::self.sampling]
         return res

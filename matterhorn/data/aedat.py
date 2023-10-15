@@ -18,6 +18,7 @@ from zipfile import BadZipFile
 from rich import print
 from rich.progress import track
 from matterhorn.data.skeleton import EventDataset2d
+from numba import jit
 try:
     from rich import print
 except:
@@ -110,6 +111,7 @@ class AEDAT(EventDataset2d):
         res[:, 1] = self.extract(xyp, self.p_mask, self.p_shift)
         res[:, 2] = self.extract(xyp, self.y_mask, self.y_shift)
         res[:, 3] = self.extract(xyp, self.x_mask, self.x_shift)
+        res = res[np.argsort(res[:, 0])]
         if self.sampling > 1:
             res = res[::self.sampling]
         return res
@@ -237,13 +239,14 @@ class CIFAR10DVS(AEDAT):
             os.makedirs(self.extracted_folder, exist_ok = True)
         extracted_folder_list = os.listdir(self.extracted_folder)
         if len(zip_file_list) == len(extracted_folder_list):
-            print("[blue]Files are already extracted.[/blue]")
+            print("[blue]Files are already unzipped.[/blue]")
             return
         error_occured = False
         for filename in zip_file_list:
+            print("[blue]Trying to unzip file %s ...[/blue]" % (filename,))
             try:
                 extract_archive(os.path.join(self.raw_folder, filename), self.extracted_folder)
-                print("[green]Sussessfully extracted file %s.[/green]" % (filename,))
+                print("[green]Sussessfully unzipped file %s.[/green]" % (filename,))
             except BadZipFile as e:
                 print("[red]Error in unzipping file %s:\r\n\r\n    %s\r\n\r\nPlease manually fix the problem.[/red]" % (filename, e))
                 error_occured = True
@@ -300,7 +303,7 @@ class DVS128Gesture(AEDAT):
         ("", "DvsGesture.tar.gz", "8a5c71fb11e24e5ca5b11866ca6c00a1"),
         ("", "gesture_mapping.csv", "109b2ae64a0e1f3ef535b18ad7367fd1")
     ]
-    labels = ["hand_clapping", "right_hand_wave", "left_hand_wave", "right_hand_clockwise", "right_hand_counter_clockwise", "left_hand_clockwise", "left_hand_counter_clockwise", "forearm_roll_forward", "forearm_roll_backward", "drums", "guitar", "random_other_gestures"]
+    labels = ["hand_clapping", "right_hand_wave", "left_hand_wave", "right_hand_clockwise", "right_hand_counter_clockwise", "left_hand_clockwise", "left_hand_counter_clockwise", "forearm_roll", "drums", "guitar", "random_other_gestures"]
     y_mask = 0x1FFF
     y_shift = 2
     x_mask = 0x1FFF
@@ -368,14 +371,15 @@ class DVS128Gesture(AEDAT):
         解压下载下来的压缩包。
         """
         if os.path.isdir(self.extracted_folder):
-            print("[blue]Files are already extracted.[/blue]")
+            print("[blue]Files are already unzipped.[/blue]")
             return
         os.makedirs(self.extracted_folder, exist_ok = True)
         filename = "DvsGesture.tar.gz"
         error_occured = False
+        print("[blue]Trying to unzip file %s ...[/blue]" % (filename,))
         try:
             extract_archive(os.path.join(self.raw_folder, filename), self.extracted_folder)
-            print("[green]Sussessfully extracted file %s.[/green]" % (filename,))
+            print("[green]Sussessfully unzipped file %s.[/green]" % (filename,))
         except BadZipFile as e:
             print("[red]Error in unzipping file %s:\r\n\r\n    %s\r\n\r\nPlease manually fix the problem.[/red]" % (filename, e))
             error_occured = True
@@ -394,6 +398,54 @@ class DVS128Gesture(AEDAT):
             is_train: bool 是否为训练集
         """
         return index < 24
+    
+
+    @staticmethod
+    @jit(nopython=True)
+    def skip_header(data: np.ndarray, mask: np.ndarray) -> np.ndarray:
+        cursor = 0
+        while cursor < len(data):
+            header = data[cursor:cursor + 7]
+            event_type = (header[0] >> 16) & 0xFFFF # 1
+            event_source = header[0] & 0xFFFF # 1
+            event_size = header[1] # 8
+            event_ts_offset = header[2] # 4
+            event_ts_overflow = header[3] # 0
+            event_capacity = header[4] # n
+            event_number = header[5] # n ?
+            event_valid = header[6] # n ?
+            cursor += 7
+
+            if event_type:
+                end = cursor + (event_number * event_size // 4)
+                mask[cursor:end] = True
+                if event_ts_overflow:
+                    data[cursor + 1:end:2] += event_ts_overflow << 31
+            cursor += event_capacity * event_size // 4
+        data = data[mask]
+        return data
+    
+
+    def filename_2_data(self, filename: str) -> np.ndarray:
+        """
+        输入文件名，读取文件内容。
+        @params:
+            filename: str 文件名
+        @return:
+            data: np.ndarray 文件内容（数据）
+        """
+        data_str = ""
+        with open(filename, 'rb') as f:
+            data_str = f.read()
+            lines = data_str.split(b'\n')
+            for line in range(len(lines)):
+                if not lines[line].startswith(b'#'):
+                    break
+            lines = lines[line:]
+            data_str = b'\n'.join(lines)
+            data = np.fromstring(data_str, dtype = self.endian + self.datatype)
+            data = DVS128Gesture.skip_header(data, np.zeros(data.shape, dtype = "bool"))
+        return data
 
 
     def load_data(self) -> np.ndarray:
@@ -416,12 +468,6 @@ class DVS128Gesture(AEDAT):
             if not filename.endswith(".aedat"):
                 continue
             raw_data = self.filename_2_data(os.path.join(aedat_file_dir, filename))
-            raw_data_list = []
-            idx_list = np.where(raw_data == 65537)[0]
-            for i in range(len(idx_list) - 1):
-                raw_data_list.append(raw_data[idx_list[i] + 7: idx_list[i + 1]])
-            raw_data_list.append(raw_data[idx_list[len(idx_list) - 1] + 7:])
-            raw_data = np.concatenate(raw_data_list, axis = 0)
             event_data = self.data_2_tpyx(raw_data)
             event_data[:, 2] = self.original_size[2] - 1 - event_data[:, 2]
             event_data[:, 3] = self.original_size[3] - 1 - event_data[:, 3]
