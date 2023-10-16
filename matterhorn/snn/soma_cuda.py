@@ -138,8 +138,6 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
         ctx.save_for_backward(o, u, h, x, u_init, tau_m)
         ctx.u_threshold = u_threshold
         ctx.u_rest = u_rest
-        if device.type != "cpu":
-            o = o.to(device = device)
         return o
     
 
@@ -153,6 +151,7 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
         @return:
             grad_x: torch.Tensor 输入梯度
         """
+        grad_o = grad_o.clone()
         device = grad_o.device
         assert device.type == "cuda", "You must use CUDA tensors."
         o, u, h, x, u_init, tau_m = ctx.saved_tensors

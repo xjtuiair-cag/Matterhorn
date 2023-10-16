@@ -44,20 +44,13 @@ __global__ void fp_lif_heaviside_hard_cuda_kernel(float* o,
     const float tau_m_val = tau_m[0];
     for (int t = 0; t < time_steps; t++) {
         const int cur_idx = t * shape + idx;
-        float cur_x = x[cur_idx];
         float last_h = t ? h[cur_idx - shape] : u_init[idx];
-        float cur_u = 0.0f;
-        float cur_o = 0.0f;
-        float cur_h = 0.0f;
-        // $$U_{i}^{l}(t)=H_{i}^{l}(t-1)+\frac{1}{τ_{m}}[-[H_{i}^{l}(t-1)-u_{rest}]+X_{i}^{l}(t)]$$
-        cur_u = last_h + (1.0f / tau_m_val) * (0.0f - (last_h - u_rest) + cur_x);
-        // $$O_{i}^{l}(t)=u[U_{i}^{l}(t)]$$
-        cur_o = cur_u >= u_threshold ? 1.0f : 0.0f;
-        // $$H_{i}^{l}(t)=U_{i}^{l}(t)[1-O_{i}^{l}(t)]+u_{rest}O_{i}^{l}(t)$$
-        cur_h = cur_u * (1.0f - cur_o) + u_rest * cur_o;
-        u[cur_idx] = cur_u;
-        o[cur_idx] = cur_o;
-        h[cur_idx] = cur_h;
+        
+        u[cur_idx] = last_h + (1.0f / tau_m_val) * (0.0f - (last_h - u_rest) + x[cur_idx]);
+        
+        o[cur_idx] = u[cur_idx] >= u_threshold ? 1.0f : 0.0f;
+        
+        h[cur_idx] = u[cur_idx] * (1.0f - o[cur_idx]) + u_rest * o[cur_idx];
     }
 }
 
@@ -148,39 +141,20 @@ __global__ void bp_lif_rectangular_hard_cuda_kernel(float* grad_o,
     for (int t = time_steps - 1; t >= 0; t--) {
         const int cur_idx = t * shape + idx;
         float last_h = t ? h[cur_idx - shape] : u_init[idx];
-        float cur_x = x[cur_idx];
-        float cur_u = u[cur_idx];
-        float cur_o = o[cur_idx];
-        float cur_grad_o = grad_o[cur_idx];
-        float cur_grad_u = 0.0f;
-        float cur_grad_x = 0.0f;
-        float cur_grad_tau_m = grad_tau_m[0];
-        // $$\frac{\partial H_{i}^{l}(t)}{\partial
-        // U_{i}^{l}(t)}=1-O_{i}^{l}(t)$$
-        // $$\frac{\partial H_{i}^{l}(t)}{\partial
-        // O_{i}^{l}(t)}=-U_{i}^{l}(t)+u_{rest}$$
-        cur_grad_o += cur_grad_h * (1.0f - cur_o);
-        cur_grad_u += cur_grad_h * (0.0f - cur_u + u_rest);
-        // $$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
-        cur_grad_u += cur_grad_o * 0.5f * (((cur_u > (u_threshold - 1.0f)) && (cur_u < (u_threshold + 1.0f))) ? 1.0f : 0.0f);
-        // $$\frac{\partial U_{i}^{l}(t)}{\partial
-        // H_{i}^{l}(t-1)}=1-\frac{1}{τ_{m}}$$
-        // $$\frac{\partial U_{i}^{l}(t)}{\partial
-        // X_{i}^{l}(t)}=\frac{1}{τ_{m}}$$
-        // $$\frac{\partial U_{i}^{l}(t)}{\partial
-        // τ_{m}}=-\frac{1}{τ_{m}^{2}}[-[H_{i}^{l}(t-1)-u_{rest}]+X_{i}^{l}(t)]$$
-        cur_grad_x += cur_grad_u * (1.0f / tau_m_val);
-        cur_grad_h = cur_grad_u * (1.0f - (1.0f / tau_m_val));
-        cur_grad_tau_m += cur_grad_u * (0.0f - (1.0f / (tau_m_val * tau_m_val)) * (0.0f - (last_h - u_rest) + cur_x));
-        grad_o[cur_idx] = cur_grad_o;
-        grad_u[cur_idx] = cur_grad_u;
-        grad_x[cur_idx] = cur_grad_x;
+
+        grad_u[cur_idx] += cur_grad_h * (1.0f - o[cur_idx]);
+        grad_o[cur_idx] += cur_grad_h * (0.0f - u[cur_idx] + u_rest);
+
+        grad_u[cur_idx] += grad_o[cur_idx] * 0.5f * (((u[cur_idx] > (u_threshold - 1.0f)) && (u[cur_idx] < (u_threshold + 1.0f))) ? 1.0f : 0.0f);
+        
+        grad_x[cur_idx] += grad_u[cur_idx] * (1.0f / tau_m_val);
+        cur_grad_h = grad_u[cur_idx] * (1.0f - (1.0f / tau_m_val));
+        grad_tau_m[0] += grad_u[cur_idx] * (0.0f - (1.0f / (tau_m_val * tau_m_val)) * (0.0f - (last_h - u_rest) + x[cur_idx]));
         if (t) {
             grad_h[cur_idx - shape] = cur_grad_h;
         } else {
             grad_u_init[idx] = cur_grad_h;
         }
-        grad_tau_m[0] = cur_grad_tau_m;
     }
 }
 
