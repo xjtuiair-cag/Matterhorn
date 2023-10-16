@@ -70,6 +70,7 @@ void fp_spiking_heaviside(at::Tensor o, at::Tensor u, float u_threshold) {
 
 /*
 矩形窗反向传播函数。
+$$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
 @params:
     grad_o: at::Tensor 脉冲输出$O^{l}(t)$的梯度
     grad_u: at::Tensor 胞体电位$U^{l}(t)$的梯度
@@ -82,11 +83,6 @@ void bp_spiking_rectangular(at::Tensor grad_o,
                             at::Tensor o,
                             at::Tensor u,
                             float u_threshold) {
-    /*
-    $$O_{i}^{l}(t)=u[U_{i}^{l}(t)]$$
-    =>
-    $$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
-    */
     grad_u += grad_o * 0.5 * ((u >= u_threshold - 1) & (u <= u_threshold + 1));
 }
 

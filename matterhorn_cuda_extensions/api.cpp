@@ -3,5 +3,5 @@
 #include "stdp.h"
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("stdp", &stdp, "stdp");
+    m.def("cu_stdp", &cu_stdp, "cu_stdp");
 }

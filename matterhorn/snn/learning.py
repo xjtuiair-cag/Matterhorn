@@ -51,7 +51,7 @@ def stdp_py(delta_weight: torch.Tensor, input_shape: int, output_shape: int, tim
 
 if torch.cuda.is_available():
     try:
-        from matterhorn_cuda_extensions import stdp as stdp_cuda
+        from matterhorn_cuda_extensions import cu_stdp as stdp_cuda
     except:
         stdp_cuda = None
 try:

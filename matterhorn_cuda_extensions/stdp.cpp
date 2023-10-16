@@ -2,7 +2,6 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <torch/serialize/tensor.h>
-#include <vector>
 
 /*
 STDP主函数。
@@ -18,7 +17,7 @@ STDP主函数。
     a_neg: float STDP参数$A^{-}$
     tau_neg: float STDP参数$τ_{-}$
 */
-void stdp(at::Tensor weight_mat,
+void cu_stdp(at::Tensor weight_mat,
           int input_shape,
           int output_shape,
           int time_steps,

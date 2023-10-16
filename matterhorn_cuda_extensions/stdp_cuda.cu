@@ -5,14 +5,14 @@
 #include "stdp.h"
 
 /*
-STDP的核心代码，利用CUDA实现。
+STDP主函数。
 @params:
-    weight_mat: float* 待更新的权重矩阵，形状为[output_shape,input_shape]
+    weight_mat: at::Tensor 待更新的权重矩阵，形状为[output_shape,input_shape]
     input_shape: int 输入向量长度
     output_shape: int 输出向量长度
     time_steps: int 时间步长
-    input_spike_train: float* 输入脉冲序列，形状为[time_steps,input_shape]
-    output_spike_train: float* 输出脉冲序列，形状为[time_steps,output_shape]
+    input_spike_train: at::Tensor 输入脉冲序列，形状为[time_steps,input_shape]
+    output_spike_train: at::Tensor 输出脉冲序列，形状为[time_steps,output_shape]
     a_pos: float STDP参数$A^{+}$
     tau_pos: float STDP参数$τ^{+}$
     a_neg: float STDP参数$A^{-}$
@@ -60,21 +60,6 @@ __global__ void stdp_cuda_kernel(float* weight_mat,
     weight_mat[i * input_shape + j] += weight;
 }
 
-/*
-调用CUDA的STDP函数。
-@params:
-    weight_mat: float* 待更新的权重矩阵，形状为[output_shape, input_shape]
-    input_shape: int 输入向量长度
-    output_shape: int 输出向量长度
-    time_steps: int 时间步长
-    input_spike_train: float* 输入脉冲序列，形状为[time_steps, input_shape]
-    output_spike_train: float* 输出脉冲序列，形状为[time_steps, output_shape]
-    a_pos: float STDP参数A+
-    tau_pos: float STDP参数tau+
-    a_neg: float STDP参数A-
-    tau_neg: float STDP参数tau-
-    stream: cudaStream_t CUDA流
-*/
 void stdp_cuda(float* weight_mat,
                int input_shape,
                int output_shape,
