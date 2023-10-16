@@ -18,6 +18,12 @@ except:
 
 
 class ResADD(snn.Module):
+    def __init__(self) -> None:
+        super().__init__(
+            multi_time_step = True
+        )
+
+
     def forward(self, a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数，ADD连接函数。
@@ -31,6 +37,12 @@ class ResADD(snn.Module):
 
 
 class ResAND(snn.Module):
+    def __init__(self) -> None:
+        super().__init__(
+            multi_time_step = True
+        )
+
+
     def forward(self, a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数，AND连接函数。
@@ -44,6 +56,12 @@ class ResAND(snn.Module):
 
 
 class ResIAND(snn.Module):
+    def __init__(self) -> None:
+        super().__init__(
+            multi_time_step = True
+        )
+
+
     def forward(self, a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数，IAND连接函数。
@@ -68,7 +86,7 @@ def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: i
         spiking_function: snn.Module 脉冲函数
         trainable: bool 参数是否可以训练
     """
-    return snn.Spatial(
+    return snn.Sequential(
         snn.Conv2d(
             in_channels = in_channels,
             out_channels = out_channels,
@@ -100,7 +118,9 @@ class SEWBlock(snn.Module):
             down_sampling: bool 是否进行下采样（出来的图像大小是原大小的一半）
             trainable: bool 参数是否可以训练
         """
-        super().__init__()
+        super().__init__(
+            multi_time_step = True
+        )
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.conv1 = ConvLIF(
@@ -186,8 +206,10 @@ class SEWRes18(snn.Module):
             residual_connection: snn.Module 脉冲连接方式
             trainable: bool 参数是否可以训练
         """
-        super().__init__()
-        self.snn_model = snn.Sequential(
+        super().__init__(
+            multi_time_step = True
+        )
+        self.model = snn.Sequential(
             snn.DirectEncoder(),
             ConvLIF(
                 in_channels = 2,
@@ -285,7 +307,7 @@ class SEWRes18(snn.Module):
         """
         重置模型。
         """
-        self.snn_model.reset()
+        self.model.reset()
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -296,6 +318,5 @@ class SEWRes18(snn.Module):
         @return:
             x: torch.Tensor 输出张量
         """
-        x = self.snn_model(x)
-        x = self.ann_model(x)
+        x = self.model(x)
         return x
