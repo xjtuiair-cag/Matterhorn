@@ -137,7 +137,6 @@ class Soma(Module):
         """
         self.u = self.init_tensor(self.u, x)
         self.u = self.f_response(self.u, x)
-        print(self.u)
         o = self.f_firing(self.u)
         self.u = self.f_reset(self.u, o)
         return o
