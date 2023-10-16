@@ -53,7 +53,7 @@ void bp_response_lif(at::Tensor grad_u,
     float tau_m_val = tau_m.data<float>()[0];
     grad_x += grad_u * (1.0 / tau_m_val);
     grad_h += grad_u * (1.0 - (1.0 / tau_m_val));
-    grad_tau_m += grad_u * (-(1 / tau_m_val / tau_m_val) * (-(h - u_rest) + x));
+    grad_tau_m += grad_u * (-(1.0 / tau_m_val / tau_m_val) * (-(h - u_rest) + x));
 }
 
 /*
@@ -83,7 +83,7 @@ void bp_spiking_rectangular(at::Tensor grad_o,
                             at::Tensor o,
                             at::Tensor u,
                             float u_threshold) {
-    grad_u += grad_o * 0.5 * ((u >= u_threshold - 1) & (u <= u_threshold + 1));
+    grad_u += grad_o * 0.5 * ((u > u_threshold - 1.0) & (u < u_threshold + 1.0));
 }
 
 /*
@@ -119,7 +119,7 @@ void bp_reset_hard(at::Tensor grad_h,
                    at::Tensor u,
                    at::Tensor o,
                    float u_rest) {
-    grad_u += grad_h * (1 - o);
+    grad_u += grad_h * (1.0 - o);
     grad_o += grad_h * (u_rest - u);
 }
 

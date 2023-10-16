@@ -1,5 +1,5 @@
-#ifndef _MATTERHORN_STDP_H
-#define _MATTERHORN_STDP_H
+#ifndef _MATTERHORN_STDP_CUDA_H
+#define _MATTERHORN_STDP_CUDA_H
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
@@ -15,11 +15,6 @@ void cu_stdp(at::Tensor weight_mat,
              float tau_pos,
              float a_neg,
              float tau_neg);
-
-#endif
-
-#ifndef _MATTERHORN_STDP_CUDA_H
-#define _MATTERHORN_STDP_CUDA_H
 
 void stdp_cuda(float* weight_mat,
                int input_shape,

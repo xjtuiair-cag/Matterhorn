@@ -10,7 +10,9 @@ setup(
             [
                 "api.cpp",
                 "stdp.cpp",
-                "stdp_cuda.cu"
+                "stdp_cuda.cu",
+                "soma.cpp",
+                "soma_cuda.cu"
             ],
             extra_compile_args = {
                 "cxx": ["-g", "-w"],
