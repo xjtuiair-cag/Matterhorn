@@ -36,9 +36,9 @@ void cu_fp_lif_heaviside_hard(at::Tensor o,
     float* o_head = o.data_ptr<float>();
     float* u_head = u.data_ptr<float>();
     float* h_head = h.data_ptr<float>();
-    const float* x_head = x.data_ptr<float>();
-    const float* u_init_head = u_init.data_ptr<float>();
-    const float* tau_m_head = tau_m.data_ptr<float>();
+    float* x_head = x.data_ptr<float>();
+    float* u_init_head = u_init.data_ptr<float>();
+    float* tau_m_head = tau_m.data_ptr<float>();
 
     fp_lif_heaviside_hard_cuda(o_head, u_head, h_head, x_head, time_steps,
                                shape, u_init_head, tau_m_head, u_rest,
@@ -97,12 +97,12 @@ void cu_bp_lif_rectangular_hard(at::Tensor grad_o,
     float* grad_x_head = grad_x.data_ptr<float>();
     float* grad_u_init_head = grad_u_init.data_ptr<float>();
     float* grad_tau_m_head = grad_tau_m.data_ptr<float>();
-    const float* o_head = o.data_ptr<float>();
-    const float* u_head = u.data_ptr<float>();
-    const float* h_head = h.data_ptr<float>();
-    const float* x_head = x.data_ptr<float>();
-    const float* u_init_head = u_init.data_ptr<float>();
-    const float* tau_m_head = tau_m.data_ptr<float>();
+    float* o_head = o.data_ptr<float>();
+    float* u_head = u.data_ptr<float>();
+    float* h_head = h.data_ptr<float>();
+    float* x_head = x.data_ptr<float>();
+    float* u_init_head = u_init.data_ptr<float>();
+    float* tau_m_head = tau_m.data_ptr<float>();
 
     bp_lif_rectangular_hard_cuda(
         grad_o_head, grad_u_head, grad_h_head, grad_x_head, grad_u_init_head,

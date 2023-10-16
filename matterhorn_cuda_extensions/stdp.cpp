@@ -28,8 +28,8 @@ void cu_stdp(at::Tensor weight_mat,
              float a_neg,
              float tau_neg) {
     float* weight_mat_head = weight_mat.data_ptr<float>();
-    const float* input_spike_train_head = input_spike_train.data_ptr<float>();
-    const float* output_spike_train_head = output_spike_train.data_ptr<float>();
+    float* input_spike_train_head = input_spike_train.data_ptr<float>();
+    float* output_spike_train_head = output_spike_train.data_ptr<float>();
 
     stdp_cuda(weight_mat_head, input_shape, output_shape, time_steps,
               input_spike_train_head, output_spike_train_head, a_pos, tau_pos,

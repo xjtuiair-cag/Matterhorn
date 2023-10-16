@@ -27,11 +27,11 @@ $$H_{i}^{l}(t)=U_{i}^{l}(t)[1-O_{i}^{l}(t)]+u_{rest}O_{i}^{l}(t)$$
 __global__ void fp_lif_heaviside_hard_cuda_kernel(float* o,
                                                   float* u,
                                                   float* h,
-                                                  const float* x,
+                                                  float* x,
                                                   int time_steps,
                                                   int shape,
-                                                  const float* u_init,
-                                                  const float* tau_m,
+                                                  float* u_init,
+                                                  float* tau_m,
                                                   float u_rest,
                                                   float u_threshold) {
     int i = blockIdx.y;
@@ -41,27 +41,34 @@ __global__ void fp_lif_heaviside_hard_cuda_kernel(float* o,
         return;
     }
 
+    const float tau_m_val = tau_m[0];
     for (int t = 0; t < time_steps; t++) {
-        int cur_idx = t * shape + idx;
+        const int cur_idx = t * shape + idx;
+        float cur_x = x[cur_idx];
+        float last_h = t ? h[cur_idx - shape] : u_init[idx];
+        float cur_u = 0.0f;
+        float cur_o = 0.0f;
+        float cur_h = 0.0f;
         // $$U_{i}^{l}(t)=H_{i}^{l}(t-1)+\frac{1}{τ_{m}}[-[H_{i}^{l}(t-1)-u_{rest}]+X_{i}^{l}(t)]$$
-        float h_last = t ? h[cur_idx - shape] : u_init[idx];
-        u[cur_idx] +=
-            h_last + (1.0 / tau_m[0]) * (-(h_last - u_rest) + x[cur_idx]);
+        cur_u = last_h + (1.0f / tau_m_val) * (0.0f - (last_h - u_rest) + cur_x);
         // $$O_{i}^{l}(t)=u[U_{i}^{l}(t)]$$
-        o[cur_idx] += u[cur_idx] >= u_threshold ? 1.0 : 0.0;
+        cur_o = cur_u >= u_threshold ? 1.0f : 0.0f;
         // $$H_{i}^{l}(t)=U_{i}^{l}(t)[1-O_{i}^{l}(t)]+u_{rest}O_{i}^{l}(t)$$
-        h[cur_idx] += u[cur_idx] * (1.0 - o[cur_idx]) + u_rest * o[cur_idx];
+        cur_h = cur_u * (1.0f - cur_o) + u_rest * cur_o;
+        u[cur_idx] = cur_u;
+        o[cur_idx] = cur_o;
+        h[cur_idx] = cur_h;
     }
 }
 
 void fp_lif_heaviside_hard_cuda(float* o,
                                 float* u,
                                 float* h,
-                                const float* x,
+                                float* x,
                                 int time_steps,
                                 int shape,
-                                const float* u_init,
-                                const float* tau_m,
+                                float* u_init,
+                                float* tau_m,
                                 float u_rest,
                                 float u_threshold) {
     cudaError_t err;
@@ -121,12 +128,12 @@ __global__ void bp_lif_rectangular_hard_cuda_kernel(float* grad_o,
                                                     float* grad_tau_m,
                                                     int time_steps,
                                                     int shape,
-                                                    const float* o,
-                                                    const float* u,
-                                                    const float* h,
-                                                    const float* x,
-                                                    const float* u_init,
-                                                    const float* tau_m,
+                                                    float* o,
+                                                    float* u,
+                                                    float* h,
+                                                    float* x,
+                                                    float* u_init,
+                                                    float* tau_m,
                                                     float u_rest,
                                                     float u_threshold) {
     int i = blockIdx.y;
@@ -136,32 +143,44 @@ __global__ void bp_lif_rectangular_hard_cuda_kernel(float* grad_o,
         return;
     }
 
+    const float tau_m_val = tau_m[0];
+    float cur_grad_h = 0.0f;
     for (int t = time_steps - 1; t >= 0; t--) {
-        int cur_idx = t * shape + idx;
+        const int cur_idx = t * shape + idx;
+        float last_h = t ? h[cur_idx - shape] : u_init[idx];
+        float cur_x = x[cur_idx];
+        float cur_u = u[cur_idx];
+        float cur_o = o[cur_idx];
+        float cur_grad_o = grad_o[cur_idx];
+        float cur_grad_u = 0.0f;
+        float cur_grad_x = 0.0f;
+        float cur_grad_tau_m = grad_tau_m[0];
         // $$\frac{\partial H_{i}^{l}(t)}{\partial
         // U_{i}^{l}(t)}=1-O_{i}^{l}(t)$$
         // $$\frac{\partial H_{i}^{l}(t)}{\partial
         // O_{i}^{l}(t)}=-U_{i}^{l}(t)+u_{rest}$$
-        grad_u[cur_idx] += grad_h[cur_idx] * (1.0 - o[cur_idx]);
-        grad_o[cur_idx] += grad_h[cur_idx] * (-u[cur_idx] + u_rest);
+        cur_grad_o += cur_grad_h * (1.0f - cur_o);
+        cur_grad_u += cur_grad_h * (0.0f - cur_u + u_rest);
         // $$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
-        grad_u[cur_idx] +=
-            grad_o[cur_idx] * 0.5 *
-            ((u[cur_idx] > u_threshold - 1.0) & (u[cur_idx] < u_threshold + 1.0));
+        cur_grad_u += cur_grad_o * 0.5f * (((cur_u > (u_threshold - 1.0f)) && (cur_u < (u_threshold + 1.0f))) ? 1.0f : 0.0f);
         // $$\frac{\partial U_{i}^{l}(t)}{\partial
         // H_{i}^{l}(t-1)}=1-\frac{1}{τ_{m}}$$
         // $$\frac{\partial U_{i}^{l}(t)}{\partial
         // X_{i}^{l}(t)}=\frac{1}{τ_{m}}$$
         // $$\frac{\partial U_{i}^{l}(t)}{\partial
         // τ_{m}}=-\frac{1}{τ_{m}^{2}}[-[H_{i}^{l}(t-1)-u_{rest}]+X_{i}^{l}(t)]$$
-        float h_last = t ? h[cur_idx - shape] : u_init[idx];
-        grad_x[cur_idx] += grad_u[cur_idx] * (1.0 / tau_m[0]);
-        if(t){
-            grad_h[cur_idx - shape] += grad_u[cur_idx] * (1.0 - (1.0 / tau_m[0]));
-        }else{
-            grad_u_init[idx] += grad_u[cur_idx] * (1.0 - (1.0 / tau_m[0]));
+        cur_grad_x += cur_grad_u * (1.0f / tau_m_val);
+        cur_grad_h = cur_grad_u * (1.0f - (1.0f / tau_m_val));
+        cur_grad_tau_m += cur_grad_u * (0.0f - (1.0f / (tau_m_val * tau_m_val)) * (0.0f - (last_h - u_rest) + cur_x));
+        grad_o[cur_idx] = cur_grad_o;
+        grad_u[cur_idx] = cur_grad_u;
+        grad_x[cur_idx] = cur_grad_x;
+        if (t) {
+            grad_h[cur_idx - shape] = cur_grad_h;
+        } else {
+            grad_u_init[idx] = cur_grad_h;
         }
-        grad_tau_m[0] += grad_u[cur_idx] * (-(1.0 / tau_m[0] / tau_m[0]) * (-(h_last - u_rest) + x[cur_idx]));
+        grad_tau_m[0] = cur_grad_tau_m;
     }
 }
 
@@ -173,12 +192,12 @@ void bp_lif_rectangular_hard_cuda(float* grad_o,
                                   float* grad_tau_m,
                                   int time_steps,
                                   int shape,
-                                  const float* o,
-                                  const float* u,
-                                  const float* h,
-                                  const float* x,
-                                  const float* u_init,
-                                  const float* tau_m,
+                                  float* o,
+                                  float* u,
+                                  float* h,
+                                  float* x,
+                                  float* u_init,
+                                  float* tau_m,
                                   float u_rest,
                                   float u_threshold) {
     cudaError_t err;
