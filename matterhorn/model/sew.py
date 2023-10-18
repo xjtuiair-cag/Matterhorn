@@ -298,8 +298,7 @@ class SEWRes18(snn.Module):
             nn.Linear(
                 in_features = 512,
                 out_features = num_classes
-            ),
-            nn.ReLU() # [10]
+            ), # [10]
         )
     
 
