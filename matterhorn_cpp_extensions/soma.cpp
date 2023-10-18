@@ -5,6 +5,8 @@
 #include <iostream>
 #include <vector>
 
+using namespace std;
+
 #define SURROGATE_RECTANGULAR 0
 #define SURROGATE_POLYNOMIAL 1
 #define SURROGATE_SIGMOID 2
@@ -63,7 +65,7 @@ void bp_response_lif(at::Tensor grad_u,
     grad_x += grad_u * (1.0 / tau_m_val);
     grad_h += grad_u * (1.0 - (1.0 / tau_m_val));
     grad_tau_m +=
-        grad_u * (-(1.0 / tau_m_val / tau_m_val) * (-(h - u_rest) + x));
+        at::sum(grad_u * -1.0 / powf(tau_m_val, 2.0) * (-(h - u_rest) + x));
 }
 
 /*
@@ -75,7 +77,7 @@ $$O_{i}^{l}(t)=u[U_{i}^{l}(t)]$$
     u_threshold: float 阈电位$u_{th}$
 */
 void fp_spiking_heaviside(at::Tensor o, at::Tensor u, float u_threshold) {
-    o += (u >= u_threshold);
+    o += at::ge(u, u_threshold);
 }
 
 /*
@@ -95,8 +97,7 @@ void bp_spiking_rectangular(at::Tensor grad_o,
                             at::Tensor u,
                             float u_threshold,
                             float a = 2.0) {
-    grad_u += grad_o * (1.0 / a) *
-              ((u > u_threshold - (a / 2.0)) & (u < u_threshold + (a / 2.0)));
+    grad_u += grad_o * (1.0 / a) * at::lt(at::abs(u - u_threshold), a / 2.0);
 }
 
 /*
@@ -111,14 +112,13 @@ $$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
     a: float 参数$a$
 */
 void bp_spiking_polynomial(at::Tensor grad_o,
-                            at::Tensor grad_u,
-                            at::Tensor o,
-                            at::Tensor u,
-                            float u_threshold,
-                            float a = 2.0) {
-    at::Tensor sign = ((2.0 / sqrtf(a) - (u - u_threshold)) > 0.0) -
-                      ((2.0 / sqrtf(a) - (u - u_threshold)) < 0.0);
-    grad_u += grad_o * (sqrtf(a) / 2.0 - a / 4.0 * (u - u_threshold)) * sign;
+                           at::Tensor grad_u,
+                           at::Tensor o,
+                           at::Tensor u,
+                           float u_threshold,
+                           float a = 1.0) {
+    grad_u += grad_o * (sqrtf(a) / 2.0 - a / 4.0 * (u - u_threshold)) *
+              at::sign(2.0 / sqrtf(a) - (u - u_threshold));
 }
 
 /*
@@ -137,9 +137,9 @@ void bp_spiking_sigmoid(at::Tensor grad_o,
                         at::Tensor o,
                         at::Tensor u,
                         float u_threshold,
-                        float a = 2.0) {
+                        float a = 1.0) {
     at::Tensor ex = at::exp(-(u - u_threshold) / a);
-    grad_u += grad_o * (1.0 / a) * (ex / ((1 + ex) * (1 + ex)));
+    grad_u += grad_o * (1.0 / a) * ex / at::pow(1.0 + ex, 2.0);
 }
 
 /*
@@ -158,9 +158,9 @@ void bp_spiking_gaussian(at::Tensor grad_o,
                          at::Tensor o,
                          at::Tensor u,
                          float u_threshold,
-                         float a = 2.0) {
+                         float a = 1.0) {
     grad_u += grad_o * 1.0 / sqrtf(2.0 * M_PI * a) *
-              at::exp(-(u - u_threshold) * (u - u_threshold) / (2.0 * a));
+              at::exp(-at::pow(u - u_threshold, 2) / (2.0 * a));
 }
 
 /*
@@ -284,7 +284,6 @@ void bp_lif(at::Tensor grad_o,
                 /* code */
                 break;
         }
-
         switch (spiking_mode) {
             case SURROGATE_RECTANGULAR:
                 bp_spiking_rectangular(grad_o[t], grad_u[t], o[t], u[t],
@@ -292,7 +291,7 @@ void bp_lif(at::Tensor grad_o,
                 break;
             case SURROGATE_POLYNOMIAL:
                 bp_spiking_polynomial(grad_o[t], grad_u[t], o[t], u[t],
-                                       u_threshold, a);
+                                      u_threshold, a);
                 break;
             case SURROGATE_SIGMOID:
                 bp_spiking_sigmoid(grad_o[t], grad_u[t], o[t], u[t],

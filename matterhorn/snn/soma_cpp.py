@@ -157,6 +157,7 @@ class multi_time_step_lif(torch.autograd.Function):
         @return:
             grad_x: torch.Tensor 输入梯度
         """
+        grad_o = grad_o.clone()
         device = grad_o.device
         o, u, h, x, u_init, tau_m = ctx.saved_tensors
         if device.type != "cpu":
@@ -166,9 +167,8 @@ class multi_time_step_lif(torch.autograd.Function):
         grad_h = torch.zeros_like(h)
         grad_x = torch.zeros_like(x)
         grad_u_init = torch.zeros_like(u_init)
-        grad_tau_m = torch.zeros_like(u_init)
+        grad_tau_m = torch.zeros_like(tau_m)
         bp_lif(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, o, u, h, x, u_init, tau_m, ctx.u_rest, ctx.u_threshold, ctx.spiking_mode, ctx.a, ctx.reset_mode)
-        grad_tau_m = torch.sum(grad_tau_m)
         if device.type != "cpu":
             grad_x = grad_x.to(device = device)
             grad_u_init = grad_u_init.to(device = device)
