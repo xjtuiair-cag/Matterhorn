@@ -201,6 +201,50 @@ void bp_reset_hard(at::Tensor grad_h,
 }
 
 /*
+软重置前向传播函数。
+$$H_{i}^{l}(t)=U_{i}^{l}(t)[1-O_{i}^{l}(t)]+u_{rest}O_{i}^{l}(t)$$
+@params:
+    h: at::Tensor 胞体历史电位$H^{l}(t)$
+    u: at::Tensor 胞体电位$U^{l}(t)$
+    o: at::Tensor 脉冲输出$O^{l}(t)$
+    u_threshold: float 阈电位$u_{th}$
+    u_rest: float 静息电位$u_{rest}$
+*/
+void fp_reset_soft(at::Tensor h,
+                   at::Tensor u,
+                   at::Tensor o,
+                   float u_threshold,
+                   float u_rest) {
+    h += u - (u_threshold - u_rest) * o;
+}
+
+/*
+软重置反向传播函数。
+$$\frac{\partial H_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=1-O_{i}^{l}(t)$$
+$$\frac{\partial H_{i}^{l}(t)}{\partial O_{i}^{l}(t)}=-U_{i}^{l}(t)+u_{rest}$$
+@params:
+    grad_h: at::Tensor 胞体历史电位$H^{l}(t)$的梯度
+    grad_u: at::Tensor 胞体电位$U^{l}(t)$的梯度
+    grad_o: at::Tensor 脉冲输出$O^{l}(t)$的梯度
+    h: at::Tensor 胞体历史电位$H^{l}(t)$
+    u: at::Tensor 胞体电位$U^{l}(t)$
+    o: at::Tensor 脉冲输出$O^{l}(t)$
+    u_threshold: float 阈电位$u_{th}$
+    u_rest: float 静息电位$u_{rest}$
+*/
+void bp_reset_soft(at::Tensor grad_h,
+                   at::Tensor grad_u,
+                   at::Tensor grad_o,
+                   at::Tensor h,
+                   at::Tensor u,
+                   at::Tensor o,
+                   float u_threshold,
+                   float u_rest) {
+    grad_u += grad_h * 1.0;
+    grad_o += grad_h * -1.0 * (u_threshold - u_rest);
+}
+
+/*
 LIF神经元的前向传播函数。
 @params:
     o: at::Tensor 脉冲输出$O^{l}$
@@ -212,6 +256,7 @@ LIF神经元的前向传播函数。
     tau_m: at::Tensor 时间常数$τ_{m}$
     u_rest: float 静息电位$u_{rest}$
     u_threshold: float 阈电位$u_{th}$
+    reset_mode: int 重置模式，分为硬重置（0）和软重置（1）两种
 */
 void fp_lif(at::Tensor o,
             at::Tensor u,
@@ -231,7 +276,7 @@ void fp_lif(at::Tensor o,
                 fp_reset_hard(h[t], u[t], o[t], u_rest);
                 break;
             case RESET_SOFT:
-                /* code */
+                fp_reset_soft(h[t], u[t], o[t], u_threshold, u_rest);
                 break;
         }
     }
@@ -255,6 +300,9 @@ LIF神经元的反向传播函数。
     tau_m: at::Tensor 时间常数$τ_{m}$
     u_rest: float 静息电位$u_{rest}$
     u_threshold: float 阈电位$u_{th}$
+    spiking_mode: int 替代梯度模式
+    a: float 参数$a$
+    reset_mode: int 重置模式，分为硬重置（0）和软重置（1）两种
 */
 void bp_lif(at::Tensor grad_o,
             at::Tensor grad_u,
@@ -281,7 +329,8 @@ void bp_lif(at::Tensor grad_o,
                               u_rest);
                 break;
             case RESET_SOFT:
-                /* code */
+                bp_reset_soft(grad_h[t], grad_u[t], grad_o[t], h[t], u[t], o[t],
+                              u_threshold, u_rest);
                 break;
         }
         switch (spiking_mode) {

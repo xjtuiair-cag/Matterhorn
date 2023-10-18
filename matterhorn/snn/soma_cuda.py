@@ -22,7 +22,7 @@ except:
 class SomaCUDA(Soma):
     supported_surrogate_gradients = ("Rectangular",)
 
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: Module = surrogate.Rectangular(), trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, trainable: bool = False) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -32,7 +32,7 @@ class SomaCUDA(Soma):
             tau_m: float 膜时间常数$τ_{m}$
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
-            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+            spiking_function: Module 计算脉冲时所使用的阶跃函数
             trainable: bool 参数是否可以训练
         """
         super().__init__(
@@ -40,11 +40,13 @@ class SomaCUDA(Soma):
             u_threshold = u_threshold,
             u_rest = u_rest,
             spiking_function = spiking_function,
+            hard_reset = hard_reset,
             trainable = trainable
         )
         surrogate_str = spiking_function.__class__.__name__
         assert surrogate_str in self.supported_surrogate_gradients, "Unknown surrogate gradient."
         self.spiking_function_prototype = self.supported_surrogate_gradients.index(surrogate_str)
+        self.reset_prototype = 0 if self.hard_reset else 1
         self.multi_time_step_(True)
 
 
@@ -167,7 +169,7 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
 
 
 class LIF(SomaCUDA):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, trainable: bool = False) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
@@ -176,7 +178,7 @@ class LIF(SomaCUDA):
             tau_m: float 膜时间常数$τ_{m}$
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
-            spiking_function: nn.Module 计算脉冲时所使用的阶跃函数
+            spiking_function: Module 计算脉冲时所使用的阶跃函数
             trainable: bool 参数是否可以训练
         """
         super().__init__(
@@ -184,6 +186,7 @@ class LIF(SomaCUDA):
             u_threshold = u_threshold,
             u_rest = u_rest,
             spiking_function = spiking_function,
+            hard_reset = hard_reset,
             trainable = trainable
         )
         self.multi_time_step_function = multi_time_step_lif_cuda()
