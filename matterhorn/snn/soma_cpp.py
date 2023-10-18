@@ -19,7 +19,7 @@ except:
 
 
 class SomaCPP(Soma):
-    supported_surrogate_gradients = ("Rectangular",)
+    supported_surrogate_gradients = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
 
     def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: Module = surrogate.Rectangular(), trainable: bool = False) -> None:
         """
@@ -113,7 +113,7 @@ class SomaCPP(Soma):
 
 class multi_time_step_lif(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: float, u_rest: float) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: float, u_rest: float, spiking_mode: int, a: float, reset_mode: float) -> torch.Tensor:
         """
         多时间步LIF神经元前向传播的C++实现。
         @params:
@@ -135,10 +135,13 @@ class multi_time_step_lif(torch.autograd.Function):
         o = torch.zeros_like(x)
         u = torch.zeros_like(x)
         h = torch.zeros_like(x)
-        fp_lif(o, u, h, x, time_steps, u_init, tau_m, u_rest, u_threshold)
+        fp_lif(o, u, h, x, time_steps, u_init, tau_m, u_rest, u_threshold, reset_mode)
         ctx.save_for_backward(o, u, h, x, u_init, tau_m)
         ctx.u_threshold = u_threshold
         ctx.u_rest = u_rest
+        ctx.spiking_mode = spiking_mode
+        ctx.a = a
+        ctx.reset_mode = reset_mode
         if device.type != "cpu":
             o = o.to(device = device)
         return o
@@ -164,13 +167,13 @@ class multi_time_step_lif(torch.autograd.Function):
         grad_x = torch.zeros_like(x)
         grad_u_init = torch.zeros_like(u_init)
         grad_tau_m = torch.zeros_like(u_init)
-        bp_lif(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, o, u, h, x, u_init, tau_m, ctx.u_rest, ctx.u_threshold)
+        bp_lif(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, o, u, h, x, u_init, tau_m, ctx.u_rest, ctx.u_threshold, ctx.spiking_mode, ctx.a, ctx.reset_mode)
         grad_tau_m = torch.sum(grad_tau_m)
         if device.type != "cpu":
             grad_x = grad_x.to(device = device)
             grad_u_init = grad_u_init.to(device = device)
             grad_tau_m = grad_tau_m.to(device = device)
-        return grad_x, grad_u_init, grad_tau_m, None, None
+        return grad_x, grad_u_init, grad_tau_m, None, None, None, None, None
 
 
 class LIF(SomaCPP):
@@ -214,5 +217,5 @@ class LIF(SomaCPP):
             o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
         self.u = self.init_tensor(self.u, x[0])
-        o = self.multi_time_step_function.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest)
+        o = self.multi_time_step_function.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, self.spiking_function_prototype, self.spiking_function.a, 0)
         return o

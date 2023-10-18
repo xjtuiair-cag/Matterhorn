@@ -26,7 +26,29 @@ void bp_spiking_rectangular(at::Tensor grad_o,
                             at::Tensor grad_u,
                             at::Tensor o,
                             at::Tensor u,
-                            float u_threshold);
+                            float u_threshold,
+                            float a);
+
+void bp_spiking_polynomial(at::Tensor grad_o,
+                            at::Tensor grad_u,
+                            at::Tensor o,
+                            at::Tensor u,
+                            float u_threshold,
+                            float a);
+
+void bp_spiking_sigmoid(at::Tensor grad_o,
+                        at::Tensor grad_u,
+                        at::Tensor o,
+                        at::Tensor u,
+                        float u_threshold,
+                        float a);
+
+void bp_spiking_gaussian(at::Tensor grad_o,
+                         at::Tensor grad_u,
+                         at::Tensor o,
+                         at::Tensor u,
+                         float u_threshold,
+                         float a);
 
 void fp_reset_hard(at::Tensor h, at::Tensor u, at::Tensor o, float u_rest);
 
@@ -46,7 +68,8 @@ void fp_lif(at::Tensor o,
             at::Tensor u_init,
             at::Tensor tau_m,
             float u_rest,
-            float u_threshold);
+            float u_threshold,
+            int reset_mode);
 
 void bp_lif(at::Tensor grad_o,
             at::Tensor grad_u,
@@ -62,6 +85,9 @@ void bp_lif(at::Tensor grad_o,
             at::Tensor u_init,
             at::Tensor tau_m,
             float u_rest,
-            float u_threshold);
+            float u_threshold,
+            int spiking_mode,
+            float a,
+            int reset_mode);
 
 #endif

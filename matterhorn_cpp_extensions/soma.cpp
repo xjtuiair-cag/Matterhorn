@@ -1,8 +1,17 @@
 #include "soma.h"
 #include <ATen/ATen.h>
+#include <ATen/Functions.h>
 #include <cmath>
 #include <iostream>
 #include <vector>
+
+#define SURROGATE_RECTANGULAR 0
+#define SURROGATE_POLYNOMIAL 1
+#define SURROGATE_SIGMOID 2
+#define SURROGATE_GAUSSIAN 3
+
+#define RESET_HARD 0
+#define RESET_SOFT 1
 
 /*
 LIF神经元反应函数的前向传播函数。
@@ -53,7 +62,8 @@ void bp_response_lif(at::Tensor grad_u,
     float tau_m_val = tau_m.data<float>()[0];
     grad_x += grad_u * (1.0 / tau_m_val);
     grad_h += grad_u * (1.0 - (1.0 / tau_m_val));
-    grad_tau_m += grad_u * (-(1.0 / tau_m_val / tau_m_val) * (-(h - u_rest) + x));
+    grad_tau_m +=
+        grad_u * (-(1.0 / tau_m_val / tau_m_val) * (-(h - u_rest) + x));
 }
 
 /*
@@ -77,13 +87,80 @@ $$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
     o: at::Tensor 脉冲输出$O^{l}(t)$
     u: at::Tensor 胞体电位$U^{l}(t)$
     u_threshold: float 阈电位$u_{th}$
+    a: float 参数$a$
 */
 void bp_spiking_rectangular(at::Tensor grad_o,
                             at::Tensor grad_u,
                             at::Tensor o,
                             at::Tensor u,
-                            float u_threshold) {
-    grad_u += grad_o * 0.5 * ((u > u_threshold - 1.0) & (u < u_threshold + 1.0));
+                            float u_threshold,
+                            float a = 2.0) {
+    grad_u += grad_o * (1.0 / a) *
+              ((u > u_threshold - (a / 2.0)) & (u < u_threshold + (a / 2.0)));
+}
+
+/*
+多项式反向传播函数。
+$$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
+@params:
+    grad_o: at::Tensor 脉冲输出$O^{l}(t)$的梯度
+    grad_u: at::Tensor 胞体电位$U^{l}(t)$的梯度
+    o: at::Tensor 脉冲输出$O^{l}(t)$
+    u: at::Tensor 胞体电位$U^{l}(t)$
+    u_threshold: float 阈电位$u_{th}$
+    a: float 参数$a$
+*/
+void bp_spiking_polynomial(at::Tensor grad_o,
+                            at::Tensor grad_u,
+                            at::Tensor o,
+                            at::Tensor u,
+                            float u_threshold,
+                            float a = 2.0) {
+    at::Tensor sign = ((2.0 / sqrtf(a) - (u - u_threshold)) > 0.0) -
+                      ((2.0 / sqrtf(a) - (u - u_threshold)) < 0.0);
+    grad_u += grad_o * (sqrtf(a) / 2.0 - a / 4.0 * (u - u_threshold)) * sign;
+}
+
+/*
+Sigmoid导数的反向传播函数。
+$$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
+@params:
+    grad_o: at::Tensor 脉冲输出$O^{l}(t)$的梯度
+    grad_u: at::Tensor 胞体电位$U^{l}(t)$的梯度
+    o: at::Tensor 脉冲输出$O^{l}(t)$
+    u: at::Tensor 胞体电位$U^{l}(t)$
+    u_threshold: float 阈电位$u_{th}$
+    a: float 参数$a$
+*/
+void bp_spiking_sigmoid(at::Tensor grad_o,
+                        at::Tensor grad_u,
+                        at::Tensor o,
+                        at::Tensor u,
+                        float u_threshold,
+                        float a = 2.0) {
+    at::Tensor ex = at::exp(-(u - u_threshold) / a);
+    grad_u += grad_o * (1.0 / a) * (ex / ((1 + ex) * (1 + ex)));
+}
+
+/*
+高斯反向传播函数。
+$$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
+@params:
+    grad_o: at::Tensor 脉冲输出$O^{l}(t)$的梯度
+    grad_u: at::Tensor 胞体电位$U^{l}(t)$的梯度
+    o: at::Tensor 脉冲输出$O^{l}(t)$
+    u: at::Tensor 胞体电位$U^{l}(t)$
+    u_threshold: float 阈电位$u_{th}$
+    a: float 参数$a$
+*/
+void bp_spiking_gaussian(at::Tensor grad_o,
+                         at::Tensor grad_u,
+                         at::Tensor o,
+                         at::Tensor u,
+                         float u_threshold,
+                         float a = 2.0) {
+    grad_u += grad_o * 1.0 / sqrtf(2.0 * M_PI * a) *
+              at::exp(-(u - u_threshold) * (u - u_threshold) / (2.0 * a));
 }
 
 /*
@@ -144,11 +221,19 @@ void fp_lif(at::Tensor o,
             at::Tensor u_init,
             at::Tensor tau_m,
             float u_rest,
-            float u_threshold) {
+            float u_threshold,
+            int reset_mode = RESET_HARD) {
     for (int t = 0; t < time_steps; t++) {
         fp_response_lif(u[t], x[t], t ? h[t - 1] : u_init, tau_m, u_rest);
         fp_spiking_heaviside(o[t], u[t], u_threshold);
-        fp_reset_hard(h[t], u[t], o[t], u_rest);
+        switch (reset_mode) {
+            case RESET_HARD:
+                fp_reset_hard(h[t], u[t], o[t], u_rest);
+                break;
+            case RESET_SOFT:
+                /* code */
+                break;
+        }
     }
 }
 
@@ -185,11 +270,39 @@ void bp_lif(at::Tensor grad_o,
             at::Tensor u_init,
             at::Tensor tau_m,
             float u_rest,
-            float u_threshold) {
+            float u_threshold,
+            int spiking_mode = SURROGATE_RECTANGULAR,
+            float a = 2.0,
+            int reset_mode = RESET_HARD) {
     for (int t = time_steps - 1; t >= 0; t--) {
-        bp_reset_hard(grad_h[t], grad_u[t], grad_o[t], h[t], u[t], o[t],
-                      u_rest);
-        bp_spiking_rectangular(grad_o[t], grad_u[t], o[t], u[t], u_threshold);
+        switch (reset_mode) {
+            case RESET_HARD:
+                bp_reset_hard(grad_h[t], grad_u[t], grad_o[t], h[t], u[t], o[t],
+                              u_rest);
+                break;
+            case RESET_SOFT:
+                /* code */
+                break;
+        }
+
+        switch (spiking_mode) {
+            case SURROGATE_RECTANGULAR:
+                bp_spiking_rectangular(grad_o[t], grad_u[t], o[t], u[t],
+                                       u_threshold, a);
+                break;
+            case SURROGATE_POLYNOMIAL:
+                bp_spiking_polynomial(grad_o[t], grad_u[t], o[t], u[t],
+                                       u_threshold, a);
+                break;
+            case SURROGATE_SIGMOID:
+                bp_spiking_sigmoid(grad_o[t], grad_u[t], o[t], u[t],
+                                   u_threshold, a);
+                break;
+            case SURROGATE_GAUSSIAN:
+                bp_spiking_gaussian(grad_o[t], grad_u[t], o[t], u[t],
+                                    u_threshold, a);
+                break;
+        }
         bp_response_lif(grad_u[t], grad_x[t], t ? grad_h[t - 1] : grad_u_init,
                         grad_tau_m, u[t], x[t], t ? h[t] : u_init, tau_m,
                         u_rest);

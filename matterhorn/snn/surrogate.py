@@ -278,7 +278,7 @@ def backward_gaussian(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1.0
     @return:
         grad_input: torch.Tensor 输入梯度
     """
-    h = (1.0 / ((2.0 * torch.pi * a) ** 0.5)) * torch.exp(-(x ** 2.0) / 2 * a)
+    h = (1.0 / ((2.0 * torch.pi * a) ** 0.5)) * torch.exp(-(x ** 2.0) / (2 * a))
     return h * grad_output
 
 
