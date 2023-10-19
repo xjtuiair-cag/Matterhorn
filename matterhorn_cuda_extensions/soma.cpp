@@ -1,17 +1,10 @@
+#include "base.h"
 #include "soma.h"
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <torch/serialize/tensor.h>
 
 using namespace std;
-
-#define SURROGATE_RECTANGULAR 0
-#define SURROGATE_POLYNOMIAL 1
-#define SURROGATE_SIGMOID 2
-#define SURROGATE_GAUSSIAN 3
-
-#define RESET_HARD 0
-#define RESET_SOFT 1
 
 /*
 LIF神经元的前向传播函数。

@@ -1,3 +1,4 @@
+#include "base.h"
 #include "soma.h"
 #include <ATen/ATen.h>
 #include <ATen/Functions.h>
@@ -6,14 +7,6 @@
 #include <vector>
 
 using namespace std;
-
-#define SURROGATE_RECTANGULAR 0
-#define SURROGATE_POLYNOMIAL 1
-#define SURROGATE_SIGMOID 2
-#define SURROGATE_GAUSSIAN 3
-
-#define RESET_HARD 0
-#define RESET_SOFT 1
 
 /*
 LIF神经元反应函数的前向传播函数。

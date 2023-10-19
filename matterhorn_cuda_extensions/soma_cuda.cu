@@ -1,16 +1,10 @@
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <iostream>
 #include <stdlib.h>
 #include "cuda_utils.h"
 #include "soma.h"
-
-#define SURROGATE_RECTANGULAR 0
-#define SURROGATE_POLYNOMIAL 1
-#define SURROGATE_SIGMOID 2
-#define SURROGATE_GAUSSIAN 3
-
-#define RESET_HARD 0
-#define RESET_SOFT 1
+#include "base.h"
+#include "base.cu"
 
 /*
 LIF神经元反应函数的前向传播函数。
@@ -71,7 +65,7 @@ $$O_{i}^{l}(t)=u[U_{i}^{l}(t)]$$
     u_threshold: float 阈电位$u_{th}$
 */
 __device__ void fp_spiking_heaviside(float& o, float u, float u_threshold) {
-    o = u >= u_threshold ? 1.0f : 0.0f;
+    o = gef(u, u_threshold);
 }
 
 /*
@@ -92,8 +86,7 @@ __device__ void bp_spiking_rectangular(float grad_o,
                                        float u_threshold,
                                        float a) {
     float ax = u - u_threshold;
-    float rect = ((ax > -1.0f) && (ax < 1.0f)) ? 1.0f : 0.0f;
-    grad_u += grad_o * 0.5f * rect;
+    grad_u += grad_o * (1.0f / a) * ltf(absf(ax), a / 2.0f);
 }
 
 /*
@@ -114,9 +107,7 @@ __device__ void bp_spiking_polynomial(float grad_o,
                                       float u_threshold,
                                       float a) {
     float ax = u - u_threshold;
-    float sign =
-        2.0f / sqrtf(a) != ax ? (2.0f / sqrtf(a) > ax ? 1.0f : -1.0f) : 0.0f;
-    grad_u += grad_o * (sqrtf(a) / 2.0f - a / 4.0f * ax) * sign;
+    grad_u += grad_o * (sqrtf(a) / 2.0f - a / 4.0f * ax) * sgnf(2.0f / sqrtf(a) - ax);
 }
 
 /*
