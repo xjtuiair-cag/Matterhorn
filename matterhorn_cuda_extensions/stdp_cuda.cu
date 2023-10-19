@@ -1,5 +1,5 @@
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <iostream>
 #include <stdlib.h>
 #include "cuda_utils.h"
 #include "stdp.h"
