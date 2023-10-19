@@ -97,7 +97,8 @@ void bp_spiking_rectangular(at::Tensor grad_o,
                             at::Tensor u,
                             float u_threshold,
                             float a = 2.0) {
-    grad_u += grad_o * (1.0 / a) * at::lt(at::abs(u - u_threshold), a / 2.0);
+    at::Tensor ax = u - u_threshold;
+    grad_u += grad_o * (1.0 / a) * at::lt(at::abs(ax), a / 2.0);
 }
 
 /*
@@ -117,8 +118,9 @@ void bp_spiking_polynomial(at::Tensor grad_o,
                            at::Tensor u,
                            float u_threshold,
                            float a = 1.0) {
-    grad_u += grad_o * (sqrtf(a) / 2.0 - a / 4.0 * (u - u_threshold)) *
-              at::sign(2.0 / sqrtf(a) - (u - u_threshold));
+    at::Tensor ax = u - u_threshold;
+    grad_u += grad_o * (sqrtf(a) / 2.0 - a / 4.0 * ax) *
+              at::sign(2.0 / sqrtf(a) - ax);
 }
 
 /*
@@ -138,7 +140,8 @@ void bp_spiking_sigmoid(at::Tensor grad_o,
                         at::Tensor u,
                         float u_threshold,
                         float a = 1.0) {
-    at::Tensor ex = at::exp(-(u - u_threshold) / a);
+    at::Tensor ax = u - u_threshold;
+    at::Tensor ex = at::exp(-ax / a);
     grad_u += grad_o * (1.0 / a) * ex / at::pow(1.0 + ex, 2.0);
 }
 
@@ -159,8 +162,9 @@ void bp_spiking_gaussian(at::Tensor grad_o,
                          at::Tensor u,
                          float u_threshold,
                          float a = 1.0) {
+    at::Tensor ax = u - u_threshold;
     grad_u += grad_o * 1.0 / sqrtf(2.0 * M_PI * a) *
-              at::exp(-at::pow(u - u_threshold, 2) / (2.0 * a));
+              at::exp(-at::pow(ax, 2.0) / (2.0 * a));
 }
 
 /*

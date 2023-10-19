@@ -6,7 +6,7 @@ from matterhorn.snn.skeleton import Module
 from matterhorn.snn.soma import Soma
 from matterhorn.snn import surrogate
 try:
-    from matterhorn_cuda_extensions import cu_fp_lif_heaviside_hard, cu_bp_lif_rectangular_hard
+    from matterhorn_cuda_extensions import cu_fp_lif, cu_bp_lif
 except:
     raise NotImplementedError("Please install Matterhorn CUDA Extensions.")
 
@@ -20,7 +20,7 @@ except:
 
 
 class SomaCUDA(Soma):
-    supported_surrogate_gradients = ("Rectangular",)
+    supported_surrogate_gradients = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
 
     def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, trainable: bool = False) -> None:
         """
@@ -116,7 +116,7 @@ class SomaCUDA(Soma):
 
 class multi_time_step_lif_cuda(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: float, u_rest: float) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: float, u_rest: float, spiking_mode: int, a: float, reset_mode: float) -> torch.Tensor:
         """
         多时间步LIF神经元前向传播的C++实现。
         @params:
@@ -126,6 +126,9 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
             tau_m: torch.Tensor 膜时间常数$τ_{m}$
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
+            spiking_mode: int 发射脉冲的模式
+            a: float 参数$a$
+            reset_mode: int 重置的模式，有硬重置（0）和软重置（1）两种
         @return:
             y: torch.Tensor 输出
         """
@@ -136,10 +139,13 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
         o = torch.zeros_like(x)
         u = torch.zeros_like(x)
         h = torch.zeros_like(x)
-        cu_fp_lif_heaviside_hard(o, u, h, x, time_steps, shape, u_init, tau_m, u_rest, u_threshold)
+        cu_fp_lif(o, u, h, x, time_steps, shape, u_init, tau_m, u_rest, u_threshold, reset_mode)
         ctx.save_for_backward(o, u, h, x, u_init, tau_m)
         ctx.u_threshold = u_threshold
         ctx.u_rest = u_rest
+        ctx.spiking_mode = spiking_mode
+        ctx.a = a
+        ctx.reset_mode = reset_mode
         return o
     
 
@@ -164,8 +170,8 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
         grad_x = torch.zeros_like(x)
         grad_u_init = torch.zeros_like(u_init)
         grad_tau_m = torch.zeros_like(tau_m)
-        cu_bp_lif_rectangular_hard(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, shape, o, u, h, x, u_init, tau_m, ctx.u_rest, ctx.u_threshold)
-        return grad_x, grad_u_init, grad_tau_m, None, None
+        cu_bp_lif(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, shape, o, u, h, x, u_init, tau_m, ctx.u_rest, ctx.u_threshold, ctx.spiking_mode, ctx.a, ctx.reset_mode)
+        return grad_x, grad_u_init, grad_tau_m, None, None, None, None, None
 
 
 class LIF(SomaCUDA):
@@ -210,5 +216,5 @@ class LIF(SomaCUDA):
             o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
         self.u = self.init_tensor(self.u, x[0])
-        o = self.multi_time_step_function.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest)
+        o = self.multi_time_step_function.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, self.spiking_function_prototype, self.spiking_function.a, self.reset_prototype)
         return o
