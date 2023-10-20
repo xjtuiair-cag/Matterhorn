@@ -18,7 +18,7 @@ setup(
     ext_modules = [
         CUDAExtension(
             "matterhorn_cuda_extensions",
-            get_cpp_files(".", ["base.cpp"]),
+            get_cpp_files(os.path.abspath("."), ["base.cpp"]),
             extra_compile_args = {
                 "cxx": ["-g", "-w"],
                 "nvcc": ["-O2"]

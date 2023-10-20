@@ -18,7 +18,7 @@ setup(
     ext_modules = [
         CppExtension(
             "matterhorn_cpp_extensions",
-            get_cpp_files(".", ["base.cpp", "base.cu"]),
+            get_cpp_files(os.path.abspath("."), ["base.cpp", "base.cu"]),
             extra_compile_args = {
                 "cxx": ["-g", "-w"]
             }

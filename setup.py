@@ -22,7 +22,7 @@ cuda_available = cuda.is_available()
 if cuda_available:
     print("\033[92mCUDA found on this device, installing matterhorn CUDA extensions.\033[0m")
     from torch.utils.cpp_extension import CUDAExtension
-    files = get_cpp_files("./matterhorn_cuda_extensions", ["base.cpp", "base.cu"])
+    files = get_cpp_files(os.path.join(os.path.abspath("."), "matterhorn_cuda_extensions"), ["base.cpp", "base.cu"])
     print("Will compile " + ", ".join(files))
     ext_modules.append(CUDAExtension(
         "matterhorn_cuda_extensions",
@@ -38,7 +38,7 @@ cpp_available = not os.system("g++ --version")
 if cpp_available:
     print("\033[92mg++ found on this device, installing matterhorn CPP extensions.\033[0m")
     from torch.utils.cpp_extension import CppExtension
-    files = get_cpp_files("./matterhorn_cpp_extensions", ["base.cpp"])
+    files = get_cpp_files(os.path.join(os.path.abspath("."), "matterhorn_cpp_extensions"), ["base.cpp"])
     print("Will compile " + ", ".join(files))
     ext_modules.append(CppExtension(
         "matterhorn_cpp_extensions",
@@ -66,7 +66,7 @@ with open(os.path.join(os.path.abspath("."), "README.md"), "r", encoding="utf-8"
 setup(
     install_requires = install_requires,
     name = "matterhorn_pytorch",
-    version = "1.0.0",
+    version = "1.0.1" + ("+cu" if cuda_available else ""),
     author = "CAG, IAIR, XJTU, Xi'an, China",
     author_email = "ericwang017@stu.xjtu.edu.cn",
     description = "Matterhorn is a neo general SNN framework based on PyTorch.",

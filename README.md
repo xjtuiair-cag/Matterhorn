@@ -23,7 +23,7 @@ TorchVision(>=0.11.0 and <= 0.13.1)
 To install PyTorch you can find the command on [https://pytorch.org/get-started/previous-versions/](https://pytorch.org/get-started/previous-versions/).
 
 ```sh
-pip install numpy matplotlib scipy tqdm rich
+pip install numpy matplotlib numba h5py tqdm rich torch torchvision
 ```
 
 ### Install Matterhorn
