@@ -10,8 +10,8 @@ import os, sys
 sys.path.append(os.path.abspath("."))
 
 
-import matterhorn.snn as snn
-from matterhorn.snn import learning
+import matterhorn_pytorch.snn as snn
+from matterhorn_pytorch.snn import learning
 
 
 from rich import print

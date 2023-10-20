@@ -9,7 +9,7 @@ Reference:
 
 import torch
 import torch.nn as nn
-import matterhorn.snn as snn
+import matterhorn_pytorch.snn as snn
 from typing import Tuple, Callable
 try:
     from rich import print

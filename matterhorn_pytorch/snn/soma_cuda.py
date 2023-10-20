@@ -2,15 +2,16 @@ import torch
 import torch.nn as nn
 
 
-from matterhorn.snn.skeleton import Module
-from matterhorn.snn.soma import Soma
-from matterhorn.snn import surrogate
+from matterhorn_pytorch.snn.skeleton import Module
+from matterhorn_pytorch.snn.soma import Soma
+from matterhorn_pytorch.snn import surrogate
 try:
-    from matterhorn_cpp_extensions import fp_lif, bp_lif
+    from matterhorn_cuda_extensions import cu_fp_lif, cu_bp_lif
 except:
-    raise NotImplementedError("Please install Matterhorn C++ Extensions.")
+    raise NotImplementedError("Please install Matterhorn CUDA Extensions.")
 
 
+import numpy as np
 from typing import Any
 try:
     from rich import print
@@ -18,7 +19,7 @@ except:
     pass
 
 
-class SomaCPP(Soma):
+class SomaCUDA(Soma):
     supported_surrogate_gradients = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
 
     def __init__(self, tau_m: float = 1.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, trainable: bool = False) -> None:
@@ -32,7 +33,6 @@ class SomaCPP(Soma):
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
             spiking_function: Module 计算脉冲时所使用的阶跃函数
-            hard_reset: bool 是否为硬重置
             trainable: bool 参数是否可以训练
         """
         super().__init__(
@@ -114,7 +114,7 @@ class SomaCPP(Soma):
         return o
 
 
-class multi_time_step_lif(torch.autograd.Function):
+class multi_time_step_lif_cuda(torch.autograd.Function):
     @staticmethod
     def forward(ctx: Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: float, u_rest: float, spiking_mode: int, a: float, reset_mode: float) -> torch.Tensor:
         """
@@ -133,23 +133,19 @@ class multi_time_step_lif(torch.autograd.Function):
             y: torch.Tensor 输出
         """
         device = x.device
+        assert device.type == "cuda", "You must use CUDA tensors."
         time_steps = x.shape[0]
-        if device.type != "cpu":
-            x = x.to(device = torch.device("cpu"))
-            u_init = u_init.to(device = torch.device("cpu"))
-            tau_m = tau_m.to(device = torch.device("cpu"))
+        shape = np.prod(x.shape[1:])
         o = torch.zeros_like(x)
         u = torch.zeros_like(x)
         h = torch.zeros_like(x)
-        fp_lif(o, u, h, x, time_steps, u_init, tau_m, u_rest, u_threshold, reset_mode)
+        cu_fp_lif(o, u, h, x, time_steps, shape, u_init, tau_m, u_rest, u_threshold, reset_mode)
         ctx.save_for_backward(o, u, h, x, u_init, tau_m)
         ctx.u_threshold = u_threshold
         ctx.u_rest = u_rest
         ctx.spiking_mode = spiking_mode
         ctx.a = a
         ctx.reset_mode = reset_mode
-        if device.type != "cpu":
-            o = o.to(device = device)
         return o
     
 
@@ -162,29 +158,23 @@ class multi_time_step_lif(torch.autograd.Function):
             grad_o: torch.Tensor 输出梯度
         @return:
             grad_x: torch.Tensor 输入梯度
-            grad_u_init: torch.Tensor 初始电位的梯度
-            grad_tau_m: torch.Tensor 膜时间常数$τ_{m}$的梯度
         """
         grad_o = grad_o.clone()
         device = grad_o.device
+        assert device.type == "cuda", "You must use CUDA tensors."
         o, u, h, x, u_init, tau_m = ctx.saved_tensors
-        if device.type != "cpu":
-            grad_o = grad_o.to(device = torch.device("cpu"))
         time_steps = grad_o.shape[0]
+        shape = np.prod(grad_o.shape[1:])
         grad_u = torch.zeros_like(u)
         grad_h = torch.zeros_like(h)
         grad_x = torch.zeros_like(x)
         grad_u_init = torch.zeros_like(u_init)
         grad_tau_m = torch.zeros_like(tau_m)
-        bp_lif(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, o, u, h, x, u_init, tau_m, ctx.u_rest, ctx.u_threshold, ctx.spiking_mode, ctx.a, ctx.reset_mode)
-        if device.type != "cpu":
-            grad_x = grad_x.to(device = device)
-            grad_u_init = grad_u_init.to(device = device)
-            grad_tau_m = grad_tau_m.to(device = device)
+        cu_bp_lif(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, shape, o, u, h, x, u_init, tau_m, ctx.u_rest, ctx.u_threshold, ctx.spiking_mode, ctx.a, ctx.reset_mode)
         return grad_x, grad_u_init, grad_tau_m, None, None, None, None, None
 
 
-class LIF(SomaCPP):
+class LIF(SomaCUDA):
     def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, trainable: bool = False) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
@@ -195,7 +185,6 @@ class LIF(SomaCPP):
             u_threshold: float 阈电位$u_{th}$
             u_rest: float 静息电位$u_{rest}$
             spiking_function: Module 计算脉冲时所使用的阶跃函数
-            hard_reset: bool 是否为硬重置
             trainable: bool 参数是否可以训练
         """
         super().__init__(
@@ -206,7 +195,7 @@ class LIF(SomaCPP):
             hard_reset = hard_reset,
             trainable = trainable
         )
-        self.multi_time_step_function = multi_time_step_lif()
+        self.multi_time_step_function = multi_time_step_lif_cuda()
 
 
     def extra_repr(self) -> str:

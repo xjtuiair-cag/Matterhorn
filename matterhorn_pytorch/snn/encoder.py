@@ -7,7 +7,7 @@
 
 import torch
 import torch.nn as nn
-from matterhorn.snn.skeleton import Module
+from matterhorn_pytorch.snn.skeleton import Module
 try:
     from rich import print
 except:

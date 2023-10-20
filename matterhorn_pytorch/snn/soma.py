@@ -7,8 +7,8 @@
 
 import torch
 import torch.nn as nn
-from matterhorn.snn.skeleton import Module
-from matterhorn.snn import surrogate
+from matterhorn_pytorch.snn.skeleton import Module
+from matterhorn_pytorch.snn import surrogate
 from typing import Callable, Iterable
 try:
     from rich import print
