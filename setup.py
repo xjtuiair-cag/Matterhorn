@@ -66,7 +66,7 @@ with open(os.path.join(os.path.abspath("."), "README.md"), "r", encoding="utf-8"
 setup(
     install_requires = install_requires,
     name = "matterhorn_pytorch",
-    version = "1.0.1" + ("+cu" if cuda_available else ""),
+    version = "1.0.1",
     author = "CAG, IAIR, XJTU, Xi'an, China",
     author_email = "ericwang017@stu.xjtu.edu.cn",
     description = "Matterhorn is a neo general SNN framework based on PyTorch.",
