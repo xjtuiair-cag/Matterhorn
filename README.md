@@ -133,7 +133,7 @@ Like building ANN in PyTorch, we can build our SNN model in Matterhorn by the co
 
 ```python
 import torch
-import from matterhorn_pytorch.snn as snn
+import matterhorn_pytorch.snn as snn
 
 snn_model = snn.Temporal(
     snn.Spatial(
@@ -176,7 +176,7 @@ You can use Poisson encoder in Matterhorn by the code below:
 
 ```python
 import torch
-import from matterhorn_pytorch.snn as snn
+import matterhorn_pytorch.snn as snn
 
 encoder = snn.PoissonEncoder(
     time_steps = 32
@@ -199,7 +199,7 @@ You can use average decoder in Matterhorn by the code below:
 
 ```python
 import torch
-import from matterhorn_pytorch.snn as snn
+import matterhorn_pytorch.snn as snn
 
 decoder = snn.AvgSpikeDecoder()
 ```
@@ -210,7 +210,7 @@ Matterhorn provides a convenient container `matterhorn_pytorch.snn.Sequential` t
 
 ```python
 import torch
-import from matterhorn_pytorch.snn as snn
+import matterhorn_pytorch.snn as snn
 
 model = snn.Sequential(
     snn.PoissonEncoder(

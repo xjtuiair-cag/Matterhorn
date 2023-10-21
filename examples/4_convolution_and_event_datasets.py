@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath("."))
 
 
 import matterhorn_pytorch
-import from matterhorn_pytorch.snn as snn
+import matterhorn_pytorch.snn as snn
 
 
 from rich import print

@@ -9,7 +9,7 @@ Reference:
 
 import torch
 import torch.nn as nn
-import from matterhorn_pytorch.snn as snn
+import matterhorn_pytorch.snn as snn
 import math
 try:
     from rich import print
