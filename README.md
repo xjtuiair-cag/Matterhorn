@@ -133,7 +133,7 @@ Like building ANN in PyTorch, we can build our SNN model in Matterhorn by the co
 
 ```python
 import torch
-import matterhorn_pytorch.snn as snn
+import matterhorn_pytorch_pytorch.snn as snn
 
 snn_model = snn.Temporal(
     snn.Spatial(
@@ -176,7 +176,7 @@ You can use Poisson encoder in Matterhorn by the code below:
 
 ```python
 import torch
-import matterhorn_pytorch.snn as snn
+import matterhorn_pytorch_pytorch.snn as snn
 
 encoder = snn.PoissonEncoder(
     time_steps = 32
@@ -199,7 +199,7 @@ You can use average decoder in Matterhorn by the code below:
 
 ```python
 import torch
-import matterhorn_pytorch.snn as snn
+import matterhorn_pytorch_pytorch.snn as snn
 
 decoder = snn.AvgSpikeDecoder()
 ```
@@ -210,7 +210,7 @@ Matterhorn provides a convenient container `matterhorn.snn.Sequential` to connec
 
 ```python
 import torch
-import matterhorn_pytorch.snn as snn
+import matterhorn_pytorch_pytorch.snn as snn
 
 model = snn.Sequential(
     snn.PoissonEncoder(
@@ -340,7 +340,7 @@ We know MNIST. MNIST dataset is for training image classification, consisting of
 You can use NMNIST dataset in Matterhorn by the code below:
 
 ```python
-from matterhorn_pytorch.data import NMNIST
+from matterhorn_pytorch.pytorch.data import NMNIST
 
 time_steps = 128
 
@@ -367,7 +367,7 @@ CIFAR10-DVS dataset records distorted CIFAR-10 image by a DVS camera. The shape 
 You can use CIFAR10-DVS Dataset in Matterhorn by the code below:
 
 ```python
-from matterhorn_pytorch.data import CIFAR10DVS
+from matterhorn_pytorch.pytorch.data import CIFAR10DVS
 
 time_steps = 128
 
@@ -394,7 +394,7 @@ DVS128 Gesture dataset records gestures from 29 different people under 3 differe
 You can use DVS128 Gesture dataset in Matterhorn by the code below:
 
 ```python
-from matterhorn_pytorch.data import DVS128Gesture
+from matterhorn_pytorch.pytorch.data import DVS128Gesture
 
 time_steps = 128
 
@@ -435,7 +435,7 @@ SHD dataset records vocal number from 1 to 10 in both English and German and tur
 You can use SHD dataset in Matterhorn by the code below:
 
 ```python
-from matterhorn_pytorch.data import SpikingHeidelbergDigits
+from matterhorn_pytorch.pytorch.data import SpikingHeidelbergDigits
 
 time_steps = 128
 

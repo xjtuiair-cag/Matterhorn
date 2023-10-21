@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 
 
-from matterhorn_pytorch.snn.skeleton import Module
-from matterhorn_pytorch.snn.soma import Soma
-from matterhorn_pytorch.snn import surrogate
+from matterhorn_pytorch.pytorch.snn.skeleton import Module
+from matterhorn_pytorch.pytorch.snn.soma import Soma
+from matterhorn_pytorch.pytorch.snn import surrogate
 try:
-    from matterhorn_cpp_extensions import fp_lif, bp_lif
+    from matterhorn_pytorch.cpp_extensions import fp_lif, bp_lif
 except:
     raise NotImplementedError("Please install Matterhorn C++ Extensions.")
 

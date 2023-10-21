@@ -6,7 +6,7 @@
 
 import torch
 import torch.nn as nn
-from matterhorn_pytorch.snn.skeleton import Module
+from matterhorn_pytorch.pytorch.snn.skeleton import Module
 try:
     from rich import print
 except:
@@ -51,11 +51,11 @@ def stdp_py(delta_weight: torch.Tensor, input_shape: int, output_shape: int, tim
 
 if torch.cuda.is_available():
     try:
-        from matterhorn_cuda_extensions import cu_stdp as stdp_cuda
+        from matterhorn_pytorch.cuda_extensions import cu_stdp as stdp_cuda
     except:
         stdp_cuda = None
 try:
-    from matterhorn_cpp_extensions import stdp as stdp_cpp
+    from matterhorn_pytorch.cpp_extensions import stdp as stdp_cpp
 except:
     stdp_cpp = None
 

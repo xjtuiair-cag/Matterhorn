@@ -10,9 +10,9 @@ import os, sys
 sys.path.append(os.path.abspath("."))
 
 
-import matterhorn_pytorch
-import matterhorn_pytorch.snn as snn
-from matterhorn_pytorch.model import SEWRes18
+import matterhorn_pytorch_pytorch
+import matterhorn_pytorch_pytorch.snn as snn
+from matterhorn_pytorch.pytorch.model import SEWRes18
 
 
 from rich import print
