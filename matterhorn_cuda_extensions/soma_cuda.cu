@@ -300,7 +300,7 @@ void fp_lif_cuda(float* o,
 
     // i = blockIdx.y 为行
     // j = blockIdx.x * blockDim.x + threadIdx.x 为列
-    dim3 blocks(DIVUP(DIVUP(shape, 1024), THREADS_PER_BLOCK), 1024);
+    dim3 blocks(ceil(ceil(shape, 1024), THREADS_PER_BLOCK), 1024);
     dim3 threads(THREADS_PER_BLOCK);
 
     // 调用CUDA核心开始计算
@@ -432,7 +432,7 @@ void bp_lif_cuda(float* grad_o,
 
     // i = blockIdx.y 为行
     // j = blockIdx.x * blockDim.x + threadIdx.x 为列
-    dim3 blocks(DIVUP(DIVUP(shape, 1024), THREADS_PER_BLOCK), 1024);
+    dim3 blocks(ceil(ceil(shape, 1024), THREADS_PER_BLOCK), 1024);
     dim3 threads(THREADS_PER_BLOCK);
 
     // 调用CUDA核心开始计算
