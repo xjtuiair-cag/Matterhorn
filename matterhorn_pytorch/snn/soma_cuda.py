@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 
-from matterhorn_pytorch.pytorch.snn.skeleton import Module
-from matterhorn_pytorch.pytorch.snn.soma import Soma
-from matterhorn_pytorch.pytorch.snn import surrogate
+from matterhorn_pytorch.snn.skeleton import Module
+from matterhorn_pytorch.snn.soma import Soma
+from matterhorn_pytorch.snn import surrogate
 try:
     from matterhorn_pytorch.cuda_extensions import cu_fp_lif, cu_bp_lif
 except:

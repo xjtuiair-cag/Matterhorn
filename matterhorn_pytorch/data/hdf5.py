@@ -15,7 +15,7 @@ from urllib.error import URLError
 from zipfile import BadZipFile
 from rich import print
 from rich.progress import track
-from matterhorn_pytorch.pytorch.data.skeleton import EventDataset1d
+from matterhorn_pytorch.data.skeleton import EventDataset1d
 try:
     from rich import print
 except:

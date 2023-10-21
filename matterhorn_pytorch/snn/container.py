@@ -7,9 +7,9 @@
 
 import torch
 import torch.nn as nn
-from matterhorn_pytorch.pytorch.snn.skeleton import Module
-from matterhorn_pytorch.pytorch.snn.encoder import Encoder
-from matterhorn_pytorch.pytorch.snn.decoder import Decoder
+from matterhorn_pytorch.snn.skeleton import Module
+from matterhorn_pytorch.snn.encoder import Encoder
+from matterhorn_pytorch.snn.decoder import Decoder
 from typing import Optional
 try:
     from rich import print

@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 from torch.nn.modules.normalization import _shape_t
-from matterhorn_pytorch.pytorch.snn.skeleton import Module
+from matterhorn_pytorch.snn.skeleton import Module
 try:
     from rich import print
 except:

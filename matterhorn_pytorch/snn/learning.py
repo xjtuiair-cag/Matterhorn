@@ -6,7 +6,7 @@
 
 import torch
 import torch.nn as nn
-from matterhorn_pytorch.pytorch.snn.skeleton import Module
+from matterhorn_pytorch.snn.skeleton import Module
 try:
     from rich import print
 except:
@@ -102,7 +102,7 @@ class STDPLinear(Module, nn.Linear):
         @params:
             in_features: int 输入长度，用法同nn.Linear
             out_features: int 输出长度，用法同nn.Linear
-            soma: nn.Module 使用的脉冲神经元胞体，在matterhorn.snn.soma中选择
+            soma: nn.Module 使用的脉冲神经元胞体，在matterhorn_pytorch.snn.soma中选择
             a_pos: float STDP参数A+
             tau_pos: float STDP参数tau+
             a_neg: float STDP参数A-
