@@ -18,7 +18,6 @@ from zipfile import BadZipFile
 from rich import print
 from rich.progress import track
 from matterhorn_pytorch.data.skeleton import EventDataset2d
-from numba import jit
 try:
     from rich import print
 except:
@@ -400,9 +399,7 @@ class DVS128Gesture(AEDAT):
         return index < 24
     
 
-    @staticmethod
-    @jit(nopython=True)
-    def skip_header(data: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    def skip_header(self, data: np.ndarray, mask: np.ndarray) -> np.ndarray:
         cursor = 0
         while cursor < len(data):
             header = data[cursor:cursor + 7]
@@ -444,7 +441,7 @@ class DVS128Gesture(AEDAT):
             lines = lines[line:]
             data_str = b'\n'.join(lines)
             data = np.fromstring(data_str, dtype = self.endian + self.datatype)
-            data = DVS128Gesture.skip_header(data, np.zeros(data.shape, dtype = "bool"))
+            data = self.skip_header(data, np.zeros(data.shape, dtype = "bool"))
         return data
 
 
