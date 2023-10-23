@@ -148,9 +148,10 @@ class multi_time_step_lif(torch.autograd.Function):
         ctx.spiking_mode = spiking_mode
         ctx.a = a
         ctx.reset_mode = reset_mode
+        u_last = u[-1]
         if device.type != "cpu":
             o = o.to(device = device)
-            u_last = u[-1].to(device = device)
+            u_last = u_last.to(device = device)
         return o, u_last
     
 
