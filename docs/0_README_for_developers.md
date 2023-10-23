@@ -261,11 +261,49 @@ True
 
 则代表PyTorch的CUDA扩展是可用的，可以使用GPU进行机器学习。
 
-### 1.5 下载VSCode
+### 1.5 安装GCC和G++
+
+若您在命令行输入
+
+```sh
+gcc -v
+g++ -v
+```
+
+后没有报错，可以跳过此步。
+
+#### Windows用户
+
+使用本仓库中提供的`mingw-get-setup.exe`，参考[该教程](https://blog.csdn.net/weixin_43448473/article/details/126942594)安装GCC与G++。
+
+#### MacOS用户
+
+参考[该教程](https://segmentfault.com/a/1190000018045211)安装Command Line Tools，其中含有Apple自带的GCC与G++。
+
+#### Linux用户
+
+利用APT安装GCC与G++：
+
+```sh
+sudo apt install gcc g++
+```
+
+**测试**
+
+打开命令行，输入
+
+```sh
+gcc -v
+g++ -v
+```
+
+若没有报错，则代表成功安装。
+
+### 1.6 下载VSCode
 
 在VSCode官网[https://code.visualstudio.com/](https://code.visualstudio.com/)下载VSCode并安装。 **注意：** 尽量挂梯子或使用IDM等下载器，否则巨慢无比。
 
-### 1.6 在本地部署Matterhorn的GIT仓库
+### 1.7 在本地部署Matterhorn的GIT仓库
 
 不同于`README`中所述`git clone`的方式，若希望进一步开发，我们需要在本地初始化GIT仓库，随后与远端同步。输入
 

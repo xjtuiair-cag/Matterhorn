@@ -96,7 +96,7 @@ def stdp(delta_weight: torch.Tensor, input_shape: int, output_shape: int, time_s
 
 
 class STDPLinear(Module, nn.Linear):
-    def __init__(self, in_features: int, out_features: int, soma: nn.Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, device = None, dtype = None) -> None:
+    def __init__(self, in_features: int, out_features: int, soma: nn.Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, device = None, dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层
         @params:
@@ -123,6 +123,7 @@ class STDPLinear(Module, nn.Linear):
         self.tau_pos = tau_pos
         self.a_neg = a_neg
         self.tau_neg = tau_neg
+        self.lr = lr
         self.reset()
     
 
@@ -167,11 +168,11 @@ class STDPLinear(Module, nn.Linear):
             for b in range(batch_size):
                 delta_weight = torch.zeros_like(self.weight)
                 delta_weight = stdp(delta_weight, self.in_features, self.out_features, time_steps, input_spike_train[:, b], output_spike_train[:, b], self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
-                self.weight += delta_weight
+                self.weight += self.lr * delta_weight
         else:
             delta_weight = torch.zeros_like(self.weight)
             delta_weight = stdp(delta_weight, self.in_features, self.out_features, time_steps, input_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
-            self.weight += delta_weight
+            self.weight += self.lr * delta_weight
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
