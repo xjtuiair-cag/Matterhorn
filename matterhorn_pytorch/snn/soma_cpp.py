@@ -150,11 +150,12 @@ class multi_time_step_lif(torch.autograd.Function):
         ctx.reset_mode = reset_mode
         if device.type != "cpu":
             o = o.to(device = device)
-        return o
+            u_last = u[-1].to(device = device)
+        return o, u_last
     
 
     @staticmethod
-    def backward(ctx: Any, grad_o: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: Any, grad_o: torch.Tensor, grad_u_last: torch.Tensor) -> torch.Tensor:
         """
         多时间步LIF神经元反向传播的C++实现。
         @params:
@@ -170,9 +171,11 @@ class multi_time_step_lif(torch.autograd.Function):
         o, u, h, x, u_init, tau_m = ctx.saved_tensors
         if device.type != "cpu":
             grad_o = grad_o.to(device = torch.device("cpu"))
+            grad_u_last = grad_u_last.to(device = torch.device("cpu"))
         time_steps = grad_o.shape[0]
         grad_u = torch.zeros_like(u)
         grad_h = torch.zeros_like(h)
+        grad_h[-1] = grad_u_last
         grad_x = torch.zeros_like(x)
         grad_u_init = torch.zeros_like(u_init)
         grad_tau_m = torch.zeros_like(tau_m)
@@ -227,5 +230,5 @@ class LIF(SomaCPP):
             o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
         self.u = self.init_tensor(self.u, x[0])
-        o = self.multi_time_step_function.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, self.spiking_function_prototype, self.spiking_function.a, self.reset_prototype)
+        o, self.u = self.multi_time_step_function.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, self.spiking_function_prototype, self.spiking_function.a, self.reset_prototype)
         return o

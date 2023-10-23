@@ -150,11 +150,12 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
         ctx.a = a
         ctx.reset_mode = reset_mode
         o = o.clone()
-        return o
+        u_last = u[-1].clone()
+        return o, u_last
     
 
     @staticmethod
-    def backward(ctx: Any, grad_o: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: Any, grad_o: torch.Tensor, grad_u_last: torch.Tensor) -> torch.Tensor:
         """
         多时间步LIF神经元反向传播的C++实现。
         @params:
@@ -164,6 +165,7 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
             grad_x: torch.Tensor 输入梯度
         """
         grad_o = grad_o.clone()
+        grad_u_last = grad_u_last.clone()
         device = grad_o.device
         assert device.type == "cuda", "You must use CUDA tensors."
         o, u, h, x, u_init, tau_m = ctx.saved_tensors
@@ -171,6 +173,7 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
         shape = np.prod(grad_o.shape[1:])
         grad_u = torch.zeros_like(u)
         grad_h = torch.zeros_like(h)
+        grad_h[-1] = grad_u_last
         grad_x = torch.zeros_like(x)
         grad_u_init = torch.zeros_like(u_init)
         grad_tau_m = torch.zeros_like(tau_m)
@@ -224,5 +227,5 @@ class LIF(SomaCUDA):
             o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
         self.u = self.init_tensor(self.u, x[0])
-        o = self.multi_time_step_function.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, self.spiking_function_prototype, self.spiking_function.a, self.reset_prototype)
+        o, self.u = self.multi_time_step_function.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, self.spiking_function_prototype, self.spiking_function.a, self.reset_prototype)
         return o
