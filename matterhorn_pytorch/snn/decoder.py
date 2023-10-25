@@ -89,6 +89,15 @@ class MinTime(Decoder):
         self.reset()
 
 
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return "reset_after_process=%s" % (str(self.reset_after_process),)
+
+
     def reset(self) -> None:
         """
         重置编码器。
@@ -126,6 +135,15 @@ class AverageTime(Decoder):
         self.reset_after_process = reset_after_process
         self.time_mul = lambda x: x.permute(*torch.arange(x.ndim - 1, -1, -1))
         self.reset()
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return "reset_after_process=%s" % (str(self.reset_after_process),)
 
 
     def reset(self) -> None:

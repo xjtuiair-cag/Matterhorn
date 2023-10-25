@@ -57,7 +57,7 @@ class Soma(Module):
         @return:
             repr_str: str 参数表
         """
-        return "multi_time_step=%s, trainable=%s, reset=%s, " % ("True" if self.multi_time_step else "False", "True" if self.trainable else "False", "\"hard\"" if self.hard_reset else "\"soft\"")
+        return "multi_time_step=%s, trainable=%s, reset=%s" % (str(self.multi_time_step), str(self.trainable), "\"hard\"" if self.hard_reset else "\"soft\"")
 
 
     def init_tensor(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -174,7 +174,7 @@ class IF(Soma):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr() + "u_th=%.3f, u_rest=%.3f" % (self.u_threshold, self.u_rest)
+        return ", ".join(["u_threshold=%g, u_rest=%g" % (self.u_threshold, self.u_rest), super().extra_repr()])
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -220,7 +220,7 @@ class LIF(Soma):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr() + "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
+        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g" % (self.tau_m, self.u_threshold, self.u_rest), super().extra_repr()])
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -271,7 +271,7 @@ class QIF(Soma):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr() + "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, a_0=%.3f, u_C=%.3f" % (self.tau_m, self.u_threshold, self.u_rest, self.a_0, self.u_c)
+        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g, a_0=%g, u_C=%g" % (self.tau_m, self.u_threshold, self.u_rest, self.a_0, self.u_c), super().extra_repr()])
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -322,7 +322,7 @@ class EIF(Soma):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr() + "tau_m=%.3f, u_th=%.3f, u_rest=%.3f, u_T=%.3f, delta_T=%.3f" % (self.tau_m, self.u_threshold, self.u_rest, self.u_t, self.delta_t)
+        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g, u_T=%g, delta_T=%g" % (self.tau_m, self.u_threshold, self.u_rest, self.u_t, self.delta_t), super().extra_repr()])
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -375,7 +375,7 @@ class Izhikevich(Soma):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr() + "a=%.3f, b=%.3f, u_th=%.3f" % (self.a, self.b, self.u_threshold)
+        return ", ".join(["a=%g, b=%g, u_threshold=%g" % (self.a, self.b, self.u_threshold), super().extra_repr()])
 
 
     def reset(self) -> None:
@@ -536,7 +536,7 @@ class KLIF(AnalogSoma):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr() + "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
+        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g" % (self.tau_m, self.u_threshold, self.u_rest), super().extra_repr()])
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -594,7 +594,7 @@ class LIAF(AnalogSoma):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr() + "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
+        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g" % (self.tau_m, self.u_threshold, self.u_rest), super().extra_repr()])
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:

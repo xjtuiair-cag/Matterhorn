@@ -87,7 +87,7 @@ class SRM0Linear(Module):
         @return:
             repr_str: str 参数表
         """
-        return "multi_time_step=%s, in_features=%d, out_features=%d, tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % ("True" if self.multi_time_step else "False", self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest)
+        return "in_features=%d, out_features=%d, tau_m=%g, u_threshold=%g, u_rest=%g, multi_time_step=%s, trainable=%s" % (self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest, str(self.multi_time_step))
 
 
     def reset(self) -> None:
@@ -221,6 +221,7 @@ class Layer(Module):
         super().__init__(
             multi_time_step = multi_time_step
         )
+        self.trainable = True
 
 
     def extra_repr(self) -> str:
@@ -229,7 +230,7 @@ class Layer(Module):
         @return:
             repr_str: str 参数表
         """
-        return "multi_time_step=%s, " % ("True" if self.multi_time_step else "False")
+        return "multi_time_step=%s, trainable=%s" % (str(self.multi_time_step), str(self.trainable))
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -311,7 +312,7 @@ class MaxPool1d(Layer, nn.MaxPool1d):
         @return:
             repr_str: str 参数表
         """
-        return Layer.extra_repr(self) + nn.MaxPool1d.extra_repr(self)
+        return ", ".join([nn.MaxPool1d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -360,7 +361,7 @@ class MaxPool2d(Layer, nn.MaxPool2d):
         @return:
             repr_str: str 参数表
         """
-        return Layer.extra_repr(self) + nn.MaxPool2d.extra_repr(self)
+        return ", ".join([nn.MaxPool2d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -409,7 +410,7 @@ class MaxPool3d(Layer, nn.MaxPool3d):
         @return:
             repr_str: str 参数表
         """
-        return Layer.extra_repr(self) + nn.MaxPool3d.extra_repr(self)
+        return ", ".join([nn.MaxPool3d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -456,7 +457,7 @@ class AvgPool1d(Layer, nn.AvgPool1d):
         @return:
             repr_str: str 参数表
         """
-        return Layer.extra_repr(self) + nn.AvgPool1d.extra_repr(self)
+        return ", ".join([nn.AvgPool1d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -505,7 +506,7 @@ class AvgPool2d(Layer, nn.AvgPool2d):
         @return:
             repr_str: str 参数表
         """
-        return Layer.extra_repr(self) + nn.AvgPool2d.extra_repr(self)
+        return ", ".join([nn.AvgPool2d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -554,7 +555,7 @@ class AvgPool3d(Layer, nn.AvgPool3d):
         @return:
             repr_str: str 参数表
         """
-        return Layer.extra_repr(self) + nn.AvgPool3d.extra_repr(self)
+        return ", ".join([nn.AvgPool3d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -595,7 +596,7 @@ class Flatten(Layer, nn.Flatten):
         @return:
             repr_str: str 参数表
         """
-        return Layer.extra_repr(self) + nn.Flatten.extra_repr(self)
+        return ", ".join([nn.Flatten.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -636,7 +637,7 @@ class Unflatten(Layer, nn.Unflatten):
         @return:
             repr_str: str 参数表
         """
-        return Layer.extra_repr(self) + nn.Unflatten.extra_repr(self)
+        return ", ".join([nn.Unflatten.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:

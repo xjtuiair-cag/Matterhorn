@@ -8,9 +8,6 @@
 import torch
 import torch.nn as nn
 from matterhorn_pytorch.snn.skeleton import Module
-from matterhorn_pytorch.snn.encoder import Encoder
-from matterhorn_pytorch.snn.decoder import Decoder
-from typing import Optional
 try:
     from rich import print
 except:
@@ -112,6 +109,15 @@ class Temporal(Container):
         self.module = module
         self.reset_after_process = reset_after_process
         self.step_after_process = False
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        @return:
+            repr_str: str 参数表
+        """
+        return "reset_after_process=%s" % (str(self.reset_after_process),)
 
 
     def supports_single_time_step(self) -> bool:

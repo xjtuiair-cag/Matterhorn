@@ -215,7 +215,7 @@ class LIF(SomaCUDA):
         @return:
             repr_str: str 参数表
         """
-        return super().extra_repr() + "tau_m=%.3f, u_th=%.3f, u_rest=%.3f" % (self.tau_m, self.u_threshold, self.u_rest)
+        return super().extra_repr() + "tau_m=%g, u_threshold=%g, u_rest=%g" % (self.tau_m, self.u_threshold, self.u_rest)
 
 
     def forward_multi_time_step(self, x: torch.Tensor) -> torch.Tensor:

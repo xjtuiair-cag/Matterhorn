@@ -27,6 +27,7 @@ class Synapse(Module):
         super().__init__(
             multi_time_step = multi_time_step
         )
+        self.trainable = True
 
 
     def extra_repr(self) -> str:
@@ -35,7 +36,7 @@ class Synapse(Module):
         @return:
             repr_str: str 参数表
         """
-        return "multi_time_step=%s, " % ("True" if self.multi_time_step else "False")
+        return "multi_time_step=%s, trainable=%s" % (str(self.multi_time_step), str(self.trainable))
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -114,7 +115,7 @@ class Linear(Synapse, nn.Linear):
         @return:
             repr_str: str 参数表
         """
-        return Synapse.extra_repr(self) + nn.Linear.extra_repr(self)
+        return ", ".join([nn.Linear.extra_repr(self), Synapse.extra_repr(self)])
 
     
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -173,7 +174,7 @@ class Conv1d(Synapse, nn.Conv1d):
         @return:
             repr_str: str 参数表
         """
-        return Synapse.extra_repr(self) + nn.Conv1d.extra_repr(self)
+        return ", ".join([nn.Conv1d.extra_repr(self), Synapse.extra_repr(self)])
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -232,7 +233,7 @@ class Conv2d(Synapse, nn.Conv2d):
         @return:
             repr_str: str 参数表
         """
-        return Synapse.extra_repr(self) + nn.Conv2d.extra_repr(self)
+        return ", ".join([nn.Conv2d.extra_repr(self), Synapse.extra_repr(self)])
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -291,7 +292,7 @@ class Conv3d(Synapse, nn.Conv3d):
         @return:
             repr_str: str 参数表
         """
-        return Synapse.extra_repr(self) + nn.Conv3d.extra_repr(self)
+        return ", ".join([nn.Conv3d.extra_repr(self), Synapse.extra_repr(self)])
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -352,7 +353,7 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
         @return:
             repr_str: str 参数表
         """
-        return Synapse.extra_repr(self) + nn.ConvTranspose1d.extra_repr(self)
+        return ", ".join([nn.ConvTranspose1d.extra_repr(self), Synapse.extra_repr(self)])
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -413,7 +414,7 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
         @return:
             repr_str: str 参数表
         """
-        return Synapse.extra_repr(self) + nn.ConvTranspose2d.extra_repr(self)
+        return ", ".join([nn.ConvTranspose2d.extra_repr(self), Synapse.extra_repr(self)])
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -474,7 +475,7 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
         @return:
             repr_str: str 参数表
         """
-        return Synapse.extra_repr(self) + nn.ConvTranspose3d.extra_repr(self)
+        return ", ".join([nn.ConvTranspose3d.extra_repr(self), Synapse.extra_repr(self)])
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -525,7 +526,7 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
         @return:
             repr_str: str 参数表
         """
-        return Synapse.extra_repr(self) + nn.BatchNorm1d.extra_repr(self)
+        return ", ".join([nn.BatchNorm1d.extra_repr(self), Synapse.extra_repr(self)])
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -576,7 +577,7 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
         @return:
             repr_str: str 参数表
         """
-        return Synapse.extra_repr(self) + nn.BatchNorm2d.extra_repr(self)
+        return ", ".join([nn.BatchNorm2d.extra_repr(self), Synapse.extra_repr(self)])
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -627,7 +628,7 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
         @return:
             repr_str: str 参数表
         """
-        return Synapse.extra_repr(self) + nn.BatchNorm3d.extra_repr(self)
+        return ", ".join([nn.BatchNorm3d.extra_repr(self), Synapse.extra_repr(self)])
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -674,7 +675,7 @@ class LayerNorm(Synapse, nn.LayerNorm):
         @return:
             repr_str: str 参数表
         """
-        return Synapse.extra_repr(self) + nn.LayerNorm.extra_repr(self)
+        return ", ".join([nn.LayerNorm.extra_repr(self), Synapse.extra_repr(self)])
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:

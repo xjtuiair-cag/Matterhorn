@@ -78,7 +78,7 @@ class Poisson(Encoder):
         @return:
             repr_str: str 参数表
         """
-        return "time_steps=%d, max=%.3f, min=%.3f" % (self.time_steps, self.max_value, self.min_value)
+        return "time_steps=%d, max_value=%g, min_value=%g" % (self.time_steps, self.max_value, self.min_value)
 
 
     def forward_single(self, x:torch.Tensor) -> torch.Tensor:
@@ -152,7 +152,7 @@ class Temporal(Encoder):
         @return:
             repr_str: str 参数表
         """
-        return "time_steps=%d, max=%.3f, min=%.3f, spike_freq=%.3f" % (self.time_steps, self.max_value, self.min_value, self.prob)
+        return "time_steps=%d, max_value=%g, min_value=%g, prob=%g, reset_after_process=%s" % (self.time_steps, self.max_value, self.min_value, self.prob, str(self.reset_after_process))
 
 
     def reset(self) -> None:

@@ -91,7 +91,7 @@ class Rectangular(nn.Module):
         @return:
             repr_str: str 参数表
         """
-        return "a=%.3f" % (self.a)
+        return "a=%g" % (self.a)
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -171,7 +171,7 @@ class Polynomial(nn.Module):
         @return:
             repr_str: str 参数表
         """
-        return "a=%.3f" % (self.a)
+        return "a=%g" % (self.a)
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -252,7 +252,7 @@ class Sigmoid(nn.Module):
         @return:
             repr_str: str 参数表
         """
-        return "a=%.3f" % (self.a)
+        return "a=%g" % (self.a)
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -332,7 +332,7 @@ class Gaussian(nn.Module):
         @return:
             repr_str: str 参数表
         """
-        return "a=%.3f" % (self.a)
+        return "a=%g" % (self.a)
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
