@@ -72,12 +72,13 @@ class SRM0Linear(Module):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.weight = nn.Parameter(torch.empty((out_features, in_features), device = device, dtype = dtype))
+        self.weight = nn.Parameter(torch.empty((out_features, in_features), device = device, dtype = dtype), requires_grad = True)
         nn.init.kaiming_uniform_(self.weight, a = math.sqrt(5))
         self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function
+        self.trainable = trainable
         self.reset()
     
 
@@ -87,7 +88,7 @@ class SRM0Linear(Module):
         @return:
             repr_str: str 参数表
         """
-        return "in_features=%d, out_features=%d, tau_m=%g, u_threshold=%g, u_rest=%g, multi_time_step=%s, trainable=%s" % (self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest, str(self.multi_time_step))
+        return "in_features=%d, out_features=%d, tau_m=%g, u_threshold=%g, u_rest=%g, multi_time_step=%s, trainable=%s" % (self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest, str(self.multi_time_step), str(self.trainable))
 
 
     def reset(self) -> None:
