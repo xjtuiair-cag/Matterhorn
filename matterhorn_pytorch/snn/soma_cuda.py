@@ -37,6 +37,9 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
         @return:
             y: torch.Tensor 输出
         """
+        x = x.clone()
+        u_init = u_init.clone()
+        tau_m = tau_m.clone()
         device = x.device
         assert device.type == "cuda", "You must use CUDA tensors."
         time_steps = x.shape[0]
@@ -77,8 +80,9 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
         grad_h[-1] = grad_u_last
         grad_x = torch.zeros_like(x)
         grad_u_init = torch.zeros_like(u_init)
-        grad_tau_m = torch.zeros_like(tau_m)
+        grad_tau_m = torch.zeros_like(u_init)
         cu_bp_lif(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, shape, o, u, h, x, u_init, tau_m, ctx.u_rest, ctx.u_threshold, ctx.spiking_mode, ctx.a, ctx.reset_mode)
+        grad_tau_m = torch.sum(grad_tau_m)
         return grad_x, grad_u_init, grad_tau_m, None, None, None, None, None
 
 

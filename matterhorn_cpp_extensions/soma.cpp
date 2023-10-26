@@ -24,7 +24,7 @@ void fp_response_lif(at::Tensor u,
                      at::Tensor tau_m,
                      float u_rest) {
     float tau_m_val = tau_m.data<float>()[0];
-    at::Tensor du = (1.0 / tau_m_val) * (-(h - u_rest) + x);
+    at::Tensor du = (1.0f / tau_m_val) * (-(h - u_rest) + x);
     u += h + du;
 }
 
@@ -55,10 +55,9 @@ void bp_response_lif(at::Tensor grad_u,
                      at::Tensor tau_m,
                      float u_rest) {
     float tau_m_val = tau_m.data<float>()[0];
-    grad_x += grad_u * (1.0 / tau_m_val);
-    grad_h += grad_u * (1.0 - (1.0 / tau_m_val));
-    grad_tau_m +=
-        at::sum(grad_u * -1.0 / powf(tau_m_val, 2.0) * (-(h - u_rest) + x));
+    grad_x += grad_u * (1.0f / tau_m_val);
+    grad_h += grad_u * (1.0f - (1.0f / tau_m_val));
+    grad_tau_m += grad_u * (-1.0f / powf(tau_m_val, 2.0f)) * (-(h - u_rest) + x);
 }
 
 /*
@@ -89,9 +88,9 @@ void bp_spiking_rectangular(at::Tensor grad_o,
                             at::Tensor o,
                             at::Tensor u,
                             float u_threshold,
-                            float a = 2.0) {
+                            float a = 2.0f) {
     at::Tensor ax = u - u_threshold;
-    grad_u += grad_o * (1.0 / a) * at::lt(at::abs(ax), a / 2.0);
+    grad_u += grad_o * (1.0f / a) * at::lt(at::abs(ax), a / 2.0f);
 }
 
 /*
@@ -110,10 +109,10 @@ void bp_spiking_polynomial(at::Tensor grad_o,
                            at::Tensor o,
                            at::Tensor u,
                            float u_threshold,
-                           float a = 1.0) {
+                           float a = 1.0f) {
     at::Tensor ax = u - u_threshold;
-    grad_u += grad_o * (sqrtf(a) / 2.0 - a / 4.0 * ax) *
-              at::sign(2.0 / sqrtf(a) - ax);
+    grad_u += grad_o * (sqrtf(a) / 2.0f - a / 4.0f * ax) *
+              at::sign(2.0f / sqrtf(a) - ax);
 }
 
 /*
@@ -132,10 +131,10 @@ void bp_spiking_sigmoid(at::Tensor grad_o,
                         at::Tensor o,
                         at::Tensor u,
                         float u_threshold,
-                        float a = 1.0) {
+                        float a = 1.0f) {
     at::Tensor ax = u - u_threshold;
     at::Tensor ex = at::exp(-ax / a);
-    grad_u += grad_o * (1.0 / a) * ex / at::pow(1.0 + ex, 2.0);
+    grad_u += grad_o * (1.0f / a) * ex / at::pow(1.0f + ex, 2.0f);
 }
 
 /*
@@ -154,10 +153,10 @@ void bp_spiking_gaussian(at::Tensor grad_o,
                          at::Tensor o,
                          at::Tensor u,
                          float u_threshold,
-                         float a = 1.0) {
+                         float a = 1.0f) {
     at::Tensor ax = u - u_threshold;
-    grad_u += grad_o * 1.0 / sqrtf(2.0 * M_PI * a) *
-              at::exp(-at::pow(ax, 2.0) / (2.0 * a));
+    grad_u += grad_o * 1.0f / sqrtf(2.0f * M_PI * a) *
+              at::exp(-at::pow(ax, 2.0f) / (2.0f * a));
 }
 
 /*
@@ -170,7 +169,7 @@ $$H_{i}^{l}(t)=U_{i}^{l}(t)[1-O_{i}^{l}(t)]+u_{rest}O_{i}^{l}(t)$$
     u_rest: float 静息电位$u_{rest}$
 */
 void fp_reset_hard(at::Tensor h, at::Tensor u, at::Tensor o, float u_rest) {
-    h += u * (1.0 - o) + u_rest * o;
+    h += u * (1.0f - o) + u_rest * o;
 }
 
 /*
@@ -193,7 +192,7 @@ void bp_reset_hard(at::Tensor grad_h,
                    at::Tensor u,
                    at::Tensor o,
                    float u_rest) {
-    grad_u += grad_h * (1.0 - o);
+    grad_u += grad_h * (1.0f - o);
     grad_o += grad_h * (u_rest - u);
 }
 
@@ -237,8 +236,8 @@ void bp_reset_soft(at::Tensor grad_h,
                    at::Tensor o,
                    float u_threshold,
                    float u_rest) {
-    grad_u += grad_h * 1.0;
-    grad_o += grad_h * -1.0 * (u_threshold - u_rest);
+    grad_u += grad_h * 1.0f;
+    grad_o += grad_h * -1.0f * (u_threshold - u_rest);
 }
 
 /*
@@ -317,7 +316,7 @@ void bp_lif(at::Tensor grad_o,
             float u_rest,
             float u_threshold,
             int spiking_mode = SURROGATE_RECTANGULAR,
-            float a = 2.0,
+            float a = 2.0f,
             int reset_mode = RESET_HARD) {
     for (int t = time_steps - 1; t >= 0; t--) {
         switch (reset_mode) {
@@ -349,7 +348,7 @@ void bp_lif(at::Tensor grad_o,
                 break;
         }
         bp_response_lif(grad_u[t], grad_x[t], t ? grad_h[t - 1] : grad_u_init,
-                        grad_tau_m, u[t], x[t], t ? h[t] : u_init, tau_m,
+                        grad_tau_m, u[t], x[t], t ? h[t - 1] : u_init, tau_m,
                         u_rest);
     }
 }

@@ -1,7 +1,7 @@
 #include <cmath>
 #include <iostream>
 #include <stdlib.h>
-#include "cuda_utils.h"
+#include "base.h"
 #include "stdp.h"
 
 /*
@@ -74,7 +74,7 @@ void stdp_cuda(float* weight_mat,
 
     // i = blockIdx.y 为行，大小为output_shape
     // j = blockIdx.x * blockDim.x + threadIdx.x 为列，大小为input_shape
-    dim3 blocks(ceil(input_shape, THREADS_PER_BLOCK), output_shape);
+    dim3 blocks(div_ceil(input_shape, THREADS_PER_BLOCK), output_shape);
     dim3 threads(THREADS_PER_BLOCK);
 
     // 调用CUDA核心开始计算

@@ -1,6 +1,7 @@
 #include <cmath>
 #include <iostream>
 #include <stdlib.h>
+#include "base.h"
 
 /*
 取绝对值。

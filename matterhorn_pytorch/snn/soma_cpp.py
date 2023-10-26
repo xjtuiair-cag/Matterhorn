@@ -83,12 +83,13 @@ class multi_time_step_lif(torch.autograd.Function):
         grad_h[-1] = grad_u_last
         grad_x = torch.zeros_like(x)
         grad_u_init = torch.zeros_like(u_init)
-        grad_tau_m = torch.zeros_like(tau_m)
+        grad_tau_m = torch.zeros_like(u_init)
         bp_lif(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, o, u, h, x, u_init, tau_m, ctx.u_rest, ctx.u_threshold, ctx.spiking_mode, ctx.a, ctx.reset_mode)
+        grad_tau_m = torch.sum(grad_tau_m)
         if device.type != "cpu":
             grad_x = grad_x.to(device = device)
             grad_u_init = grad_u_init.to(device = device)
-            grad_tau_m = grad_tau_m.to(device = device)
+            grad_tau_m = grad_tau_m.to(device = device)        
         return grad_x, grad_u_init, grad_tau_m, None, None, None, None, None
 
 
