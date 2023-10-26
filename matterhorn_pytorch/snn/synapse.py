@@ -78,6 +78,8 @@ class Synapse(Module):
         """
         if self.multi_time_step:
             x = self.forward_multi_time_step(o)
+            if self.reset_after_process:
+                self.reset()
         else:
             x = self.forward_single_time_step(o)
         return x

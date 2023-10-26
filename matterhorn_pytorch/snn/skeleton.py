@@ -13,14 +13,16 @@ except:
 
 
 class Module(nn.Module):
-    def __init__(self, multi_time_step = False) -> None:
+    def __init__(self, multi_time_step: bool = False, reset_after_process: bool = False) -> None:
         """
         脉冲神经网络模块的骨架。
         @params:
             multi_time_step: bool 是否调整为多个时间步模式
+            reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
         """
         nn.Module.__init__(self)
         self.multi_time_step__ = False
+        self.reset_after_process__ = reset_after_process
         if multi_time_step:
             self.multi_time_step_(multi_time_step)
     
@@ -75,6 +77,25 @@ class Module(nn.Module):
             self.multi_time_step__ = False
             return True
         return False
+
+
+    @property
+    def reset_after_process(self) -> bool:
+        """
+        是否在执行完后自动重置。
+        @return:
+            if_on: bool 是否为自动重置（True为自动重置，False为手动重置）
+        """
+        return self.reset_after_process__
+
+
+    def reset_after_process_(self, if_on: bool) -> bool:
+        """
+        调整是否在执行完后自动重置。
+        @params:
+            if_on: bool 是否为自动重置（True为自动重置，False为手动重置）
+        """
+        self.reset_after_process__ = if_on
 
 
     def reset(self) -> None:

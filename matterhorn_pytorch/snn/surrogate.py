@@ -69,7 +69,7 @@ class heaviside_rectangular(torch.autograd.Function):
         @return:
             grad_input: torch.Tensor 输入梯度
         """
-        x = ctx.saved_tensors[0]
+        x, = ctx.saved_tensors
         return backward_rectangular(grad_output, x, ctx.a), None
 
 
@@ -149,7 +149,7 @@ class heaviside_polynomial(torch.autograd.Function):
         @return:
             grad_input: torch.Tensor 输入梯度
         """
-        x = ctx.saved_tensors[0]
+        x, = ctx.saved_tensors
         return backward_polynomial(grad_output, x, ctx.a), None
 
 
@@ -230,7 +230,7 @@ class heaviside_sigmoid(torch.autograd.Function):
         @return:
             grad_input: torch.Tensor 输入梯度
         """
-        x = ctx.saved_tensors[0]
+        x, = ctx.saved_tensors
         return backward_sigmoid(grad_output, x, ctx.a), None
 
 
@@ -310,7 +310,7 @@ class heaviside_gaussian(torch.autograd.Function):
         @return:
             grad_input: torch.Tensor 输入梯度
         """
-        x = ctx.saved_tensors[0]
+        x, = ctx.saved_tensors
         return backward_gaussian(grad_output, x, ctx.a), None
 
 

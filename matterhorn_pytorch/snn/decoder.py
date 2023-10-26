@@ -15,12 +15,15 @@ except:
 
 
 class Decoder(Module):
-    def __init__(self) -> None:
+    def __init__(self, reset_after_process: bool = False) -> None:
         """
         解码器的基类。解码器是一个多时间步模型。
+        @params:
+            reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(
-            multi_time_step = True
+            multi_time_step = True,
+            reset_after_process = reset_after_process
         )
 
 
@@ -83,9 +86,10 @@ class MinTime(Decoder):
         @params:
             reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
         """
-        super().__init__()
+        super().__init__(
+            reset_after_process = True
+        )
         self.current_time_step = 0
-        self.reset_after_process = reset_after_process
         self.reset()
 
 
@@ -130,9 +134,10 @@ class AverageTime(Decoder):
         @params:
             reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
         """
-        super().__init__()
+        super().__init__(
+            reset_after_process = reset_after_process
+        )
         self.current_time_step = 0
-        self.reset_after_process = reset_after_process
         self.time_mul = lambda x: x.permute(*torch.arange(x.ndim - 1, -1, -1))
         self.reset()
 
