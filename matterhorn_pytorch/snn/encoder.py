@@ -194,7 +194,7 @@ class Temporal(Encoder):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        泊松编码的前向传播函数，将值$V$转化为该时间步$t$内的脉冲$O^{0}(t)$
+        时间编码的前向传播函数，将值$V$转化为该时间步$t$内的脉冲$O^{0}(t)$
         @params:
             x: torch.Tensor 输入张量，形状为[B,...]
         @return:
