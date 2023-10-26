@@ -104,10 +104,10 @@ class Temporal(Container):
         if is_snn_module:
             assert module.multi_time_step == False, "You cannot put a multi time step module %s into temporal container" % (module.__class__.__name__,)
         super().__init__(
-            multi_time_step = True
+            multi_time_step = True,
+            reset_after_process = reset_after_process
         )
         self.module = module
-        self.reset_after_process = reset_after_process
         self.step_after_process = False
 
 

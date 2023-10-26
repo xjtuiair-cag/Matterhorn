@@ -1,7 +1,8 @@
-#include "stdp.h"
 #include <cuda.h>
 #include <cuda_runtime_api.h>
-#include <torch/serialize/tensor.h>
+#include <ATen/ATen.h>
+#include "base.h"
+#include "stdp.h"
 
 /*
 STDP主函数。

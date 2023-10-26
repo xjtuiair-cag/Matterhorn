@@ -10,3 +10,12 @@
 #define RESET_SOFT 1
 
 #endif
+
+#ifndef _MATTERHORN_CUDA_BASE_H
+#define _MATTERHORN_CUDA_BASE_H
+
+#define THREADS_PER_BLOCK 1024
+
+#define div_ceil(base, comp) (base / comp + (base % comp ? 1 : 0))
+
+#endif

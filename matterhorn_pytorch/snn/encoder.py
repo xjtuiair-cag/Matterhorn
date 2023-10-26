@@ -15,12 +15,15 @@ except:
 
 
 class Encoder(Module):
-    def __init__(self) -> None:
+    def __init__(self, reset_after_process: bool = False) -> None:
         """
         编码器的基类。编码器是一个多时间步模型。
+        @params:
+            reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(
-            multi_time_step = True
+            multi_time_step = True,
+            reset_after_process = reset_after_process
         )
 
 
@@ -136,13 +139,14 @@ class Temporal(Encoder):
             prob: float 若达到了时间，以多大的概率发放脉冲，范围为[0, 1]
             reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
         """
-        super().__init__()
+        super().__init__(
+            reset_after_process = reset_after_process
+        )
         assert max_value > min_value, "Max value is less than min value."
         self.time_steps = time_steps
         self.max_value = max_value
         self.min_value = min_value
         self.prob = prob
-        self.reset_after_process = reset_after_process
         self.reset()
 
 

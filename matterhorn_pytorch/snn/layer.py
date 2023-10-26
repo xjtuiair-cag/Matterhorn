@@ -273,6 +273,8 @@ class Layer(Module):
         """
         if self.multi_time_step:
             y = self.forward_multi_time_step(x)
+            if self.reset_after_process:
+                self.reset()
         else:
             y = self.forward_single_time_step(x)
         y = val_to_spike.apply(y)

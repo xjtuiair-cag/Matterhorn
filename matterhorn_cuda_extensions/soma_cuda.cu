@@ -1,9 +1,8 @@
 #include <cmath>
 #include <iostream>
 #include <stdlib.h>
-#include "cuda_utils.h"
-#include "soma.h"
 #include "base.h"
+#include "soma.h"
 #include "base.cu"
 
 /*
@@ -52,8 +51,7 @@ __device__ void bp_response_lif(float grad_u,
                                 float u_rest) {
     grad_x += grad_u * (1.0f / tau_m);
     grad_h = grad_u * (1.0f - (1.0f / tau_m));
-    grad_tau_m +=
-        grad_u * (0.0f - (1.0f / (tau_m * tau_m)) * (0.0f - (h - u_rest) + x));
+    grad_tau_m += grad_u * (-1.0f / powf(tau_m, 2.0f)) * (-(h - u_rest) + x);
 }
 
 /*
@@ -260,9 +258,7 @@ __global__ void fp_lif_cuda_kernel(float* o,
                                    float u_rest,
                                    float u_threshold,
                                    int reset_mode) {
-    int i = blockIdx.y;
-    int j = blockIdx.x * blockDim.x + threadIdx.x;
-    int idx = i * 1024 + j;
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= shape) {
         return;
     }
@@ -298,9 +294,7 @@ void fp_lif_cuda(float* o,
                  int reset_mode) {
     cudaError_t err;
 
-    // i = blockIdx.y 为行
-    // j = blockIdx.x * blockDim.x + threadIdx.x 为列
-    dim3 blocks(ceil(ceil(shape, 1024), THREADS_PER_BLOCK), 1024);
+    dim3 blocks(div_ceil(shape, THREADS_PER_BLOCK));
     dim3 threads(THREADS_PER_BLOCK);
 
     // 调用CUDA核心开始计算
@@ -357,9 +351,7 @@ __global__ void bp_lif_cuda_kernel(float* grad_o,
                                    int spiking_mode,
                                    float a,
                                    int reset_mode) {
-    int i = blockIdx.y;
-    int j = blockIdx.x * blockDim.x + threadIdx.x;
-    int idx = i * 1024 + j;
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= shape) {
         return;
     }
@@ -399,7 +391,7 @@ __global__ void bp_lif_cuda_kernel(float* grad_o,
                 break;
         }
         bp_response_lif(grad_u[cur_idx], grad_x[cur_idx], cur_grad_h,
-                        grad_tau_m[0], u[cur_idx], x[cur_idx], last_h,
+                        grad_tau_m[idx], u[cur_idx], x[cur_idx], last_h,
                         tau_m_val, u_rest);
         if (t) {
             grad_h[cur_idx - shape] = cur_grad_h;
@@ -430,9 +422,7 @@ void bp_lif_cuda(float* grad_o,
                  int reset_mode) {
     cudaError_t err;
 
-    // i = blockIdx.y 为行
-    // j = blockIdx.x * blockDim.x + threadIdx.x 为列
-    dim3 blocks(ceil(ceil(shape, 1024), THREADS_PER_BLOCK), 1024);
+    dim3 blocks(div_ceil(shape, THREADS_PER_BLOCK));
     dim3 threads(THREADS_PER_BLOCK);
 
     // 调用CUDA核心开始计算
