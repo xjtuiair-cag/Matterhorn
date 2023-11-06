@@ -483,7 +483,7 @@ def event_plot_3d(ax: Axes3D, indices_pos: np.ndarray, indices_neg: np.ndarray =
     ax.set_xlabel(index_0)
     ax.set_ylabel(index_2)
     ax.set_zlabel(index_1)
-    if shape is not None and len(shape) == 2:
+    if shape is not None and len(shape) == 3:
         ax.set_xlim3d(-0.5, shape[0] - 0.5)
         ax.set_ylim3d(-0.5, shape[2] - 0.5)
         ax.set_zlim3d(-0.5, shape[1] - 0.5)
