@@ -64,7 +64,7 @@ class Module(nn.Module):
         return self.multi_time_step__
 
 
-    def multi_time_step_(self, if_on: bool) -> bool:
+    def multi_time_step_(self, if_on: bool) -> nn.Module:
         """
         调整模型的多时间步模式。
         @params
@@ -72,11 +72,9 @@ class Module(nn.Module):
         """
         if self.supports_multi_time_step() and if_on:
             self.multi_time_step__ = True
-            return True
         elif self.supports_single_time_step() and not if_on:
             self.multi_time_step__ = False
-            return True
-        return False
+        return self
 
 
     @property

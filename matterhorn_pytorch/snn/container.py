@@ -15,9 +15,10 @@ except:
 
 
 class Container(Module):
-    def __init__(self, multi_time_step = False) -> None:
+    def __init__(self, multi_time_step: bool = False, reset_after_process: bool = True) -> None:
         super().__init__(
-            multi_time_step = multi_time_step
+            multi_time_step = multi_time_step,
+            reset_after_process = reset_after_process
         )
 
 
@@ -37,7 +38,7 @@ class Spatial(Container, nn.Sequential):
                 self.multi_time_step__ = self.multi_time_step__ or module.multi_time_step
 
 
-    def multi_time_step_(self, if_on: bool) -> bool:
+    def multi_time_step_(self, if_on: bool) -> nn.Module:
         """
         调整模型的多时间步模式。
         @params
@@ -49,7 +50,7 @@ class Spatial(Container, nn.Sequential):
             if is_snn_module:
                 res = module.multi_time_step_(if_on)
                 self.multi_time_step__ = self.multi_time_step__ or module.multi_time_step
-        return True
+        return self
 
 
     def reset(self) -> None:
@@ -93,7 +94,7 @@ class Spatial(Container, nn.Sequential):
 
 
 class Temporal(Container):
-    def __init__(self, module: nn.Module, reset_after_process = True) -> None:
+    def __init__(self, module: nn.Module, reset_after_process: bool = True) -> None:
         """
         SNN的时间容器，在多个时间步之内执行脉冲神经网络。
         @params:
@@ -188,7 +189,7 @@ class Temporal(Container):
 
 
 class Sequential(Container, nn.Sequential):
-    def __init__(self, *args, reset_after_process = True) -> None:
+    def __init__(self, *args, reset_after_process: bool = True) -> None:
         """
         对Sequential进行重写，涵盖ANN与SNN的网络。
         @params:
