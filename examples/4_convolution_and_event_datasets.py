@@ -22,11 +22,7 @@ from rich.table import Table
 def main():
     # 欢迎语，客套话
 
-    print(Panel(Text("EXAMPLE 4: CONVOLUTIONAL SPIKING NEURAL NETWORKS", justify = "center", style = "bold blue")))
-
-    print("This is your fourth example. You'll learn to use event datasets and convolution operation on [green]Matterhorn[/green].")
-
-    print("In this demo, we're about to build a 3-layer convolutional network.")
+    print(Panel(Text("EXAMPLE 4: CONVOLUTION AND EVENT DATASETS", justify = "center", style = "bold blue")))
 
     # 设置参数
 

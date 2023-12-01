@@ -80,6 +80,16 @@ class EventDataset(Dataset):
         return os.path.join(self.root, self.__class__.__name__, "processed", "%d" % (self.sampling,))
 
 
+    @property
+    def cached_folder(self) -> str:
+        """
+        张量缓存所存储的地方。
+        @return:
+            str 张量缓存位置
+        """
+        return os.path.join(self.root, self.__class__.__name__, "cached")
+
+
     def check_exists(self) -> bool:
         """
         检查是否存在。

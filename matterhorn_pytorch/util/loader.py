@@ -1,3 +1,9 @@
+# -*- coding: UTF-8 -*-
+"""
+（未完工，测试功能）SNN模型的保存与提取。
+"""
+
+
 import torch
 import torch.nn as nn
 import numpy as np

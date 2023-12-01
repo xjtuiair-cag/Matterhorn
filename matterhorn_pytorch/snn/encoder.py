@@ -53,7 +53,7 @@ class Direct(Encoder):
             y: torch.Tensor 输出张量，形状为[T,B,...]
         """
         idx = [i for i, j in enumerate(x.shape)]
-        assert len(idx) >= 2, "There is no time steps."
+        assert len(idx) >= 2, "There is no temporal dimension."
         idx[0], idx[1] = idx[1], idx[0]
         y = x.permute(*idx)
         return y

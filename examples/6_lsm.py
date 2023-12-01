@@ -1,18 +1,17 @@
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
-from torch.cuda.amp import autocast as autocast
+import torchvision
+from torchvision.datasets import MNIST
+from torch.utils.data import DataLoader, Dataset
 
 
 import time
-import datetime
 import os, sys
 sys.path.append(os.path.abspath("."))
 
 
-import matterhorn_pytorch
 import matterhorn_pytorch.snn as snn
-from matterhorn_pytorch.model import SEWRes18
+import matterhorn_pytorch.lsm as lsm
 
 
 from rich import print
@@ -25,19 +24,19 @@ from rich.table import Table
 def main():
     # 欢迎语，客套话
 
-    print(Panel(Text("EXAMPLE 5: USING SPIKING MODELS", justify = "center", style = "bold blue")))
+    print(Panel(Text("EXAMPLE 6: FROM SNNS TO LSMS", justify = "center", style = "bold blue")))
 
     # 设置参数
 
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
     time_steps = 32
-    batch_size = 16
+    batch_size = 256
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    epochs = 64
+    epochs = 100
     learning_rate = 1e-3
     momentum = 0.9
-    tau = 1.1
+    tau = 2.0
 
     hyper_param_table = Table(show_header = True, header_style = "bold blue")
     hyper_param_table.add_column("Name", justify = "center")
@@ -54,37 +53,54 @@ def main():
 
     print(Panel(Text("Model", justify = "center")))
 
-    model = SEWRes18(
-        input_h_w = (128, 128),
-        num_classes = 10,
-        tau_m = tau
+    model = snn.Sequential(
+        snn.PoissonEncoder(
+            time_steps = time_steps
+        ),
+        snn.Flatten(),
+        lsm.Cast(
+            28 * 28,
+            28 * 28 + 10,
+            range(28 * 28),
+            range(28 * 28)
+        ),
+        lsm.functional.merge(
+            lsm.LSM(
+                adjacent = lsm.functional.init_adjacent_dist_2d(28, 28),
+                soma = snn.LIF()
+            ),
+            lsm.LSM(
+                adjacent = lsm.functional.init_adjacent_norm(10),
+                soma = snn.LIF()
+            )
+        ),
+        lsm.Cast(
+            28 * 28 + 10,
+            10,
+            range(28 * 28, 28 * 28 + 10),
+            range(10)
+        ),
+        snn.AvgSpikeDecoder(),
     )
     model = model.to(device)
 
     print(model)
-    print(device)
 
     # 调取数据集，本次使用的数据集为MNIST
 
     print(Panel(Text("Dataset", justify = "center")))
 
-    width = 128
-    height = 128
-    train_dataset = matterhorn_pytorch.data.NMNIST(
+    train_dataset = torchvision.datasets.MNIST(
         root = "./examples/data",
         train = True,
-        download = True,
-        time_steps = time_steps,
-        width = width,
-        height = height
+        transform = torchvision.transforms.ToTensor(),
+        download=True
     )
-    test_dataset = matterhorn_pytorch.data.NMNIST(
+    test_dataset = torchvision.datasets.MNIST(
         root = "./examples/data",
         train = False,
-        download = True,
-        time_steps = time_steps,
-        width = width,
-        height = height
+        transform = torchvision.transforms.ToTensor(),
+        download = True
     )
 
     train_data_loader = DataLoader(
@@ -104,7 +120,6 @@ def main():
 
     demo_data, demo_label = test_dataset[0]
     print(demo_data.shape)
-    # matterhorn_pytorch.util.plotter.event_plot_tyx(demo_data, titles = ["%s Label %s" % (test_dataset.__class__.__name__, test_dataset.labels[demo_label])])
 
     # 设置学习率，优化器，学习率衰减机制等等
 
@@ -112,12 +127,6 @@ def main():
 
     optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
-
-    log_dir = "./examples/logs"
-    sub_dir = model.__class__.__name__ + "_" + train_dataset.__class__.__name__ + "_" + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
-    os.makedirs(os.path.join(log_dir, sub_dir), exist_ok = True)
-    with open(os.path.join(log_dir, sub_dir, "result.csv"), "w") as f:
-        f.write("Epoch,Training Loss,Training Accuracy,Testing Loss,Testing Accuracy,Duration\n")
 
     # 开始训练
 
@@ -143,11 +152,11 @@ def main():
             optimizer.zero_grad()
             x = x.to(device)
             y = y.to(device)
-            y0 = torch.nn.functional.one_hot(y, num_classes = len(train_dataset.labels)).float()
+            y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
 
             o = model(x)
             loss = torch.nn.functional.mse_loss(o, y0)
-            loss.backward(retain_graph = True)
+            loss.backward()
             optimizer.step()
 
             train_samples += y.numel()
@@ -167,7 +176,7 @@ def main():
             for x, y in track(test_data_loader, description = "Testing at epoch %d" % (e,)):
                 x = x.to(device)
                 y = y.to(device)
-                y0 = torch.nn.functional.one_hot(y, num_classes = len(train_dataset.labels)).float()
+                y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
                 
                 o = model(x)
                 loss = torch.nn.functional.mse_loss(o, y0)
@@ -180,7 +189,6 @@ def main():
         test_acc /= test_samples
         if test_acc > max_test_acc:
             max_test_acc = test_acc
-            torch.save(model.state_dict(), os.path.join(log_dir, sub_dir, "best.pt"))
         
         end_time = time.time()
 
@@ -198,16 +206,12 @@ def main():
         result_table.add_row("Maximum Testing Accuracy", "%g%%" % (100 * max_test_acc,))
         result_table.add_row("Duration", "%gs" %(end_time - start_time,))
         print(result_table)
-        with open(os.path.join(log_dir, sub_dir, "result.csv"), "a") as f:
-            f.write("%d, %g, %g, %g, %g, %g\n" % (e, train_loss, train_acc, test_loss, test_acc, end_time - start_time))
 
         last_train_loss = train_loss
         last_train_acc = train_acc
         last_test_loss = test_loss
         last_test_acc = test_acc
         lr_scheduler.step()
-        
-    torch.save(model.state_dict(), os.path.join(log_dir, sub_dir, "last.pt"))
 
 
 if __name__ == "__main__":

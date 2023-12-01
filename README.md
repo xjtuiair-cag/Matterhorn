@@ -4,13 +4,13 @@
 
 ![logo](./assets/logo.png)
 
-Matterhorn is a neo general SNN framework based on PyTorch.
+Matterhorn is a novel general SNN framework based on PyTorch.
 
 ## 2 Installation
 
 ### Environment
 
-Python(>=3.7.0)
+Python(>=3.7 and <= 3.9)
 
 CUDA(>=11.3.0, with CUDNN)
 
@@ -20,11 +20,15 @@ TorchVision(>=0.11.0 and <= 0.13.1)
 
 ### Environment Installation
 
-To install PyTorch you can find the command on [https://pytorch.org/get-started/previous-versions/](https://pytorch.org/get-started/previous-versions/).
+For Windows version you may have to install GCC as well as G++ through Visual C++ or MinGW.
 
 ```sh
-pip install numpy matplotlib numba h5py tqdm rich torch torchvision
+git clone https://github.com/AmperiaWang/Matterhorn.git
+cd Matterhorn
+pip install -r requirements.txt
 ```
+
+Don't forget to add `sudo` if you are not the root user.
 
 ### Install Matterhorn
 
@@ -295,13 +299,11 @@ where the weight function $W(x)$ is:
 
 $$
 W(x)=
-\left \{
 \begin{aligned}
 A_{+}e^{-\frac{x}{τ_{+}}},x>0 \\\\
 0,x=0 \\\\
 -A_{-}e^{\frac{x}{τ_{-}}},x<0
 \end{aligned}
-\right \}.
 $$
 
 ![STDP function](./assets/readme_7.png)

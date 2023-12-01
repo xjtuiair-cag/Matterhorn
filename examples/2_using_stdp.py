@@ -24,13 +24,7 @@ from rich.table import Table
 def main():
     # 欢迎语，客套话
 
-    print(Panel(Text("EXAMPLE 2: TRAIN YOUR SNN WITH STDP RULE", justify = "center", style = "bold blue")))
-
-    print("This is your second example. You'll learn to train your SNN with spike-timing-dependent plasticity (STDP) on [green]Matterhorn[/green].")
-
-    print("We strongly recommend you to install CUDA extensions (if you have NVIDIA GPUs that support CUDA) or CPP extensions, or this example will be extremely slow.")
-
-    print("In this demo, we're about to build a 2-layer multi-layer perceptron. Unlike example 1, we will train the network with STDP rule.")
+    print(Panel(Text("EXAMPLE 2: TRAIN YOUR SNNS WITH STDP RULE", justify = "center", style = "bold blue")))
 
     # 设置参数
 

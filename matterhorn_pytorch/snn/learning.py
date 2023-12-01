@@ -60,7 +60,7 @@ except:
     stdp_cpp = None
 
 
-def stdp(delta_weight: torch.Tensor, input_shape: int, output_shape: int, time_steps: int, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float) -> torch.Tensor:
+def stdp(delta_weight: torch.Tensor, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float) -> torch.Tensor:
     """
     STDP总函数，视情况调用函数
     @params:
@@ -75,6 +75,10 @@ def stdp(delta_weight: torch.Tensor, input_shape: int, output_shape: int, time_s
         a_neg: float STDP参数A-
         tau_neg: float STDP参数tau-
     """
+    input_shape = delta_weight.shape[1]
+    output_shape = delta_weight.shape[0]
+    assert input_spike_train.shape[1] == output_spike_train.shape[1] and input_spike_train.shape[0] == input_shape and output_spike_train.shape[0] == output_shape, "The shape of tensors is not compatible: weight (o=%d, i=%d) with input (i=%d, t=%d) and output (o=%d, t=%d)" % (delta_weight.shape[0], delta_weight.shape[1], input_spike_train.shape[0], input_spike_train.shape[1], output_spike_train.shape[0], output_spike_train.shape[1])
+    time_steps = input_spike_train.shape[1]
     w_type = delta_weight.device.type
     w_idx = delta_weight.device.index
     i_type = input_spike_train.device.type

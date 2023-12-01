@@ -23,11 +23,7 @@ from rich.table import Table
 def main():
     # 欢迎语，客套话
 
-    print(Panel(Text("EXAMPLE 3: BUILD WITH SRM0 NEURON", justify = "center", style = "bold blue")))
-
-    print("This is your third example. Unlike traditional neuron model, in this example, you will face with a brand new kind of neuron model, SRM0 neuron model.")
-
-    print("In this demo, we're about to build a 2-layer multi-layer perceptron, but use SRM0 model.")
+    print(Panel(Text("EXAMPLE 3: BUILD SNNS WITH SRM0 NEURON", justify = "center", style = "bold blue")))
 
     # 设置参数
 

@@ -45,7 +45,7 @@ class val_to_spike(torch.autograd.Function):
 
 
 class SRM0Linear(Module):
-    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: nn.Module = surrogate.Rectangular(), trainable: bool = False, device = None, dtype = None) -> None:
+    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: nn.Module = surrogate.Rectangular(), trainable: bool = False, device = None, dtype = None) -> None:
         """
         SRM0神经元，突触响应的神经元
         电位公式较为复杂：

@@ -23,13 +23,7 @@ from rich.table import Table
 def main():
     # 欢迎语，客套话
 
-    print(Panel(Text("EXAMPLE 1: USE MATTERHORN TO BUILD YOUR SNN", justify = "center", style = "bold blue")))
-
-    print("Welcome to [green]Matterhorn[/green]! This is your first example.")
-
-    print("This example is aimed to let you build your own SNN model and train it on traditional image dataset on [green]Matterhorn[/green], for example, MNIST.")
-
-    print("In this demo, we're about to build a 2-layer multi-layer perceptron. From the code below, you'll see how a spatial-temporal network is built.")
+    print(Panel(Text("EXAMPLE 1: USE MATTERHORN TO BUILD YOUR SNNS", justify = "center", style = "bold blue")))
 
     # 设置参数
 

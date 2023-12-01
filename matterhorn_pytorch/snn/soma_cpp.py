@@ -1,3 +1,11 @@
+# -*- coding: UTF-8 -*-
+"""
+脉冲神经网络神经元的胞体，一层的后半段。输入为模拟电位值，输出为脉冲。
+由突触将来自上一层神经元的脉冲信号$O_{j}^{l-1}(t)$整合成为突触后电位$X_{i}^{l}(t)$后，在胞体中进行突触后电位的累积和发放。
+此模块为其C++实现方案。
+"""
+
+
 import torch
 import torch.nn as nn
 
@@ -94,7 +102,7 @@ class multi_time_step_lif(torch.autograd.Function):
 
 
 class LIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, trainable: bool = False) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
