@@ -66,11 +66,11 @@ def main():
         ),
         lsm.functional.merge(
             lsm.LSM(
-                adjacent = lsm.functional.init_adjacent_dist_2d(28, 28),
+                adjacent = lsm.functional.init_adjacent_dist_2d(28, 28, 0.4),
                 soma = snn.LIF()
             ),
             lsm.LSM(
-                adjacent = lsm.functional.init_adjacent_norm(10),
+                adjacent = lsm.functional.init_adjacent_norm(10, 0.4),
                 soma = snn.LIF()
             )
         ),
@@ -85,6 +85,10 @@ def main():
     model = model.to(device)
 
     print(model)
+
+    from matterhorn_pytorch.util.plotter import graph_plot_by_adjacent
+    graph_plot_by_adjacent(model[3].adjacent[:50, :50])
+    exit()
 
     # 调取数据集，本次使用的数据集为MNIST
 

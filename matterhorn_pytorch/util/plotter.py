@@ -6,6 +6,7 @@
 
 import numpy as np
 import torch
+import os
 import re
 import matplotlib
 from matplotlib import pyplot as plt
@@ -664,3 +665,46 @@ def event_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, p
             titles = titles,
             figsize = figsize
         )
+
+
+def graph_plot_by_adjacent(adjacent: Union[np.ndarray, torch.Tensor], show: bool = True, save: str = None, figsize: Tuple = (6, 6)) -> None:
+    from pyecharts.charts import Graph
+    from pyecharts.options import LineStyleOpts
+    import webbrowser
+    get_name = lambda i: "Neuron %d" % (i + 1,)
+    fig = plt.figure(figsize = figsize)
+    neuron_num = max(adjacent.shape[0], adjacent.shape[1])
+    neurons = []
+    for i in range(neuron_num):
+        neurons.append({"name": get_name(i), "symbolSize": 10})
+    synapses = []
+    axons, dendrites = torch.nonzero(adjacent, as_tuple = True)
+    axons, dendrites = axons.numpy().tolist(), dendrites.numpy().tolist()
+    for i in range(len(axons)):
+        synapses.append({"source": axons[i], "target": dendrites[i]})
+    graph = Graph({
+        "title": "LSM Graph",
+        "width": "1920px",
+        "height": "1080px",
+        "is_animation": False
+    })
+    graph.add(
+        "LSM Graph",
+        neurons,
+        synapses,
+        layout = "circular",
+        edge_length = 50,
+        gravity = 0.2,
+        repulsion = 50,
+        edge_symbol = [None, "arrow"],
+        linestyle_opts = LineStyleOpts(
+            curve = 1.0
+        ),
+    )
+    if save:
+        graph.render(save)
+    else:
+        graph.render()
+        save = os.path.join(os.getcwd(), "render.html")
+    if show:
+        webbrowser.open("file://" + save.replace("\\", "/"))
