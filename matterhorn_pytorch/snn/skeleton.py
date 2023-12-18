@@ -119,11 +119,15 @@ class Module(nn.Module):
         """
         if mode is None:
             super().train(False)
+            return
         if isinstance(mode, bool):
             super().train(mode)
-        mode = mode.lower()
+            return
+        if isinstance(mode, str):
+            mode = mode.lower()
         if mode == "bp":
             super().train(True)
+            return
         super().train(False)
     
 

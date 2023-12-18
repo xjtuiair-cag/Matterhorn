@@ -72,7 +72,8 @@ def main():
                 tau_m = tau,
             )
         ),
-        snn.AvgSpikeDecoder()
+        snn.AvgSpikeDecoder(),
+        step_after_process = True
     )
     model = model.to(device)
 

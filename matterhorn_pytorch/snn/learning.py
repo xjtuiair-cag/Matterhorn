@@ -76,10 +76,13 @@ def stdp(delta_weight: torch.Tensor, input_spike_train: torch.Tensor, output_spi
         a_neg (float): STDP参数A-
         tau_neg (float): STDP参数tau-
     """
-    input_shape = delta_weight.shape[1]
-    output_shape = delta_weight.shape[0]
-    assert input_spike_train.shape[1] == output_spike_train.shape[1] and input_spike_train.shape[0] == input_shape and output_spike_train.shape[0] == output_shape, "The shape of tensors is not compatible: weight (o=%d, i=%d) with input (i=%d, t=%d) and output (o=%d, t=%d)" % (delta_weight.shape[0], delta_weight.shape[1], input_spike_train.shape[0], input_spike_train.shape[1], output_spike_train.shape[0], output_spike_train.shape[1])
-    time_steps = input_spike_train.shape[1]
+    input_time_steps, input_shape = input_spike_train.shape
+    output_time_steps, output_shape = output_spike_train.shape
+    weight_output_shape, weight_input_shape = delta_weight.shape
+    assert input_shape == weight_input_shape, "Incorrect input shape, %d required but %d found." % (weight_input_shape, input_shape)
+    assert output_shape == weight_output_shape, "Incorrect output shape, %d required but %d found." % (weight_output_shape, output_shape)
+    assert output_time_steps == input_time_steps, "Incorrect time steps, %d for output but %d for input." % (output_time_steps, input_time_steps)
+    time_steps = output_time_steps
     w_type = delta_weight.device.type
     w_idx = delta_weight.device.index
     i_type = input_spike_train.device.type
@@ -174,7 +177,6 @@ class STDPLinear(Module, nn.Linear):
         """
         对整个神经元应用STDP使其更新。
         """
-        time_steps = len(self.input_spike_seq)
         if self.multi_time_step:
             input_spike_train = torch.cat(self.input_spike_seq)
             output_spike_train = torch.cat(self.output_spike_seq)
@@ -185,11 +187,11 @@ class STDPLinear(Module, nn.Linear):
             batch_size = input_spike_train.shape[1]
             for b in range(batch_size):
                 delta_weight = torch.zeros_like(self.weight)
-                delta_weight = stdp(delta_weight, self.in_features, self.out_features, time_steps, input_spike_train[:, b], output_spike_train[:, b], self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
+                delta_weight = stdp(delta_weight, input_spike_train[:, b], output_spike_train[:, b], self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
                 self.weight += self.lr * delta_weight
         else: # [T, L]
             delta_weight = torch.zeros_like(self.weight)
-            delta_weight = stdp(delta_weight, self.in_features, self.out_features, time_steps, input_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
+            delta_weight = stdp(delta_weight, input_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
             self.weight += self.lr * delta_weight
 
 
@@ -220,7 +222,7 @@ class STDPLinear(Module, nn.Linear):
         time_steps = o.shape[0]
         batch_size = o.shape[1]
         o = o.flatten(0, 1)
-        x = nn.Linear.forward(o)
+        x = nn.Linear.forward(self, o)
         output_shape = [time_steps, batch_size] + list(x.shape[1:])
         x = x.reshape(output_shape)
         o = self.soma(x)
