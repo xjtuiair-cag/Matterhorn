@@ -32,8 +32,8 @@ class EventDataset(Dataset):
         Args:
             root (str): 数据集的存储位置
             train (bool): 是否为训练集
-            transform (Callable): | None 数据如何变换
-            target_transform (Callable): | None 标签如何变换
+            transform (Callable | None): 数据如何变换
+            target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
@@ -227,8 +227,8 @@ class EventDataset1d(EventDataset):
         Args:
             root (str): 数据集的存储位置
             train (bool): 是否为训练集
-            transform (Callable): | None 数据如何变换
-            target_transform (Callable): | None 标签如何变换
+            transform (Callable | None): 数据如何变换
+            target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
@@ -334,8 +334,8 @@ class EventDataset2d(EventDataset):
         Args:
             root (str): 数据集的存储位置
             train (bool): 是否为训练集
-            transform (Callable): | None 数据如何变换
-            target_transform (Callable): | None 标签如何变换
+            transform (Callable | None): 数据如何变换
+            target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲

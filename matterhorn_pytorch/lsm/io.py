@@ -22,8 +22,8 @@ class Cast(snn.Module):
         Args:
             in_features (int): 输入长度
             out_features (int): 输出长度
-            in_indices: Iterable[int] 输入索引
-            out_indices: Iterable[int] 输出索引
+            in_indices (int*): 输入索引
+            out_indices (int*): 输出索引
             multi_time_step (bool): 是否调整为多个时间步模式
         """
         super().__init__(

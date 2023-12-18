@@ -20,8 +20,8 @@ def init_adjacent_direct(neuron_num: int, axon_numbers: Iterable[int], dendrite_
     自定义连接关系生成邻接矩阵。
     Args:
         neuron_num (int): 液体状态机中神经元的个数
-        axon_numbers: Iterable[int] 各个轴突（输出）的编号
-        dendrite_numbers: Iterable[int] 各个树突（输入）的编号
+        axon_numbers (int*): 各个轴突（输出）的编号
+        dendrite_numbers (int*): 各个树突（输入）的编号
     Returns:
         res (torch.Tensor): 邻接矩阵
     """

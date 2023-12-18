@@ -199,7 +199,7 @@ class SEWRes18(snn.Module):
         """
         Spiking Element-Wise Block， SEW ResNet的单元。
         Args:
-            input_h_w: Tuple[int] 输出脉冲通道数
+            input_h_w (int*): 输出脉冲通道数
             num_classes (int): 输出类别数
             tau_m (float): 参数τ_{m}，神经元时间常数
             spiking_function (snn.Module): 脉冲函数

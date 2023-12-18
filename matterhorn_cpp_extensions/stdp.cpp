@@ -10,12 +10,12 @@ using namespace std;
 /*
 STDP主函数。
 Args:
-    weight_mat: at::Tensor 待更新的权重矩阵，形状为[output_shape,input_shape]
+    weight_mat (at::Tensor): 待更新的权重矩阵，形状为[output_shape,input_shape]
     input_shape (int): 输入向量长度
     output_shape (int): 输出向量长度
     time_steps (int): 时间步长
-    input_spike_train: at::Tensor 输入脉冲序列，形状为[time_steps,input_shape]
-    output_spike_train: at::Tensor 输出脉冲序列，形状为[time_steps,output_shape]
+    input_spike_train (at::Tensor): 输入脉冲序列，形状为[time_steps,input_shape]
+    output_spike_train (at::Tensor): 输出脉冲序列，形状为[time_steps,output_shape]
     a_pos (float): STDP参数$A^{+}$
     tau_pos (float): STDP参数$τ^{+}$
     a_neg (float): STDP参数$A^{-}$

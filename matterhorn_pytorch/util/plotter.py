@@ -123,7 +123,7 @@ def event_tensor_plot_yx(data: torch.Tensor, polarity: bool = True, show: bool =
         polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[C(P), H, W]（3维）或[B, C(P), H, W]（4维）；如果为False，则传入的数据为[H, W]（2维）或[B, H, W]（3维）
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
-        titles: List[str] 每张图都是什么标题
+        titles (str*): 每张图都是什么标题
         figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
@@ -212,7 +212,7 @@ def event_seq_plot_yx(data: np.ndarray, shape: Tuple, show: bool = True, save: s
         shape (Tuple): 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
-        titles: List[str] 每张图都是什么标题
+        titles (str*): 每张图都是什么标题
         figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
@@ -262,7 +262,7 @@ def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, po
         polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[C(P), H, W]（3维）或[B, C(P), H, W]（4维）；如果为False，则传入的数据为[H, W]（2维）或[B, H, W]（3维）
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
-        titles: List[str] 每张图都是什么标题
+        titles (str*): 每张图都是什么标题
         figSize (Tuple): 图像大小
         is_seq (bool): 是否为序列，True表明事件为形状为[n, 4]的序列，否则为形状为[T, C(P), H, W]的张量
     """
@@ -294,7 +294,7 @@ def event_tensor_plot_tx(data: torch.Tensor, polarity: bool = True, show: bool =
         polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), L]（3维）或[B, T, C(P), L]（4维）；如果为False，则传入的数据为[T, L]（2维）或[B, T, L]（3维）
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
-        titles: List[str] 每张图都是什么标题
+        titles (str*): 每张图都是什么标题
         figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
@@ -376,7 +376,7 @@ def event_seq_plot_tx(data: np.ndarray, shape: Tuple, show: bool = True, save: s
         shape (Tuple): 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
-        titles: List[str] 每张图都是什么标题
+        titles (str*): 每张图都是什么标题
         figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
@@ -422,7 +422,7 @@ def event_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, po
         polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), L]（3维）或[B, T, C(P), L]（4维）；如果为False，则传入的数据为[T, L]（2维）或[B, T, L]（3维）（打印张量用）
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
-        titles: List[str] 每张图都是什么标题
+        titles (str*): 每张图都是什么标题
         figSize (Tuple): 图像大小
         is_seq (bool): 是否为序列，True表明事件为形状为[n, 4]的序列，否则为形状为[T, C(P), H, W]的张量
     """
@@ -500,7 +500,7 @@ def event_tensor_plot_tyx(data: torch.Tensor, polarity: bool = True, show: bool 
         polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), H, W]（4维）或[B, T, C(P), H, W]（5维）；如果为False，则传入的数据为[T, H, W]（3维）或[B, T, H, W]（4维）
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
-        titles: List[str] 每张图都是什么标题
+        titles (str*): 每张图都是什么标题
         figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
@@ -594,7 +594,7 @@ def event_seq_plot_tyx(data: np.ndarray, shape: Tuple, show: bool = True, save: 
         shape (Tuple): 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
-        titles: List[str] 每张图都是什么标题
+        titles (str*): 每张图都是什么标题
         figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
@@ -643,7 +643,7 @@ def event_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, p
         polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), H, W]（4维）或[B, T, C(P), H, W]（5维）；如果为False，则传入的数据为[T, H, W]（3维）或[B, T, H, W]（4维）（打印张量用）
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
-        titles: List[str] 每张图都是什么标题
+        titles (str*): 每张图都是什么标题
         figSize (Tuple): 图像大小
         is_seq (bool): 是否为序列，True表明事件为形状为[n, 4]的序列，否则为形状为[T, C(P), H, W]的张量
     """

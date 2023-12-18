@@ -9,13 +9,13 @@ using namespace std;
 /*
 LIF神经元的前向传播函数。
 Args:
-    o: at::Tensor 脉冲输出$O^{l}$
-    u: at::Tensor 胞体电位$U^{l}$
-    h: at::Tensor 胞体历史电位$H^{l}$
-    x: at::Tensor 输入电位$X^{l}$
+    o (at::Tensor): 脉冲输出$O^{l}$
+    u (at::Tensor): 胞体电位$U^{l}$
+    h (at::Tensor): 胞体历史电位$H^{l}$
+    x (at::Tensor): 输入电位$X^{l}$
     time_steps (int): 总时间步长
-    u_init: at::Tensor 初始胞体电位$H^{l}(-1)$
-    tau_m: at::Tensor 时间常数$τ_{m}$
+    u_init (at::Tensor): 初始胞体电位$H^{l}(-1)$
+    tau_m (at::Tensor): 时间常数$τ_{m}$
     u_rest (float): 静息电位$u_{rest}$
     u_threshold (float): 阈电位$u_{th}$
     reset_mode (int): 重置模式，分为硬重置（0）和软重置（1）两种
@@ -45,19 +45,19 @@ void cu_fp_lif(at::Tensor o,
 /*
 LIF神经元的反向传播函数。
 Args:
-    grad_o: at::Tensor 脉冲输出$O^{l}$的梯度
-    grad_u: at::Tensor 胞体电位$U^{l}$的梯度
-    grad_h: at::Tensor 胞体历史电位$H^{l}$的梯度
-    grad_x: at::Tensor 输入电位$X^{l}$的梯度
-    grad_u_init: at::Tensor 初始胞体电位$H^{l}(-1)$的梯度
-    grad_tau_m: at::Tensor 时间常数$τ_{m}$的梯度
+    grad_o (at::Tensor): 脉冲输出$O^{l}$的梯度
+    grad_u (at::Tensor): 胞体电位$U^{l}$的梯度
+    grad_h (at::Tensor): 胞体历史电位$H^{l}$的梯度
+    grad_x (at::Tensor): 输入电位$X^{l}$的梯度
+    grad_u_init (at::Tensor): 初始胞体电位$H^{l}(-1)$的梯度
+    grad_tau_m (at::Tensor): 时间常数$τ_{m}$的梯度
     time_steps (int): 总时间步长
-    o: at::Tensor 脉冲输出$O^{l}$
-    u: at::Tensor 胞体电位$U^{l}$
-    h: at::Tensor 胞体历史电位$H^{l}$
-    x: at::Tensor 输入电位$X^{l}$
-    u_init: at::Tensor 初始胞体电位$H^{l}(-1)$
-    tau_m: at::Tensor 时间常数$τ_{m}$
+    o (at::Tensor): 脉冲输出$O^{l}$
+    u (at::Tensor): 胞体电位$U^{l}$
+    h (at::Tensor): 胞体历史电位$H^{l}$
+    x (at::Tensor): 输入电位$X^{l}$
+    u_init (at::Tensor): 初始胞体电位$H^{l}(-1)$
+    tau_m (at::Tensor): 时间常数$τ_{m}$
     u_rest (float): 静息电位$u_{rest}$
     u_threshold (float): 阈电位$u_{th}$
     spiking_mode (int): 替代梯度模式

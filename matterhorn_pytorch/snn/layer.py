@@ -67,7 +67,7 @@ class SRM0Linear(Module):
             spiking_function (nn.Module): 计算脉冲时所使用的阶跃函数
             trainable (bool): 参数是否可以训练
             device: Optional[torch.device, str] 所使用的设备
-            dtype: Optional[type] 数据类型
+            dtype (type | None): 数据类型
         """
         super().__init__()
         self.in_features = in_features
@@ -287,7 +287,7 @@ class MaxPool1d(Layer, nn.MaxPool1d):
         一维最大池化。
         Args:
             kernel_size (_size_any_t): 池化核大小
-            stride (_size_any_t): | None 池化步长
+            stride (_size_any_t | None): 池化步长
             padding (_size_any_t): 边界填充的长度
             dilation (_size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
@@ -336,7 +336,7 @@ class MaxPool2d(Layer, nn.MaxPool2d):
         二维最大池化。
         Args:
             kernel_size (_size_any_t): 池化核大小
-            stride (_size_any_t): | None 池化步长
+            stride (_size_any_t | None): 池化步长
             padding (_size_any_t): 边界填充的长度
             dilation (_size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
@@ -385,7 +385,7 @@ class MaxPool3d(Layer, nn.MaxPool3d):
         三维最大池化。
         Args:
             kernel_size (_size_any_t): 池化核大小
-            stride (_size_any_t): | None 池化步长
+            stride (_size_any_t | None): 池化步长
             padding (_size_any_t): 边界填充的长度
             dilation (_size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
@@ -481,11 +481,11 @@ class AvgPool2d(Layer, nn.AvgPool2d):
         二维平均池化。
         Args:
             kernel_size (_size_2_t): 池化核大小
-            stride (_size_2_t): | None 池化核步长
+            stride (_size_2_t | None): 池化核步长
             padding (_size_2_t): 边界填充的长度
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
-            divisor_override (int): | None 是否用某个数取代总和作为除数
+            divisor_override (int | None): 是否用某个数取代总和作为除数
             multi_time_step (bool): 是否调整为多个时间步模式
         """
         Layer.__init__(
@@ -530,11 +530,11 @@ class AvgPool3d(Layer, nn.AvgPool3d):
         三维平均池化。
         Args:
             kernel_size (_size_3_t): 池化核大小
-            stride (_size_3_t): | None 池化核步长
+            stride (_size_3_t | None): 池化核步长
             padding (_size_3_t): 边界填充的长度
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
-            divisor_override (int): | None 是否用某个数取代总和作为除数
+            divisor_override (int | None): 是否用某个数取代总和作为除数
             multi_time_step (bool): 是否调整为多个时间步模式
         """
         Layer.__init__(
