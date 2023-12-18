@@ -8,6 +8,7 @@
 import torch
 import torch.nn as nn
 from matterhorn_pytorch.snn.skeleton import Module
+from typing import Union
 try:
     from rich import print
 except:
@@ -63,43 +64,52 @@ class Spatial(Container, nn.Sequential):
                 module.reset()
 
 
-    def start_step(self) -> None:
+    def train(self, mode: Union[str, bool]) -> None:
         """
-        开始STDP训练。
+        切换训练和测试模式。
+        Args:
+            mode (str | bool): 采用何种训练方式，None为测试模式
+        """
+        if isinstance(mode, str):
+            mode = mode.lower()
+        for module in self:
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
+                module.train(mode)
+            else:
+                module.train(mode in (True, "bp"))
+        Container.train(self, mode)
+
+
+    def eval(self) -> None:
+        """
+        切换测试模式。
         """
         for module in self:
             is_snn_module = isinstance(module, Module)
             if is_snn_module:
-                module.start_step()
-
-
-    def stop_step(self) -> None:
-        """
-        停止STDP训练。
-        """
-        for module in self:
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
-                module.stop_step()
+                module.eval()
+        Container.eval(self)
     
 
-    def step_once(self) -> None:
+    def step(self) -> None:
         """
-        一次部署所有结点的STDP训练。
+        一次部署所有结点的自定义训练。
         """
         for module in self:
             is_snn_module = isinstance(module, Module)
             if is_snn_module:
-                module.step_once()
+                module.step()
 
 
 class Temporal(Container):
-    def __init__(self, module: nn.Module, reset_after_process: bool = True) -> None:
+    def __init__(self, module: nn.Module, reset_after_process: bool = True, step_after_process: bool = False) -> None:
         """
         SNN的时间容器，在多个时间步之内执行脉冲神经网络。
         Args:
             module (nn.Module): 所用来执行的单步模型
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
+            step_after_process (bool): 是否在执行完后部署自定义训练，若为False则需要手动调用step方法训练
         """
         is_snn_module = isinstance(module, Module)
         if is_snn_module:
@@ -108,8 +118,8 @@ class Temporal(Container):
             multi_time_step = True,
             reset_after_process = reset_after_process
         )
+        self.step_after_process = step_after_process
         self.module = module
-        self.step_after_process = False
 
 
     def extra_repr(self) -> str:
@@ -139,33 +149,39 @@ class Temporal(Container):
             self.module.reset()
 
     
-    def start_step(self) -> None:
+    def train(self, mode: Union[str, bool]) -> None:
         """
-        开始STDP训练。
+        切换训练和测试模式。
+        Args:
+            mode (str | bool): 采用何种训练方式，None为测试模式
         """
-        self.step_after_process = True
+        if isinstance(mode, str):
+            mode = mode.lower()
+        self.step_after_process = mode in ("stdp")
         is_snn_module = isinstance(self.module, Module)
         if is_snn_module:
-            self.module.start_step()
+            self.module.train(mode)
+        else:
+            self.module.train(mode in (True, "bp"))
+        Container.train(self, mode)
     
 
-    def stop_step(self) -> None:
+    def eval(self) -> None:
         """
-        停止STDP训练。
+        切换测试模式。
         """
         self.step_after_process = False
-        is_snn_module = isinstance(self.module, Module)
-        if is_snn_module:
-            self.module.stop_step()
+        self.module.eval()
+        Container.eval(self)
     
 
-    def step_once(self) -> None:
+    def step(self) -> None:
         """
         部署结点的STDP训练。
         """
         is_snn_module = isinstance(self.module, Module)
         if is_snn_module:
-            self.module.step_once()
+            self.module.step()
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -182,18 +198,20 @@ class Temporal(Container):
             result.append(self.module(x[t]))
         y = torch.stack(result)
         if self.step_after_process:
-            self.step_once()
+            self.step()
         if self.reset_after_process:
             self.reset()
         return y
 
 
 class Sequential(Container, nn.Sequential):
-    def __init__(self, *args, reset_after_process: bool = True) -> None:
+    def __init__(self, *args, reset_after_process: bool = True, step_after_process: bool = False) -> None:
         """
         对Sequential进行重写，涵盖ANN与SNN的网络。
         Args:
-            *args ([nn.Module]): 按空间顺序传入的各个模块
+            args (*nn.Module): 按空间顺序传入的各个模块
+            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
+            step_after_process (bool): 是否在执行完后部署自定义训练，若为False则需要手动调用step方法训练
         """
         multi_time_step = True
         # all_snn_module_single_time_step = True
@@ -205,7 +223,12 @@ class Sequential(Container, nn.Sequential):
         #         all_snn_module_single_time_step = False
         # if all_snn_module_single_time_step:
         #     multi_time_step = False
-        Container.__init__(self, multi_time_step = multi_time_step)
+        Container.__init__(
+            self,
+            multi_time_step = multi_time_step,
+            reset_after_process = reset_after_process
+        )
+        self.step_after_process = step_after_process
         nn.Sequential.__init__(self, *args)
         convert_indices = []
         remove_indices = []
@@ -275,32 +298,56 @@ class Sequential(Container, nn.Sequential):
             if is_snn_module:
                 module.reset()
 
-
-    def start_step(self) -> None:
+    
+    def train(self, mode: Union[str, bool]) -> None:
         """
-        开始STDP训练。
+        切换训练和测试模式。
+        Args:
+            mode (str | bool): 采用何种训练方式，None为测试模式
         """
+        if isinstance(mode, str):
+            mode = mode.lower()
+        self.step_after_process = mode in ("stdp",)
         for module in self:
             is_snn_module = isinstance(module, Module)
             if is_snn_module:
-                module.start_step()
-
-
-    def stop_step(self) -> None:
-        """
-        停止STDP训练。
-        """
-        for module in self:
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
-                module.stop_step()
+                module.train(mode)
+            else:
+                module.train(mode in (True, "bp"))
+        Container.train(self, mode)
     
 
-    def step_once(self) -> None:
+    def eval(self) -> None:
+        """
+        切换测试模式。
+        """
+        self.step_after_process = False
+        for module in self:
+            module.eval()
+        Container.eval(self)
+    
+
+    def step(self) -> None:
         """
         一次部署所有结点的STDP训练。
         """
         for module in self:
             is_snn_module = isinstance(module, Module)
             if is_snn_module:
-                module.step_once()
+                module.step()
+
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数，默认接受的张量形状为[T,B,...]（需要将时间维度通过permute等函数转到最外）
+        Args:
+            x (torch.Tensor): 输入张量
+        Returns:
+            y (torch.Tensor): 输出张量
+        """
+        y = nn.Sequential.forward(self, x)
+        if self.step_after_process:
+            self.step()
+        if self.reset_after_process:
+            self.reset()
+        return y

@@ -43,7 +43,7 @@ class Synapse(Module):
         """
         单个时间步的前向传播函数。
         Args:
-            x (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[B, ...]
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[B, ...]
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$，形状为[B, ...]
         """
@@ -55,7 +55,7 @@ class Synapse(Module):
         """
         多个时间步的前向传播函数。
         Args:
-            x (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[T, B, ...]
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[T, B, ...]
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$，形状为[T, B, ...]
         """

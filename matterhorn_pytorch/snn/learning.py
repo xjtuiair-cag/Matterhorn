@@ -7,6 +7,7 @@
 import torch
 import torch.nn as nn
 from matterhorn_pytorch.snn.skeleton import Module
+from typing import Union
 try:
     from rich import print
 except:
@@ -100,7 +101,7 @@ def stdp(delta_weight: torch.Tensor, input_spike_train: torch.Tensor, output_spi
 
 
 class STDPLinear(Module, nn.Linear):
-    def __init__(self, in_features: int, out_features: int, soma: nn.Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, device = None, dtype = None) -> None:
+    def __init__(self, in_features: int, out_features: int, soma: nn.Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, device = None, dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层
         Args:
@@ -111,8 +112,13 @@ class STDPLinear(Module, nn.Linear):
             tau_pos (float): STDP参数tau+
             a_neg (float): STDP参数A-
             tau_neg (float): STDP参数tau-
+            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Module.__init__(self)
+        Module.__init__(
+            self,
+            multi_time_step = multi_time_step,
+            reset_after_process = False
+        )
         nn.Linear.__init__(
             self,
             in_features = in_features, 
@@ -129,29 +135,11 @@ class STDPLinear(Module, nn.Linear):
         self.tau_neg = tau_neg
         self.lr = lr
         self.reset()
-    
-
-    def start_step(self) -> None:
-        """
-        开始训练
-        """
-        is_snn_module = isinstance(self.soma, Module)
-        if is_snn_module:
-            self.soma.start_step()
-    
-
-    def stop_step(self) -> None:
-        """
-        停止训练
-        """
-        is_snn_module = isinstance(self.soma, Module)
-        if is_snn_module:
-            self.soma.stop_step()
 
 
     def reset(self) -> None:
         """
-        重置整个神经元
+        重置整个神经元。
         """
         self.input_spike_seq = []
         self.output_spike_seq = []
@@ -160,35 +148,96 @@ class STDPLinear(Module, nn.Linear):
             self.soma.reset()
 
 
-    def step_once(self) -> None:
+    def train(self, mode: Union[str, bool] = "stdp") -> None:
         """
-        对整个神经元应用STDP使其更新
+        切换训练和测试模式。
+        Args:
+            mode (str | bool): 采用何种训练方式，None为测试模式
+        """
+        if isinstance(mode, str):
+            mode = mode.lower()
+        is_snn_module = isinstance(self.soma, Module)
+        if is_snn_module:
+            self.soma.train(mode)
+        else:
+            self.soma.train(mode in (True, "bp"))
+    
+
+    def eval(self) -> None:
+        """
+        切换测试模式。
+        """
+        self.soma.eval()
+
+
+    def step(self) -> None:
+        """
+        对整个神经元应用STDP使其更新。
         """
         time_steps = len(self.input_spike_seq)
-        input_spike_train = torch.stack(self.input_spike_seq)
-        output_spike_train = torch.stack(self.output_spike_seq)
-        if len(input_spike_train.shape) == 3:
+        if self.multi_time_step:
+            input_spike_train = torch.cat(self.input_spike_seq)
+            output_spike_train = torch.cat(self.output_spike_seq)
+        else:
+            input_spike_train = torch.stack(self.input_spike_seq)
+            output_spike_train = torch.stack(self.output_spike_seq)
+        if len(input_spike_train.shape) == 3: # [B, T, L]
             batch_size = input_spike_train.shape[1]
             for b in range(batch_size):
                 delta_weight = torch.zeros_like(self.weight)
                 delta_weight = stdp(delta_weight, self.in_features, self.out_features, time_steps, input_spike_train[:, b], output_spike_train[:, b], self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
                 self.weight += self.lr * delta_weight
-        else:
+        else: # [T, L]
             delta_weight = torch.zeros_like(self.weight)
             delta_weight = stdp(delta_weight, self.in_features, self.out_features, time_steps, input_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
             self.weight += self.lr * delta_weight
-    
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+
+    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
+        """
+        单个时间步的前向传播函数。True
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[B, I]
+        Returns:
+            o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}(t)$，形状为[B, O]
+        """
+        self.input_spike_seq.append(o.clone().detach())
+        x = nn.Linear.forward(self, o)
+        o = self.soma(x)
+        self.output_spike_seq.append(o.clone().detach())
+        return o
+
+
+    def forward_multi_time_step(self, o: torch.Tensor) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}$，形状为[T, B, I]
+        Returns:
+            o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}$，形状为[T, B, O]
+        """
+        self.input_spike_seq.append(o.clone().detach())
+        time_steps = o.shape[0]
+        batch_size = o.shape[1]
+        o = o.flatten(0, 1)
+        x = nn.Linear.forward(o)
+        output_shape = [time_steps, batch_size] + list(x.shape[1:])
+        x = x.reshape(output_shape)
+        o = self.soma(x)
+        self.output_spike_seq.append(o.clone().detach())
+        return o
+
+
+    def forward(self, o: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
-            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
         Returns:
-            o (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+            o (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        self.input_spike_seq.append(x.clone().detach().requires_grad_(True))
-        x = super().forward(x)
-        x = self.soma(x)
-        self.output_spike_seq.append(x.clone().detach().requires_grad_(True))
-        return x
+        if self.multi_time_step:
+            o = self.forward_multi_time_step(o)
+        else:
+            o = self.forward_single_time_step(o)
+        return o

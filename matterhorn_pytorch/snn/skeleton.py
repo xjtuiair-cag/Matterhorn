@@ -6,6 +6,7 @@ SNN模块的框架，在torch.nn的基础上，定义了几个SNN的基本函数
 
 import torch
 import torch.nn as nn
+from typing import Union
 try:
     from rich import print
 except:
@@ -110,22 +111,31 @@ class Module(nn.Module):
         pass
 
     
-    def start_step(self) -> None:
+    def train(self, mode: Union[str, bool] = "bp") -> None:
         """
-        开始STDP训练。
+        切换训练和测试模式。
+        Args:
+            mode (str | bool): 采用何种训练方式，None为测试模式
         """
-        pass
+        if mode is None:
+            super().train(False)
+        if isinstance(mode, bool):
+            super().train(mode)
+        mode = mode.lower()
+        if mode == "bp":
+            super().train(True)
+        super().train(False)
     
 
-    def stop_step(self) -> None:
+    def eval(self) -> None:
         """
-        停止STDP训练。
+        切换测试模式。
         """
-        pass
+        super().eval()
     
 
-    def step_once(self) -> None:
+    def step(self) -> None:
         """
-        部署结点的STDP训练。
+        部署结点的自定义训练。
         """
         pass

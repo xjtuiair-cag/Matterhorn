@@ -132,8 +132,7 @@ def main():
 
             # 使用训练集进行训练
 
-            model.train()
-            model.start_step()
+            model.train("stdp")
             train_loss = 0.0
             train_acc = 0.0
             train_samples = 0
@@ -155,7 +154,6 @@ def main():
             # 使用测试集进行评估
 
             model.eval()
-            model.stop_step()
             test_loss = 0.0
             test_acc = 0.0
             test_samples = 0

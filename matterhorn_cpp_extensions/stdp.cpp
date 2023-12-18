@@ -34,7 +34,7 @@ void stdp(at::Tensor weight_mat,
     for (int i = 0; i < output_shape; i++) {
         for (int j = 0; j < input_shape; j++) {
             // 去遍历时间，更新权重
-            float weight = 0.0;
+            at::Tensor weight = weight_mat[i][j];
             // 遍历输出脉冲
             for (int ti = 0; ti < time_steps; ti++) {
                 at::Tensor spike_i = output_spike_train[ti][i];
@@ -47,15 +47,14 @@ void stdp(at::Tensor weight_mat,
                     if (spike_j.data<float>()[0] == 0.0) {
                         continue;
                     }
-                    int dt = ti - tj;
+                    float dt = (float)(ti - tj);
                     if (dt > 0) {
-                        weight += a_pos * exp(-dt / tau_pos);
+                        weight += a_pos * expf(-dt / tau_pos);
                     } else if (dt < 0) {
-                        weight += -a_neg * exp(dt / tau_neg);
+                        weight += -a_neg * expf(dt / tau_neg);
                     }
                 }
             }
-            weight_mat[i][j] += weight;
         }
     }
 }
