@@ -31,18 +31,18 @@ class multi_time_step_lif(torch.autograd.Function):
     def forward(ctx: Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: float, u_rest: float, spiking_mode: int, a: float, reset_mode: float) -> torch.Tensor:
         """
         多时间步LIF神经元前向传播的C++实现。
-        @params:
+        Args:
             ctx: 上下文
-            x: torch.Tensor 来自突触的输入电位$X_{i}^{l}(t)$
-            u_init: torch.Tensor 初始电位
-            tau_m: torch.Tensor 膜时间常数$τ_{m}$
-            u_threshold: float 阈电位$u_{th}$
-            u_rest: float 静息电位$u_{rest}$
-            spiking_mode: int 发射脉冲的模式
-            a: float 参数$a$
-            reset_mode: int 重置的模式，有硬重置（0）和软重置（1）两种
-        @return:
-            y: torch.Tensor 输出
+            x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
+            u_init (torch.Tensor): 初始电位
+            tau_m (torch.Tensor): 膜时间常数$τ_{m}$
+            u_threshold (float): 阈电位$u_{th}$
+            u_rest (float): 静息电位$u_{rest}$
+            spiking_mode (int): 发射脉冲的模式
+            a (float): 参数$a$
+            reset_mode (int): 重置的模式，有硬重置（0）和软重置（1）两种
+        Returns:
+            y (torch.Tensor): 输出
         """
         device = x.device
         time_steps = x.shape[0]
@@ -71,13 +71,13 @@ class multi_time_step_lif(torch.autograd.Function):
     def backward(ctx: Any, grad_o: torch.Tensor, grad_u_last: torch.Tensor) -> torch.Tensor:
         """
         多时间步LIF神经元反向传播的C++实现。
-        @params:
+        Args:
             ctx: 上下文
-            grad_o: torch.Tensor 输出梯度
-        @return:
-            grad_x: torch.Tensor 输入梯度
-            grad_u_init: torch.Tensor 初始电位的梯度
-            grad_tau_m: torch.Tensor 膜时间常数$τ_{m}$的梯度
+            grad_o (torch.Tensor): 输出梯度
+        Returns:
+            grad_x (torch.Tensor): 输入梯度
+            grad_u_init (torch.Tensor): 初始电位的梯度
+            grad_tau_m (torch.Tensor): 膜时间常数$τ_{m}$的梯度
         """
         grad_o = grad_o.clone()
         device = grad_o.device
@@ -107,13 +107,13 @@ class LIF(Soma):
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
         $$τ\frac{du}{dt}=-(u-u_{rest})+RI$$
-        @params:
-            tau_m: float 膜时间常数$τ_{m}$
-            u_threshold: float 阈电位$u_{th}$
-            u_rest: float 静息电位$u_{rest}$
-            spiking_function: Module 计算脉冲时所使用的阶跃函数
-            hard_reset: bool 是否为硬重置
-            trainable: bool 参数是否可以训练
+        Args:
+            tau_m (float): 膜时间常数$τ_{m}$
+            u_threshold (float): 阈电位$u_{th}$
+            u_rest (float): 静息电位$u_{rest}$
+            spiking_function (Module): 计算脉冲时所使用的阶跃函数
+            hard_reset (bool): 是否为硬重置
+            trainable (bool): 参数是否可以训练
         """
         super().__init__(
             tau_m = tau_m,
@@ -130,8 +130,8 @@ class LIF(Soma):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g" % (self.tau_m, self.u_threshold, self.u_rest), super().extra_repr(), "ext=%s" % ('"cpp"',)])
 
@@ -139,10 +139,10 @@ class LIF(Soma):
     def forward_multi_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
-        @params:
-            x: torch.Tensor 来自突触的输入电位$X_{i}^{l}(t)$
-        @return:
-            o: torch.Tensor 胞体当前的输出脉冲$O_{i}^{l}(t)$
+        Args:
+            x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
+        Returns:
+            o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
         self.u = self.init_tensor(self.u, x[0])
         o, self.u = self.multi_time_step_function.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, self.spiking_function_prototype, self.spiking_function.a, self.reset_function_prototype)

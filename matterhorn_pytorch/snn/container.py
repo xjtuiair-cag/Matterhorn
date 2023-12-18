@@ -26,8 +26,8 @@ class Spatial(Container, nn.Sequential):
     def __init__(self, *args) -> None:
         """
         SNN的空间容器，用法同nn.Sequential，加入一些特殊的作用于SNN的函数。
-        @params:
-            *args: [nn.Module] 按空间顺序传入的各个模块
+        Args:
+            *args ([nn.Module]): 按空间顺序传入的各个模块
         """
         Container.__init__(self)
         nn.Sequential.__init__(self, *args)
@@ -41,8 +41,8 @@ class Spatial(Container, nn.Sequential):
     def multi_time_step_(self, if_on: bool) -> nn.Module:
         """
         调整模型的多时间步模式。
-        @params
-            if_on: bool 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
+        Args
+            if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
         """
         self.multi_time_step__ = False
         for module in self:
@@ -97,9 +97,9 @@ class Temporal(Container):
     def __init__(self, module: nn.Module, reset_after_process: bool = True) -> None:
         """
         SNN的时间容器，在多个时间步之内执行脉冲神经网络。
-        @params:
-            module: nn.Module 所用来执行的单步模型
-            reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
+        Args:
+            module (nn.Module): 所用来执行的单步模型
+            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         is_snn_module = isinstance(module, Module)
         if is_snn_module:
@@ -115,8 +115,8 @@ class Temporal(Container):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return "reset_after_process=%s" % (str(self.reset_after_process),)
 
@@ -124,8 +124,8 @@ class Temporal(Container):
     def supports_single_time_step(self) -> bool:
         """
         是否支持单个时间步。
-        @return:
-            if_support: bool 是否支持单个时间步
+        Returns:
+            if_support (bool): 是否支持单个时间步
         """
         return False
 
@@ -171,10 +171,10 @@ class Temporal(Container):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数，默认接受的张量形状为[T,B,...]（需要将时间维度通过permute等函数转到最外）
-        @params:
-            x: torch.Tensor 输入张量
-        @return:
-            y: torch.Tensor 输出张量
+        Args:
+            x (torch.Tensor): 输入张量
+        Returns:
+            y (torch.Tensor): 输出张量
         """
         time_steps = x.shape[0]
         result = []
@@ -192,8 +192,8 @@ class Sequential(Container, nn.Sequential):
     def __init__(self, *args, reset_after_process: bool = True) -> None:
         """
         对Sequential进行重写，涵盖ANN与SNN的网络。
-        @params:
-            *args: [nn.Module] 按空间顺序传入的各个模块
+        Args:
+            *args ([nn.Module]): 按空间顺序传入的各个模块
         """
         multi_time_step = True
         # all_snn_module_single_time_step = True

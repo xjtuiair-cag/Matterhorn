@@ -18,12 +18,12 @@ except:
 def init_adjacent_direct(neuron_num: int, axon_numbers: Iterable[int], dendrite_numbers: Iterable[int]) -> torch.Tensor:
     """
     自定义连接关系生成邻接矩阵。
-    @params:
-        neuron_num: int 液体状态机中神经元的个数
+    Args:
+        neuron_num (int): 液体状态机中神经元的个数
         axon_numbers: Iterable[int] 各个轴突（输出）的编号
         dendrite_numbers: Iterable[int] 各个树突（输入）的编号
-    @return:
-        torch.Tensor 邻接矩阵
+    Returns:
+        res (torch.Tensor): 邻接矩阵
     """
     res = torch.zeros(neuron_num, neuron_num, dtype = torch.float)
     res[axon_numbers, dendrite_numbers] = 1.0
@@ -33,11 +33,11 @@ def init_adjacent_direct(neuron_num: int, axon_numbers: Iterable[int], dendrite_
 def init_adjacent_uniform(neuron_num: int, threshold: float = 0.75) -> torch.Tensor:
     """
     由均匀分布生成随机邻接矩阵。
-    @params:
-        neuron_num: int 液体状态机中神经元的个数
-        threshold: float 连接的阈值，阈值越大代表连接越容易
-    @return:
-        torch.Tensor 邻接矩阵
+    Args:
+        neuron_num (int): 液体状态机中神经元的个数
+        threshold (float): 连接的阈值，阈值越大代表连接越容易
+    Returns:
+        res (torch.Tensor): 邻接矩阵
     """
     res = torch.rand(neuron_num, neuron_num)
     return (res <= threshold).to(torch.float)
@@ -46,11 +46,11 @@ def init_adjacent_uniform(neuron_num: int, threshold: float = 0.75) -> torch.Ten
 def init_adjacent_norm(neuron_num: int, threshold: float = 0.75) -> torch.Tensor:
     """
     由正态分布生成随机邻接矩阵。
-    @params:
-        neuron_num: int 液体状态机中神经元的个数
-        threshold: float 连接的阈值，阈值越大代表连接越容易
-    @return:
-        torch.Tensor 邻接矩阵
+    Args:
+        neuron_num (int): 液体状态机中神经元的个数
+        threshold (float): 连接的阈值，阈值越大代表连接越容易
+    Returns:
+        res (torch.Tensor): 邻接矩阵
     """
     res = torch.randn(neuron_num, neuron_num)
     return (res <= threshold).to(torch.float)
@@ -59,11 +59,11 @@ def init_adjacent_norm(neuron_num: int, threshold: float = 0.75) -> torch.Tensor
 def init_adjacent_dist_1d(length: int, threshold: float = 1.0) -> torch.Tensor:
     """
     由神经元之间的相对（一维）距离得到神经元的邻接矩阵。相对距离越近神经元的连接概率越高。
-    @params:
-        length: int 液体状态机中神经元的个数
-        threshold: float 连接的阈值，阈值越大代表连接越容易
-    @return:
-        torch.Tensor 邻接矩阵
+    Args:
+        length (int): 液体状态机中神经元的个数
+        threshold (float): 连接的阈值，阈值越大代表连接越容易
+    Returns:
+        res (torch.Tensor): 邻接矩阵
     """
     neuron_num = length
     res = torch.zeros(neuron_num, neuron_num, dtype = torch.float)
@@ -76,12 +76,12 @@ def init_adjacent_dist_1d(length: int, threshold: float = 1.0) -> torch.Tensor:
 def init_adjacent_dist_2d(height: int, width: int, threshold: float = 1.0) -> torch.Tensor:
     """
     由神经元之间的相对（二维）距离得到神经元的邻接矩阵。相对距离越近神经元的连接概率越高。
-    @params:
-        height: int 二维高度，矩阵中的行数
-        width: int 二维宽度，矩阵中的列数
-        threshold: float 连接的阈值，阈值越大代表连接越容易
-    @return:
-        torch.Tensor 邻接矩阵
+    Args:
+        height (int): 二维高度，矩阵中的行数
+        width (int): 二维宽度，矩阵中的列数
+        threshold (float): 连接的阈值，阈值越大代表连接越容易
+    Returns:
+        res (torch.Tensor): 邻接矩阵
     """
     neuron_num = height * width
     res = torch.zeros(neuron_num, neuron_num, dtype = torch.float)
@@ -98,13 +98,13 @@ def init_adjacent_dist_2d(height: int, width: int, threshold: float = 1.0) -> to
 def init_adjacent_dist_3d(channels: int, height: int, width: int, threshold: float = 1.0) -> torch.Tensor:
     """
     由神经元之间的相对（三维）距离得到神经元的邻接矩阵。相对距离越近神经元的连接概率越高。
-    @params:
-        channels: int 三维通道数
-        height: int 三维高度，矩阵中的行数
-        width: int 三维宽度，矩阵中的列数
-        threshold: float 连接的阈值，阈值越大代表连接越容易
-    @return:
-        torch.Tensor 邻接矩阵
+    Args:
+        channels (int): 三维通道数
+        height (int): 三维高度，矩阵中的行数
+        width (int): 三维宽度，矩阵中的列数
+        threshold (float): 连接的阈值，阈值越大代表连接越容易
+    Returns:
+        res (torch.Tensor): 邻接矩阵
     """
     neuron_num = channels * height * width
     res = torch.zeros(neuron_num, neuron_num, dtype = torch.float)

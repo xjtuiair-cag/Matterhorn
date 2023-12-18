@@ -19,12 +19,12 @@ class Cast(snn.Module):
     def __init__(self, in_features: int, out_features: int, in_indices: Iterable[int], out_indices: Iterable[int], multi_time_step: bool = True) -> None:
         """
         LSM的输入/输出形状转化，将数据投射至正确的神经元输入上。
-        @params:
-            in_features: int 输入长度
-            out_features: int 输出长度
+        Args:
+            in_features (int): 输入长度
+            out_features (int): 输出长度
             in_indices: Iterable[int] 输入索引
             out_indices: Iterable[int] 输出索引
-            multi_time_step: bool 是否调整为多个时间步模式
+            multi_time_step (bool): 是否调整为多个时间步模式
         """
         super().__init__(
             multi_time_step = multi_time_step
@@ -42,9 +42,9 @@ class Cast(snn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
-        @params:
-            x: torch.Tensor 当前输入
-        @return:
-            y: torch.Tensor 当前输出
+        Args:
+            x (torch.Tensor): 当前输入
+        Returns:
+            y (torch.Tensor): 当前输出
         """
         return nn.functional.linear(x, self.adjacent.T, None)

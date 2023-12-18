@@ -35,19 +35,19 @@ class NMNIST(EventDataset2d):
     def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 34, height: int = 34, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
         """
         NMNIST数据集，将MNIST数据集动态变换后，转为事件的形式。
-        @params:
-            root: str 数据集的存储位置
-            train: bool 是否为训练集
-            transform: Callable | None 数据如何变换
-            target_transform: Callable | None 标签如何变换
-            download: bool 如果数据集不存在，是否应该下载
-            sampling: int 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
-            count: bool 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
-            time_steps: int 最终的数据集总共含有多少个时间步
-            width: int 最终数据集的宽度
-            height: int 最终数据集的高度
-            polarity: bool 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            clipped: bool 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+        Args:
+            root (str): 数据集的存储位置
+            train (bool): 是否为训练集
+            transform (Callable): | None 数据如何变换
+            target_transform (Callable): | None 标签如何变换
+            download (bool): 如果数据集不存在，是否应该下载
+            sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
+            time_steps (int): 最终的数据集总共含有多少个时间步
+            width (int): 最终数据集的宽度
+            height (int): 最终数据集的高度
+            polarity (bool): 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
+            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
         """
         super().__init__(
             root = root,
@@ -118,10 +118,10 @@ class NMNIST(EventDataset2d):
     def filename_2_data(self, filename: str) -> np.ndarray:
         """
         输入文件名，读取文件内容。
-        @params:
-            filename: str 文件名
-        @return:
-            data: np.ndarray 文件内容（数据）
+        Args:
+            filename (str): 文件名
+        Returns:
+            data (np.ndarray): 文件内容（数据）
         """
         data_str = ""
         with open(filename, 'rb') as f:
@@ -133,10 +133,10 @@ class NMNIST(EventDataset2d):
     def data_2_tpyx(self, data: np.ndarray) -> np.ndarray:
         """
         将数据分割为t,p,y,x数组。
-        @params:
-            data: np.ndarray 数据，形状为[5n]
-        @return:
-            data_tpyx: np.ndarray 分为t,p,y,x的数据，形状为[n, 4]
+        Args:
+            data (np.ndarray): 数据，形状为[5n]
+        Returns:
+            data_tpyx (np.ndarray): 分为t,p,y,x的数据，形状为[n, 4]
         """
         res = np.zeros((data.shape[0] // 5, 4), dtype = "uint32")
         res[:, 0] = ((data[2::5] & 0x7f) << 16) + (data[3::5] << 8) + data[4::5]
@@ -152,8 +152,8 @@ class NMNIST(EventDataset2d):
     def load_data(self) -> np.ndarray:
         """
         加载数据集。
-        @return:
-            data_label: np.ndarray 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
+        Returns:
+            data_label (np.ndarray): 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
         """
         list_filename = os.path.join(self.processed_folder, "__main__.csv")
         if os.path.isfile(list_filename):

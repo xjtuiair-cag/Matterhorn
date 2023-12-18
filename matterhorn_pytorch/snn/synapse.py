@@ -21,8 +21,8 @@ class Synapse(Module):
     def __init__(self, multi_time_step = False) -> None:
         """
         突触函数的骨架，定义突触最基本的函数。
-        @params:
-            multi_time_step: bool 是否调整为多个时间步模式
+        Args:
+            multi_time_step (bool): 是否调整为多个时间步模式
         """
         super().__init__(
             multi_time_step = multi_time_step
@@ -33,8 +33,8 @@ class Synapse(Module):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return "multi_time_step=%s, trainable=%s" % (str(self.multi_time_step), str(self.trainable))
 
@@ -42,10 +42,10 @@ class Synapse(Module):
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            x: torch.Tensor 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[B, ...]
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$，形状为[B, ...]
+        Args:
+            x (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[B, ...]
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$，形状为[B, ...]
         """
         x = o
         return x
@@ -54,10 +54,10 @@ class Synapse(Module):
     def forward_multi_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
-        @params:
-            x: torch.Tensor 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[T, B, ...]
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$，形状为[T, B, ...]
+        Args:
+            x (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[T, B, ...]
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$，形状为[T, B, ...]
         """
         time_steps = o.shape[0]
         batch_size = o.shape[1]
@@ -71,10 +71,10 @@ class Synapse(Module):
     def forward(self, o: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
-        @params:
-            o: torch.Tensor 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         if self.multi_time_step:
             x = self.forward_multi_time_step(o)
@@ -89,12 +89,12 @@ class Linear(Synapse, nn.Linear):
     def __init__(self, in_features: int, out_features: int, bias: bool = True, multi_time_step: bool = False, device = None, dtype = None) -> None:
         """
         全连接操作，输入一个大小为[B, L_{in}]的张量，输出一个大小为[B, L_{out}]的张量。
-        @params:
+        Args:
             in_features: 输入的长度L_{in}
             out_features: 输出的长度L_{out}
-            bias: bool 是否要加入偏置
-            multi_time_step: bool 是否调整为多个时间步模式
-            device: torch.device 所计算的设备
+            bias (bool): 是否要加入偏置
+            multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
             dtype: 所计算的数据类型
         """
         Synapse.__init__(
@@ -114,8 +114,8 @@ class Linear(Synapse, nn.Linear):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return ", ".join([nn.Linear.extra_repr(self), Synapse.extra_repr(self)])
 
@@ -123,10 +123,10 @@ class Linear(Synapse, nn.Linear):
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            o: torch.Tensor 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.Linear.forward(self, o)
         return x
@@ -136,18 +136,18 @@ class Conv1d(Synapse, nn.Conv1d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: Union[_size_1_t, str] = 0, dilation: _size_1_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", multi_time_step: bool = False, device = None, dtype = None) -> None:
         """
         一维卷积操作，输入一个大小为[B, C_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, L_{out}]的张量。
-        @params:
-            in_channels: int 输入的频道数C_{in}
-            out_channels: int 输出的频道C_{out}
-            kernel_size: _size_1_t 卷积核的形状
-            stride: _size_1_t 卷积的输出步长，决定卷积输出的形状
-            padding: _size_1_t | str 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            dilation: _size_1_t 卷积的输入步长
-            groups: int 分组进行卷积操作的组数
-            bias: bool 是否要加入偏置
-            padding_mode: str 边缘填充的方式
-            multi_time_step: bool 是否调整为多个时间步模式
-            device: torch.device 所计算的设备
+        Args:
+            in_channels (int): 输入的频道数C_{in}
+            out_channels (int): 输出的频道C_{out}
+            kernel_size (_size_1_t): 卷积核的形状
+            stride (_size_1_t): 卷积的输出步长，决定卷积输出的形状
+            padding (_size_1_t): | str 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            dilation (_size_1_t): 卷积的输入步长
+            groups (int): 分组进行卷积操作的组数
+            bias (bool): 是否要加入偏置
+            padding_mode (str): 边缘填充的方式
+            multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
             dtype: 所计算的数据类型
         """
         Synapse.__init__(
@@ -173,8 +173,8 @@ class Conv1d(Synapse, nn.Conv1d):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return ", ".join([nn.Conv1d.extra_repr(self), Synapse.extra_repr(self)])
 
@@ -182,10 +182,10 @@ class Conv1d(Synapse, nn.Conv1d):
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            o: torch.Tensor 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.Conv1d.forward(self, o)
         return x
@@ -195,18 +195,18 @@ class Conv2d(Synapse, nn.Conv2d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: Union[_size_2_t, str] = 0, dilation: _size_2_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", multi_time_step: bool = False, device = None, dtype = None) -> None:
         """
         二维卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}]的张量。
-        @params:
-            in_channels: int 输入的频道数C_{in}
-            out_channels: int 输出的频道C_{out}
-            kernel_size: _size_2_t 卷积核的形状
-            stride: _size_2_t 卷积的输出步长，决定卷积输出的形状
-            padding: _size_2_t | str 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            dilation: _size_2_t 卷积的输入步长
-            groups: int 分组进行卷积操作的组数
-            bias: bool 是否要加入偏置
-            padding_mode: str 边缘填充的方式
-            multi_time_step: bool 是否调整为多个时间步模式
-            device: torch.device 所计算的设备
+        Args:
+            in_channels (int): 输入的频道数C_{in}
+            out_channels (int): 输出的频道C_{out}
+            kernel_size (_size_2_t): 卷积核的形状
+            stride (_size_2_t): 卷积的输出步长，决定卷积输出的形状
+            padding (_size_2_t): | str 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            dilation (_size_2_t): 卷积的输入步长
+            groups (int): 分组进行卷积操作的组数
+            bias (bool): 是否要加入偏置
+            padding_mode (str): 边缘填充的方式
+            multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
             dtype: 所计算的数据类型
         """
         Synapse.__init__(
@@ -232,8 +232,8 @@ class Conv2d(Synapse, nn.Conv2d):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return ", ".join([nn.Conv2d.extra_repr(self), Synapse.extra_repr(self)])
 
@@ -241,10 +241,10 @@ class Conv2d(Synapse, nn.Conv2d):
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            o: torch.Tensor 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.Conv2d.forward(self, o)
         return x
@@ -254,18 +254,18 @@ class Conv3d(Synapse, nn.Conv3d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: Union[_size_3_t, str] = 0, dilation: _size_3_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", multi_time_step: bool = False, device = None, dtype = None) -> None:
         """
         三维卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}, L_{out}]的张量。
-        @params:
-            in_channels: int 输入的频道数C_{in}
-            out_channels: int 输出的频道C_{out}
-            kernel_size: _size_3_t 卷积核的形状
-            stride: _size_3_t 卷积的输出步长，决定卷积输出的形状
-            padding: _size_3_t | str 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            dilation: _size_3_t 卷积的输入步长
-            groups: int 分组进行卷积操作的组数
-            bias: bool 是否要加入偏置
-            padding_mode: str 边缘填充的方式
-            multi_time_step: bool 是否调整为多个时间步模式
-            device: torch.device 所计算的设备
+        Args:
+            in_channels (int): 输入的频道数C_{in}
+            out_channels (int): 输出的频道C_{out}
+            kernel_size (_size_3_t): 卷积核的形状
+            stride (_size_3_t): 卷积的输出步长，决定卷积输出的形状
+            padding (_size_3_t): | str 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            dilation (_size_3_t): 卷积的输入步长
+            groups (int): 分组进行卷积操作的组数
+            bias (bool): 是否要加入偏置
+            padding_mode (str): 边缘填充的方式
+            multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
             dtype: 所计算的数据类型
         """
         Synapse.__init__(
@@ -291,8 +291,8 @@ class Conv3d(Synapse, nn.Conv3d):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return ", ".join([nn.Conv3d.extra_repr(self), Synapse.extra_repr(self)])
 
@@ -300,10 +300,10 @@ class Conv3d(Synapse, nn.Conv3d):
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            o: torch.Tensor 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.Conv3d.forward(self, o)
         return x
@@ -313,19 +313,19 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: _size_1_t = 0, output_padding: _size_1_t = 0, groups: int = 1, bias: bool = True, dilation: _size_1_t = 1, padding_mode: str = "zeros", multi_time_step: bool = False, device = None, dtype = None) -> None:
         """
         一维逆卷积操作，输入一个大小为[B, C_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, L_{out}]的张量。
-        @params:
-            in_channels: int 输入的频道数C_{in}
-            out_channels: int 输出的频道C_{out}
-            kernel_size: _size_1_t 卷积核的形状
-            stride: _size_1_t 卷积的输出步长，决定卷积输出的形状
-            padding: _size_1_t 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            output_padding: _size_1_t 在输出边缘填充的量
-            groups: int 分组进行卷积操作的组数
-            bias: bool 是否要加入偏置
-            dilation: _size_1_t 卷积的输出步长
-            padding_mode: str 边缘填充的方式
-            multi_time_step: bool 是否调整为多个时间步模式
-            device: torch.device 所计算的设备
+        Args:
+            in_channels (int): 输入的频道数C_{in}
+            out_channels (int): 输出的频道C_{out}
+            kernel_size (_size_1_t): 卷积核的形状
+            stride (_size_1_t): 卷积的输出步长，决定卷积输出的形状
+            padding (_size_1_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            output_padding (_size_1_t): 在输出边缘填充的量
+            groups (int): 分组进行卷积操作的组数
+            bias (bool): 是否要加入偏置
+            dilation (_size_1_t): 卷积的输出步长
+            padding_mode (str): 边缘填充的方式
+            multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
             dtype: 所计算的数据类型
         """
         Synapse.__init__(
@@ -352,8 +352,8 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return ", ".join([nn.ConvTranspose1d.extra_repr(self), Synapse.extra_repr(self)])
 
@@ -361,10 +361,10 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            o: torch.Tensor 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.ConvTranspose1d.forward(self, o)
         return x
@@ -374,19 +374,19 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, output_padding: _size_2_t = 0, groups: int = 1, bias: bool = True, dilation: _size_2_t = 1, padding_mode: str = "zeros", multi_time_step: bool = False, device = None, dtype = None) -> None:
         """
         二维逆卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}]的张量。
-        @params:
-            in_channels: int 输入的频道数C_{in}
-            out_channels: int 输出的频道C_{out}
-            kernel_size: _size_2_t 卷积核的形状
-            stride: _size_2_t 卷积的输出步长，决定卷积输出的形状
-            padding: _size_2_t 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            output_padding: _size_2_t 在输出边缘填充的量
-            groups: int 分组进行卷积操作的组数
-            bias: bool 是否要加入偏置
-            dilation: _size_2_t 卷积的输出步长
-            padding_mode: str 边缘填充的方式
-            multi_time_step: bool 是否调整为多个时间步模式
-            device: torch.device 所计算的设备
+        Args:
+            in_channels (int): 输入的频道数C_{in}
+            out_channels (int): 输出的频道C_{out}
+            kernel_size (_size_2_t): 卷积核的形状
+            stride (_size_2_t): 卷积的输出步长，决定卷积输出的形状
+            padding (_size_2_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            output_padding (_size_2_t): 在输出边缘填充的量
+            groups (int): 分组进行卷积操作的组数
+            bias (bool): 是否要加入偏置
+            dilation (_size_2_t): 卷积的输出步长
+            padding_mode (str): 边缘填充的方式
+            multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
             dtype: 所计算的数据类型
         """
         Synapse.__init__(
@@ -413,8 +413,8 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return ", ".join([nn.ConvTranspose2d.extra_repr(self), Synapse.extra_repr(self)])
 
@@ -422,10 +422,10 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            o: torch.Tensor 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.ConvTranspose2d.forward(self, o)
         return x
@@ -435,19 +435,19 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _size_3_t = 0, output_padding: _size_3_t = 0, groups: int = 1, bias: bool = True, dilation: _size_3_t = 1, padding_mode: str = "zeros", multi_time_step: bool = False, device = None, dtype = None) -> None:
         """
         三维逆卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}, L_{out}]的张量。
-        @params:
-            in_channels: int 输入的频道数C_{in}
-            out_channels: int 输出的频道C_{out}
-            kernel_size: _size_3_t 卷积核的形状
-            stride: _size_3_t 卷积的输出步长，决定卷积输出的形状
-            padding: _size_3_t 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            output_padding: _size_3_t 在输出边缘填充的量
-            groups: int 分组进行卷积操作的组数
-            bias: bool 是否要加入偏置
-            dilation: _size_3_t 卷积的输出步长
-            padding_mode: str 边缘填充的方式
-            multi_time_step: bool 是否调整为多个时间步模式
-            device: torch.device 所计算的设备
+        Args:
+            in_channels (int): 输入的频道数C_{in}
+            out_channels (int): 输出的频道C_{out}
+            kernel_size (_size_3_t): 卷积核的形状
+            stride (_size_3_t): 卷积的输出步长，决定卷积输出的形状
+            padding (_size_3_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            output_padding (_size_3_t): 在输出边缘填充的量
+            groups (int): 分组进行卷积操作的组数
+            bias (bool): 是否要加入偏置
+            dilation (_size_3_t): 卷积的输出步长
+            padding_mode (str): 边缘填充的方式
+            multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
             dtype: 所计算的数据类型
         """
         Synapse.__init__(
@@ -474,8 +474,8 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return ", ".join([nn.ConvTranspose3d.extra_repr(self), Synapse.extra_repr(self)])
 
@@ -483,10 +483,10 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            o: torch.Tensor 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.ConvTranspose3d.forward(self, o)
         return x
@@ -496,14 +496,14 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, multi_time_step: bool = False, device = None, dtype = None) -> None:
         """
         一维批归一化。
-        @params:
-            num_features: int 需要被归一化那一维度的长度
-            eps: float 参数epsilon
-            momentum: float 动量参数
-            affine: bool 是否启用参数gamma和beta，进行仿射变换
-            track_running_stats: bool 是否需要跟踪整个训练过程来进行批归一化的学习
-            multi_time_step: bool 是否调整为多个时间步模式
-            device: torch.device 所计算的设备
+        Args:
+            num_features (int): 需要被归一化那一维度的长度
+            eps (float): 参数epsilon
+            momentum (float): 动量参数
+            affine (bool): 是否启用参数gamma和beta，进行仿射变换
+            track_running_stats (bool): 是否需要跟踪整个训练过程来进行批归一化的学习
+            multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
             dtype: 所计算的数据类型
         """
         Synapse.__init__(
@@ -525,8 +525,8 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return ", ".join([nn.BatchNorm1d.extra_repr(self), Synapse.extra_repr(self)])
 
@@ -534,10 +534,10 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
+        Args:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.BatchNorm1d.forward(self, x)
         return x
@@ -547,14 +547,14 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, multi_time_step: bool = False, device = None, dtype = None) -> None:
         """
         二维批归一化。
-        @params:
-            num_features: int 需要被归一化那一维度的长度
-            eps: float 参数epsilon
-            momentum: float 动量参数
-            affine: bool 是否启用参数gamma和beta，进行仿射变换
-            track_running_stats: bool 是否需要跟踪整个训练过程来进行批归一化的学习
-            multi_time_step: bool 是否调整为多个时间步模式
-            device: torch.device 所计算的设备
+        Args:
+            num_features (int): 需要被归一化那一维度的长度
+            eps (float): 参数epsilon
+            momentum (float): 动量参数
+            affine (bool): 是否启用参数gamma和beta，进行仿射变换
+            track_running_stats (bool): 是否需要跟踪整个训练过程来进行批归一化的学习
+            multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
             dtype: 所计算的数据类型
         """
         Synapse.__init__(
@@ -576,8 +576,8 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return ", ".join([nn.BatchNorm2d.extra_repr(self), Synapse.extra_repr(self)])
 
@@ -585,10 +585,10 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
+        Args:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.BatchNorm2d.forward(self, x)
         return x
@@ -598,14 +598,14 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, multi_time_step: bool = False, device = None, dtype = None) -> None:
         """
         三维批归一化。
-        @params:
-            num_features: int 需要被归一化那一维度的长度
-            eps: float 参数epsilon
-            momentum: float 动量参数
-            affine: bool 是否启用参数gamma和beta，进行仿射变换
-            track_running_stats: bool 是否需要跟踪整个训练过程来进行批归一化的学习
-            multi_time_step: bool 是否调整为多个时间步模式
-            device: torch.device 所计算的设备
+        Args:
+            num_features (int): 需要被归一化那一维度的长度
+            eps (float): 参数epsilon
+            momentum (float): 动量参数
+            affine (bool): 是否启用参数gamma和beta，进行仿射变换
+            track_running_stats (bool): 是否需要跟踪整个训练过程来进行批归一化的学习
+            multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
             dtype: 所计算的数据类型
         """
         Synapse.__init__(
@@ -627,8 +627,8 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return ", ".join([nn.BatchNorm3d.extra_repr(self), Synapse.extra_repr(self)])
 
@@ -636,10 +636,10 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
+        Args:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.BatchNorm3d.forward(self, x)
         return x
@@ -649,12 +649,12 @@ class LayerNorm(Synapse, nn.LayerNorm):
     def __init__(self, normalized_shape: _shape_t, eps: float = 0.00001, elementwise_affine: bool = True, multi_time_step: bool = False, device = None, dtype = None) -> None:
         """
         数据归一化。
-        @params:
-            normalized_shape: _shape_t 在什么数据尺度上进行归一化
-            eps: float 参数epsilon
-            elementwise_affine: bool 是否启用参数gamma和beta，进行仿射变换
-            multi_time_step: bool 是否调整为多个时间步模式
-            device: torch.device 所计算的设备
+        Args:
+            normalized_shape (_shape_t): 在什么数据尺度上进行归一化
+            eps (float): 参数epsilon
+            elementwise_affine (bool): 是否启用参数gamma和beta，进行仿射变换
+            multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
             dtype: 所计算的数据类型
         """
         Synapse.__init__(
@@ -674,8 +674,8 @@ class LayerNorm(Synapse, nn.LayerNorm):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return ", ".join([nn.LayerNorm.extra_repr(self), Synapse.extra_repr(self)])
 
@@ -683,10 +683,10 @@ class LayerNorm(Synapse, nn.LayerNorm):
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
-        @return:
-            x: torch.Tensor 突触的突触后电位$X_{i}^{l}(t)$
+        Args:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.LayerNorm.forward(self, x)
         return x

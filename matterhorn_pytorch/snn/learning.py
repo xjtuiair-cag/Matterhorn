@@ -17,19 +17,19 @@ except:
 def stdp_py(delta_weight: torch.Tensor, input_shape: int, output_shape: int, time_steps: int, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float) -> torch.Tensor:
     """
     STDP的python版本实现，不到万不得已不会调用（性能是灾难级别的）
-    @params:
-        delta_weight: torch.Tensor 权重矩阵，形状为[output_shape, input_shape]
-        input_shape: int 输入长度
-        output_shape: int 输出长度
-        time_steps: int 时间步长
-        input_spike_train: torch.Tensor 输入脉冲序列，形状为[input_shape, time_steps]
-        output_spike_train: torch.Tensor 输出脉冲序列，形状为[output_shape, time_steps]
-        a_pos: float STDP参数A+
-        tau_pos: float STDP参数tau+
-        a_neg: float STDP参数A-
-        tau_neg: float STDP参数tau-
-    @return:
-        delta_weight: torch.Tensor 权重增量
+    Args:
+        delta_weight (torch.Tensor): 权重矩阵，形状为[output_shape, input_shape]
+        input_shape (int): 输入长度
+        output_shape (int): 输出长度
+        time_steps (int): 时间步长
+        input_spike_train (torch.Tensor): 输入脉冲序列，形状为[input_shape, time_steps]
+        output_spike_train (torch.Tensor): 输出脉冲序列，形状为[output_shape, time_steps]
+        a_pos (float): STDP参数A+
+        tau_pos (float): STDP参数tau+
+        a_neg (float): STDP参数A-
+        tau_neg (float): STDP参数tau-
+    Returns:
+        delta_weight (torch.Tensor): 权重增量
     """
     for i in range(output_shape):
         for j in range(input_shape):
@@ -63,17 +63,17 @@ except:
 def stdp(delta_weight: torch.Tensor, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float) -> torch.Tensor:
     """
     STDP总函数，视情况调用函数
-    @params:
-        delta_weight: torch.Tensor 权重矩阵，形状为[output_shape, input_shape]
-        input_shape: int 输入长度
-        output_shape: int 输出长度
-        time_steps: int 时间步长
-        input_spike_train: torch.Tensor 输入脉冲序列，形状为[input_shape, time_steps]
-        output_spike_train: torch.Tensor 输出脉冲序列，形状为[output_shape, time_steps]
-        a_pos: float STDP参数A+
-        tau_pos: float STDP参数tau+
-        a_neg: float STDP参数A-
-        tau_neg: float STDP参数tau-
+    Args:
+        delta_weight (torch.Tensor): 权重矩阵，形状为[output_shape, input_shape]
+        input_shape (int): 输入长度
+        output_shape (int): 输出长度
+        time_steps (int): 时间步长
+        input_spike_train (torch.Tensor): 输入脉冲序列，形状为[input_shape, time_steps]
+        output_spike_train (torch.Tensor): 输出脉冲序列，形状为[output_shape, time_steps]
+        a_pos (float): STDP参数A+
+        tau_pos (float): STDP参数tau+
+        a_neg (float): STDP参数A-
+        tau_neg (float): STDP参数tau-
     """
     input_shape = delta_weight.shape[1]
     output_shape = delta_weight.shape[0]
@@ -103,14 +103,14 @@ class STDPLinear(Module, nn.Linear):
     def __init__(self, in_features: int, out_features: int, soma: nn.Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, device = None, dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层
-        @params:
-            in_features: int 输入长度，用法同nn.Linear
-            out_features: int 输出长度，用法同nn.Linear
-            soma: nn.Module 使用的脉冲神经元胞体，在matterhorn_pytorch.snn.soma中选择
-            a_pos: float STDP参数A+
-            tau_pos: float STDP参数tau+
-            a_neg: float STDP参数A-
-            tau_neg: float STDP参数tau-
+        Args:
+            in_features (int): 输入长度，用法同nn.Linear
+            out_features (int): 输出长度，用法同nn.Linear
+            soma (nn.Module): 使用的脉冲神经元胞体，在matterhorn_pytorch.snn.soma中选择
+            a_pos (float): STDP参数A+
+            tau_pos (float): STDP参数tau+
+            a_neg (float): STDP参数A-
+            tau_neg (float): STDP参数tau-
         """
         Module.__init__(self)
         nn.Linear.__init__(
@@ -182,10 +182,10 @@ class STDPLinear(Module, nn.Linear):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
-        @params:
-            x: torch.Tensor 上一层脉冲$O_{j}^{l-1}(t)$
-        @return:
-            o: torch.Tensor 当前层脉冲$O_{i}^{l}(t)$
+        Args:
+            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            o (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
         self.input_spike_seq.append(x.clone().detach().requires_grad_(True))
         x = super().forward(x)

@@ -21,10 +21,10 @@ class TemporalWiseAttention(snn.Module):
     def __init__(self, time_steps: int, r: float, d_threshold: float) -> None:
         """
         Tempora-wise Attention连接层
-        @params:
-            time_steps: int 时间步长
-            r: float 用于控制权重矩阵的大小(T*(T/r)和(T/r)*T)
-            d_threshold: float 注意阈值，用于阶跃函数
+        Args:
+            time_steps (int): 时间步长
+            r (float): 用于控制权重矩阵的大小(T*(T/r)和(T/r)*T)
+            d_threshold (float): 注意阈值，用于阶跃函数
         """
         super().__init__(
             multi_time_step = True
@@ -52,10 +52,10 @@ class TemporalWiseAttention(snn.Module):
     def f_train(self, s: torch.Tensor) -> torch.Tensor:
         """
         训练模式下的前向传播，公式为$d^{n-1}=σ(W_{2}^{n}δ(W_{1}^{n}s^{n-1}]))$
-        @params:
-            s: torch.Tensor 统计向量$s^{n-1}$
-        @return:
-            d: torch.Tensor 分数向量$d^{n-1}$
+        Args:
+            s (torch.Tensor): 统计向量$s^{n-1}$
+        Returns:
+            d (torch.Tensor): 分数向量$d^{n-1}$
         """
         dim = len(s.shape)
         if dim > 1:
@@ -69,10 +69,10 @@ class TemporalWiseAttention(snn.Module):
     def f_inf(self, s: torch.Tensor) -> torch.Tensor:
         """
         推理模式下的前向传播，公式为$d^{n-1}=σ(W_{2}^{n}δ(W_{1}^{n}s^{n-1}]))$
-        @params:
-            s: torch.Tensor 统计向量$s^{n-1}$，形状为[B, T]
-        @return:
-            d: torch.Tensor 分数向量$d^{n-1}$，形状为[B, T]
+        Args:
+            s (torch.Tensor): 统计向量$s^{n-1}$，形状为[B, T]
+        Returns:
+            d (torch.Tensor): 分数向量$d^{n-1}$，形状为[B, T]
         """
         dim = len(s.shape)
         if dim > 1:
@@ -86,10 +86,10 @@ class TemporalWiseAttention(snn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数
-        @params:
-            x: torch.Tensor 原始脉冲张量
-        @return:
-            x: torch.Tensor 过滤后的脉冲张量
+        Args:
+            x (torch.Tensor): 原始脉冲张量
+        Returns:
+            x (torch.Tensor): 过滤后的脉冲张量
         """
         is_train = x.requires_grad
         dim = len(x.shape)

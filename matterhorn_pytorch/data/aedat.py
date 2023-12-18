@@ -41,20 +41,20 @@ class AEDAT(EventDataset2d):
     def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4", clipped: Optional[Union[Tuple, int]] = None) -> None:
         """
         原始数据后缀名为.aedat的数据集
-        @params:
-            root: str 数据集的存储位置
-            train: bool 是否为训练集
-            transform: Callable | None 数据如何变换
-            target_transform: Callable | None 标签如何变换
-            download: bool 如果数据集不存在，是否应该下载
-            sampling: int 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
-            count: bool 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
-            time_steps: int 最终的数据集总共含有多少个时间步
-            width: int 最终数据集的宽度
-            height: int 最终数据集的高度
-            polarity: bool 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            endian: str 大端还是小端，">"代表大端存储，"<"代表小端存储
-            datatype: str 数据类型，如u4表示uint32
+        Args:
+            root (str): 数据集的存储位置
+            train (bool): 是否为训练集
+            transform (Callable): | None 数据如何变换
+            target_transform (Callable): | None 标签如何变换
+            download (bool): 如果数据集不存在，是否应该下载
+            sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
+            time_steps (int): 最终的数据集总共含有多少个时间步
+            width (int): 最终数据集的宽度
+            height (int): 最终数据集的高度
+            polarity (bool): 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
+            endian (str): 大端还是小端，">"代表大端存储，"<"代表小端存储
+            datatype (str): 数据类型，如u4表示uint32
         """
         self.endian = endian
         self.datatype = datatype
@@ -77,10 +77,10 @@ class AEDAT(EventDataset2d):
     def filename_2_data(self, filename: str) -> np.ndarray:
         """
         输入文件名，读取文件内容。
-        @params:
-            filename: str 文件名
-        @return:
-            data: np.ndarray 文件内容（数据）
+        Args:
+            filename (str): 文件名
+        Returns:
+            data (np.ndarray): 文件内容（数据）
         """
         data_str = ""
         with open(filename, 'rb') as f:
@@ -98,10 +98,10 @@ class AEDAT(EventDataset2d):
     def data_2_tpyx(self, data: np.ndarray) -> np.ndarray:
         """
         将数据分割为t,p,y,x数组。
-        @params:
-            data: np.ndarray 数据，形状为[2n]
-        @return:
-            data_tpyx: np.ndarray 分为t,p,y,x的数据，形状为[n, 4]
+        Args:
+            data (np.ndarray): 数据，形状为[2n]
+        Returns:
+            data_tpyx (np.ndarray): 分为t,p,y,x的数据，形状为[n, 4]
         """
         res = np.zeros((data.shape[0] // 2, 4), dtype = "uint32")
         xyp = data[::2]
@@ -119,10 +119,10 @@ class AEDAT(EventDataset2d):
     def label(self, key: str) -> int:
         """
         返回该文件对应的标签。
-        @params:
-            key: str 关键词
-        @return:
-            label: int 文件的标签
+        Args:
+            key (str): 关键词
+        Returns:
+            label (int): 文件的标签
         """
         if key in self.labels:
             return self.labels.index(key)
@@ -132,11 +132,11 @@ class AEDAT(EventDataset2d):
     def is_train(self, label: int, index: int = 0) -> bool:
         """
         从路径、文件名和索引判断是否是训练集。
-        @params:
-            label: int 标签
-            index: int 文件的索引
-        @return:
-            is_train: bool 是否为训练集
+        Args:
+            label (int): 标签
+            index (int): 文件的索引
+        Returns:
+            is_train (bool): 是否为训练集
         """
         return True
 
@@ -169,19 +169,19 @@ class CIFAR10DVS(AEDAT):
     def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
         """
         CIFAR-10 DVS数据集，将CIFAR10数据集投影至LCD屏幕后，用事件相机录制的数据集
-        @params:
-            root: str 数据集的存储位置
-            train: bool 是否为训练集
-            transform: Callable | None 数据如何变换
-            target_transform: Callable | None 标签如何变换
-            download: bool 如果数据集不存在，是否应该下载
-            sampling: int 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
-            count: bool 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
-            time_steps: int 最终的数据集总共含有多少个时间步
-            width: int 最终数据集的宽度
-            height: int 最终数据集的高度
-            polarity: bool 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            clipped: bool 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+        Args:
+            root (str): 数据集的存储位置
+            train (bool): 是否为训练集
+            transform (Callable): | None 数据如何变换
+            target_transform (Callable): | None 标签如何变换
+            download (bool): 如果数据集不存在，是否应该下载
+            sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
+            time_steps (int): 最终的数据集总共含有多少个时间步
+            width (int): 最终数据集的宽度
+            height (int): 最终数据集的高度
+            polarity (bool): 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
+            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
         """
         super().__init__(
             root = root,
@@ -256,11 +256,11 @@ class CIFAR10DVS(AEDAT):
     def is_train(self, label: int, index: int = 0) -> bool:
         """
         从路径、文件名和索引判断是否是训练集。
-        @params:
-            label: int 标签
-            index: int 文件的索引
-        @return:
-            is_train: bool 是否为训练集
+        Args:
+            label (int): 标签
+            index (int): 文件的索引
+        Returns:
+            is_train (bool): 是否为训练集
         """
         return index < 900
 
@@ -268,8 +268,8 @@ class CIFAR10DVS(AEDAT):
     def load_data(self) -> np.ndarray:
         """
         加载数据集。
-        @return:
-            data_label: np.ndarray 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
+        Returns:
+            data_label (np.ndarray): 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
         """
         list_filename = os.path.join(self.processed_folder, "__main__.csv")
         if os.path.isfile(list_filename):
@@ -314,19 +314,19 @@ class DVS128Gesture(AEDAT):
     def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
         """
         DVS128 Gesture数据集，用事件相机录制手势形成的数据集
-        @params:
-            root: str 数据集的存储位置
-            train: bool 是否为训练集
-            transform: Callable | None 数据如何变换
-            target_transform: Callable | None 标签如何变换
-            download: bool 如果数据集不存在，是否应该下载
-            sampling: int 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
-            count: bool 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
-            time_steps: int 最终的数据集总共含有多少个时间步
-            width: int 最终数据集的宽度
-            height: int 最终数据集的高度
-            polarity: bool 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            clipped: bool 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+        Args:
+            root (str): 数据集的存储位置
+            train (bool): 是否为训练集
+            transform (Callable): | None 数据如何变换
+            target_transform (Callable): | None 标签如何变换
+            download (bool): 如果数据集不存在，是否应该下载
+            sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
+            time_steps (int): 最终的数据集总共含有多少个时间步
+            width (int): 最终数据集的宽度
+            height (int): 最终数据集的高度
+            polarity (bool): 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
+            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
         """
         super().__init__(
             root = root,
@@ -390,11 +390,11 @@ class DVS128Gesture(AEDAT):
     def is_train(self, label: int, index: int = 0) -> bool:
         """
         从路径、文件名和索引判断是否是训练集。
-        @params:
-            label: int 标签
-            index: int 文件的索引
-        @return:
-            is_train: bool 是否为训练集
+        Args:
+            label (int): 标签
+            index (int): 文件的索引
+        Returns:
+            is_train (bool): 是否为训练集
         """
         return index < 24
     
@@ -426,10 +426,10 @@ class DVS128Gesture(AEDAT):
     def filename_2_data(self, filename: str) -> np.ndarray:
         """
         输入文件名，读取文件内容。
-        @params:
-            filename: str 文件名
-        @return:
-            data: np.ndarray 文件内容（数据）
+        Args:
+            filename (str): 文件名
+        Returns:
+            data (np.ndarray): 文件内容（数据）
         """
         data_str = ""
         with open(filename, 'rb') as f:
@@ -448,8 +448,8 @@ class DVS128Gesture(AEDAT):
     def load_data(self) -> np.ndarray:
         """
         加载数据集。
-        @return:
-            data_label: np.ndarray 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
+        Returns:
+            data_label (np.ndarray): 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
         """
         list_filename = os.path.join(self.processed_folder, "__main__.csv")
         if os.path.isfile(list_filename):

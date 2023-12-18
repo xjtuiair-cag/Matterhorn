@@ -19,11 +19,11 @@ class LSM(snn.Module):
     def __init__(self, adjacent: torch.Tensor, soma: snn.Module, multi_time_step: bool = True, reset_after_process: bool = True, trainable: bool = True, device = None, dtype = None) -> None:
         """
         液体状态机。
-        @params:
-            adjacent: torch.Tensor 邻接矩阵，行为各个神经元的轴突，列为各个神经元的树突，1为有从轴突指向树突的连接，0为没有
-            soma: snn.Module 胞体
-            multi_time_step: bool 是否调整为多个时间步模式
-            reset_after_process: bool 是否在执行完后自动重置，若为False则需要手动重置
+        Args:
+            adjacent (torch.Tensor): 邻接矩阵，行为各个神经元的轴突，列为各个神经元的树突，1为有从轴突指向树突的连接，0为没有
+            soma (snn.Module): 胞体
+            multi_time_step (bool): 是否调整为多个时间步模式
+            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(
             multi_time_step = multi_time_step,
@@ -44,8 +44,8 @@ class LSM(snn.Module):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
-        @return:
-            repr_str: str 参数表
+        Returns:
+            repr_str (str): 参数表
         """
         return "neuron_num=%d, adjacent=\n%s\n, multi_time_step=%s" % (self.neuron_num, self.adjacent, str(self.multi_time_step))
 
@@ -53,11 +53,11 @@ class LSM(snn.Module):
     def init_tensor(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         校正整个输入形状。
-        @params:
-            u: torch.Tensor 待校正的输入，可能是张量或浮点值
-            x: torch.Tensor 带有正确数据类型、所在设备和形状的张量
-        @return:
-            u: torch.Tensor 经过校正的输入张量
+        Args:
+            u (torch.Tensor): 待校正的输入，可能是张量或浮点值
+            x (torch.Tensor): 带有正确数据类型、所在设备和形状的张量
+        Returns:
+            u (torch.Tensor): 经过校正的输入张量
         """
         if isinstance(u, float):
             u = torch.full_like(x, u)
@@ -68,10 +68,10 @@ class LSM(snn.Module):
     def permute_t_b(self, x: torch.Tensor) -> torch.Tensor:
         """
         将时间步与批大小对调。
-        @params:
-            x: torch.Tensor 输入张量
-        @return:
-            y: torch.Tensor 输出张量
+        Args:
+            x (torch.Tensor): 输入张量
+        Returns:
+            y (torch.Tensor): 输出张量
         """
         idx = [i for i, j in enumerate(x.shape)]
         idx[0], idx[1] = idx[1], idx[0]
@@ -97,10 +97,10 @@ class LSM(snn.Module):
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
-        @params:
-            x: torch.Tensor 当前输入，形状为[B, I]
-        @return:
-            y: torch.Tensor 当前输出，形状为[B, O]
+        Args:
+            x (torch.Tensor): 当前输入，形状为[B, I]
+        Returns:
+            y (torch.Tensor): 当前输出，形状为[B, O]
         """
         x = self.f_synapse(self.last_output, x)
         y = self.soma(x)
@@ -111,10 +111,10 @@ class LSM(snn.Module):
     def forward_multi_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
-        @params:
-            x: torch.Tensor 输入序列，形状为[T, B, I]
-        @return:
-            y: torch.Tensor 输出序列，形状为[T, B, O]
+        Args:
+            x (torch.Tensor): 输入序列，形状为[T, B, I]
+        Returns:
+            y (torch.Tensor): 输出序列，形状为[T, B, O]
         """
         time_steps = x.shape[0]
         y_seq = []
@@ -127,10 +127,10 @@ class LSM(snn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
-        @params:
-            x: torch.Tensor 当前输入，形状为[B, I]（单步）或[B, T, I]（多步）
-        @return:
-            y: torch.Tensor 当前输出，形状为[B, O]（单步）或[B, T, O]（多步）
+        Args:
+            x (torch.Tensor): 当前输入，形状为[B, I]（单步）或[B, T, I]（多步）
+        Returns:
+            y (torch.Tensor): 当前输出，形状为[B, O]（单步）或[B, T, O]（多步）
         """
         if self.multi_time_step:
             x = self.permute_t_b(x)

@@ -493,17 +493,17 @@ for i in range(output_shape):
 """
 ```
 
-在函数头与函数体之间，用多行注释的形式写上该函数的简介、参数表及返回值表；参数表的开头用`@params:`表示，并且每个参数单独一行；返回值表的开头用`@return`表示，并且每个返回值单独一行：
+在函数头与函数体之间，用多行注释的形式写上该函数的简介、参数表及返回值表；参数表的开头用`Args:`表示，并且每个参数单独一行；返回值表的开头用`Returns`表示，并且每个返回值单独一行：
 
 ```python
 def add_tensor_in_row(mat_add: torch.Tensor, vec_add: torch.Tensor) -> torch.Tensor:
    """
    将向量加到矩阵的行上。
-   @params:
-      mat_add: torch.Tensor 被加的矩阵，一个形状为mxn的矩阵
-      vec_add: torch.Tensor 用于相加的向量，一个形状为m的向量
-   @return:
-      torch.Tensor 相加后的结果，一个形状为mxn的矩阵
+   Args:
+      mat_add (torch.Tensor): 被加的矩阵，一个形状为mxn的矩阵
+      vec_add (torch.Tensor): 用于相加的向量，一个形状为m的向量
+   Returns:
+      res (torch.Tensor): 相加后的结果，一个形状为mxn的矩阵
    """
    return (mat.T + vec).T
 ```
@@ -629,11 +629,11 @@ demo_var: Any
 def add_tensor_in_row(mat_add: torch.Tensor, vec_add: torch.Tensor) -> torch.Tensor:
    """
    将向量加到矩阵的行上。
-   @params:
-      mat_add: torch.Tensor 被加的矩阵，一个形状为mxn的矩阵
-      vec_add: torch.Tensor 用于相加的向量，一个形状为m的向量
-   @return:
-      torch.Tensor 相加后的结果，一个形状为mxn的矩阵
+   Args:
+      mat_add (torch.Tensor): 被加的矩阵，一个形状为mxn的矩阵
+      vec_add (torch.Tensor): 用于相加的向量，一个形状为m的向量
+   Returns:
+      res (torch.Tensor): 相加后的结果，一个形状为mxn的矩阵
    """
    return (mat.T + vec).T
 

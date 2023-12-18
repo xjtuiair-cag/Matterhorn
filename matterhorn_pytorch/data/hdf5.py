@@ -35,17 +35,17 @@ class HDF5(EventDataset1d):
     def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, precision: int = 1e9, time_steps: int = 128, length: int = 128, clipped: Optional[Union[Tuple, float]] = None) -> None:
         """
         原始数据后缀名为.hdf5的数据集
-        @params:
-            root: str 数据集的存储位置
-            train: bool 是否为训练集
-            transform: Callable | None 数据如何变换
-            target_transform: Callable | None 标签如何变换
-            download: bool 如果数据集不存在，是否应该下载
-            sampling: int 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
-            count: bool 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
-            precision: int 最终数据集的时间精度
-            time_steps: int 最终的数据集总共含有多少个时间步
-            length: int 最终数据集的空间精度
+        Args:
+            root (str): 数据集的存储位置
+            train (bool): 是否为训练集
+            transform (Callable): | None 数据如何变换
+            target_transform (Callable): | None 标签如何变换
+            download (bool): 如果数据集不存在，是否应该下载
+            sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
+            precision (int): 最终数据集的时间精度
+            time_steps (int): 最终的数据集总共含有多少个时间步
+            length (int): 最终数据集的空间精度
         """
         self.precision = precision
         super().__init__(
@@ -65,8 +65,8 @@ class HDF5(EventDataset1d):
     def load_data(self) -> np.ndarray:
         """
         加载数据集。
-        @return:
-            data_label: np.ndarray 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
+        Returns:
+            data_label (np.ndarray): 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
         """
         return None
 
@@ -74,10 +74,10 @@ class HDF5(EventDataset1d):
     def filename_2_data(self, filename: str) -> h5py.File:
         """
         输入文件名，读取文件内容。
-        @params:
-            filename: str 文件名
-        @return:
-            data: np.ndarray 文件内容（数据）
+        Args:
+            filename (str): 文件名
+        Returns:
+            data (np.ndarray): 文件内容（数据）
         """
         data = h5py.File(filename, "r")
         return data
@@ -97,18 +97,18 @@ class SpikingHeidelbergDigits(HDF5):
     def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 700, clipped: Optional[Union[Tuple, float]] = None) -> None:
         """
         Spiking Heidelberg Digits数据集，记录下英文和德语的0-9（总共20类），并转换成长度为700的脉冲。
-        @params:
-            root: str 数据集的存储位置
-            train: bool 是否为训练集
-            transform: Callable | None 数据如何变换
-            target_transform: Callable | None 标签如何变换
-            download: bool 如果数据集不存在，是否应该下载
-            sampling: int 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
-            count: bool 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
-            precision: int 最终数据集的时间精度
-            time_steps: int 最终的数据集总共含有多少个时间步
-            length: int 最终数据集的空间精度
-            clipped: bool 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+        Args:
+            root (str): 数据集的存储位置
+            train (bool): 是否为训练集
+            transform (Callable): | None 数据如何变换
+            target_transform (Callable): | None 标签如何变换
+            download (bool): 如果数据集不存在，是否应该下载
+            sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
+            count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
+            precision (int): 最终数据集的时间精度
+            time_steps (int): 最终的数据集总共含有多少个时间步
+            length (int): 最终数据集的空间精度
+            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
         """
         super().__init__(
             root = root,
@@ -178,8 +178,8 @@ class SpikingHeidelbergDigits(HDF5):
     def load_data(self) -> np.ndarray:
         """
         加载数据集。
-        @return:
-            data_label: np.ndarray 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
+        Returns:
+            data_label (np.ndarray): 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
         """
         list_filename = os.path.join(self.processed_folder, "__main__.csv")
         if os.path.isfile(list_filename):

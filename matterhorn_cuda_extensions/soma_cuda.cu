@@ -8,12 +8,12 @@
 /*
 LIF神经元反应函数的前向传播函数。
 $$U_{i}^{l}(t)=H_{i}^{l}(t-1)+\frac{1}{τ_{m}}[-[H_{i}^{l}(t-1)-u_{rest}]+X_{i}^{l}(t)]$$
-@params:
+Args:
     u: at::Tensor 胞体电位$U^{l}(t)$
     x: at::Tensor 输入电位$X^{l}(t)$
     h: at::Tensor 胞体历史电位$H^{l}(t-1)$
     tau_m: at::Tensor 时间常数$τ_{m}$
-    u_rest: float 静息电位$u_{rest}$
+    u_rest (float): 静息电位$u_{rest}$
 */
 __device__ void fp_response_lif(float& u,
                                 float x,
@@ -29,7 +29,7 @@ $$\frac{\partial U_{i}^{l}(t)}{\partial H_{i}^{l}(t-1)}=1-\frac{1}{τ_{m}}$$
 $$\frac{\partial U_{i}^{l}(t)}{\partial X_{i}^{l}(t)}=\frac{1}{τ_{m}}$$
 $$\frac{\partial U_{i}^{l}(t)}{\partial
 τ_{m}}=-\frac{1}{τ_{m}^{2}}[-[H_{i}^{l}(t-1)-u_{rest}]+X_{i}^{l}(t)]$$
-@params:
+Args:
     grad_u: at::Tensor 胞体电位$U^{l}(t)$的梯度
     grad_x: at::Tensor 输入电位$X^{l}(t)$的梯度
     grad_h: at::Tensor 胞体历史电位$H^{l}(t-1)$的梯度
@@ -38,7 +38,7 @@ $$\frac{\partial U_{i}^{l}(t)}{\partial
     h: at::Tensor 胞体历史电位$H^{l}(t)$
     x: at::Tensor 输入电位$X^{l}(t-1)$
     tau_m: at::Tensor 时间常数$τ_{m}$
-    u_rest: float 静息电位$u_{rest}$
+    u_rest (float): 静息电位$u_{rest}$
 */
 __device__ void bp_response_lif(float grad_u,
                                 float& grad_x,
@@ -57,10 +57,10 @@ __device__ void bp_response_lif(float grad_u,
 /*
 Heaviside脉冲函数前向传播函数。
 $$O_{i}^{l}(t)=u[U_{i}^{l}(t)]$$
-@params:
+Args:
     o: at::Tensor 脉冲输出$O^{l}(t)$
     u: at::Tensor 胞体电位$U^{l}(t)$
-    u_threshold: float 阈电位$u_{th}$
+    u_threshold (float): 阈电位$u_{th}$
 */
 __device__ void fp_spiking_heaviside(float& o, float u, float u_threshold) {
     o = gef(u, u_threshold);
@@ -69,13 +69,13 @@ __device__ void fp_spiking_heaviside(float& o, float u, float u_threshold) {
 /*
 矩形窗反向传播函数。
 $$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
-@params:
+Args:
     grad_o: at::Tensor 脉冲输出$O^{l}(t)$的梯度
     grad_u: at::Tensor 胞体电位$U^{l}(t)$的梯度
     o: at::Tensor 脉冲输出$O^{l}(t)$
     u: at::Tensor 胞体电位$U^{l}(t)$
-    u_threshold: float 阈电位$u_{th}$
-    a: float 参数$a$
+    u_threshold (float): 阈电位$u_{th}$
+    a (float): 参数$a$
 */
 __device__ void bp_spiking_rectangular(float grad_o,
                                        float& grad_u,
@@ -90,13 +90,13 @@ __device__ void bp_spiking_rectangular(float grad_o,
 /*
 多项式反向传播函数。
 $$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
-@params:
+Args:
     grad_o: at::Tensor 脉冲输出$O^{l}(t)$的梯度
     grad_u: at::Tensor 胞体电位$U^{l}(t)$的梯度
     o: at::Tensor 脉冲输出$O^{l}(t)$
     u: at::Tensor 胞体电位$U^{l}(t)$
-    u_threshold: float 阈电位$u_{th}$
-    a: float 参数$a$
+    u_threshold (float): 阈电位$u_{th}$
+    a (float): 参数$a$
 */
 __device__ void bp_spiking_polynomial(float grad_o,
                                       float& grad_u,
@@ -111,13 +111,13 @@ __device__ void bp_spiking_polynomial(float grad_o,
 /*
 Sigmoid导数的反向传播函数。
 $$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
-@params:
+Args:
     grad_o: at::Tensor 脉冲输出$O^{l}(t)$的梯度
     grad_u: at::Tensor 胞体电位$U^{l}(t)$的梯度
     o: at::Tensor 脉冲输出$O^{l}(t)$
     u: at::Tensor 胞体电位$U^{l}(t)$
-    u_threshold: float 阈电位$u_{th}$
-    a: float 参数$a$
+    u_threshold (float): 阈电位$u_{th}$
+    a (float): 参数$a$
 */
 __device__ void bp_spiking_sigmoid(float grad_o,
                                    float& grad_u,
@@ -133,13 +133,13 @@ __device__ void bp_spiking_sigmoid(float grad_o,
 /*
 高斯反向传播函数。
 $$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=u'$$
-@params:
+Args:
     grad_o: at::Tensor 脉冲输出$O^{l}(t)$的梯度
     grad_u: at::Tensor 胞体电位$U^{l}(t)$的梯度
     o: at::Tensor 脉冲输出$O^{l}(t)$
     u: at::Tensor 胞体电位$U^{l}(t)$
-    u_threshold: float 阈电位$u_{th}$
-    a: float 参数$a$
+    u_threshold (float): 阈电位$u_{th}$
+    a (float): 参数$a$
 */
 __device__ void bp_spiking_gaussian(float grad_o,
                                     float& grad_u,
@@ -155,11 +155,11 @@ __device__ void bp_spiking_gaussian(float grad_o,
 /*
 硬重置前向传播函数。
 $$H_{i}^{l}(t)=U_{i}^{l}(t)[1-O_{i}^{l}(t)]+u_{rest}O_{i}^{l}(t)$$
-@params:
+Args:
     h: at::Tensor 胞体历史电位$H^{l}(t)$
     u: at::Tensor 胞体电位$U^{l}(t)$
     o: at::Tensor 脉冲输出$O^{l}(t)$
-    u_rest: float 静息电位$u_{rest}$
+    u_rest (float): 静息电位$u_{rest}$
 */
 __device__ void fp_reset_hard(float& h, float u, float o, float u_rest) {
     h = u * (1.0f - o) + u_rest * o;
@@ -169,14 +169,14 @@ __device__ void fp_reset_hard(float& h, float u, float o, float u_rest) {
 硬重置反向传播函数。
 $$\frac{\partial H_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=1-O_{i}^{l}(t)$$
 $$\frac{\partial H_{i}^{l}(t)}{\partial O_{i}^{l}(t)}=-U_{i}^{l}(t)+u_{rest}$$
-@params:
+Args:
     grad_h: at::Tensor 胞体历史电位$H^{l}(t)$的梯度
     grad_u: at::Tensor 胞体电位$U^{l}(t)$的梯度
     grad_o: at::Tensor 脉冲输出$O^{l}(t)$的梯度
     h: at::Tensor 胞体历史电位$H^{l}(t)$
     u: at::Tensor 胞体电位$U^{l}(t)$
     o: at::Tensor 脉冲输出$O^{l}(t)$
-    u_rest: float 静息电位$u_{rest}$
+    u_rest (float): 静息电位$u_{rest}$
 */
 __device__ void bp_reset_hard(float grad_h,
                               float& grad_u,
@@ -192,12 +192,12 @@ __device__ void bp_reset_hard(float grad_h,
 /*
 软重置前向传播函数。
 $$H_{i}^{l}(t)=U_{i}^{l}(t)[1-O_{i}^{l}(t)]+u_{rest}O_{i}^{l}(t)$$
-@params:
+Args:
     h: at::Tensor 胞体历史电位$H^{l}(t)$
     u: at::Tensor 胞体电位$U^{l}(t)$
     o: at::Tensor 脉冲输出$O^{l}(t)$
-    u_threshold: float 阈电位$u_{th}$
-    u_rest: float 静息电位$u_{rest}$
+    u_threshold (float): 阈电位$u_{th}$
+    u_rest (float): 静息电位$u_{rest}$
 */
 __device__ void fp_reset_soft(float& h,
                               float u,
@@ -211,15 +211,15 @@ __device__ void fp_reset_soft(float& h,
 软重置反向传播函数。
 $$\frac{\partial H_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=1-O_{i}^{l}(t)$$
 $$\frac{\partial H_{i}^{l}(t)}{\partial O_{i}^{l}(t)}=-U_{i}^{l}(t)+u_{rest}$$
-@params:
+Args:
     grad_h: at::Tensor 胞体历史电位$H^{l}(t)$的梯度
     grad_u: at::Tensor 胞体电位$U^{l}(t)$的梯度
     grad_o: at::Tensor 脉冲输出$O^{l}(t)$的梯度
     h: at::Tensor 胞体历史电位$H^{l}(t)$
     u: at::Tensor 胞体电位$U^{l}(t)$
     o: at::Tensor 脉冲输出$O^{l}(t)$
-    u_threshold: float 阈电位$u_{th}$
-    u_rest: float 静息电位$u_{rest}$
+    u_threshold (float): 阈电位$u_{th}$
+    u_rest (float): 静息电位$u_{rest}$
 */
 __device__ void bp_reset_soft(float grad_h,
                               float& grad_u,
@@ -235,17 +235,17 @@ __device__ void bp_reset_soft(float grad_h,
 
 /*
 LIF神经元的前向传播函数。
-@params:
+Args:
     o: at::Tensor 脉冲输出$O^{l}$
     u: at::Tensor 胞体电位$U^{l}$
     h: at::Tensor 胞体历史电位$H^{l}$
     x: at::Tensor 输入电位$X^{l}$
-    time_steps: int 总时间步长
+    time_steps (int): 总时间步长
     u_init: at::Tensor 初始胞体电位$H^{l}(-1)$
     tau_m: at::Tensor 时间常数$τ_{m}$
-    u_rest: float 静息电位$u_{rest}$
-    u_threshold: float 阈电位$u_{th}$
-    reset_mode: int 重置模式，分为硬重置（0）和软重置（1）两种
+    u_rest (float): 静息电位$u_{rest}$
+    u_threshold (float): 阈电位$u_{th}$
+    reset_mode (int): 重置模式，分为硬重置（0）和软重置（1）两种
 */
 __global__ void fp_lif_cuda_kernel(float* o,
                                    float* u,
@@ -312,25 +312,25 @@ void fp_lif_cuda(float* o,
 
 /*
 LIF神经元的反向传播函数。
-@params:
+Args:
     grad_o: at::Tensor 脉冲输出$O^{l}$的梯度
     grad_u: at::Tensor 胞体电位$U^{l}$的梯度
     grad_h: at::Tensor 胞体历史电位$H^{l}$的梯度
     grad_x: at::Tensor 输入电位$X^{l}$的梯度
     grad_u_init: at::Tensor 初始胞体电位$H^{l}(-1)$的梯度
     grad_tau_m: at::Tensor 时间常数$τ_{m}$的梯度
-    time_steps: int 总时间步长
+    time_steps (int): 总时间步长
     o: at::Tensor 脉冲输出$O^{l}$
     u: at::Tensor 胞体电位$U^{l}$
     h: at::Tensor 胞体历史电位$H^{l}$
     x: at::Tensor 输入电位$X^{l}$
     u_init: at::Tensor 初始胞体电位$H^{l}(-1)$
     tau_m: at::Tensor 时间常数$τ_{m}$
-    u_rest: float 静息电位$u_{rest}$
-    u_threshold: float 阈电位$u_{th}$
-    spiking_mode: int 替代梯度模式
-    a: float 参数$a$
-    reset_mode: int 重置模式，分为硬重置（0）和软重置（1）两种
+    u_rest (float): 静息电位$u_{rest}$
+    u_threshold (float): 阈电位$u_{th}$
+    spiking_mode (int): 替代梯度模式
+    a (float): 参数$a$
+    reset_mode (int): 重置模式，分为硬重置（0）和软重置（1）两种
 */
 __global__ void bp_lif_cuda_kernel(float* grad_o,
                                    float* grad_u,

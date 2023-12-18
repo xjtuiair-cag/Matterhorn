@@ -22,14 +22,14 @@ plt.rcParams['mathtext.fontset'] = 'stix'
 def transition_color(val: float, min_val: float = 0., max_val: float = 1., min_color: str = "#000000", max_color: str = "#ffffff"):
     """
     获取过渡色。
-    @params:
-        val: float 当前值
-        min_val: float 最小值
-        max_val: float 最大值
-        min_color: str 当数据处于最小值时，点应当有的颜色
-        max_color: str 当数据处于最大值时，点应当有的颜色
-    @return:
-        hex: str 该值所对应颜色的hex编码
+    Args:
+        val (float): 当前值
+        min_val (float): 最小值
+        max_val (float): 最大值
+        min_color (str): 当数据处于最小值时，点应当有的颜色
+        max_color (str): 当数据处于最大值时，点应当有的颜色
+    Returns:
+        hex (str): 该值所对应颜色的hex编码
     """
     min_color = "0x" + re.sub(r"[^0-9abcdefABCDEF]", "", min_color)
     max_color = "0x" + re.sub(r"[^0-9abcdefABCDEF]", "", max_color)
@@ -49,14 +49,14 @@ def transition_color(val: float, min_val: float = 0., max_val: float = 1., min_c
 def event_plot_1d(data: torch.Tensor, indices_pos: np.ndarray, indices_neg: np.ndarray = None, color_pos: str = "#0000ff", color_neg: str = "#ff0000", title: str = None, index_0: str = "t", prec: int = 8) -> None:
     """
     单次一维事件数据打印。
-    @params:
-        indices_pos: np.ndarray （正）事件索引
-        indices_neg: np.ndarray 负事件索引，如果没有极性传入None
-        color_pos: str 正事件颜色（Hex）
-        color_neg: str 负事件颜色（Hex）
-        title: str 图片的标题
-        index_0: str 维度的索引
-        prec: int 事件的脉冲有多细
+    Args:
+        indices_pos (np.ndarray): （正）事件索引
+        indices_neg (np.ndarray): 负事件索引，如果没有极性传入None
+        color_pos (str): 正事件颜色（Hex）
+        color_neg (str): 负事件颜色（Hex）
+        title (str): 图片的标题
+        index_0 (str): 维度的索引
+        prec (int): 事件的脉冲有多细
     """
     if not indices_pos.shape[0]:
         return
@@ -76,18 +76,18 @@ def event_plot_1d(data: torch.Tensor, indices_pos: np.ndarray, indices_neg: np.n
 def event_plot_2d(indices_pos: np.ndarray, indices_neg: np.ndarray = None, values_pos: np.ndarray = None, values_neg: np.ndarray = None, color_pos: str = "#0000ff", color_neg: str = "#ff0000", title: str = None, index_0: str = "t", index_1: str = "x", shape: Tuple = None, shift: float = 0.1) -> None:
     """
     单次二维事件数据打印。
-    @params:
-        indices_pos: np.ndarray （正）事件索引
-        indices_neg: np.ndarray 负事件索引，如果没有极性传入None
-        values_pos: np.ndarray 正事件值，默认全为1
-        values_pos: np.ndarray 负事件值，默认全为1
-        color_pos: str 正事件颜色（Hex）
-        color_neg: str 负事件颜色（Hex）
-        title: str 图片的标题
-        index_0: str 最外维度的索引
-        index_1: str 最内维度的索引
-        shape: Tuple 画幅的形状
-        shift: float 给事件加上的偏移量，方便同时打印正负事件
+    Args:
+        indices_pos (np.ndarray): （正）事件索引
+        indices_neg (np.ndarray): 负事件索引，如果没有极性传入None
+        values_pos (np.ndarray): 正事件值，默认全为1
+        values_pos (np.ndarray): 负事件值，默认全为1
+        color_pos (str): 正事件颜色（Hex）
+        color_neg (str): 负事件颜色（Hex）
+        title (str): 图片的标题
+        index_0 (str): 最外维度的索引
+        index_1 (str): 最内维度的索引
+        shape (Tuple): 画幅的形状
+        shift (float): 给事件加上的偏移量，方便同时打印正负事件
     """
     def draw(indices: np.ndarray, values: np.ndarray, color: str, shift: float) -> None:
         if values is None:
@@ -118,13 +118,13 @@ def event_plot_2d(indices_pos: np.ndarray, indices_neg: np.ndarray = None, value
 def event_tensor_plot_yx(data: torch.Tensor, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
     二维空间的事件张量数据打印。
-    @params:
-        data: torch.Tensor 需要打印的数据（可以是2、3、4维）
-        polarity: bool 是否将第2个维度作为极性维度，如果为True，则传入的数据为[C(P), H, W]（3维）或[B, C(P), H, W]（4维）；如果为False，则传入的数据为[H, W]（2维）或[B, H, W]（3维）
-        show: bool 是否展示图像，默认展示
-        save: str 是否保存图像，若传入路径，则保存图像；否则不保存
+    Args:
+        data (torch.Tensor): 需要打印的数据（可以是2、3、4维）
+        polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[C(P), H, W]（3维）或[B, C(P), H, W]（4维）；如果为False，则传入的数据为[H, W]（2维）或[B, H, W]（3维）
+        show (bool): 是否展示图像，默认展示
+        save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles: List[str] 每张图都是什么标题
-        figSize: Tuple 图像大小
+        figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
     dim = len(data.shape)
@@ -207,13 +207,13 @@ def event_tensor_plot_yx(data: torch.Tensor, polarity: bool = True, show: bool =
 def event_seq_plot_yx(data: np.ndarray, shape: Tuple, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
     二维空间的事件序列数据打印。
-    @params:
-        data: np.ndarray 需要打印的数据（可以是2、3维）
-        shape: Tuple 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
-        show: bool 是否展示图像，默认展示
-        save: str 是否保存图像，若传入路径，则保存图像；否则不保存
+    Args:
+        data (np.ndarray): 需要打印的数据（可以是2、3维）
+        shape (Tuple): 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
+        show (bool): 是否展示图像，默认展示
+        save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles: List[str] 每张图都是什么标题
-        figSize: Tuple 图像大小
+        figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
     get_shape = lambda i: shape[i] if shape is not None and len(shape) > i and shape[i] > 0 else (np.max(data[:, i]) - np.min(data[:, i]) + 1)
@@ -256,15 +256,15 @@ def event_seq_plot_yx(data: np.ndarray, shape: Tuple, show: bool = True, save: s
 def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> None:
     """
     二维空间的事件数据打印。
-    @params:
-        data: np.ndarray | torch.Tensor 需要打印的数据
-        shape: Tuple 图的形状（打印序列用）
-        polarity: bool 是否将第2个维度作为极性维度，如果为True，则传入的数据为[C(P), H, W]（3维）或[B, C(P), H, W]（4维）；如果为False，则传入的数据为[H, W]（2维）或[B, H, W]（3维）
-        show: bool 是否展示图像，默认展示
-        save: str 是否保存图像，若传入路径，则保存图像；否则不保存
+    Args:
+        data (np.ndarray): | torch.Tensor 需要打印的数据
+        shape (Tuple): 图的形状（打印序列用）
+        polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[C(P), H, W]（3维）或[B, C(P), H, W]（4维）；如果为False，则传入的数据为[H, W]（2维）或[B, H, W]（3维）
+        show (bool): 是否展示图像，默认展示
+        save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles: List[str] 每张图都是什么标题
-        figSize: Tuple 图像大小
-        is_seq: bool 是否为序列，True表明事件为形状为[n, 4]的序列，否则为形状为[T, C(P), H, W]的张量
+        figSize (Tuple): 图像大小
+        is_seq (bool): 是否为序列，True表明事件为形状为[n, 4]的序列，否则为形状为[T, C(P), H, W]的张量
     """
     if is_seq:
         event_seq_plot_yx(
@@ -289,13 +289,13 @@ def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, po
 def event_tensor_plot_tx(data: torch.Tensor, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
     一维空间+一维时间的事件张量数据打印。
-    @params:
-        data: torch.Tensor 需要打印的数据（可以是2、3、4维）
-        polarity: bool 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), L]（3维）或[B, T, C(P), L]（4维）；如果为False，则传入的数据为[T, L]（2维）或[B, T, L]（3维）
-        show: bool 是否展示图像，默认展示
-        save: str 是否保存图像，若传入路径，则保存图像；否则不保存
+    Args:
+        data (torch.Tensor): 需要打印的数据（可以是2、3、4维）
+        polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), L]（3维）或[B, T, C(P), L]（4维）；如果为False，则传入的数据为[T, L]（2维）或[B, T, L]（3维）
+        show (bool): 是否展示图像，默认展示
+        save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles: List[str] 每张图都是什么标题
-        figSize: Tuple 图像大小
+        figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
     dim = len(data.shape)
@@ -371,13 +371,13 @@ def event_tensor_plot_tx(data: torch.Tensor, polarity: bool = True, show: bool =
 def event_seq_plot_tx(data: np.ndarray, shape: Tuple, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
     一维空间+一维时间的事件序列数据打印。
-    @params:
-        data: np.ndarray 需要打印的数据（可以是2、3维）
-        shape: Tuple 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
-        show: bool 是否展示图像，默认展示
-        save: str 是否保存图像，若传入路径，则保存图像；否则不保存
+    Args:
+        data (np.ndarray): 需要打印的数据（可以是2、3维）
+        shape (Tuple): 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
+        show (bool): 是否展示图像，默认展示
+        save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles: List[str] 每张图都是什么标题
-        figSize: Tuple 图像大小
+        figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
     get_shape = lambda i: shape[i] if shape is not None and len(shape) > i and shape[i] > 0 else (np.max(data[:, i]) - np.min(data[:, i]) + 1)
@@ -416,15 +416,15 @@ def event_seq_plot_tx(data: np.ndarray, shape: Tuple, show: bool = True, save: s
 def event_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> None:
     """
     一维空间+一维时间的事件数据打印。
-    @params:
-        data: np.ndarray | torch.Tensor 需要打印的数据
-        shape: Tuple 图的形状（打印序列用）
-        polarity: bool 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), L]（3维）或[B, T, C(P), L]（4维）；如果为False，则传入的数据为[T, L]（2维）或[B, T, L]（3维）（打印张量用）
-        show: bool 是否展示图像，默认展示
-        save: str 是否保存图像，若传入路径，则保存图像；否则不保存
+    Args:
+        data (np.ndarray): | torch.Tensor 需要打印的数据
+        shape (Tuple): 图的形状（打印序列用）
+        polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), L]（3维）或[B, T, C(P), L]（4维）；如果为False，则传入的数据为[T, L]（2维）或[B, T, L]（3维）（打印张量用）
+        show (bool): 是否展示图像，默认展示
+        save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles: List[str] 每张图都是什么标题
-        figSize: Tuple 图像大小
-        is_seq: bool 是否为序列，True表明事件为形状为[n, 4]的序列，否则为形状为[T, C(P), H, W]的张量
+        figSize (Tuple): 图像大小
+        is_seq (bool): 是否为序列，True表明事件为形状为[n, 4]的序列，否则为形状为[T, C(P), H, W]的张量
     """
     if is_seq:
         event_seq_plot_tx(
@@ -449,20 +449,20 @@ def event_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, po
 def event_plot_3d(ax: Axes3D, indices_pos: np.ndarray, indices_neg: np.ndarray = None, values_pos: np.ndarray = None, values_neg: np.ndarray = None, color_pos: str = "#0000ff", color_neg: str = "#ff0000", title: str = None, index_0: str = "t", index_1: str = "y", index_2: str = "x", shape: Tuple = None, shift: float = 0.1) -> None:
     """
     单次三维事件数据打印。
-    @params:
-        ax: Axes3D 画布
-        indices_pos: np.ndarray （正）事件索引
-        indices_neg: np.ndarray 负事件索引，如果没有极性传入None
-        values_pos: np.ndarray 正事件值，默认全为1
-        values_pos: np.ndarray 负事件值，默认全为1
-        color_pos: str 正事件颜色（Hex）
-        color_neg: str 负事件颜色（Hex）
-        title: str 图片的标题
-        index_0: str 最外维度的索引
-        index_1: str 中间维度的索引
-        index_2: str 最内维度的索引
-        shape: Tuple 画幅的形状
-        shift: float 给事件加上的偏移量，方便同时打印正负事件
+    Args:
+        ax (Axes3D): 画布
+        indices_pos (np.ndarray): （正）事件索引
+        indices_neg (np.ndarray): 负事件索引，如果没有极性传入None
+        values_pos (np.ndarray): 正事件值，默认全为1
+        values_pos (np.ndarray): 负事件值，默认全为1
+        color_pos (str): 正事件颜色（Hex）
+        color_neg (str): 负事件颜色（Hex）
+        title (str): 图片的标题
+        index_0 (str): 最外维度的索引
+        index_1 (str): 中间维度的索引
+        index_2 (str): 最内维度的索引
+        shape (Tuple): 画幅的形状
+        shift (float): 给事件加上的偏移量，方便同时打印正负事件
     """
     def draw(ax: Axes3D, indices: np.ndarray, values: np.ndarray, color: str, shift: float) -> None:
         if values is None:
@@ -495,13 +495,13 @@ def event_plot_3d(ax: Axes3D, indices_pos: np.ndarray, indices_neg: np.ndarray =
 def event_tensor_plot_tyx(data: torch.Tensor, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
     二维空间+一维时间的事件张量数据打印。
-    @params:
-        data: torch.Tensor 需要打印的数据（可以是3、4、5维）
-        polarity: bool 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), H, W]（4维）或[B, T, C(P), H, W]（5维）；如果为False，则传入的数据为[T, H, W]（3维）或[B, T, H, W]（4维）
-        show: bool 是否展示图像，默认展示
-        save: str 是否保存图像，若传入路径，则保存图像；否则不保存
+    Args:
+        data (torch.Tensor): 需要打印的数据（可以是3、4、5维）
+        polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), H, W]（4维）或[B, T, C(P), H, W]（5维）；如果为False，则传入的数据为[T, H, W]（3维）或[B, T, H, W]（4维）
+        show (bool): 是否展示图像，默认展示
+        save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles: List[str] 每张图都是什么标题
-        figSize: Tuple 图像大小
+        figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
     dim = len(data.shape)
@@ -589,13 +589,13 @@ def event_tensor_plot_tyx(data: torch.Tensor, polarity: bool = True, show: bool 
 def event_seq_plot_tyx(data: np.ndarray, shape: Tuple, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
     二维空间+一维时间的事件序列数据打印。
-    @params:
-        data: np.ndarray 需要打印的数据（可以是3、4维）
-        shape: Tuple 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
-        show: bool 是否展示图像，默认展示
-        save: str 是否保存图像，若传入路径，则保存图像；否则不保存
+    Args:
+        data (np.ndarray): 需要打印的数据（可以是3、4维）
+        shape (Tuple): 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
+        show (bool): 是否展示图像，默认展示
+        save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles: List[str] 每张图都是什么标题
-        figSize: Tuple 图像大小
+        figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
     get_shape = lambda i: shape[i] if shape is not None and len(shape) > i and shape[i] > 0 else (np.max(data[:, i]) - np.min(data[:, i]) + 1)
@@ -637,15 +637,15 @@ def event_seq_plot_tyx(data: np.ndarray, shape: Tuple, show: bool = True, save: 
 def event_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> None:
     """
     二维空间+一维时间的事件数据打印。
-    @params:
-        data: np.ndarray | torch.Tensor 需要打印的数据
-        shape: Tuple 图的形状（打印序列用）
-        polarity: bool 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), H, W]（4维）或[B, T, C(P), H, W]（5维）；如果为False，则传入的数据为[T, H, W]（3维）或[B, T, H, W]（4维）（打印张量用）
-        show: bool 是否展示图像，默认展示
-        save: str 是否保存图像，若传入路径，则保存图像；否则不保存
+    Args:
+        data (np.ndarray): | torch.Tensor 需要打印的数据
+        shape (Tuple): 图的形状（打印序列用）
+        polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), H, W]（4维）或[B, T, C(P), H, W]（5维）；如果为False，则传入的数据为[T, H, W]（3维）或[B, T, H, W]（4维）（打印张量用）
+        show (bool): 是否展示图像，默认展示
+        save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles: List[str] 每张图都是什么标题
-        figSize: Tuple 图像大小
-        is_seq: bool 是否为序列，True表明事件为形状为[n, 4]的序列，否则为形状为[T, C(P), H, W]的张量
+        figSize (Tuple): 图像大小
+        is_seq (bool): 是否为序列，True表明事件为形状为[n, 4]的序列，否则为形状为[T, C(P), H, W]的张量
     """
     if is_seq:
         event_seq_plot_tyx(
