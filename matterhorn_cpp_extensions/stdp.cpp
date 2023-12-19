@@ -38,19 +38,19 @@ void stdp(at::Tensor weight_mat,
             // 遍历输出脉冲
             for (int ti = 0; ti < time_steps; ti++) {
                 at::Tensor spike_i = output_spike_train[ti][i];
-                if (spike_i.data<float>()[0] == 0.0) {
+                if (spike_i.data<float>()[0] < 0.5f) {
                     continue;
                 }
                 // 遍历输入脉冲
                 for (int tj = 0; tj < time_steps; tj++) {
                     at::Tensor spike_j = input_spike_train[tj][j];
-                    if (spike_j.data<float>()[0] == 0.0) {
+                    if (spike_j.data<float>()[0] < 0.5f) {
                         continue;
                     }
                     float dt = (float)(ti - tj);
-                    if (dt > 0) {
+                    if (dt > 0.0f) {
                         weight += a_pos * expf(-dt / tau_pos);
-                    } else if (dt < 0) {
+                    } else if (dt < 0.0f) {
                         weight += -a_neg * expf(dt / tau_neg);
                     }
                 }

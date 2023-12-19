@@ -40,19 +40,19 @@ __global__ void stdp_cuda_kernel(float* weight_mat,
     // 遍历输出脉冲
     for (int ti = 0; ti < time_steps; ti++) {
         float spike_i = output_spike_train[i + ti * output_shape];
-        if (!spike_i) {
+        if (spike_i < 0.5f) {
             continue;
         }
         // 遍历输入脉冲
         for (int tj = 0; tj < time_steps; tj++) {
             float spike_j = input_spike_train[j + tj * input_shape];
-            if (!spike_j) {
+            if (spike_j < 0.5f) {
                 continue;
             }
-            int dt = ti - tj;
-            if (dt > 0) {
+            float dt = (float)(ti - tj);
+            if (dt > 0.0f) {
                 weight += a_pos * expf(-dt / tau_pos);
-            } else if (dt < 0) {
+            } else if (dt < 0.0f) {
                 weight += -a_neg * expf(dt / tau_neg);
             }
         }

@@ -36,15 +36,15 @@ def stdp_py(delta_weight: torch.Tensor, input_shape: int, output_shape: int, tim
         for j in range(input_shape):
             weight = 0.0
             for ti in range(time_steps):
-                if not output_spike_train[ti, i]:
+                if output_spike_train[ti, i] < 0.5:
                     continue
                 for tj in range(time_steps):
-                    if not input_spike_train[tj, j]:
+                    if input_spike_train[tj, j] < 0.5:
                         continue
                     dt = ti - tj
-                    if dt > 0:
+                    if dt > 0.0:
                         weight += a_pos * torch.exp(-dt / tau_pos)
-                    else:
+                    elif dt < 0.0:
                         weight += -a_neg * torch.exp(dt / tau_neg)
             delta_weight[i, j] += weight
     return delta_weight
@@ -61,7 +61,7 @@ except:
     stdp_cpp = None
 
 
-def stdp(delta_weight: torch.Tensor, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float) -> torch.Tensor:
+def stdp(delta_weight: torch.Tensor, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float, device = None) -> torch.Tensor:
     """
     STDP总函数，视情况调用函数
     Args:
@@ -75,6 +75,9 @@ def stdp(delta_weight: torch.Tensor, input_spike_train: torch.Tensor, output_spi
         tau_pos (float): STDP参数tau+
         a_neg (float): STDP参数A-
         tau_neg (float): STDP参数tau-
+        device: 计算设备
+    Returns:
+        delta_weight: 权重更新值
     """
     input_time_steps, input_shape = input_spike_train.shape
     output_time_steps, output_shape = output_spike_train.shape
@@ -90,6 +93,10 @@ def stdp(delta_weight: torch.Tensor, input_spike_train: torch.Tensor, output_spi
     o_type = output_spike_train.device.type
     o_idx = output_spike_train.device.index
     assert (w_type == i_type and i_type == o_type) and (w_idx == i_idx and i_idx == o_idx), "The type of weight matrix, input spike train and output spike train should be the same."
+    if device is not None:
+        if isinstance(device, str):
+            device = torch.device(device)
+        assert device.type == w_type and device_idx == w_idx, "Incorrect computing device"
     device_type = w_type
     device_idx = w_idx
     if device_type == "cuda" and stdp_cuda is not None:
