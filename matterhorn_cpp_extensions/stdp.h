@@ -13,6 +13,7 @@ void stdp(at::Tensor weight_mat,
          float a_pos,
          float tau_pos,
          float a_neg,
-         float tau_neg);
+         float tau_neg,
+         int batch_size);
 
 #endif

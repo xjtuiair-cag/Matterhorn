@@ -14,7 +14,8 @@ void cu_stdp(at::Tensor weight_mat,
              float a_pos,
              float tau_pos,
              float a_neg,
-             float tau_neg);
+             float tau_neg,
+             int batch_size);
 
 void stdp_cuda(float* weight_mat,
                int input_shape,
@@ -25,6 +26,7 @@ void stdp_cuda(float* weight_mat,
                float a_pos,
                float tau_pos,
                float a_neg,
-               float tau_neg);
+               float tau_neg,
+               int batch_size);
 
 #endif
