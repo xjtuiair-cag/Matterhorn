@@ -33,7 +33,7 @@ if cuda_available:
         }
     ))
 else:
-    print("\033[91mCUDA not found on this device. If you have NVIDIA's GPU, please install CUDA and try again later, or manually install Matterhorn CUDA extensions.\033[0m")
+    print("\033[93mCUDA not found on this device. If you have NVIDIA's GPU, please install CUDA and try again later, or manually install Matterhorn CUDA extensions.\033[0m")
 cpp_available = not os.system("g++ --version")
 if cpp_available:
     print("\033[92mg++ found on this device, installing matterhorn CPP extensions.\033[0m")
@@ -48,7 +48,7 @@ if cpp_available:
         }
     ))
 else:
-    print("\033[91mg++ not found on this device. Please install g++ and try again later, or manually install Matterhorn CPP extensions.\033[0m")
+    print("\033[93mg++ not found on this device. Please install g++ and try again later, or manually install Matterhorn CPP extensions.\033[0m")
 cmdclass = None
 if cuda_available or cpp_available:
     cmdclass = {
