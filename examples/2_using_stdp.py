@@ -63,6 +63,7 @@ def main():
             out_features = 80,
             soma = snn.LIF(
                 tau_m = tau,
+                multi_time_step = True
             )
         ),
         learning.STDPLinear(
@@ -70,6 +71,7 @@ def main():
             out_features = 10,
             soma = snn.LIF(
                 tau_m = tau,
+                multi_time_step = True
             )
         ),
         snn.AvgSpikeDecoder(),
