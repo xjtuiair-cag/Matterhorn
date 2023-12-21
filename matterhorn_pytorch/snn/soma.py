@@ -19,7 +19,7 @@ except:
 class Soma(Module):
     supported_surrogate_gradients = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
 
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -183,7 +183,7 @@ class Soma(Module):
 
 
 class IF(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, multi_time_step = False) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step = False) -> None:
         """
         Integrate-and-Fire(IF)神经元。
         无泄漏过程，一阶电位变换公式为：
@@ -228,7 +228,7 @@ class IF(Soma):
 
 
 class LIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
@@ -279,7 +279,7 @@ class LIF(Soma):
 
 
 class QIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_c: float = 0.8, a_0: float = 1.0, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_c: float = 0.8, a_0: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         Quadratic Integrate-and-Fire(QIF)神经元。
         一阶电位变换公式为：
@@ -334,7 +334,7 @@ class QIF(Soma):
 
 
 class EIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_t: float = 8.0, delta_t: float = 1.0, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_t: float = 8.0, delta_t: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         Exponential Integrate-and-Fire(EIF)神经元。
         一阶电位变换公式为：
@@ -389,7 +389,7 @@ class EIF(Soma):
 
 
 class Izhikevich(Soma):
-    def __init__(self, a: float = 1.0, b: float = 1.0, u_threshold: float = -0.055, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, a: float = 1.0, b: float = 1.0, u_threshold: float = -0.055, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         Izhikevich神经元。
         一阶电位变换公式为：
@@ -468,7 +468,7 @@ class Izhikevich(Soma):
 
 
 class Response(Soma):
-    def __init__(self, response_function: Callable, param_list: Iterable = [], u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Rectangular(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, response_function: Callable, param_list: Iterable = [], u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         可以自定义反应函数的胞体。
         Args:
@@ -509,7 +509,7 @@ class Response(Soma):
 
 
 class AnalogSoma(Soma):
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         带有模拟输出的Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -630,7 +630,7 @@ class KLIF(AnalogSoma):
 
 
 class LIAF(AnalogSoma):
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Rectangular(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         Leaky Integrate-and-Analog-Fire(LIAF)神经元
         Args:

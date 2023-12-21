@@ -11,7 +11,6 @@ sys.path.append(os.path.abspath("."))
 
 
 import matterhorn_pytorch.snn as snn
-from matterhorn_pytorch.snn import learning
 
 
 from rich import print
@@ -53,12 +52,12 @@ def main():
 
     print(Panel(Text("Model", justify = "center")))
 
-    model = snn.Sequential(
+    stdp_model = snn.Sequential(
         snn.PoissonEncoder(
             time_steps = time_steps,
         ),
         snn.Flatten(),
-        learning.STDPLinear(
+        snn.STDPLinear(
             in_features = 28 * 28,
             out_features = 80,
             soma = snn.LIF(
@@ -66,7 +65,7 @@ def main():
                 multi_time_step = True
             )
         ),
-        learning.STDPLinear(
+        snn.STDPLinear(
             in_features = 80,
             out_features = 10,
             soma = snn.LIF(
@@ -77,9 +76,18 @@ def main():
         snn.AvgSpikeDecoder(),
         step_after_process = True
     )
-    model = model.to(device)
+    decoder = snn.Sequential(
+        snn.AvgSpikeDecoder(),
+        nn.Linear(
+            in_features = 10,
+            out_features = 10
+        )
+    )
+    stdp_model = stdp_model.to(device)
+    decoder = decoder.to(device)
 
-    print(model)
+    print(stdp_model)
+    print(decoder)
 
     # 调取数据集，本次使用的数据集为MNIST
 
@@ -118,6 +126,11 @@ def main():
 
     # 设置学习率，优化器，学习率衰减机制等等
 
+    print(Panel(Text("Preparations for Training", justify = "center")))
+
+    optimizer = torch.optim.Adam(decoder.parameters(), lr = learning_rate)
+    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
+
     # 开始训练
 
     print(Panel(Text("Training", justify = "center")))
@@ -135,7 +148,8 @@ def main():
 
             # 使用训练集进行训练
 
-            model.train("stdp")
+            stdp_model.train("stdp")
+            decoder.train(True)
             train_loss = 0.0
             train_acc = 0.0
             train_samples = 0
@@ -144,8 +158,10 @@ def main():
                 y = y.to(device)
                 y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
 
-                o = model(x)
+                o = decoder(stdp_model(x).detach())
                 loss = torch.nn.functional.mse_loss(o, y0)
+                loss.backward()
+                optimizer.step()
 
                 train_samples += y.numel()
                 train_loss += loss.item() * y.numel()
@@ -156,7 +172,8 @@ def main():
         
             # 使用测试集进行评估
 
-            model.eval()
+            stdp_model.eval()
+            decoder.eval()
             test_loss = 0.0
             test_acc = 0.0
             test_samples = 0
@@ -165,7 +182,7 @@ def main():
                 y = y.to(device)
                 y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
                 
-                o = model(x)
+                o = decoder(stdp_model(x).detach())
                 loss = torch.nn.functional.mse_loss(o, y0)
 
                 test_samples += y.numel()

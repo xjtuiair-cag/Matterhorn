@@ -111,7 +111,7 @@ class Module(nn.Module):
         pass
 
     
-    def train(self, mode: Union[str, bool] = "bp") -> None:
+    def train(self, mode: Union[str, bool] = True) -> None:
         """
         切换训练和测试模式。
         Args:

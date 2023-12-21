@@ -64,7 +64,7 @@ class Spatial(Container, nn.Sequential):
                 module.reset()
 
 
-    def train(self, mode: Union[str, bool]) -> None:
+    def train(self, mode: Union[str, bool] = True) -> None:
         """
         切换训练和测试模式。
         Args:
@@ -149,7 +149,7 @@ class Temporal(Container):
             self.module.reset()
 
     
-    def train(self, mode: Union[str, bool]) -> None:
+    def train(self, mode: Union[str, bool] = True) -> None:
         """
         切换训练和测试模式。
         Args:
@@ -157,7 +157,7 @@ class Temporal(Container):
         """
         if isinstance(mode, str):
             mode = mode.lower()
-        self.step_after_process = mode in ("stdp")
+        self.step_after_process = mode in ("stdp",)
         is_snn_module = isinstance(self.module, Module)
         if is_snn_module:
             self.module.train(mode)
@@ -299,7 +299,7 @@ class Sequential(Container, nn.Sequential):
                 module.reset()
 
     
-    def train(self, mode: Union[str, bool]) -> None:
+    def train(self, mode: Union[str, bool] = True) -> None:
         """
         切换训练和测试模式。
         Args:

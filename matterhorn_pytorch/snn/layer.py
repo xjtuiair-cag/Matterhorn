@@ -13,6 +13,7 @@ from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
 from matterhorn_pytorch.snn.skeleton import Module
 from matterhorn_pytorch.snn import surrogate
+from matterhorn_pytorch.training.functional import stdp
 try:
     from rich import print
 except:
@@ -45,7 +46,7 @@ class val_to_spike(torch.autograd.Function):
 
 
 class SRM0Linear(Module):
-    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: nn.Module = surrogate.Rectangular(), trainable: bool = False, device = None, dtype = None) -> None:
+    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: nn.Module = surrogate.Gaussian(), trainable: bool = False, device = None, dtype = None) -> None:
         """
         SRM0神经元，突触响应的神经元
         电位公式较为复杂：
@@ -209,6 +210,149 @@ class SRM0Linear(Module):
         u = self.f_response(self.r, x)
         o = self.f_firing(u)
         self.r = self.f_reset(u, o)
+        return o
+
+
+class STDPLinear(Module, nn.Linear):
+    def __init__(self, in_features: int, out_features: int, soma: nn.Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, device = None, dtype = None) -> None:
+        """
+        使用STDP学习机制时的全连接层
+        Args:
+            in_features (int): 输入长度，用法同nn.Linear
+            out_features (int): 输出长度，用法同nn.Linear
+            soma (nn.Module): 使用的脉冲神经元胞体，在matterhorn_pytorch.snn.soma中选择
+            a_pos (float): STDP参数A+
+            tau_pos (float): STDP参数tau+
+            a_neg (float): STDP参数A-
+            tau_neg (float): STDP参数tau-
+            multi_time_step (bool): 是否调整为多个时间步模式
+        """
+        Module.__init__(
+            self,
+            multi_time_step = multi_time_step,
+            reset_after_process = False
+        )
+        nn.Linear.__init__(
+            self,
+            in_features = in_features, 
+            out_features = out_features,
+            bias = False,
+            device = device,
+            dtype = dtype
+        )
+        self.weight.requires_grad_(False)
+        self.soma = soma
+        self.a_pos = a_pos
+        self.tau_pos = tau_pos
+        self.a_neg = a_neg
+        self.tau_neg = tau_neg
+        self.lr = lr
+        self.reset()
+
+
+    def reset(self) -> None:
+        """
+        重置整个神经元。
+        """
+        self.input_spike_seq = []
+        self.output_spike_seq = []
+        is_snn_module = isinstance(self.soma, Module)
+        if is_snn_module:
+            self.soma.reset()
+
+
+    def train(self, mode: Union[str, bool] = "stdp") -> None:
+        """
+        切换训练和测试模式。
+        Args:
+            mode (str | bool): 采用何种训练方式，None为测试模式
+        """
+        if isinstance(mode, str):
+            mode = mode.lower()
+        is_snn_module = isinstance(self.soma, Module)
+        if is_snn_module:
+            self.soma.train(mode)
+        else:
+            self.soma.train(mode in (True, "bp"))
+    
+
+    def eval(self) -> None:
+        """
+        切换测试模式。
+        """
+        self.soma.eval()
+
+
+    def step(self) -> None:
+        """
+        对整个神经元应用STDP使其更新。
+        """
+        if self.multi_time_step:
+            input_spike_train = torch.cat(self.input_spike_seq)
+            output_spike_train = torch.cat(self.output_spike_seq)
+        else:
+            input_spike_train = torch.stack(self.input_spike_seq)
+            output_spike_train = torch.stack(self.output_spike_seq)
+        is_batched = input_spike_train.ndim >= 3
+        if is_batched:
+            input_spike_train = input_spike_train.permute(1, 0, 2)
+            output_spike_train = output_spike_train.permute(1, 0, 2)
+        else:
+            input_spike_train = input_spike_train.reshape(input_spike_train.shape[0], 1, input_spike_train.shape[1])
+            output_spike_train = output_spike_train.reshape(output_spike_train.shape[0], 1, output_spike_train.shape[1])
+        # 将不同维度的输入与输出张量形状统一转为[T, B, L]
+        delta_weight = torch.zeros_like(self.weight)
+        delta_weight = stdp(delta_weight, input_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
+        self.weight += self.lr * delta_weight
+
+
+    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
+        """
+        单个时间步的前向传播函数。True
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[B, I]
+        Returns:
+            o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}(t)$，形状为[B, O]
+        """
+        self.input_spike_seq.append(o.clone().detach())
+        x = nn.Linear.forward(self, o)
+        o = self.soma(x)
+        self.output_spike_seq.append(o.clone().detach())
+        return o
+
+
+    def forward_multi_time_step(self, o: torch.Tensor) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}$，形状为[T, B, I]
+        Returns:
+            o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}$，形状为[T, B, O]
+        """
+        self.input_spike_seq.append(o.clone().detach())
+        time_steps = o.shape[0]
+        batch_size = o.shape[1]
+        o = o.flatten(0, 1)
+        x = nn.Linear.forward(self, o)
+        output_shape = [time_steps, batch_size] + list(x.shape[1:])
+        x = x.reshape(output_shape)
+        o = self.soma(x)
+        self.output_spike_seq.append(o.clone().detach())
+        return o
+
+
+    def forward(self, o: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            o (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        """
+        if self.multi_time_step:
+            o = self.forward_multi_time_step(o)
+        else:
+            o = self.forward_single_time_step(o)
         return o
 
 
