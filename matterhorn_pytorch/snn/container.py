@@ -54,60 +54,13 @@ class Spatial(Container, nn.Sequential):
         return self
 
 
-    def reset(self) -> None:
-        """
-        一次重置该序列中所有的神经元。
-        """
-        for module in self:
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
-                module.reset()
-
-
-    def train(self, mode: Union[str, bool] = True) -> None:
-        """
-        切换训练和测试模式。
-        Args:
-            mode (str | bool): 采用何种训练方式，None为测试模式
-        """
-        if isinstance(mode, str):
-            mode = mode.lower()
-        for module in self:
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
-                module.train(mode)
-            else:
-                module.train(mode in (True, "bp"))
-
-
-    def eval(self) -> None:
-        """
-        切换测试模式。
-        """
-        for module in self:
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
-                module.eval()
-    
-
-    def step(self) -> None:
-        """
-        一次部署所有结点的自定义训练。
-        """
-        for module in self:
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
-                module.step()
-
-
 class Temporal(Container):
-    def __init__(self, module: nn.Module, reset_after_process: bool = True, step_after_process: bool = False) -> None:
+    def __init__(self, module: nn.Module, reset_after_process: bool = True) -> None:
         """
         SNN的时间容器，在多个时间步之内执行脉冲神经网络。
         Args:
             module (nn.Module): 所用来执行的单步模型
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
-            step_after_process (bool): 是否在执行完后部署自定义训练，若为False则需要手动调用step方法训练
         """
         is_snn_module = isinstance(module, Module)
         if is_snn_module:
@@ -116,7 +69,6 @@ class Temporal(Container):
             multi_time_step = True,
             reset_after_process = reset_after_process
         )
-        self.step_after_process = step_after_process
         self.module = module
 
 
@@ -138,48 +90,6 @@ class Temporal(Container):
         return False
 
 
-    def reset(self) -> None:
-        """
-        重置模型。
-        """
-        is_snn_module = isinstance(self.module, Module)
-        if is_snn_module:
-            self.module.reset()
-
-    
-    def train(self, mode: Union[str, bool] = True) -> None:
-        """
-        切换训练和测试模式。
-        Args:
-            mode (str | bool): 采用何种训练方式，None为测试模式
-        """
-        if isinstance(mode, str):
-            mode = mode.lower()
-        self.step_after_process = mode in ("stdp",)
-        is_snn_module = isinstance(self.module, Module)
-        if is_snn_module:
-            self.module.train(mode)
-        else:
-            self.module.train(mode in (True, "bp"))
-    
-
-    def eval(self) -> None:
-        """
-        切换测试模式。
-        """
-        self.step_after_process = False
-        self.module.eval()
-    
-
-    def step(self) -> None:
-        """
-        部署结点的STDP训练。
-        """
-        is_snn_module = isinstance(self.module, Module)
-        if is_snn_module:
-            self.module.step()
-
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数，默认接受的张量形状为[T,B,...]（需要将时间维度通过permute等函数转到最外）
@@ -193,21 +103,18 @@ class Temporal(Container):
         for t in range(time_steps):
             result.append(self.module(x[t]))
         y = torch.stack(result)
-        if self.step_after_process:
-            self.step()
         if self.reset_after_process:
             self.reset()
         return y
 
 
 class Sequential(Container, nn.Sequential):
-    def __init__(self, *args, reset_after_process: bool = True, step_after_process: bool = False) -> None:
+    def __init__(self, *args, reset_after_process: bool = True) -> None:
         """
         对Sequential进行重写，涵盖ANN与SNN的网络。
         Args:
             args (*nn.Module): 按空间顺序传入的各个模块
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
-            step_after_process (bool): 是否在执行完后部署自定义训练，若为False则需要手动调用step方法训练
         """
         multi_time_step = True
         # all_snn_module_single_time_step = True
@@ -224,7 +131,6 @@ class Sequential(Container, nn.Sequential):
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
         )
-        self.step_after_process = step_after_process
         nn.Sequential.__init__(self, *args)
         convert_indices = []
         remove_indices = []
@@ -285,54 +191,6 @@ class Sequential(Container, nn.Sequential):
             del self[idx]
 
 
-    def reset(self) -> None:
-        """
-        一次重置该序列中所有的神经元。
-        """
-        for module in self:
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
-                module.reset()
-
-    
-    def train(self, mode: Union[str, bool] = True) -> None:
-        """
-        切换训练和测试模式。
-        Args:
-            mode (str | bool): 采用何种训练方式，None为测试模式
-        """
-        if isinstance(mode, str):
-            mode = mode.lower()
-        self.step_after_process = mode in ("stdp",)
-        for module in self:
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
-                module.train(mode)
-            else:
-                print(mode)
-                print(mode in (True, "bp"))
-                module.train(mode in (True, "bp"))
-
-
-    def eval(self) -> None:
-        """
-        切换测试模式。
-        """
-        self.step_after_process = False
-        for module in self:
-            module.eval()
-    
-
-    def step(self) -> None:
-        """
-        一次部署所有结点的STDP训练。
-        """
-        for module in self:
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
-                module.step()
-
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数，默认接受的张量形状为[T,B,...]（需要将时间维度通过permute等函数转到最外）
@@ -342,8 +200,6 @@ class Sequential(Container, nn.Sequential):
             y (torch.Tensor): 输出张量
         """
         y = nn.Sequential.forward(self, x)
-        if self.step_after_process:
-            self.step()
         if self.reset_after_process:
             self.reset()
         return y

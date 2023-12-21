@@ -38,15 +38,6 @@ class TemporalWiseAttention(snn.Module):
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
         self.heaviside = snn.Rectangular()
-
-
-    def reset(self) -> None:
-        """
-        重置模型。
-        """
-        self.fc1.reset()
-        self.fc2.reset()
-        self.heaviside.reset()
     
 
     def f_train(self, s: torch.Tensor) -> torch.Tensor:

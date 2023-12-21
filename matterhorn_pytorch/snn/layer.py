@@ -81,7 +81,7 @@ class SRM0Linear(Module):
         self.spiking_function = spiking_function
         self.trainable = trainable
         self.reset()
-    
+
 
     def extra_repr(self) -> str:
         """
@@ -240,6 +240,8 @@ class STDPLinear(Module, nn.Linear):
             device = device,
             dtype = dtype
         )
+        self.input_spike_seq = []
+        self.output_spike_seq = []
         self.weight.requires_grad_(False)
         self.soma = soma
         self.a_pos = a_pos
@@ -250,37 +252,13 @@ class STDPLinear(Module, nn.Linear):
         self.reset()
 
 
-    def reset(self) -> None:
+    def extra_repr(self) -> str:
         """
-        重置整个神经元。
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
         """
-        self.input_spike_seq = []
-        self.output_spike_seq = []
-        is_snn_module = isinstance(self.soma, Module)
-        if is_snn_module:
-            self.soma.reset()
-
-
-    def train(self, mode: Union[str, bool] = "stdp") -> None:
-        """
-        切换训练和测试模式。
-        Args:
-            mode (str | bool): 采用何种训练方式，None为测试模式
-        """
-        if isinstance(mode, str):
-            mode = mode.lower()
-        is_snn_module = isinstance(self.soma, Module)
-        if is_snn_module:
-            self.soma.train(mode)
-        else:
-            self.soma.train(mode in (True, "bp"))
-    
-
-    def eval(self) -> None:
-        """
-        切换测试模式。
-        """
-        self.soma.eval()
+        return ", ".join([nn.Linear.extra_repr(self), "a_pos=%g, tau_pos=%g, a_neg=%g, tau_neg=%g, lr=%g" % (self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.lr)])
 
 
     def step(self) -> None:
@@ -304,6 +282,8 @@ class STDPLinear(Module, nn.Linear):
         delta_weight = torch.zeros_like(self.weight)
         delta_weight = stdp(delta_weight, input_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
         self.weight += self.lr * delta_weight
+        self.input_spike_seq = []
+        self.output_spike_seq = []
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -314,10 +294,8 @@ class STDPLinear(Module, nn.Linear):
         Returns:
             o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}(t)$，形状为[B, O]
         """
-        self.input_spike_seq.append(o.clone().detach())
         x = nn.Linear.forward(self, o)
         o = self.soma(x)
-        self.output_spike_seq.append(o.clone().detach())
         return o
 
 
@@ -329,7 +307,6 @@ class STDPLinear(Module, nn.Linear):
         Returns:
             o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}$，形状为[T, B, O]
         """
-        self.input_spike_seq.append(o.clone().detach())
         time_steps = o.shape[0]
         batch_size = o.shape[1]
         o = o.flatten(0, 1)
@@ -337,7 +314,6 @@ class STDPLinear(Module, nn.Linear):
         output_shape = [time_steps, batch_size] + list(x.shape[1:])
         x = x.reshape(output_shape)
         o = self.soma(x)
-        self.output_spike_seq.append(o.clone().detach())
         return o
 
 
@@ -349,10 +325,12 @@ class STDPLinear(Module, nn.Linear):
         Returns:
             o (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
+        self.input_spike_seq.append(o.clone().detach())
         if self.multi_time_step:
             o = self.forward_multi_time_step(o)
         else:
             o = self.forward_single_time_step(o)
+        self.output_spike_seq.append(o.clone().detach())
         return o
 
 

@@ -102,51 +102,28 @@ class Module(nn.Module):
         """
         重置模型。
         """
-        pass
+        for module in self.children():
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
+                module.reset()
 
 
     def detach(self) -> None:
         """
         将模型中的某些变量从其计算图中分离。
         """
-        pass
-
-    
-    def train(self, mode: Union[str, bool] = True) -> None:
-        """
-        切换训练和测试模式。
-        Args:
-            mode (str | bool): 采用何种训练方式，None为测试模式
-        """
-        _mode = True
-        if mode is None:
-            _mode = False
-        elif isinstance(mode, bool):
-            _mode = mode
-        elif isinstance(mode, str):
-            mode = mode.lower()
-            if mode in ("bp",):
-                _mode = True
-            else:
-                _mode = False
-        self.training = _mode
         for module in self.children():
-            if isinstance(module, Module):
-                module.train(mode)
-            else:
-                module.train(_mode)
-        return self
-
-
-    def eval(self) -> None:
-        """
-        切换测试模式。
-        """
-        super().eval()
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
+                module.detach()
     
 
     def step(self) -> None:
         """
         部署结点的自定义训练。
         """
-        pass
+        if self.training:
+            for module in self.children():
+                is_snn_module = isinstance(module, Module)
+                if is_snn_module:
+                    module.step()

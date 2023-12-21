@@ -166,17 +166,6 @@ class SEWBlock(snn.Module):
         self.residual_connection = residual_connection
     
 
-    def reset(self) -> None:
-        """
-        重置模型。
-        """
-        self.conv1.reset()
-        self.conv2.reset()
-        if self.down_sampling_block is not None:
-            self.down_sampling_block.reset()
-        self.residual_connection.reset()
-    
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
@@ -300,13 +289,6 @@ class SEWRes18(snn.Module):
                 out_features = num_classes
             ), # [10]
         )
-    
-
-    def reset(self) -> None:
-        """
-        重置模型。
-        """
-        self.model.reset()
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

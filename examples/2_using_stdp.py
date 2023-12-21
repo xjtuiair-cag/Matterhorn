@@ -72,9 +72,7 @@ def main():
                 tau_m = tau,
                 multi_time_step = True
             )
-        ),
-        snn.AvgSpikeDecoder(),
-        step_after_process = True
+        )
     )
     decoder = snn.Sequential(
         snn.AvgSpikeDecoder(),
@@ -142,41 +140,43 @@ def main():
     last_test_acc = 0.0
     get_color = lambda x, y: "green" if x > y else ("red" if x < y else "blue")
 
-    with torch.no_grad():
-        for e in range(epochs):
-            start_time = time.time()
+    for e in range(epochs):
+        start_time = time.time()
 
-            # 使用训练集进行训练
+        # 使用训练集进行训练
 
-            stdp_model.train("stdp")
-            decoder.train(True)
-            train_loss = 0.0
-            train_acc = 0.0
-            train_samples = 0
-            for x, y in track(train_data_loader, description = "Training at epoch %d" % (e,)):
-                x = x.to(device)
-                y = y.to(device)
-                y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
+        stdp_model.train()
+        decoder.train()
+        train_loss = 0.0
+        train_acc = 0.0
+        train_samples = 0
+        for x, y in track(train_data_loader, description = "Training at epoch %d" % (e,)):
+            optimizer.zero_grad()
+            x = x.to(device)
+            y = y.to(device)
+            y0 = torch.nn.functional.one_hot(y, num_classes = 10).float()
 
-                o = decoder(stdp_model(x).detach())
-                loss = torch.nn.functional.mse_loss(o, y0)
-                loss.backward()
-                optimizer.step()
+            o = decoder(stdp_model(x).detach().requires_grad_(True))
+            loss = torch.nn.functional.mse_loss(o, y0)
+            stdp_model.step()
+            loss.backward()
+            optimizer.step()
 
-                train_samples += y.numel()
-                train_loss += loss.item() * y.numel()
-                train_acc += (o.argmax(1) == y).float().sum().item()
+            train_samples += y.numel()
+            train_loss += loss.item() * y.numel()
+            train_acc += (o.argmax(1) == y).float().sum().item()
 
-            train_loss /= train_samples
-            train_acc /= train_samples
+        train_loss /= train_samples
+        train_acc /= train_samples
         
-            # 使用测试集进行评估
+        # 使用测试集进行评估
 
-            stdp_model.eval()
-            decoder.eval()
-            test_loss = 0.0
-            test_acc = 0.0
-            test_samples = 0
+        stdp_model.eval()
+        decoder.eval()
+        test_loss = 0.0
+        test_acc = 0.0
+        test_samples = 0
+        with torch.no_grad():
             for x, y in track(test_data_loader, description = "Testing at epoch %d" % (e,)):
                 x = x.to(device)
                 y = y.to(device)
@@ -189,31 +189,33 @@ def main():
                 test_loss += loss.item() * y.numel()
                 test_acc += (o.argmax(1) == y).float().sum().item()
         
-            test_loss /= test_samples
-            test_acc /= test_samples
-            if test_acc > max_test_acc:
-                max_test_acc = test_acc
+        test_loss /= test_samples
+        test_acc /= test_samples
+        if test_acc > max_test_acc:
+            max_test_acc = test_acc
         
-            end_time = time.time()
+        end_time = time.time()
 
-            # 打印测试结果
+        # 打印测试结果
 
-            result_table = Table(show_header = True, header_style = "bold blue")
-            result_table.add_column("Name", justify = "center")
-            result_table.add_column("Value", justify = "center")
-            result_table.add_row("Epoch", str(e))
-            result_table.add_row("Training Loss", "[%s]%g[/%s]" % (get_color(last_train_loss, train_loss), train_loss, get_color(last_train_loss, train_loss)))
-            result_table.add_row("Training Accuracy", "[%s]%g%%[/%s]" % (get_color(train_acc, last_train_acc), 100 * train_acc,get_color(train_acc, last_train_acc)))
-            result_table.add_row("Testing Loss", "[%s]%g[/%s]" % (get_color(last_test_loss, test_loss), test_loss, get_color(last_test_loss, test_loss)))
-            result_table.add_row("Testing Accuracy", "[%s]%g%%[/%s]" % (get_color(test_acc, last_test_acc), 100 * test_acc, get_color(test_acc, last_test_acc)))
-            result_table.add_row("Maximum Testing Accuracy", "%g%%" % (100 * max_test_acc,))
-            result_table.add_row("Duration", "%gs" %(end_time - start_time,))
-            print(result_table)
+        result_table = Table(show_header = True, header_style = "bold blue")
+        result_table.add_column("Name", justify = "center")
+        result_table.add_column("Value", justify = "center")
+        result_table.add_row("Epoch", str(e))
+        result_table.add_row("Learning Rate", "%g" % (lr_scheduler.get_last_lr()[0],))
+        result_table.add_row("Training Loss", "[%s]%g[/%s]" % (get_color(last_train_loss, train_loss), train_loss, get_color(last_train_loss, train_loss)))
+        result_table.add_row("Training Accuracy", "[%s]%g%%[/%s]" % (get_color(train_acc, last_train_acc), 100 * train_acc,get_color(train_acc, last_train_acc)))
+        result_table.add_row("Testing Loss", "[%s]%g[/%s]" % (get_color(last_test_loss, test_loss), test_loss, get_color(last_test_loss, test_loss)))
+        result_table.add_row("Testing Accuracy", "[%s]%g%%[/%s]" % (get_color(test_acc, last_test_acc), 100 * test_acc, get_color(test_acc, last_test_acc)))
+        result_table.add_row("Maximum Testing Accuracy", "%g%%" % (100 * max_test_acc,))
+        result_table.add_row("Duration", "%gs" %(end_time - start_time,))
+        print(result_table)
 
-            last_train_loss = train_loss
-            last_train_acc = train_acc
-            last_test_loss = test_loss
-            last_test_acc = test_acc
+        last_train_loss = train_loss
+        last_train_acc = train_acc
+        last_test_loss = test_loss
+        last_test_acc = test_acc
+        lr_scheduler.step()
 
 
 if __name__ == "__main__":
