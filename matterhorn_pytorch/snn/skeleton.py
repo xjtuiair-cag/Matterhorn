@@ -88,13 +88,14 @@ class Module(nn.Module):
         return self.reset_after_process__
 
 
-    def reset_after_process_(self, if_on: bool) -> bool:
+    def reset_after_process_(self, if_on: bool) -> nn.Module:
         """
         调整是否在执行完后自动重置。
         Args:
             if_on (bool): 是否为自动重置（True为自动重置，False为手动重置）
         """
         self.reset_after_process__ = if_on
+        return self
 
 
     def reset(self) -> None:
@@ -117,19 +118,25 @@ class Module(nn.Module):
         Args:
             mode (str | bool): 采用何种训练方式，None为测试模式
         """
+        _mode = True
         if mode is None:
-            super().train(False)
-            return
-        if isinstance(mode, bool):
-            super().train(mode)
-            return
-        if isinstance(mode, str):
+            _mode = False
+        elif isinstance(mode, bool):
+            _mode = mode
+        elif isinstance(mode, str):
             mode = mode.lower()
-        if mode == "bp":
-            super().train(True)
-            return
-        super().train(False)
-    
+            if mode in ("bp",):
+                _mode = True
+            else:
+                _mode = False
+        self.training = _mode
+        for module in self.children():
+            if isinstance(module, Module):
+                module.train(mode)
+            else:
+                module.train(_mode)
+        return self
+
 
     def eval(self) -> None:
         """

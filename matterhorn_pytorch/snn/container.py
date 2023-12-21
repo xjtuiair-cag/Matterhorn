@@ -78,7 +78,6 @@ class Spatial(Container, nn.Sequential):
                 module.train(mode)
             else:
                 module.train(mode in (True, "bp"))
-        Container.train(self, mode)
 
 
     def eval(self) -> None:
@@ -89,7 +88,6 @@ class Spatial(Container, nn.Sequential):
             is_snn_module = isinstance(module, Module)
             if is_snn_module:
                 module.eval()
-        Container.eval(self)
     
 
     def step(self) -> None:
@@ -163,7 +161,6 @@ class Temporal(Container):
             self.module.train(mode)
         else:
             self.module.train(mode in (True, "bp"))
-        Container.train(self, mode)
     
 
     def eval(self) -> None:
@@ -172,7 +169,6 @@ class Temporal(Container):
         """
         self.step_after_process = False
         self.module.eval()
-        Container.eval(self)
     
 
     def step(self) -> None:
@@ -313,9 +309,10 @@ class Sequential(Container, nn.Sequential):
             if is_snn_module:
                 module.train(mode)
             else:
+                print(mode)
+                print(mode in (True, "bp"))
                 module.train(mode in (True, "bp"))
-        Container.train(self, mode)
-    
+
 
     def eval(self) -> None:
         """
@@ -324,7 +321,6 @@ class Sequential(Container, nn.Sequential):
         self.step_after_process = False
         for module in self:
             module.eval()
-        Container.eval(self)
     
 
     def step(self) -> None:
