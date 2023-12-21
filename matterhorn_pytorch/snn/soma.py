@@ -39,8 +39,8 @@ class Soma(Module):
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
         )
-        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
         self.u = 0.0
+        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function
@@ -279,7 +279,7 @@ class LIF(Soma):
 
 
 class QIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_c: float = 0.8, a_0: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_c: float = -0.00055, a_0: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         Quadratic Integrate-and-Fire(QIF)神经元。
         一阶电位变换公式为：
@@ -328,15 +328,15 @@ class QIF(Soma):
         Returns:
             u (torch.Tensor): 当前电位$U_{i}^{l}(t)$
         """
-        du = (1.0 / self.tau_m) * (-self.a_0 * (h - self.u_rest) * (h - self.u_c) + x)
+        du = (1.0 / self.tau_m) * (self.a_0 * (h - self.u_rest) * (h - self.u_c) + x)
         u = h + du
         return u
 
 
-class EIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_t: float = 8.0, delta_t: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+class ExpIF(Soma):
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
-        Exponential Integrate-and-Fire(EIF)神经元。
+        Exponential Integrate-and-Fire(ExpIF)神经元。
         一阶电位变换公式为：
         $$τ\frac{du}{dt}=-(u-u_{rest})+Δ_{T}e^{\frac{u-u_{T}}{Δ_{T}}}+RI$$
         Args:
@@ -389,7 +389,7 @@ class EIF(Soma):
 
 
 class Izhikevich(Soma):
-    def __init__(self, a: float = 1.0, b: float = 1.0, u_threshold: float = -0.055, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, a: float = 1.0, b: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         Izhikevich神经元。
         一阶电位变换公式为：
@@ -407,17 +407,17 @@ class Izhikevich(Soma):
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
         """
+        self.w = 0.0
         super().__init__(
             tau_m = 1.0,
             u_threshold = u_threshold,
-            u_rest = 0.0,
+            u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process,
             trainable = trainable
         )
-        self.w = 0.0
         self.a = nn.Parameter(torch.tensor(a), requires_grad = trainable)
         self.b = nn.Parameter(torch.tensor(b), requires_grad = trainable)
     
@@ -462,7 +462,7 @@ class Izhikevich(Soma):
         self.w = self.init_tensor(self.w, h)
         dw = self.a * (self.b * h - self.w)
         self.w = self.w + dw
-        du = 0.04 * h * h + 5.0 * h + 140.0 - self.w + x
+        du = 0.00004 * h * h + 0.005 * h + 0.14 + self.u_rest - self.w + x
         u = h + du
         return u
 
