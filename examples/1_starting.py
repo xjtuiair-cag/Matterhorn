@@ -58,9 +58,9 @@ def main():
         ),
         snn.Flatten(),
         snn.Linear(28 * 28, 80, bias = False),
-        snn.QIF(trainable = True),
+        snn.LIF(trainable = True),
         snn.Linear(80, 10, bias = False),
-        snn.QIF(trainable = True),
+        snn.LIF(trainable = True),
         snn.AvgSpikeDecoder()
     )
     model = model.to(device)
