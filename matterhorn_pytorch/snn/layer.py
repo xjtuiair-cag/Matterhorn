@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
+from matterhorn_pytorch.snn.container import Temporal
 from matterhorn_pytorch.snn.skeleton import Module
 from matterhorn_pytorch.snn import surrogate
 from matterhorn_pytorch.training.functional import stdp
@@ -46,7 +47,10 @@ class val_to_spike(torch.autograd.Function):
 
 
 class SRM0Linear(Module):
-    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: nn.Module = surrogate.Gaussian(), trainable: bool = False, device = None, dtype = None) -> None:
+    supported_surrogate_gradients = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
+
+
+    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: nn.Module = surrogate.Gaussian(), multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         SRM0神经元，突触响应的神经元
         电位公式较为复杂：
@@ -65,20 +69,26 @@ class SRM0Linear(Module):
             tau_m (float): 膜时间常数$τ_{m}$
             u_threshold (float): 阈电位$u_{th}$
             u_rest (float): 静息电位$u_{rest}$
-            spiking_function (nn.Module): 计算脉冲时所使用的阶跃函数
+            spiking_function (Module): 计算脉冲时所使用的阶跃函数
+            multi_time_step (bool): 是否调整为多个时间步模式
+            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
-            device: Optional[torch.device, str] 所使用的设备
-            dtype (type | None): 数据类型
         """
-        super().__init__()
+        super().__init__(
+            multi_time_step = multi_time_step,
+            reset_after_process = reset_after_process
+        )
         self.in_features = in_features
         self.out_features = out_features
-        self.weight = nn.Parameter(torch.empty((out_features, in_features), device = device, dtype = dtype), requires_grad = True)
+        self.weight = nn.Parameter(torch.empty((out_features, in_features)), requires_grad = True)
         nn.init.kaiming_uniform_(self.weight, a = math.sqrt(5))
         self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function
+        self.surrogate_str = spiking_function.__class__.__name__
+        assert self.surrogate_str in self.supported_surrogate_gradients, "Unknown surrogate gradient."
+        self.spiking_function_prototype = self.supported_surrogate_gradients.index(self.surrogate_str)
         self.trainable = trainable
         self.reset()
 
@@ -190,9 +200,9 @@ class SRM0Linear(Module):
         return r
 
 
-    def forward(self, o: torch.Tensor) -> torch.Tensor:
+    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             o (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
@@ -213,8 +223,41 @@ class SRM0Linear(Module):
         return o
 
 
+    def forward_multi_time_step(self, o: torch.Tensor) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            o (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            o (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        time_steps = o.shape[0]
+        o_seq = []
+        for t in range(time_steps):
+            o_seq.append(self.forward_single_time_step(o[t]))
+        o = torch.stack(o_seq)
+        return o
+
+
+    def forward(self, o: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            o (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            o (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        if self.multi_time_step:
+            o = self.forward_multi_time_step(o)
+            if self.reset_after_process:
+                self.reset()
+        else:
+            o = self.forward_single_time_step(o)
+        return o
+
+
 class STDPLinear(Module, nn.Linear):
-    def __init__(self, in_features: int, out_features: int, soma: nn.Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, device = None, dtype = None) -> None:
+    def __init__(self, in_features: int, out_features: int, soma: Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, device = None, dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层
         Args:
@@ -243,7 +286,16 @@ class STDPLinear(Module, nn.Linear):
         self.input_spike_seq = []
         self.output_spike_seq = []
         self.weight.requires_grad_(False)
-        self.soma = soma
+        if self.multi_time_step:
+            if soma.supports_multi_time_step():
+                self.soma = soma.multi_time_step_(True)
+            elif not soma.multi_time_step:
+                self.soma = Temporal(soma, reset_after_process = False)
+        else:
+            if soma.supports_single_time_step():
+                self.soma = soma.multi_time_step_(False)
+            else:
+                self.soma = soma
         self.a_pos = a_pos
         self.tau_pos = tau_pos
         self.a_neg = a_neg

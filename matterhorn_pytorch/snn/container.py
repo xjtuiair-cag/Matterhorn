@@ -32,26 +32,11 @@ class Spatial(Container, nn.Sequential):
         """
         Container.__init__(self)
         nn.Sequential.__init__(self, *args)
-        self.multi_time_step__ = False
+        self.a_mts = False
         for module in self:
             is_snn_module = isinstance(module, Module)
             if is_snn_module:
-                self.multi_time_step__ = self.multi_time_step__ or module.multi_time_step
-
-
-    def multi_time_step_(self, if_on: bool) -> nn.Module:
-        """
-        调整模型的多时间步模式。
-        Args
-            if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
-        """
-        self.multi_time_step__ = False
-        for module in self:
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
-                res = module.multi_time_step_(if_on)
-                self.multi_time_step__ = self.multi_time_step__ or module.multi_time_step
-        return self
+                self.a_mts = self.a_mts or module.multi_time_step
 
 
 class Temporal(Container):
@@ -189,6 +174,15 @@ class Sequential(Container, nn.Sequential):
         remove_indices = remove_indices[::-1]
         for idx in remove_indices:
             del self[idx]
+
+
+    def supports_single_time_step(self) -> bool:
+        """
+        是否支持单个时间步。
+        Returns:
+            if_support (bool): 是否支持单个时间步
+        """
+        return False
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
