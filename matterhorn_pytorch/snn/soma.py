@@ -19,6 +19,7 @@ except:
 class Soma(Module):
     supported_surrogate_gradients = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
 
+
     def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：

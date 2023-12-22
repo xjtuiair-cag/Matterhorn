@@ -22,8 +22,8 @@ class Module(nn.Module):
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         nn.Module.__init__(self)
-        self.multi_time_step__ = False
-        self.reset_after_process__ = reset_after_process
+        self.a_mts = False
+        self.a_ptr = reset_after_process
         if multi_time_step:
             self.multi_time_step_(multi_time_step)
     
@@ -62,7 +62,7 @@ class Module(nn.Module):
         Returns:
             if_on (bool): 当前是否为多个时间步模式
         """
-        return self.multi_time_step__
+        return self.a_mts
 
 
     def multi_time_step_(self, if_on: bool) -> nn.Module:
@@ -72,9 +72,14 @@ class Module(nn.Module):
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
         """
         if self.supports_multi_time_step() and if_on:
-            self.multi_time_step__ = True
+            self.a_mts = True
         elif self.supports_single_time_step() and not if_on:
-            self.multi_time_step__ = False
+            self.a_mts = False
+        for module in self.children():
+            is_snn_module = isinstance(module, Module)
+            if is_snn_module:
+                module.multi_time_step_(if_on)
+                assert module.multi_time_step == self.multi_time_step, "Unmatched step mode"
         return self
 
 
@@ -85,7 +90,7 @@ class Module(nn.Module):
         Returns:
             if_on (bool): 是否为自动重置（True为自动重置，False为手动重置）
         """
-        return self.reset_after_process__
+        return self.a_ptr
 
 
     def reset_after_process_(self, if_on: bool) -> nn.Module:
@@ -94,7 +99,7 @@ class Module(nn.Module):
         Args:
             if_on (bool): 是否为自动重置（True为自动重置，False为手动重置）
         """
-        self.reset_after_process__ = if_on
+        self.a_ptr = if_on
         return self
 
 
