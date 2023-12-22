@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import math
 from matterhorn_pytorch import snn
+from matterhorn_pytorch.snn.skeleton import Module
 try:
     from rich import print
 except:
@@ -141,3 +142,27 @@ class LSM(snn.Module):
         else:
             y = self.forward_single_time_step(x)
         return y
+
+
+class STDPLSM(LSM):
+    def __init__(self, adjacent: torch.Tensor, soma: Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, reset_after_process: bool = True, trainable: bool = True, device = None, dtype = None) -> None:
+        super().__init__(
+            adjacent = adjacent,
+            soma = soma,
+            multi_time_step = multi_time_step,
+            reset_after_process = reset_after_process,
+            trainable = trainable,
+            device = device,
+            dtype = dtype
+        )
+        self.input_spike_seq = []
+        self.output_spike_seq = []
+        self.weight.requires_grad_(False)
+        self.weight_input.requires_grad_(False)
+        self.soma = soma
+        self.a_pos = a_pos
+        self.tau_pos = tau_pos
+        self.a_neg = a_neg
+        self.tau_neg = tau_neg
+        self.lr = lr
+        

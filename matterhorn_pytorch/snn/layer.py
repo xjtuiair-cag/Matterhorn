@@ -265,6 +265,8 @@ class STDPLinear(Module, nn.Linear):
         """
         对整个神经元应用STDP使其更新。
         """
+        if not self.training:
+            return
         if self.multi_time_step:
             input_spike_train = torch.cat(self.input_spike_seq)
             output_spike_train = torch.cat(self.output_spike_seq)
@@ -325,12 +327,14 @@ class STDPLinear(Module, nn.Linear):
         Returns:
             o (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        self.input_spike_seq.append(o.clone().detach())
+        if self.training:
+            self.input_spike_seq.append(o.clone().detach())
         if self.multi_time_step:
             o = self.forward_multi_time_step(o)
         else:
             o = self.forward_single_time_step(o)
-        self.output_spike_seq.append(o.clone().detach())
+        if self.training:
+            self.output_spike_seq.append(o.clone().detach())
         return o
 
 
