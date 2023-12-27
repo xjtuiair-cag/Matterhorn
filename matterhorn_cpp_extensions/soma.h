@@ -4,6 +4,15 @@
 #include <ATen/ATen.h>
 #include <vector>
 
+void fp_response_if(at::Tensor u, at::Tensor x, at::Tensor h);
+
+void bp_response_if(at::Tensor grad_u,
+                    at::Tensor grad_x,
+                    at::Tensor grad_h,
+                    at::Tensor u,
+                    at::Tensor x,
+                    at::Tensor h);
+
 void fp_response_lif(at::Tensor u,
                      at::Tensor x,
                      at::Tensor h,
@@ -19,6 +28,50 @@ void bp_response_lif(at::Tensor grad_u,
                      at::Tensor h,
                      at::Tensor tau_m,
                      float u_rest);
+
+void fp_response_qif(at::Tensor u,
+                     at::Tensor x,
+                     at::Tensor h,
+                     at::Tensor tau_m,
+                     at::Tensor u_c,
+                     at::Tensor a_0,
+                     float u_rest);
+
+void bp_response_qif(at::Tensor grad_u,
+                     at::Tensor grad_x,
+                     at::Tensor grad_h,
+                     at::Tensor grad_tau_m,
+                     at::Tensor grad_u_c,
+                     at::Tensor grad_a_0,
+                     at::Tensor u,
+                     at::Tensor x,
+                     at::Tensor h,
+                     at::Tensor tau_m,
+                     at::Tensor u_c,
+                     at::Tensor a_0,
+                     float u_rest);
+
+void fp_response_expif(at::Tensor u,
+                       at::Tensor x,
+                       at::Tensor h,
+                       at::Tensor tau_m,
+                       at::Tensor u_t,
+                       at::Tensor delta_t,
+                       float u_rest);
+
+void bp_response_expif(at::Tensor grad_u,
+                       at::Tensor grad_x,
+                       at::Tensor grad_h,
+                       at::Tensor grad_tau_m,
+                       at::Tensor grad_u_t,
+                       at::Tensor grad_delta_t,
+                       at::Tensor u,
+                       at::Tensor x,
+                       at::Tensor h,
+                       at::Tensor tau_m,
+                       at::Tensor u_t,
+                       at::Tensor delta_t,
+                       float u_rest);
 
 void fp_spiking_heaviside(at::Tensor o, at::Tensor u, float u_threshold);
 

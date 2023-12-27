@@ -1,3 +1,7 @@
+#ifndef _MATTERHORN_SOMA_CUDA
+#define _MATTERHORN_SOMA_CUDA
+
+
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <ATen/ATen.h>
@@ -101,3 +105,6 @@ void cu_bp_lif(at::Tensor grad_o,
                 u_head, h_head, x_head, u_init_head, tau_m_head, u_rest,
                 u_threshold, spiking_mode, a, reset_mode);
 }
+
+
+#endif

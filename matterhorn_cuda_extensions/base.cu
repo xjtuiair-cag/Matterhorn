@@ -1,3 +1,7 @@
+#ifndef _MATTERHORN_BASE_CUDA
+#define _MATTERHORN_BASE_CUDA
+
+
 #include <cmath>
 #include <iostream>
 #include <stdlib.h>
@@ -208,3 +212,6 @@ Returns:
 __device__ float clampf(float base, float min, float max) {
     return base > min ? (base < max ? base : max) : min;
 }
+
+
+#endif

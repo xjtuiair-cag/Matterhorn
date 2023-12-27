@@ -391,7 +391,7 @@ class ExpIF(Soma):
 
 class Izhikevich(Soma):
     def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, a: float = 1.0, b: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
-        """
+        """, 
         Izhikevich神经元。
         一阶电位变换公式为：
         $$\frac{du}{dt}=0.04u^{2}+5u+140-w+I$$
