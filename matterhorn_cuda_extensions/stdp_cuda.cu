@@ -1,3 +1,7 @@
+#ifndef _MATTERHORN_STDP_CUDA_KERNEL
+#define _MATTERHORN_STDP_CUDA_KERNEL
+
+
 #include <stdlib.h>
 #include <cmath>
 #include <iostream>
@@ -98,3 +102,6 @@ void stdp_cuda(float* weight_mat,
         exit(-1);
     }
 }
+
+
+#endif

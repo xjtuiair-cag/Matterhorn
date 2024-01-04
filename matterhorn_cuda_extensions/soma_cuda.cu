@@ -1,3 +1,7 @@
+#ifndef _MATTERHORN_SOMA_CUDA_KERNEL
+#define _MATTERHORN_SOMA_CUDA_KERNEL
+
+
 #include <cmath>
 #include <iostream>
 #include <stdlib.h>
@@ -438,3 +442,6 @@ void bp_lif_cuda(float* grad_o,
         exit(-1);
     }
 }
+
+
+#endif

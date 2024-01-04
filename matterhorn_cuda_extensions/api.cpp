@@ -1,3 +1,7 @@
+#ifndef _MATTERHORN_API_CUDA
+#define _MATTERHORN_API_CUDA
+
+
 #include <torch/extension.h>
 
 #include "stdp.h"
@@ -8,3 +12,6 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     m.def("cu_fp_lif", &cu_fp_lif, "cu_fp_lif");
     m.def("cu_bp_lif", &cu_bp_lif, "cu_bp_lif");
 }
+
+
+#endif

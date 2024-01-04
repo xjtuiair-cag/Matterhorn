@@ -1,12 +1,51 @@
-#include "base.h"
+#ifndef _MATTERHORN_SOMA
+#define _MATTERHORN_SOMA
+
+
 #include "soma.h"
 #include <ATen/ATen.h>
 #include <ATen/Functions.h>
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include "base.h"
 
 using namespace std;
+
+/*
+IF神经元反应函数的前向传播函数。
+$$U_{i}^{l}(t)=H_{i}^{l}(t-1)+X_{i}^{l}(t)$$
+Args:
+    u (at::Tensor): 胞体电位$U^{l}(t)$
+    x (at::Tensor): 输入电位$X^{l}(t)$
+    h (at::Tensor): 胞体历史电位$H^{l}(t-1)$
+*/
+void fp_response_if(at::Tensor u, at::Tensor x, at::Tensor h) {
+    at::Tensor du = x;
+    u += h + du;
+}
+
+/*
+IF神经元反应函数的反向传播函数。
+$$\frac{\partial U_{i}^{l}(t)}{\partial H_{i}^{l}(t-1)}=1$$
+$$\frac{\partial U_{i}^{l}(t)}{\partial X_{i}^{l}(t)}=1$$
+Args:
+    grad_u (at::Tensor): 胞体电位$U^{l}(t)$的梯度
+    grad_x (at::Tensor): 输入电位$X^{l}(t)$的梯度
+    grad_h (at::Tensor): 胞体历史电位$H^{l}(t-1)$的梯度
+    u (at::Tensor): 胞体电位$U^{l}(t)$
+    x (at::Tensor): 输入电位$X^{l}(t-1)$
+    h (at::Tensor): 胞体历史电位$H^{l}(t)$
+*/
+void bp_response_if(at::Tensor grad_u,
+                    at::Tensor grad_x,
+                    at::Tensor grad_h,
+                    at::Tensor u,
+                    at::Tensor x,
+                    at::Tensor h) {
+    grad_x += grad_u * 1.0f;
+    grad_h += grad_u * 1.0f;
+}
 
 /*
 LIF神经元反应函数的前向传播函数。
@@ -40,8 +79,8 @@ Args:
     grad_h (at::Tensor): 胞体历史电位$H^{l}(t-1)$的梯度
     grad_tau_m (at::Tensor): 时间常数$τ_{m}$的梯度
     u (at::Tensor): 胞体电位$U^{l}(t)$
-    h (at::Tensor): 胞体历史电位$H^{l}(t)$
     x (at::Tensor): 输入电位$X^{l}(t-1)$
+    h (at::Tensor): 胞体历史电位$H^{l}(t)$
     tau_m (at::Tensor): 时间常数$τ_{m}$
     u_rest (float): 静息电位$u_{rest}$
 */
@@ -57,7 +96,168 @@ void bp_response_lif(at::Tensor grad_u,
     float tau_m_val = tau_m.data<float>()[0];
     grad_x += grad_u * (1.0f / tau_m_val);
     grad_h += grad_u * (1.0f - (1.0f / tau_m_val));
-    grad_tau_m += grad_u * (-1.0f / powf(tau_m_val, 2.0f)) * (-(h - u_rest) + x);
+    grad_tau_m +=
+        grad_u * (-1.0f / powf(tau_m_val, 2.0f)) * (-(h - u_rest) + x);
+}
+
+/*
+QIF神经元反应函数的前向传播函数。
+$$U_{i}^{l}(t)=H_{i}^{l}(t-1)+\frac{1}{τ_{m}}[a_{0}(H_{i}^{l}(t-1)-u_{rest})(H_{i}^{l}(t-1)-u_{c})+X_{i}^{l}(t)]$$
+Args:
+    u (at::Tensor): 胞体电位$U^{l}(t)$
+    x (at::Tensor): 输入电位$X^{l}(t)$
+    h (at::Tensor): 胞体历史电位$H^{l}(t-1)$
+    tau_m (at::Tensor): 时间常数$τ_{m}$
+    u_c (at::Tensor): 参数$u_{c}$
+    a_0 (at::Tensor): 参数$a_{0}$
+    u_rest (float): 静息电位$u_{rest}$
+*/
+void fp_response_qif(at::Tensor u,
+                     at::Tensor x,
+                     at::Tensor h,
+                     at::Tensor tau_m,
+                     at::Tensor u_c,
+                     at::Tensor a_0,
+                     float u_rest) {
+    float tau_m_val = tau_m.data<float>()[0];
+    float u_c_val = u_c.data<float>()[0];
+    float a_0_val = a_0.data<float>()[0];
+    at::Tensor du =
+        (1.0f / tau_m_val) * (a_0_val * (h - u_rest) * (h - u_c_val) + x);
+    u += h + du;
+}
+
+/*
+QIF神经元反应函数的反向传播函数。
+$$\frac{\partial U_{i}^{l}(t)}{\partial
+H_{i}^{l}(t-1)}=1+\frac{a_{0}}{τ_{m}}[2H_{i}^{l}(t-1)-u_{rest}-u_{c}]$$
+$$\frac{\partial U_{i}^{l}(t)}{\partial X_{i}^{l}(t)}=\frac{1}{τ_{m}}$$
+$$\frac{\partial U_{i}^{l}(t)}{\partial
+τ_{m}}=-\frac{1}{τ_{m}^{2}}[a_{0}(H_{i}^{l}(t-1)-u_{rest})(H_{i}^{l}(t-1)-u_{c})+X_{i}^{l}(t)]$$
+$$\frac{\partial U_{i}^{l}(t)}{\partial
+u_{c}}=-\frac{a_{0}}{τ_{m}}(H_{i}^{l}(t-1)-u_{rest})$$
+$$\frac{\partial U_{i}^{l}(t)}{\partial
+a_{0}}=\frac{1}{τ_{m}}(H_{i}^{l}(t-1)-u_{rest})(H_{i}^{l}(t-1)-u_{c})$$
+Args:
+    grad_u (at::Tensor): 胞体电位$U^{l}(t)$的梯度
+    grad_x (at::Tensor): 输入电位$X^{l}(t)$的梯度
+    grad_h (at::Tensor): 胞体历史电位$H^{l}(t-1)$的梯度
+    grad_tau_m (at::Tensor): 时间常数$τ_{m}$的梯度
+    grad_u_c (at::Tensor): 参数$u_{c}$的梯度
+    grad_a_0 (at::Tensor): 参数$a_{0}$的梯度
+    u (at::Tensor): 胞体电位$U^{l}(t)$
+    x (at::Tensor): 输入电位$X^{l}(t-1)$
+    h (at::Tensor): 胞体历史电位$H^{l}(t)$
+    tau_m (at::Tensor): 时间常数$τ_{m}$
+    u_c (at::Tensor): 参数$u_{c}$
+    a_0 (at::Tensor): 参数$a_{0}$
+    u_rest (float): 静息电位$u_{rest}$
+*/
+void bp_response_qif(at::Tensor grad_u,
+                     at::Tensor grad_x,
+                     at::Tensor grad_h,
+                     at::Tensor grad_tau_m,
+                     at::Tensor grad_u_c,
+                     at::Tensor grad_a_0,
+                     at::Tensor u,
+                     at::Tensor x,
+                     at::Tensor h,
+                     at::Tensor tau_m,
+                     at::Tensor u_c,
+                     at::Tensor a_0,
+                     float u_rest) {
+    float tau_m_val = tau_m.data<float>()[0];
+    float u_c_val = u_c.data<float>()[0];
+    float a_0_val = a_0.data<float>()[0];
+    grad_x += grad_u * (1.0f / tau_m_val);
+    grad_h +=
+        grad_u * (1.0f + (a_0_val / tau_m_val) * (2.0f * h - u_rest - u_c_val));
+    grad_tau_m += grad_u * (-1.0f / powf(tau_m_val, 2.0f)) *
+                  (a_0_val * (h - u_rest) * (h - u_c_val) + x);
+    grad_u_c += grad_u * -(a_0_val / tau_m_val) * (h - u_rest);
+    grad_a_0 += grad_u * (1.0f / tau_m_val) * (h - u_rest) * (h - u_c_val);
+}
+
+/*
+ExpIF神经元反应函数的前向传播函数。
+$$U_{i}^{l}(t)=H_{i}^{l}(t-1)+\frac{1}{τ_{m}}[-(H_{i}^{l}(t-1)-u_{rest})+Δ_{T}e^{\frac{H_{i}^{l}(t-1)-u_{T}}{Δ_{T}}}+X_{i}^{l}(t)]$$
+Args:
+    u (at::Tensor): 胞体电位$U^{l}(t)$
+    x (at::Tensor): 输入电位$X^{l}(t)$
+    h (at::Tensor): 胞体历史电位$H^{l}(t-1)$
+    tau_m (at::Tensor): 时间常数$τ_{m}$
+    u_t (at::Tensor): 参数$u_{t}$
+    delta_t (at::Tensor): 参数$Δ_{T}$
+    u_rest (float): 静息电位$u_{rest}$
+*/
+void fp_response_expif(at::Tensor u,
+                       at::Tensor x,
+                       at::Tensor h,
+                       at::Tensor tau_m,
+                       at::Tensor u_t,
+                       at::Tensor delta_t,
+                       float u_rest) {
+    float tau_m_val = tau_m.data<float>()[0];
+    float u_t_val = u_t.data<float>()[0];
+    float delta_t_val = delta_t.data<float>()[0];
+    at::Tensor du = (1.0f / tau_m_val) *
+                    (-(h - u_rest) +
+                     delta_t_val * at::exp((h - u_t_val) / delta_t_val) + x);
+    u += h + du;
+}
+
+/*
+ExpIF神经元反应函数的反向传播函数。
+$$\frac{\partial U_{i}^{l}(t)}{\partial
+H_{i}^{l}(t-1)}=1-\frac{1}{τ_{m}}+e^{\frac{H_{i}^{l}(t-1)-u_{T}}{Δ_{T}}}$$
+$$\frac{\partial U_{i}^{l}(t)}{\partial X_{i}^{l}(t)}=\frac{1}{τ_{m}}$$
+$$\frac{\partial U_{i}^{l}(t)}{\partial
+τ_{m}}=-\frac{1}{τ_{m}^{2}}[-(H_{i}^{l}(t-1)-u_{rest})+Δ_{T}e^{\frac{H_{i}^{l}(t-1)-u_{T}}{Δ_{T}}}+X_{i}^{l}(t)]$$
+$$\frac{\partial U_{i}^{l}(t)}{\partial
+u_{t}}=-\frac{1}{τ_{m}}e^{\frac{H_{i}^{l}(t-1)-u_{T}}{Δ_{T}}}$$
+$$\frac{\partial U_{i}^{l}(t)}{\partial
+Δ_{T}}=\frac{1}{τ_{m}}(1-\frac{1}{Δ_{T}})e^{\frac{H_{i}^{l}(t-1)-u_{T}}{Δ_{T}}}$$
+Args:
+    grad_u (at::Tensor): 胞体电位$U^{l}(t)$的梯度
+    grad_x (at::Tensor): 输入电位$X^{l}(t)$的梯度
+    grad_h (at::Tensor): 胞体历史电位$H^{l}(t-1)$的梯度
+    grad_tau_m (at::Tensor): 时间常数$τ_{m}$的梯度
+    grad_u_t (at::Tensor): 参数$u_{t}$的梯度
+    grad_delta_t (at::Tensor): 参数$Δ_{T}$的梯度
+    u (at::Tensor): 胞体电位$U^{l}(t)$
+    x (at::Tensor): 输入电位$X^{l}(t-1)$
+    h (at::Tensor): 胞体历史电位$H^{l}(t)$
+    tau_m (at::Tensor): 时间常数$τ_{m}$
+    u_t (at::Tensor): 参数$u_{t}$
+    delta_t (at::Tensor): 参数$Δ_{T}$
+    u_rest (float): 静息电位$u_{rest}$
+*/
+void bp_response_expif(at::Tensor grad_u,
+                       at::Tensor grad_x,
+                       at::Tensor grad_h,
+                       at::Tensor grad_tau_m,
+                       at::Tensor grad_u_t,
+                       at::Tensor grad_delta_t,
+                       at::Tensor u,
+                       at::Tensor x,
+                       at::Tensor h,
+                       at::Tensor tau_m,
+                       at::Tensor u_t,
+                       at::Tensor delta_t,
+                       float u_rest) {
+    float tau_m_val = tau_m.data<float>()[0];
+    float u_t_val = u_t.data<float>()[0];
+    float delta_t_val = delta_t.data<float>()[0];
+    grad_x += grad_u * (1.0f / tau_m_val);
+    grad_h += grad_u * (1.0f - (1.0f / tau_m_val) +
+                        at::exp((h - u_t_val) / delta_t_val));
+    grad_tau_m += grad_u * (-1.0f / powf(tau_m_val, 2.0f)) *
+                  (-(h - u_rest) +
+                   delta_t_val * at::exp((h - u_t_val) / delta_t_val) + x);
+    grad_u_t +=
+        grad_u * (-1.0f / tau_m_val) * at::exp((h - u_t_val) / delta_t_val);
+    grad_delta_t += grad_u * (1.0f / tau_m_val) * (1.0f - 1.0f / delta_t_val) *
+                    at::exp((h - u_t_val) / delta_t_val);
 }
 
 /*
@@ -352,3 +552,6 @@ void bp_lif(at::Tensor grad_o,
                         u_rest);
     }
 }
+
+
+#endif

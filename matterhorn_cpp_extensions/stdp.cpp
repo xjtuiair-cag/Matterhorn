@@ -1,3 +1,7 @@
+#ifndef _MATTERHORN_STDP
+#define _MATTERHORN_STDP
+
+
 #include "stdp.h"
 #include <ATen/ATen.h>
 #include <ATen/Functions.h>
@@ -61,3 +65,6 @@ void stdp(at::Tensor weight_mat,
         }
     }
 }
+
+
+#endif

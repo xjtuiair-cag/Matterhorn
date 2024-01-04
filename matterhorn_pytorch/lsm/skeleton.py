@@ -9,6 +9,9 @@ import torch
 import torch.nn as nn
 import math
 from matterhorn_pytorch import snn
+from matterhorn_pytorch.snn.container import Temporal
+from matterhorn_pytorch.snn.skeleton import Module
+from matterhorn_pytorch.training.functional import stdp
 try:
     from rich import print
 except:
@@ -32,7 +35,16 @@ class LSM(snn.Module):
         assert len(adjacent.shape) == 2 and adjacent.shape[0] == adjacent.shape[1], "Incorrect adjacent matrix."
         self.adjacent = nn.Parameter(adjacent.to(torch.float), requires_grad = False)
         self.neuron_num = self.adjacent.shape[0]
-        self.soma = soma
+        if self.multi_time_step:
+            if soma.supports_multi_time_step():
+                self.soma = soma.multi_time_step_(True)
+            elif not soma.multi_time_step:
+                self.soma = Temporal(soma, reset_after_process = False)
+        else:
+            if soma.supports_single_time_step():
+                self.soma = soma.multi_time_step_(False)
+            else:
+                self.soma = soma
         self.trainable = trainable
         self.weight = nn.Parameter(torch.empty((self.neuron_num, self.neuron_num), device = device, dtype = dtype), requires_grad = trainable)
         nn.init.kaiming_uniform_(self.weight, a = math.sqrt(5))
@@ -140,4 +152,93 @@ class LSM(snn.Module):
                 self.reset()
         else:
             y = self.forward_single_time_step(x)
+        return y
+
+
+class STDPLSM(LSM):
+    def __init__(self, adjacent: torch.Tensor, soma: Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, reset_after_process: bool = True, trainable: bool = True, device = None, dtype = None) -> None:
+        super().__init__(
+            adjacent = adjacent,
+            soma = soma,
+            multi_time_step = multi_time_step,
+            reset_after_process = reset_after_process,
+            trainable = trainable,
+            device = device,
+            dtype = dtype
+        )
+        self.input_spike_seq = []
+        self.output_spike_seq = []
+        self.weight.requires_grad_(False)
+        self.weight_input.requires_grad_(False)
+        if self.multi_time_step:
+            if soma.supports_multi_time_step():
+                self.soma = soma.multi_time_step_(True)
+            elif not soma.multi_time_step:
+                self.soma = Temporal(soma, reset_after_process = False)
+        else:
+            if soma.supports_single_time_step():
+                self.soma = soma.multi_time_step_(False)
+            else:
+                self.soma = soma
+        self.a_pos = a_pos
+        self.tau_pos = tau_pos
+        self.a_neg = a_neg
+        self.tau_neg = tau_neg
+        self.lr = lr
+
+
+    def step(self) -> None:
+        """
+        对整个神经元应用STDP使其更新。
+        """
+        if not self.training:
+            return
+        if self.multi_time_step:
+            input_spike_train = torch.cat(self.input_spike_seq)
+            output_spike_train = torch.cat(self.output_spike_seq)
+        else:
+            input_spike_train = torch.stack(self.input_spike_seq)
+            output_spike_train = torch.stack(self.output_spike_seq)
+        is_batched = input_spike_train.ndim >= 3
+        if is_batched:
+            input_spike_train = input_spike_train.permute(1, 0, 2)
+            output_spike_train = output_spike_train.permute(1, 0, 2)
+        else:
+            input_spike_train = input_spike_train.reshape(input_spike_train.shape[0], 1, input_spike_train.shape[1])
+            output_spike_train = output_spike_train.reshape(output_spike_train.shape[0], 1, output_spike_train.shape[1])
+        # 将不同维度的输入与输出张量形状统一转为[T, B, L]
+        recurrent_spike_train = torch.zeros_like(output_spike_train)
+        recurrent_spike_train[1:] = output_spike_train[:-1]
+        delta_weight = torch.zeros_like(self.weight)
+        delta_weight = stdp(delta_weight, recurrent_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
+        self.weight += self.lr * delta_weight
+        delta_weight_input = torch.zeros_like(self.weight)
+        delta_weight_input = stdp(delta_weight_input, input_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
+        self.weight_input += self.lr * torch.diagonal(delta_weight_input)
+        self.input_spike_seq = []
+        self.output_spike_seq = []
+
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            x (torch.Tensor): 当前输入，形状为[B, I]（单步）或[B, T, I]（多步）
+        Returns:
+            y (torch.Tensor): 当前输出，形状为[B, O]（单步）或[B, T, O]（多步）
+        """
+        if self.multi_time_step:
+            x = self.permute_t_b(x)
+            y = self.forward_multi_time_step(x)
+            if self.training:
+                self.input_spike_seq.append(x.clone().detach())
+                self.output_spike_seq.append(y.clone().detach())
+            y = self.permute_t_b(y)
+            if self.reset_after_process:
+                self.reset()
+        else:
+            y = self.forward_single_time_step(x)
+            if self.training:
+                self.input_spike_seq.append(x.clone().detach())
+                self.output_spike_seq.append(y.clone().detach())
         return y

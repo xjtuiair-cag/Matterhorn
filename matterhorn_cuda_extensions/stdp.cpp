@@ -1,3 +1,7 @@
+#ifndef _MATTERHORN_STDP_CUDA
+#define _MATTERHORN_STDP_CUDA
+
+
 #include "stdp.h"
 #include <ATen/ATen.h>
 #include <cuda.h>
@@ -37,3 +41,6 @@ void cu_stdp(at::Tensor weight_mat,
               input_spike_train_head, output_spike_train_head, a_pos, tau_pos,
               a_neg, tau_neg, batch_size);
 }
+
+
+#endif
