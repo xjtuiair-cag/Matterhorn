@@ -303,7 +303,7 @@ g++ -v
 
 ```sh
 cd your/path
-git clone https://github.com/AmperiaWang/Matterhorn.git
+git clone https://github.com/xjtuiair-cag/Matterhorn.git
 ```
 
 随后安装：

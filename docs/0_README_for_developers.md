@@ -325,7 +325,7 @@ git init
 初始化新的GIT仓库后，输入
 
 ```sh
-git remote add origin https://github.com/AmperiaWang/Matterhorn.git
+git remote add origin https://github.com/xjtuiair-cag/Matterhorn.git
 ```
 
 将本地仓库与远程仓库相链接。

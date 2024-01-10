@@ -23,7 +23,7 @@ TorchVision(>=0.11.0 and <= 0.13.1)
 For Windows version you may have to install GCC as well as G++ through Visual C++ or MinGW.
 
 ```sh
-git clone https://github.com/AmperiaWang/Matterhorn.git
+git clone https://github.com/xjtuiair-cag/Matterhorn.git
 cd Matterhorn
 pip install -r requirements.txt
 ```
@@ -33,7 +33,7 @@ Don't forget to add `sudo` if you are not the root user.
 ### Install Matterhorn
 
 ```sh
-git clone https://github.com/AmperiaWang/Matterhorn.git
+git clone https://github.com/xjtuiair-cag/Matterhorn.git
 cd Matterhorn
 python3 setup.py install
 ```
