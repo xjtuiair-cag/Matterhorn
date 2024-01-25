@@ -1,6 +1,5 @@
 from setuptools import find_packages
 from setuptools import setup
-from torch.utils.cpp_extension import BuildExtension
 import os
 from typing import List
 
@@ -16,43 +15,51 @@ def get_cpp_files(root_path: str, exceptions: List[str]) -> List[str]:
 
 requirements = ["torch"]
 
-ext_modules = []
-cuda_available = not os.system("nvcc --version")
-if cuda_available:
-    print("\033[92mCUDA found on this device, installing matterhorn CUDA extensions.\033[0m")
-    from torch.utils.cpp_extension import CUDAExtension
-    files = get_cpp_files(os.path.join(os.path.abspath("."), "matterhorn_cuda_extensions"), ["base.cpp", "base.cu"])
-    print("Will compile " + ", ".join(files))
-    ext_modules.append(CUDAExtension(
-        "matterhorn_cuda_extensions",
-        files,
-        extra_compile_args = {
-            "cxx": ["-g", "-w"],
-            "nvcc": ["-O2"]
+try:
+    ext_modules = []
+    cuda_available = not os.system("export PATH=$PATH:/usr/local/cuda/bin;nvcc --version")
+    if cuda_available:
+        print("\033[92mCUDA found on this device, installing Matterhorn CUDA extensions.\033[0m")
+        from torch.utils.cpp_extension import CUDAExtension
+        files = get_cpp_files(os.path.join(os.path.abspath("."), "matterhorn_cuda_extensions"), ["base.cpp", "base.cu"])
+        print("Will compile " + ", ".join(files))
+        ext_modules.append(CUDAExtension(
+            "matterhorn_cuda_extensions",
+            files,
+            extra_compile_args = {
+                "cxx": ["-g", "-w"],
+                "nvcc": ["-O2"]
+            }
+        ))
+    else:
+        print("\033[93mCUDA not found on this device. If you have NVIDIA's GPU, please install CUDA and try again later, or manually install Matterhorn CUDA extensions.\033[0m")
+    cpp_available = not os.system("g++ --version")
+    if cpp_available:
+        print("\033[92mG++ found on this device, installing Matterhorn CPP extensions.\033[0m")
+        from torch.utils.cpp_extension import CppExtension
+        files = get_cpp_files(os.path.join(os.path.abspath("."), "matterhorn_cpp_extensions"), ["base.cpp"])
+        print("Will compile " + ", ".join(files))
+        ext_modules.append(CppExtension(
+            "matterhorn_cpp_extensions",
+            files,
+            extra_compile_args = {
+                "cxx": ["-g", "-w"]
+            }
+        ))
+    else:
+        print("\033[93mG++ not found on this device. Please install G++ and try again later, or manually install Matterhorn CPP extensions.\033[0m")
+    cmdclass = None
+    if cuda_available or cpp_available:
+        print("\033[92mTrying to build Matterhorn extensions.\033[0m")
+        from torch.utils.cpp_extension import BuildExtension
+        cmdclass = {
+            "build_ext": BuildExtension
         }
-    ))
-else:
-    print("\033[93mCUDA not found on this device. If you have NVIDIA's GPU, please install CUDA and try again later, or manually install Matterhorn CUDA extensions.\033[0m")
-cpp_available = not os.system("g++ --version")
-if cpp_available:
-    print("\033[92mg++ found on this device, installing matterhorn CPP extensions.\033[0m")
-    from torch.utils.cpp_extension import CppExtension
-    files = get_cpp_files(os.path.join(os.path.abspath("."), "matterhorn_cpp_extensions"), ["base.cpp"])
-    print("Will compile " + ", ".join(files))
-    ext_modules.append(CppExtension(
-        "matterhorn_cpp_extensions",
-        files,
-        extra_compile_args = {
-            "cxx": ["-g", "-w"]
-        }
-    ))
-else:
-    print("\033[93mg++ not found on this device. Please install g++ and try again later, or manually install Matterhorn CPP extensions.\033[0m")
-cmdclass = None
-if cuda_available or cpp_available:
-    cmdclass = {
-        "build_ext": BuildExtension
-    }
+except:
+    print("\033[93mFailed to build Matterhorn extensions. You can manually build Matterhorn CPP extensions later.\033[0m")
+    ext_modules = []
+    cmdclass = None
+
 
 with open(os.path.join(os.path.abspath("."), "requirements.txt"), "r", encoding="utf-8") as fh:
     install_requires = fh.read()
