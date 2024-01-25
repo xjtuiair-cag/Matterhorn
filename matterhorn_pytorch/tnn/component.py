@@ -48,7 +48,7 @@ class Bitonic(Module):
         Returns:
             y (torch.Tensor): 输出信号y，形状为[T, B, C, 2^l]
         """
-        if self.level <= 0:
+        if self.level <= 0 or x.shape[-1] <= 1:
             y = x
         elif self.level == 1:
             y0 = F.s_min(x[..., 0], x[..., 1])
@@ -61,26 +61,32 @@ class Bitonic(Module):
             y_dims = y_dims[1:] + [0]
             y = y.permute(*y_dims)
         else:
-            y0 = x[..., :self.half_length]
-            y1 = x[..., self.half_length:]
-            if not post:
-                y0 = self.asc_unit(y0)
-                y1 = self.desc_unit(y1)
-            if self.asc:
-                y2 = F.s_min(y0, y1)
-                y3 = F.s_max(y0, y1)
-                y0 = self.asc_unit(y2, post = True)
-                y1 = self.asc_unit(y3, post = True)
+            if x.shape[-1] <= self.half_length:
+                if self.asc:
+                    y = self.asc_unit(x, post = True)
+                else:
+                    y = self.desc_unit(x, post = True)
             else:
-                y2 = F.s_max(y0, y1)
-                y3 = F.s_min(y0, y1)
-                y0 = self.desc_unit(y2, post = True)
-                y1 = self.desc_unit(y3, post = True)
-            y = torch.cat([y0, y1], dim = len(y0.shape) - 1)
+                y0 = x[..., :self.half_length]
+                y1 = x[..., self.half_length:]
+                if not post:
+                    y0 = self.asc_unit(y0)
+                    y1 = self.desc_unit(y1)
+                if self.asc:
+                    y2 = F.s_min(y0, y1)
+                    y3 = F.s_max(y0, y1)
+                    y0 = self.asc_unit(y2, post = True)
+                    y1 = self.asc_unit(y3, post = True)
+                else:
+                    y2 = F.s_max(y0, y1)
+                    y3 = F.s_min(y0, y1)
+                    y0 = self.desc_unit(y2, post = True)
+                    y1 = self.desc_unit(y3, post = True)
+                y = torch.cat([y0, y1], dim = len(y0.shape) - 1)
         return y
 
 
-class Spiking(Module):
+class Firing(Module):
     def __init__(self, u_threshold: int) -> None:
         """
         统计上升/下降的时间，并发射脉冲。
@@ -116,7 +122,7 @@ class Spiking(Module):
 if __name__ == "__main__":
     up_times = Bitonic(4)
     down_times = Bitonic(4)
-    firing = Spiking(6)
+    firing = Firing(6)
     x = F.t_to_s(torch.cat([torch.randint(1, 10, (1, 16)).float()], dim = 1), 16)
     y = F.t_to_s(torch.cat([torch.randint(3, 12, (1, 16)).float()], dim = 1), 16)
     print(F.s_to_t(x))

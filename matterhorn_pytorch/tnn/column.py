@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from typing import Any
 from matterhorn_pytorch.snn import Module
-import matterhorn_pytorch.tnn.functional as F
+from matterhorn_pytorch.tnn.component import Bitonic, Firing
 try:
     from rich import print
 except:
