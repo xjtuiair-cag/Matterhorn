@@ -101,6 +101,10 @@ def main():
 
     demo_data, demo_label = test_dataset[0]
     print(demo_data.shape)
+    d = model.state_dict()
+    for name in d:
+        print(name)
+        print(d[name].shape)
 
     # 设置学习率，优化器，学习率衰减机制等等
 

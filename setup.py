@@ -1,6 +1,7 @@
 from setuptools import find_packages
 from setuptools import setup
 import os
+import platform
 from typing import List
 
 
@@ -17,7 +18,11 @@ requirements = ["torch"]
 
 try:
     ext_modules = []
-    cuda_available = not os.system("export PATH=$PATH:/usr/local/cuda/bin;nvcc --version")
+    if platform.system() == "Windows":
+        nvcc_cmd = "nvcc --version"
+    else:
+        nvcc_cmd = "export PATH=$PATH:/usr/local/cuda/bin;nvcc --version"
+    cuda_available = not os.system(nvcc_cmd)
     if cuda_available:
         print("\033[92mCUDA found on this device, installing Matterhorn CUDA extensions.\033[0m")
         from torch.utils.cpp_extension import CUDAExtension
