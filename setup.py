@@ -15,7 +15,6 @@ def get_cpp_files(root_path: str, exceptions: List[str]) -> List[str]:
 
 
 requirements = ["torch"]
-
 try:
     ext_modules = []
     if platform.system() == "Windows":
@@ -53,7 +52,7 @@ try:
         ))
     else:
         print("\033[93mG++ not found on this device. Please install G++ and try again later, or manually install Matterhorn CPP extensions.\033[0m")
-    cmdclass = None
+    cmdclass = {}
     if cuda_available or cpp_available:
         print("\033[92mTrying to build Matterhorn extensions.\033[0m")
         from torch.utils.cpp_extension import BuildExtension
@@ -63,7 +62,7 @@ try:
 except:
     print("\033[93mFailed to build Matterhorn extensions. You can manually build Matterhorn CPP extensions later.\033[0m")
     ext_modules = []
-    cmdclass = None
+    cmdclass = {}
 
 
 with open(os.path.join(os.path.abspath("."), "requirements.txt"), "r", encoding="utf-8") as fh:
