@@ -60,7 +60,7 @@ try:
             "build_ext": BuildExtension
         }
 except:
-    print("\033[93mFailed to build Matterhorn extensions. You can manually build Matterhorn CPP extensions later.\033[0m")
+    print("\033[93mFailed to build Matterhorn extensions. You can manually build Matterhorn extensions later.\033[0m")
     ext_modules = []
     cmdclass = {}
 
