@@ -13,6 +13,7 @@ import torch.nn as nn
 from matterhorn_pytorch.snn.skeleton import Module
 from matterhorn_pytorch.snn.soma import Soma
 from matterhorn_pytorch.snn import surrogate
+from matterhorn_pytorch.snn.surrogate import Gaussian
 try:
     from matterhorn_cpp_extensions import fp_lif, bp_lif
 except:
@@ -102,31 +103,6 @@ class multi_time_step_lif(torch.autograd.Function):
 
 
 class LIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, trainable: bool = False) -> None:
-        """
-        Leaky-Integrate-and-Fire(LIF)神经元。
-        一阶电位变换公式为：
-        $$τ\frac{du}{dt}=-(u-u_{rest})+RI$$
-        Args:
-            tau_m (float): 膜时间常数$τ_{m}$
-            u_threshold (float): 阈电位$u_{th}$
-            u_rest (float): 静息电位$u_{rest}$
-            spiking_function (Module): 计算脉冲时所使用的阶跃函数
-            hard_reset (bool): 是否为硬重置
-            trainable (bool): 参数是否可以训练
-        """
-        super().__init__(
-            tau_m = tau_m,
-            u_threshold = u_threshold,
-            u_rest = u_rest,
-            spiking_function = spiking_function,
-            hard_reset = hard_reset,
-            multi_time_step = True,
-            trainable = trainable
-        )
-        self.multi_time_step_function = multi_time_step_lif()
-
-
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
@@ -145,5 +121,5 @@ class LIF(Soma):
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
         self.u = self.init_tensor(self.u, x[0])
-        o, self.u = self.multi_time_step_function.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, self.spiking_function_prototype, self.spiking_function.a, self.reset_function_prototype)
+        o, self.u = multi_time_step_lif.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, self.spiking_function_prototype, self.spiking_function.a, self.reset_function_prototype)
         return o
