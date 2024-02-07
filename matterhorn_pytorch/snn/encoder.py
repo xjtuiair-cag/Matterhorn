@@ -128,6 +128,73 @@ class Poisson(Encoder):
         return y
 
 
+class SoftMax(Encoder):
+    def __init__(self, time_steps: int = 1) -> None:
+        """
+        对所有值进行SoftMax操作，随后转化为脉冲发放率（多步）
+        Args:
+            time_steps (int): 生成的时间步长
+            max_value (float): 最大值
+            min_value (float): 最小值
+        """
+        super().__init__()
+        self.time_steps = time_steps
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return "time_steps=%d" % (self.time_steps)
+
+
+    def forward_single(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        单步前向传播函数。
+        Args:
+            x (torch.Tensor): 输入张量，形状为[B,...]
+        Returns:
+            y (torch.Tensor): 输出张量，形状为[B,...]
+        """
+        p = torch.exp(x)
+        p /= torch.max(p)
+        r = torch.rand_like(x)
+        y = r.le(p).to(x)
+        return y
+    
+
+    def forward_multiple(self, x: torch.Tensor, time_steps: int) -> torch.Tensor:
+        """
+        多步前向传播函数。
+        Args:
+            x (torch.Tensor): 输入张量，形状为[B,...]
+        Returns:
+            y (torch.Tensor): 输出张量，形状为[T, B,...]
+        """
+        y_seq = []
+        for t in range(time_steps):
+            y_seq.append(self.forward_single(x))
+        y = torch.stack(y_seq)
+        return y
+
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        泊松编码的前向传播函数，将值$V$转化为该时间步$t$内的脉冲$O^{0}(t)$
+        Args:
+            x (torch.Tensor): 输入张量，形状为[B,...]
+        Returns:
+            y (torch.Tensor): 输出张量，形状为[T,B,...]
+        """
+        if self.time_steps <= 1:
+            y = self.forward_single(x)
+        else:
+            y = self.forward_multiple(x, self.time_steps)
+        return y
+
+
 class Temporal(Encoder):
     def __init__(self, time_steps: int = 1, max_value: float = 1.0, min_value: float = 0.0, prob: float = 0.75, reset_after_process: bool = True) -> None:
         """

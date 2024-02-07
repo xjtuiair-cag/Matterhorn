@@ -52,9 +52,14 @@ try:
         ))
     else:
         print("\033[93mG++ not found on this device. Please install G++ and try again later, or manually install Matterhorn CPP extensions.\033[0m")
+        if platform.system() == "Windows":
+            print("\033[93mIf you're Windows user, please download and install G++ from https://github.com/xjtuiair-cag/Matterhorn/blob/main/mingw-get-setup.exe .\033[0m")
+            
     cmdclass = {}
     if cuda_available or cpp_available:
         print("\033[92mTrying to build Matterhorn extensions.\033[0m")
+        if platform.system() == "Windows":
+            print("\033[93mIf you're Windows user and errors occur, please follow Microsoft's instruction and install VS generation tools for C++, then retry.\033[0m")
         from torch.utils.cpp_extension import BuildExtension
         cmdclass = {
             "build_ext": BuildExtension

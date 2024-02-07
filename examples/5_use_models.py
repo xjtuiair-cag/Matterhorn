@@ -10,7 +10,7 @@ import os, sys
 sys.path.append(os.path.abspath("."))
 
 
-import matterhorn_pytorch
+import matterhorn_pytorch as mth
 import matterhorn_pytorch.snn as snn
 from matterhorn_pytorch.model import SEWRes18
 
@@ -70,7 +70,7 @@ def main():
 
     width = 128
     height = 128
-    train_dataset = matterhorn_pytorch.data.NMNIST(
+    train_dataset = mth.data.NMNIST(
         root = "./examples/data",
         train = True,
         download = True,
@@ -78,7 +78,7 @@ def main():
         width = width,
         height = height
     )
-    test_dataset = matterhorn_pytorch.data.NMNIST(
+    test_dataset = mth.data.NMNIST(
         root = "./examples/data",
         train = False,
         download = True,
@@ -104,7 +104,7 @@ def main():
 
     demo_data, demo_label = test_dataset[0]
     print(demo_data.shape)
-    # matterhorn_pytorch.util.plotter.event_plot_tyx(demo_data, titles = ["%s Label %s" % (test_dataset.__class__.__name__, test_dataset.labels[demo_label])])
+    # mth.util.plotter.event_plot_tyx(demo_data, titles = ["%s Label %s" % (test_dataset.__class__.__name__, test_dataset.labels[demo_label])])
 
     # 设置学习率，优化器，学习率衰减机制等等
 

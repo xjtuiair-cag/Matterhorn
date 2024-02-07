@@ -14,6 +14,31 @@ except:
     pass
 
 
+class val_to_spike(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x: torch.Tensor) -> torch.Tensor:
+        """
+        模拟值转脉冲的前向传播函数，以0.5为界
+        Args:
+            x (torch.Tensor): 模拟值
+        Returns:
+            o (torch.Tensor): 脉冲值（0、1）
+        """
+        return x.ge(0.5).to(x)
+
+
+    @staticmethod
+    def backward(ctx, grad_output: torch.Tensor) -> torch.Tensor:
+        """
+        模拟值转脉冲的反向传播函数
+        Args:
+            grad_output (torch.Tensor): 输出梯度
+        Returns:
+            grad_input (torch.Tensor): 输入梯度
+        """
+        return grad_output
+
+
 @torch.jit.script
 def forward_heaviside(x: torch.Tensor) -> torch.Tensor:
     """

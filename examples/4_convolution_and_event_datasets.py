@@ -8,7 +8,7 @@ import os, sys
 sys.path.append(os.path.abspath("."))
 
 
-import matterhorn_pytorch
+import matterhorn_pytorch as mth
 import matterhorn_pytorch.snn as snn
 
 
@@ -28,7 +28,7 @@ def main():
 
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
-    time_steps = 128
+    time_steps = 32
     batch_size = 128
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 32
@@ -53,16 +53,14 @@ def main():
 
     model = snn.Sequential(
         snn.DirectEncoder(),
-        snn.Conv2d(in_channels = 2, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 17, 17]
+        snn.Conv2d(in_channels = 2, out_channels = 8, kernel_size = 3, stride = 2, padding = 1), # [T, 8, 17, 17]
         snn.LIF(tau_m = tau),
-        snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 9, 9]
-        snn.LIF(tau_m = tau),
-        snn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 3, stride = 2, padding = 1), # [T, 64, 5, 5]
+        snn.Conv2d(in_channels = 8, out_channels = 32, kernel_size = 3, stride = 2, padding = 1), # [T, 32, 9, 9]
         snn.LIF(tau_m = tau),
         snn.AvgSpikeDecoder(),
         nn.Flatten(),
-        nn.Linear(1600, 10),
-        nn.ReLU()
+        nn.Linear(2592, 10),
+        nn.Sigmoid()
     )
     model = model.to(device)
 
@@ -75,7 +73,7 @@ def main():
 
     width = 34
     height = 34
-    train_dataset = matterhorn_pytorch.data.NMNIST(
+    train_dataset = mth.data.NMNIST(
         root = "./examples/data",
         train = True,
         download = True,
@@ -83,7 +81,7 @@ def main():
         width = width,
         height = height
     )
-    test_dataset = matterhorn_pytorch.data.NMNIST(
+    test_dataset = mth.data.NMNIST(
         root = "./examples/data",
         train = False,
         download = True,
@@ -109,7 +107,7 @@ def main():
 
     demo_data, demo_label = test_dataset[0]
     print(demo_data.shape)
-    # matterhorn_pytorch.util.plotter.event_plot_tyx(demo_data, titles = ["%s Label %s" % (test_dataset.__class__.__name__, test_dataset.labels[demo_label])])
+    # mth.util.plotter.event_plot_tyx(demo_data, titles = ["%s Label %s" % (test_dataset.__class__.__name__, test_dataset.labels[demo_label])])
 
     # 设置学习率，优化器，学习率衰减机制等等
 

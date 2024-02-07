@@ -11,7 +11,8 @@ import torch
 import torch.nn as nn
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
-from matterhorn_pytorch.snn.container import Temporal
+from matterhorn_pytorch.snn.container import Temporal 
+from matterhorn_pytorch.snn.functional import val_to_spike
 from matterhorn_pytorch.snn.skeleton import Module
 from matterhorn_pytorch.snn import surrogate
 from matterhorn_pytorch.training.functional import stdp
@@ -19,31 +20,6 @@ try:
     from rich import print
 except:
     pass
-
-
-class val_to_spike(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx, x: torch.Tensor) -> torch.Tensor:
-        """
-        模拟值转脉冲的前向传播函数，以0.5为界
-        Args:
-            x (torch.Tensor): 模拟值
-        Returns:
-            o (torch.Tensor): 脉冲值（0、1）
-        """
-        return x.ge(0.5).to(x)
-    
-
-    @staticmethod
-    def backward(ctx, grad_output: torch.Tensor) -> torch.Tensor:
-        """
-        模拟值转脉冲的反向传播函数
-        Args:
-            grad_output (torch.Tensor): 输出梯度
-        Returns:
-            grad_input (torch.Tensor): 输入梯度
-        """
-        return grad_output
 
 
 class SRM0Linear(Module):
