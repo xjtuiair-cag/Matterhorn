@@ -1,5 +1,9 @@
 # Matterhorn
 
+[English](./README.md)
+
+[中文](./README_zh_cn.md)
+
 ## 1 General Introduction
 
 ![logo](./assets/logo.png)
@@ -10,17 +14,19 @@ Matterhorn is a novel general SNN framework based on PyTorch.
 
 ### Environment
 
-Python(>=3.7 and <= 3.9)
+Python (>= 3.7 and <= 3.9)
 
-CUDA(>=11.3.0, with CUDNN)
+CUDA (>= 11.3.0, with CUDNN, optional)
 
-PyTorch(>=1.10.0 and <=1.13.1)
+PyTorch (>= 1.10.0 and <= 1.13.1)
 
-TorchVision(>=0.11.0 and <= 0.13.1)
+TorchVision (>= 0.11.0 and <= 0.13.1)
 
-### Environment Installation
+### Requirement Installation
 
-For Windows version you may have to install GCC as well as G++ through Visual C++ or MinGW.
+For Windows version you may have to install GCC as well as G++ through Visual Studio (build tools) and [MinGW](./mingw-get-setup.exe).
+
+Then execute:
 
 ```sh
 git clone https://github.com/xjtuiair-cag/Matterhorn.git
@@ -28,7 +34,7 @@ cd Matterhorn
 pip install -r requirements.txt
 ```
 
-Don't forget to add `sudo` if you are not the root user.
+Don't forget to add `sudo` prefix if you are not the root user.
 
 ### Install Matterhorn
 
@@ -42,11 +48,17 @@ Don't forget to add `sudo` if you are not the root user.
 
 ## 3 Module Explanation
 
-### Neurons in SNN
+### Terms
 
-As we're all known, the image below describes what an ANN looks like.
+ANNs - Artificial Neural Networks
 
-![ANN Structure](./assets/readme_1.png)
+SNNs - Spiking Neural Networks
+
+### Neurons in SNNs
+
+As we're all known, the image below describes what ANNs look like.
+
+![ANNs' Structure](./assets/readme_1.png)
 
 **Operation 1** is **synapse function**, which uses weights and bias to calculate those values from previous layer to current layer. Commonly used synapse functions are including full connection layer `nn.Linear`, convolution layer `nn.Conv2D`, etc.
 
@@ -62,7 +74,7 @@ We use an equation to describe the activation function:
 
 $$X^{l}=activation(Y^{l})$$
 
-In conclusion, each of layers in ANN has 2 functions. We can build our ANN model in PyTorch by the code below:
+In conclusion, each of layers in ANNs has 2 functions. We can build our ANN model in PyTorch by the code below:
 
 ```python
 import torch.nn as nn
@@ -73,13 +85,13 @@ model = nn.Sequential(
 )
 ```
 
-This is a 1-layer MLP. It can take an image with the size of 28x28 as input and classify it into 10 classes. In this example, two equations of ANN can be represented as below:
+This is a 1-layer MLP. It can take an image with the size of 28x28 as input and classify it into 10 classes. In this example, two equations of ANNs can be represented as below:
 
 $$Y^{l}=W^{l}X^{l-1}+\vec{b}$$
 
 $$X^{l}=ReLU(Y^{l})$$
 
-In SNN, the synapse equation is the same as that in ANN. However, functions in soma are no longer like what is in ANN. In the soma of SNN, there exists a loop in time. The image below describes what an SNN looks like.
+In SNNs, the synapse equation is the same as that in ANNs. However, functions in soma are no longer like what is in ANNs. In the soma of SNNs, there exists a loop in time. The image below describes what SNNs look like.
 
 ![SNN Structure](./assets/readme_2.png)
 
@@ -127,13 +139,13 @@ Under most occasions we use equation below to reset potential:
 
 $$H^{l}(t)=U^{l}(t-1)[1-O^{l}(t-1)]+u_{rest}O^{l}(t-1)$$
 
-In brief, we use 4 equations to describe SNN neurons. This is what an SNN looks like. The shape of an SNN neuron is like a trumpet. Its synapses transform those spikes from last neuron and pass the input response to soma, in which there is a time loop awaits.
+In brief, we use 4 equations to describe spiking neurons. This is what SNN look like. The shape of a spiking neuron is like a trumpet. Its synapses transform those spikes from last neuron and pass the input response to soma, in which there is a time loop awaits.
 
-By unfolding SNN neurons on temporal dimension, we can get the spatial-temporal topology network of SNN.
+By unfolding spiking neurons on temporal dimension, we can get the spatio-temporal topology network of SNNs.
 
-![Spatial-temporal Topology Network of SNN](./assets/readme_3.png)
+![Spatial-temporal Topology Network of SNNs](./assets/readme_3.png)
 
-Like building ANN in PyTorch, we can build our SNN model in Matterhorn by the code below:
+Like building ANNs in PyTorch, we can build our SNN model in Matterhorn by the code below:
 
 ```python
 import torch
@@ -147,9 +159,9 @@ snn_model = snn.Temporal(
 )
 ```
 
-In the code, `Spatial` is one of Matterhorn's containers to represent sequential SNN layers on spatial dimension, and `Temporal` is another Matterhorn's container to repeat calculating potential and spikes on temporal dimension. By using `Spatial` and `Temporal`, an SNN spatial-temporal topology network is built and thus used for training and evaluating.
+In the code, `Spatial` is one of Matterhorn's containers to represent sequential SNN layers on spatial dimension, and `Temporal` is another Matterhorn's container to repeat calculating potential and spikes on temporal dimension. By using `Spatial` and `Temporal`, an spatio-temporal topology network is built and thus used for training and evaluating.
 
-The built network takes an $n+1$ dimensional `torch.Tensor` as input spike train. It will take the first dimension as time steps, thus calculating through each time step. after that, it will generate a `torch.Tensor` as output spike train, just like what an ANN takes and generates in PyTorch. The only difference, which is also a key point, is that we should encode our information into spike train and decode the output spike train.
+The built network takes an $n+1$ dimensional `torch.Tensor` as input spike train. It will take the first dimension as time steps, thus calculating through each time step. after that, it will generate a `torch.Tensor` as output spike train, just like what ANNs takes and generates in PyTorch. The only difference, which is also a key point, is that we should encode our information into spike train and decode the output spike train.
 
 ### Encoding and Decoding
 
@@ -208,7 +220,7 @@ import matterhorn_pytorch.snn as snn
 decoder = snn.AvgSpikeDecoder()
 ```
 
-It will take first dimension as temporal dimension, and generate statistical results as output. The output can be transported into ANN for further processes.
+It will take first dimension as temporal dimension, and generate statistical results as output. The output can be transported into ANNs for further processes.
 
 Matterhorn provides a convenient container `matterhorn_pytorch.snn.Sequential` to connect all your SNN and ANN models.
 
@@ -227,11 +239,11 @@ model = snn.Sequential(
 )
 ```
 
-By now, you have experienced what an SNN looks like and how to build it by Matterhorn. For further experience, you can refer to [examples/2_layer_mlp.py](./examples/2_layer_mlp.py).
+By now, you have experienced what SNNs look like and how to build it by Matterhorn. For further experience, you can refer to [examples/1_starting.py](./examples/1_starting.py).
 
 ```sh
 cd Matterhorn
-python3 examples/2_layer_mlp.py
+python3 examples/1_starting.py
 ```
 
 In most cases, neurons of SNNs can be divided into 1 synapse operation and 3 soma operations. However, there are always some special cases. SRM0 neuron model is one of them, whose response is calculated in each synapse. We can use 5 operations to represent SRM0 neurons, 2 for synapses and 3 for soma:
@@ -256,11 +268,11 @@ $$O_{i}^{l}(t)=Heaviside(U_{i}^{l}(t))$$
 
 $$H_{i}^{l}(t)=1-O_{i}^{l}(t-1)$$
 
-With 5 operations resembled we can build a SRM0 neuron. For further experience, you can refer to [examples/2_layer_mlp_with_SRM0.py](./examples/2_layer_mlp_with_SRM0.py).
+With 5 operations resembled we can build a SRM0 neuron. For further experience, you can refer to [examples/3_using_srm0.py](./examples/3_using_srm0.py).
 
 ```sh
 cd Matterhorn
-python3 examples/2_layer_mlp_with_SRM0.py
+python3 examples/3_using_srm0.py
 ```
 
 ### Why Should We Need Surrogate Gradient
@@ -285,7 +297,7 @@ You can inspect all provided surrogate gradient functions in `matterhorn_pytorch
 
 ### Learning: BPTT Vs. STDP
 
-Training SNNs could be as easy as training ANNs after gradient problem of Heaviside step function is solved. After we unfold SNNs into a spatial-temporal network, backpropagation through time (BPTT) could be used in SNNs. On spatial dimension, gradients can be propagated through firing function and synapse function, thus neurons of previous layer would receive the gradient; On temporal dimension, the gradient of the next time step can be propagated through firing function and response function, thus soma of previous time would receive the gradient.
+Training SNNs could be as easy as training ANNs after gradient problem of Heaviside step function is solved. After we unfold SNNs into a spatio-temporal network, backpropagation through time (BPTT) could be used in SNNs. On spatial dimension, gradients can be propagated through firing function and synapse function, thus neurons of previous layer would receive the gradient; On temporal dimension, the gradient of the next time step can be propagated through firing function and response function, thus soma of previous time would receive the gradient.
 
 ![BPTT](./assets/readme_6.png)
 
@@ -308,11 +320,11 @@ $$
 
 ![STDP function](./assets/readme_7.png)
 
-By setting parameters $A_{+}$, $τ_{+}$, $A_{-}$ and $τ_{-}$, we can easily train SNNs unsupervised. For further experience, you can refer to [examples/2_layer_mlp_with_stdp.py](./examples/2_layer_mlp_with_stdp.py).
+By setting parameters $A_{+}$, $τ_{+}$, $A_{-}$ and $τ_{-}$, we can easily train SNNs unsupervised. For further experience, you can refer to [examples/2_using_stdp.py](./examples/2_using_stdp.py).
 
 ```sh
 cd Matterhorn
-python3 examples/2_layer_mlp_with_stdp.py
+python3 examples/2_using_stdp.py
 ```
 
 **Note:** Please make sure you have installed `matterhorn_cpp_extensions` (or `matterhorn_cuda_extensions` if you have CUDA), otherwise it will be extremely slow.
@@ -331,11 +343,16 @@ python3 setup.py install
 
 ### Neuromorphic Datasets
 
-Matterhorn provides several neuromorphic datasets for training spiking neural networks.
+Matterhorn provides several neuromorphic datasets for training SNNs. You can experience provided neuromorphic dataset in Matterhorn by example [examples/4_convolution_and_event_datasets.py](./examples/4_convolution_and_event_datasets.py).
+
+```sh
+cd Matterhorn
+python3 examples/4_convolution_and_event_datasets.py
+```
 
 #### NMNIST
 
-We know MNIST. MNIST dataset is for training image classification, consisting of a set of 28x28 pixel grayscale images of handwritten digits (0-9). NMNIST is like MNIST, which is different is that it distorts images and record them into events. The shape of events in NMNIST Dataset is Tx2x34x34.
+We know MNIST. MNIST dataset is for training image classification, consisting of a set of 28x28 pixel grayscale images of handwritten digits (0-9). NMNIST is like MNIST, which is different is that it distorts images and record them into events. The shape of events in NMNIST Dataset is `[T, 2, 34, 34]`.
 
 ![NMNIST Dataset](./assets/readme_8.png)
 
@@ -362,7 +379,7 @@ test_dataset = NMNIST(
 
 #### CIFAR10-DVS
 
-CIFAR10-DVS dataset records distorted CIFAR-10 image by a DVS camera. The shape of events in CIFAR10-DVS Dataset is Tx2x128x128.
+CIFAR10-DVS dataset records distorted CIFAR-10 image by a DVS camera. The shape of events in CIFAR10-DVS Dataset is `[T, 2, 128, 128]` .
 
 ![CIFAR10-DVS Dataset](./assets/readme_9.png)
 
@@ -389,7 +406,7 @@ test_dataset = CIFAR10DVS(
 
 #### DVS128 Gesture
 
-DVS128 Gesture dataset records gestures from 29 different people under 3 different illuminating conditions by DVS camera. The shape of events in DVS128 Gesture dataset is Tx2x128x128.
+DVS128 Gesture dataset records gestures from 29 different people under 3 different illuminating conditions by DVS camera. The shape of events in DVS128 Gesture dataset is `[T, 2, 128, 128]` .
 
 ![DVS128 Gesture Dataset](./assets/readme_10.png)
 
@@ -430,7 +447,7 @@ Recommended sampling ratio is more than 100 (which means choose one from `sampli
 
 #### Spiking Heidelberg Digits (SHD)
 
-SHD dataset records vocal number from 1 to 10 in both English and German and turns them into events. The shape of events in SHD dataset is Tx700.
+SHD dataset records vocal number from 1 to 10 in both English and German and turns them into events. The shape of events in SHD dataset is `[T, 700]`.
 
 ![SHD Dataset](./assets/readme_11.png)
 
@@ -457,18 +474,12 @@ test_dataset = SpikingHeidelbergDigits(
 
 ## 4 Neuromorphic Hardware Support
 
-Will come out soon, but not today.
+Will come out soon, but not today. Sorry.
 
-## References
+## References (and Special Thanks to)
 
-[1] Wei Fang, Yanqi Chen, Jianhao Ding, Zhaofei Yu, Huihui Zhou, Timothée Masquelier, Yonghong Tian, et al. Spikingjelly. [https://github.com/fangwei123456/spikingjelly](https://github.com/fangwei123456/spikingjelly).
+[1] Fang W, Chen Y, Ding J, et al. SpikingJelly: An open-source machine learning infrastructure platform for spike-based intelligence[J]. Science Advances, 2023, 9(40): eadi1480.
 
-```
-@misc{SpikingJelly,
-	title = {SpikingJelly},
-	author = {Fang, Wei and Chen, Yanqi and Ding, Jianhao and Chen, Ding and Yu, Zhaofei and Zhou, Huihui and Timothée Masquelier and Tian, Yonghong and other contributors},
-	year = {2020},
-	howpublished = {\url{https://github.com/fangwei123456/spikingjelly}},
-	note = {Accessed: 2023-08-01},
-}
-```
+[2] Fang W, Yu Z, Chen Y, et al. Deep residual learning in spiking neural networks[J]. Advances in Neural Information Processing Systems, 2021, 34: 21056-21069.
+
+[3] Yao M, Gao H, Zhao G, et al. Temporal-wise attention spiking neural networks for event streams classification[C]//Proceedings of the IEEE/CVF International Conference on Computer Vision. 2021: 10221-10230.
