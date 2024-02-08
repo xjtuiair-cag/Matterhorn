@@ -679,7 +679,7 @@ def graph_plot_by_adjacent(adjacent: Union[np.ndarray, torch.Tensor], show: bool
         neurons.append({"name": get_name(i), "symbolSize": 10})
     synapses = []
     axons, dendrites = torch.nonzero(adjacent, as_tuple = True)
-    axons, dendrites = axons.numpy().tolist(), dendrites.numpy().tolist()
+    axons, dendrites = axons.cpu().numpy().tolist(), dendrites.cpu().numpy().tolist()
     for i in range(len(axons)):
         synapses.append({"source": axons[i], "target": dendrites[i]})
     graph = Graph({

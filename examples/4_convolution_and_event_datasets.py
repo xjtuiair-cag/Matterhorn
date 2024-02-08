@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 
 
 import time
+import datetime
 import os, sys
 sys.path.append(os.path.abspath("."))
 
@@ -34,7 +35,7 @@ def main():
     epochs = 32
     learning_rate = 1e-3
     momentum = 0.9
-    tau = 1.1
+    tau = 2.0
 
     hyper_param_table = Table(show_header = True, header_style = "bold blue")
     hyper_param_table.add_column("Name", justify = "center")
@@ -116,6 +117,12 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
 
+    log_dir = "./examples/logs"
+    sub_dir = model.__class__.__name__ + "_" + train_dataset.__class__.__name__ + "_" + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+    os.makedirs(os.path.join(log_dir, sub_dir), exist_ok = True)
+    with open(os.path.join(log_dir, sub_dir, "result.csv"), "w") as f:
+        f.write("Epoch,Training Loss,Training Accuracy,Testing Loss,Testing Accuracy,Duration\n")
+
     # 开始训练
 
     print(Panel(Text("Training", justify = "center")))
@@ -177,6 +184,7 @@ def main():
         test_acc /= test_samples
         if test_acc > max_test_acc:
             max_test_acc = test_acc
+            torch.save(model, os.path.join(log_dir, sub_dir, "best.pt"))
         
         end_time = time.time()
 
@@ -194,12 +202,17 @@ def main():
         result_table.add_row("Maximum Testing Accuracy", "%g%%" % (100 * max_test_acc,))
         result_table.add_row("Duration", "%gs" %(end_time - start_time,))
         print(result_table)
+        with open(os.path.join(log_dir, sub_dir, "result.csv"), "a") as f:
+            f.write("%d, %g, %g, %g, %g, %g\n" % (e, train_loss, train_acc, test_loss, test_acc, end_time - start_time))
 
         last_train_loss = train_loss
         last_train_acc = train_acc
         last_test_loss = test_loss
         last_test_acc = test_acc
         lr_scheduler.step()
+        
+    torch.save(model, os.path.join(log_dir, sub_dir, "last.pt"))
+
 
 if __name__ == "__main__":
     main()

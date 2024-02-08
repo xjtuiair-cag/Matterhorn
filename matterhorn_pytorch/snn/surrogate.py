@@ -7,13 +7,14 @@
 import torch
 import torch.nn as nn
 from matterhorn_pytorch.snn.functional import heaviside_rectangular, heaviside_polynomial, heaviside_sigmoid, heaviside_gaussian
+from matterhorn_pytorch.snn.skeleton import Module
 try:
     from rich import print
 except:
     pass
 
 
-class Rectangular(nn.Module):
+class Rectangular(Module):
     def __init__(self, a: float = 2.0) -> None:
         """
         Heaviside阶跃函数，替代梯度为矩形函数
@@ -21,7 +22,6 @@ class Rectangular(nn.Module):
             a (float): 参数a，决定矩形函数的形状
         """
         super().__init__()
-        self.func = heaviside_rectangular()
         self.a = a
     
 
@@ -42,10 +42,10 @@ class Rectangular(nn.Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return self.func.apply(x, self.a)
+        return heaviside_rectangular.apply(x, self.a)
 
 
-class Polynomial(nn.Module):
+class Polynomial(Module):
     def __init__(self, a: float = 1.0) -> None:
         """
         Heaviside阶跃函数，替代梯度为多项式函数
@@ -53,7 +53,6 @@ class Polynomial(nn.Module):
             a (float): 参数a，决定多项式函数的形状
         """
         super().__init__()
-        self.func = heaviside_polynomial()
         self.a = a
     
 
@@ -74,10 +73,10 @@ class Polynomial(nn.Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return self.func.apply(x, self.a)
+        return heaviside_polynomial.apply(x, self.a)
 
 
-class Sigmoid(nn.Module):
+class Sigmoid(Module):
     def __init__(self, a: float = 1.0) -> None:
         """
         Heaviside阶跃函数，替代梯度为Sigmoid函数
@@ -85,7 +84,6 @@ class Sigmoid(nn.Module):
             a (float): 参数a，决定Sigmoid函数的形状
         """
         super().__init__()
-        self.func = heaviside_sigmoid()
         self.a = a
     
 
@@ -106,10 +104,10 @@ class Sigmoid(nn.Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return self.func.apply(x, self.a)
+        return heaviside_sigmoid.apply(x, self.a)
 
 
-class Gaussian(nn.Module):
+class Gaussian(Module):
     def __init__(self, a: float = 1.0) -> None:
         """
         Heaviside阶跃函数，替代梯度为高斯函数
@@ -117,7 +115,6 @@ class Gaussian(nn.Module):
             a (float): 参数a，决定高斯函数的形状
         """
         super().__init__()
-        self.func = heaviside_gaussian()
         self.a = a
     
 
@@ -138,4 +135,4 @@ class Gaussian(nn.Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return self.func.apply(x, self.a)
+        return heaviside_gaussian.apply(x, self.a)

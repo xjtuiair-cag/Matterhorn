@@ -10,6 +10,7 @@ import os, sys
 sys.path.append(os.path.abspath("."))
 
 
+import matterhorn_pytorch as mth
 import matterhorn_pytorch.snn as snn
 
 

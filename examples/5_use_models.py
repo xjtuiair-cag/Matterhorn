@@ -32,7 +32,7 @@ def main():
     print(Panel(Text("Hyper Parameters", justify = "center")))
 
     time_steps = 32
-    batch_size = 16
+    batch_size = 4
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 64
     learning_rate = 1e-3
@@ -70,7 +70,7 @@ def main():
 
     width = 128
     height = 128
-    train_dataset = mth.data.NMNIST(
+    train_dataset = mth.data.CIFAR10DVS(
         root = "./examples/data",
         train = True,
         download = True,
@@ -78,7 +78,7 @@ def main():
         width = width,
         height = height
     )
-    test_dataset = mth.data.NMNIST(
+    test_dataset = mth.data.CIFAR10DVS(
         root = "./examples/data",
         train = False,
         download = True,
@@ -180,7 +180,7 @@ def main():
         test_acc /= test_samples
         if test_acc > max_test_acc:
             max_test_acc = test_acc
-            torch.save(model.state_dict(), os.path.join(log_dir, sub_dir, "best.pt"))
+            torch.save(model, os.path.join(log_dir, sub_dir, "best.pt"))
         
         end_time = time.time()
 
@@ -207,7 +207,7 @@ def main():
         last_test_acc = test_acc
         lr_scheduler.step()
         
-    torch.save(model.state_dict(), os.path.join(log_dir, sub_dir, "last.pt"))
+    torch.save(model, os.path.join(log_dir, sub_dir, "last.pt"))
 
 
 if __name__ == "__main__":

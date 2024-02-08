@@ -17,6 +17,22 @@ except:
     pass
 
 
+from matterhorn_pytorch.snn.soma import LIF
+if torch.cuda.is_available():
+    try:
+        from matterhorn_pytorch.snn.soma_cuda import LIF
+    except:
+        try:
+            from matterhorn_pytorch.snn.soma_cpp import LIF
+        except:
+            pass
+else:
+    try:
+        from matterhorn_pytorch.snn.soma_cpp import LIF
+    except:
+        pass
+
+
 class ResADD(snn.Module):
     def __init__(self) -> None:
         super().__init__(
@@ -97,7 +113,7 @@ def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: i
         snn.BatchNorm2d(
             num_features = out_channels
         ),
-        snn.LIF(
+        LIF(
             tau_m = tau_m,
             spiking_function = spiking_function,
             trainable = trainable
@@ -288,6 +304,7 @@ class SEWRes18(snn.Module):
                 in_features = 512,
                 out_features = num_classes
             ), # [10]
+            nn.Softmax()
         )
 
 
