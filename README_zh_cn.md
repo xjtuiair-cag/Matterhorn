@@ -58,7 +58,7 @@ SNNs - 脉冲神经网络
 
 正如我们所知，下面的图像描述了 ANNs 的结构。
 
-![ANNs 结构](./assets/readme_1.png)
+![ANNs 的结构](./assets/readme_1.png)
 
 **函数1** 是 **突触函数** ，它使用权重和偏置来计算从上一层到当前层的值。常用的突触函数包括全连接层 `nn.Linear` ，卷积层 `nn.Conv2D` 等。
 
@@ -93,7 +93,7 @@ $$X^{l}=ReLU(Y^{l})$$
 
 SNNs 中的突触方程与 ANNs 中的相同。然而， SNNs 的胞体函数却和 ANNs 不同。 SNNs 的胞体存在一个时间循环。下面的图像描述了 SNNs 的结构。
 
-![SNN 结构](./assets/readme_2.png)
+![SNNs 的结构](./assets/readme_2.png)
 
 **函数1** 是 **突触函数** ，它计算来自前一层的脉冲 $O^{l-1}(t)$ ，从而生成输入电位 $X^{l}(t)$ 。
 
