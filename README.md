@@ -268,11 +268,11 @@ $$O_{i}^{l}(t)=Heaviside(U_{i}^{l}(t))$$
 
 $$H_{i}^{l}(t)=1-O_{i}^{l}(t-1)$$
 
-With 5 operations resembled we can build a SRM0 neuron. For further experience, you can refer to [examples/3_using_srm0.py](./examples/3_using_srm0.py).
+With 5 operations resembled we can build a SRM0 neuron. For further experience, you can refer to [examples/3_using_srm0_neuron.py](./examples/3_using_srm0_neuron.py).
 
 ```sh
 cd Matterhorn
-python3 examples/3_using_srm0.py
+python3 examples/3_using_srm0_neuron.py
 ```
 
 ### Why Should We Need Surrogate Gradient

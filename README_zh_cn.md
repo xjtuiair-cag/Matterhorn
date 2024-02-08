@@ -8,7 +8,7 @@
 
 ![logo](./assets/logo.png)
 
-Matterhorn 是一个基于 PyTorch 的，全新的通用 SNN 框架。
+Matterhorn 是基于 PyTorch 的，全新的通用 SNN 框架。
 
 ## 2 Matterhorn 的安装
 
@@ -16,11 +16,11 @@ Matterhorn 是一个基于 PyTorch 的，全新的通用 SNN 框架。
 
 Python （版本 >=3.7，<=3.9）
 
-CUDA （版本 >=11.3.0，CUDNN 也需要装，如果电脑没有NVIDIA显卡不用安装）
+CUDA （版本 >=11.3.0， CUDNN 也需要装，如果电脑没有 NVIDIA 显卡不用安装）
 
-PyTorch （版本 >=1.10.0，<=1.13.1）
+PyTorch （版本 >=1.10.0 ， <=1.13.1）
 
-TorchVision （>=0.11.0 and <= 0.13.1）
+TorchVision （版本 >=0.11.0 ， <= 0.13.1）
 
 ### 依赖安装
 
@@ -60,7 +60,7 @@ SNNs - 脉冲神经网络
 
 ![ANNs 结构](./assets/readme_1.png)
 
-**函数1** 是 **突触函数** ，它使用权重和偏置来计算从上一层到当前层的值。常用的突触函数包括全连接层 `nn.Linear`，卷积层 `nn.Conv2D` 等。
+**函数1** 是 **突触函数** ，它使用权重和偏置来计算从上一层到当前层的值。常用的突触函数包括全连接层 `nn.Linear` ，卷积层 `nn.Conv2D` 等。
 
 我们使用一个方程来描述突触函数：
 
@@ -68,7 +68,7 @@ $$Y^{l}=synapse(X^{l-1})$$
 
 这里的 $l$ 表示当前层的编号。
 
-**函数2** 是 **激活函数** ，它从突触中过滤信息并将过滤后的信息传递到下一层。常用的激活函数包括 `nn.ReLU`，`nn.Sigmoid` 等。
+**函数2** 是 **激活函数** ，它从突触中过滤信息并将过滤后的信息传递到下一层。常用的激活函数包括 `nn.ReLU` ， `nn.Sigmoid` 等。
 
 我们使用一个方程来描述激活函数：
 
@@ -85,23 +85,23 @@ model = nn.Sequential(
 )
 ```
 
-这是一个单层的 MLP。它可以将大小为 28x28 的图像作为输入，并将其分类为 10 个类别。在这个例子中，ANNs 的两个方程可以表示为：
+这是一个单层的 MLP 。它可以将大小为 28x28 的图像作为输入，并将其分类为 10 个类别。在这个例子中， ANNs 的两个方程可以表示为：
 
 $$Y^{l}=W^{l}X^{l-1}+\vec{b}$$
 
 $$X^{l}=ReLU(Y^{l})$$
 
-SNNs 中的突触方程与 ANNs 中的相同。然而，SNNs 的胞体函数却和 ANNs 不同。SNNs 的胞体存在一个时间循环。下面的图像描述了 SNNs 的结构。
+SNNs 中的突触方程与 ANNs 中的相同。然而， SNNs 的胞体函数却和 ANNs 不同。 SNNs 的胞体存在一个时间循环。下面的图像描述了 SNNs 的结构。
 
 ![SNN 结构](./assets/readme_2.png)
 
-**函数1** 是 **突触函数** ，它计算来自前一层的脉冲 $O^{l-1}(t)$，从而生成输入电位 $X^{l}(t)$。
+**函数1** 是 **突触函数** ，它计算来自前一层的脉冲 $O^{l-1}(t)$ ，从而生成输入电位 $X^{l}(t)$ 。
 
 我们使用一个方程来描述突触函数：
 
 $$X^{l}(t)=synapse(O^{l-1}(t))$$
 
-**函数2** 中，输入电位与历史电位经过一个一阶微分方程生成胞体电位 $U^{l}(t)$。我们将其称为 **响应函数** 。
+**函数2** 中，输入电位与历史电位经过一个一阶微分方程生成胞体电位 $U^{l}(t)$ 。我们将其称为 **响应函数** 。
 
 我们使用一个方程来描述响应函数：
 
@@ -117,7 +117,7 @@ $$\tau \frac{du}{dt}=-(u-u_{rest})+RI$$
 
 $$U^{l}(t)=(1-\frac{1}{\tau})H^{l}(t)+\frac{1}{\tau}u_{rest}+X^{l}(t)$$
 
-**函数3** 使用 Heaviside 阶跃函数和阈电位 $u_{th}$ 决定是否生成脉冲 $O^{l}(t)$。我们将其称为 **脉冲函数** 。
+**函数3** 使用 Heaviside 阶跃函数和阈电位 $u_{th}$ 决定是否生成脉冲 $O^{l}(t)$ 。我们将其称为 **脉冲函数** 。
 
 我们使用一个方程来描述脉冲函数：
 
@@ -159,7 +159,7 @@ snn_model = snn.Temporal(
 )
 ```
 
-在以上代码中，`Spatial` 是 Matterhorn 的其中一个容器，用于表示在空间维度上依次排列的 SNN 层，而 `Temporal` 是 Matterhorn 的另一个容器，用于在时间维度上重复计算电位和脉冲。通过使用 `Spatial` 和 `Temporal` 两个容器，可以构建一个时空拓扑网络，从而进行 SNNs 的训练。
+在以上代码中， `Spatial` 是 Matterhorn 的其中一个容器，用于表示在空间维度上依次排列的 SNN 层，而 `Temporal` 是 Matterhorn 的另一个容器，用于在时间维度上重复计算电位和脉冲。通过使用 `Spatial` 和 `Temporal` 两个容器，可以构建一个时空拓扑网络，从而进行 SNNs 的训练。
 
 构建的网络接受 $n+1$ 维的 `torch.Tensor` 作为输入脉冲序列。第一个维度默认为时间步，它会循环每个时间步去进行计算。之后，它将生成一个 `torch.Tensor` 作为输出脉冲序列。对它的计算就像对 PyTorch 中 ANN 模型的计算一样。这其中最重要的是对脉冲进行编解码。
 
@@ -220,9 +220,9 @@ import matterhorn_pytorch.snn as snn
 decoder = snn.AvgSpikeDecoder()
 ```
 
-它将把第一个维度视为时间维度，并生成统计结果作为输出。输出可以传输到ANN中进行进一步处理。
+它将把第一个维度视为时间维度，并生成统计结果作为输出。输出可以传输到 ANNs 中进行进一步处理。
 
-Matterhorn提供了一个方便的容器 `matterhorn_pytorch.snn.Sequential` 来连接所有的SNN和ANN模型。它会自动判断如何适应所有模型的时间步变化，因此在代码中，您不用再考虑时间步。
+Matterhorn 提供了一个方便的容器 `matterhorn_pytorch.snn.Sequential` 来连接所有的 SNN 和 ANN 模型。它会自动判断如何适应所有模型的时间步变化，因此在代码中，您不用再考虑时间步。
 
 ```python
 import torch
@@ -239,7 +239,7 @@ model = snn.Sequential(
 )
 ```
 
-到目前为止，您已经知道了 SNNs 的样子以及如何使用 Matterhorn 构建它。要进行更深入的体验，您可以参考 [examples/1_starting.py](./examples/1_starting.py)。
+到目前为止，您已经知道了 SNNs 的样子以及如何使用 Matterhorn 构建它。要进行更深入的体验，您可以参考 [examples/1_starting.py](./examples/1_starting.py) 。
 
 ```sh
 cd Matterhorn
@@ -268,11 +268,11 @@ $$O_{i}^{l}(t)=Heaviside(U_{i}^{l}(t))$$
 
 $$H_{i}^{l}(t)=1-O_{i}^{l}(t-1)$$
 
-通过 5 个相似的函数，我们可以构建一个 SRM0 神经元。要进行更深入的体验，您可以参考 [examples/3_using_srm0.py](./examples/3_using_srm0.py) 。
+通过 5 个相似的函数，我们可以构建一个 SRM0 神经元。要进行更深入的体验，您可以参考 [examples/3_using_srm0_neuron.py](./examples/3_using_srm0_neuron.py) 。
 
 ```sh
 cd Matterhorn
-python3 examples/3_using_srm0.py
+python3 examples/3_using_srm0_neuron.py
 ```
 
 ### 为什么我们需要替代梯度
@@ -303,8 +303,8 @@ $$O^{l}(t)=u(U^{l}(t)-u_{th})$$
 
 除 BPTT 之外，还有另一种在每个神经元中本地无监督训练的简单方法，我们称之为脉冲时序依赖可塑性（STDP）。 STDP 使用输入和输出脉冲之间的精确时间差异来计算权重增量。
 
-STDP 遵循以下方程：
-
+遵循以下方程：
+STDP 
 $$Δw_{ij}=\sum_{t_{j}}{\sum_{t_{i}}W(t_{i}-t_{j})}$$
 
 其中权重函数 $W(x)$ 为：
@@ -320,21 +320,21 @@ $$
 
 ![STDP 函数](./assets/readme_7.png)
 
-通过设置参数$A_{+}$、$τ_{+}$、$A_{-}$和$τ_{-}$，我们可以轻松地进行无监督训练SNN。有关更多体验，请参考 [examples/2_using_stdp.py](./examples/2_using_stdp.py) 。
+通过设置参数 $A_{+}$ 、 $τ_{+}$ 、 $A_{-}$ 和 $τ_{-}$ ，我们可以轻松地进行无监督训练 SNNs 。有关更多体验，请参考 [examples/2_using_stdp.py](./examples/2_using_stdp.py) 。
 
 ```sh
 cd Matterhorn
 python3 examples/2_using_stdp.py
 ```
 
-**注意：** 请确保已安装`matterhorn_cpp_extensions`（或者如果有CUDA，则安装`matterhorn_cuda_extensions`），否则速度将非常慢。
+**注意：** 请确保已安装 `matterhorn_cpp_extensions` （或者如果有 CUDA ，则安装 `matterhorn_cuda_extensions`），否则速度将非常慢。
 
 ```sh
 cd matterhorn_cpp_extensions
 python3 setup.py install
 ```
 
-如果有CUDA，您可以安装CUDA版本：
+如果有 CUDA ，您可以安装 CUDA 版本：
 
 ```sh
 cd matterhorn_cuda_extensions
@@ -474,7 +474,7 @@ test_dataset = SpikingHeidelbergDigits(
 
 ## 4 神经形态硬件支持
 
-在做了在做了，别着急。出了就更新。
+在做了在做了，别问，问就是明天更新。
 
 ## 参考文献（特别感谢）
 
