@@ -105,7 +105,7 @@ By **operation 2**, the input potential, with the history potential, is calculat
 
 We use an equation to describe the response function:
 
-$$U^{l}(t)=response(H^{l}(t),X^{l}(t))$$
+$$U^{l}(t)=response(H^{l}(t-1),X^{l}(t))$$
 
 Each spiking neuron model has its unique response differential equation.
 
@@ -115,7 +115,7 @@ $$\tau \frac{du}{dt}=-(u-u_{rest})+RI$$
 
 Discretizing it into a difference equation, we can get:
 
-$$U^{l}(t)=(1-\frac{1}{\tau})H^{l}(t)+\frac{1}{\tau}u_{rest}+X^{l}(t)$$
+$$U^{l}(t)-H^{l}(t-1)=\frac{1}{\tau}[-[H^{l}(t-1)-u_{rest}]+X^{l}(t)]$$
 
 **Operation 3** uses Heaviside step function and threshold potential $u_{th}$ to decide whether to generate spikes $O^{l}(t)$. We name it **firing function**.
 
@@ -133,11 +133,11 @@ The aim of **operation 4** is to set refractory time on neurons by output spikes
 
 We use an equation to describe reset function:
 
-$$H^{l}(t)=reset(U^{l}(t-1),O^{l}(t-1))$$
+$$H^{l}(t)=reset(U^{l}(t),O^{l}(t))$$
 
 Under most occasions we use equation below to reset potential:
 
-$$H^{l}(t)=U^{l}(t-1)[1-O^{l}(t-1)]+u_{rest}O^{l}(t-1)$$
+$$H^{l}(t)=U^{l}(t)[1-O^{l}(t)]+u_{rest}O^{l}(t)$$
 
 In brief, we use 4 equations to describe spiking neurons. This is what SNN look like. The shape of a spiking neuron is like a trumpet. Its synapses transform those spikes from last neuron and pass the input response to soma, in which there is a time loop awaits.
 
@@ -258,7 +258,7 @@ $$X_{i}^{l}(t)=\sum_{j}{w_{ij}R_{j}^{l}(t)}$$
 
 **Operation 3**: **response function**
 
-$$U_{i}^{l}(t)=X_{i}^{l}(t)H_{i}^{l}(t)$$
+$$U_{i}^{l}(t)=X_{i}^{l}(t)H_{i}^{l}(t-1)$$
 
 **Operation 4**: **firing function**
 
@@ -266,7 +266,7 @@ $$O_{i}^{l}(t)=Heaviside(U_{i}^{l}(t))$$
 
 **Operation 5**: **reset function**
 
-$$H_{i}^{l}(t)=1-O_{i}^{l}(t-1)$$
+$$H_{i}^{l}(t)=1-O_{i}^{l}(t)$$
 
 With 5 operations resembled we can build a SRM0 neuron. For further experience, you can refer to [examples/3_using_srm0_neuron.py](./examples/3_using_srm0_neuron.py).
 
