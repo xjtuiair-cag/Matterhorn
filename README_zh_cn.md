@@ -12,6 +12,8 @@ Matterhorn 是基于 PyTorch 的，全新的通用 SNN 框架。
 
 ## 2 Matterhorn 的安装
 
+以下是简略版本的安装，如果您是新手，详细的安装过程可以参考[ Matterhorn 的下载与使用教程](./docs/zh_cn/1_install.md)。
+
 ### 环境要求
 
 Python （版本 >=3.7，<=3.9）
@@ -41,7 +43,7 @@ pip install -r requirements.txt
 ```sh
 git clone https://github.com/xjtuiair-cag/Matterhorn.git
 cd Matterhorn
-python3 setup.py install
+python3 setup.py develop
 ```
 
 同上，如果您是 Linux 的非 root 用户，而您的 Python 是全用户版本，请务必要加上 `sudo` 前缀。
@@ -331,14 +333,14 @@ python3 examples/2_using_stdp.py
 
 ```sh
 cd matterhorn_cpp_extensions
-python3 setup.py install
+python3 setup.py develop
 ```
 
 如果有 CUDA ，您可以安装 CUDA 版本：
 
 ```sh
 cd matterhorn_cuda_extensions
-python3 setup.py install
+python3 setup.py develop
 ```
 
 ### 神经形态数据集

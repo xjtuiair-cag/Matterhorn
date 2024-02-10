@@ -12,6 +12,8 @@ Matterhorn is a novel general SNN framework based on PyTorch.
 
 ## 2 Installation
 
+This is the brief one, for complete version you can refer to [the tutorial of Matterhorn's installation](./docs/en_us/1_install.md).
+
 ### Environment
 
 Python (>= 3.7 and <= 3.9)
@@ -41,7 +43,7 @@ Don't forget to add `sudo` prefix if you are not the root user.
 ```sh
 git clone https://github.com/xjtuiair-cag/Matterhorn.git
 cd Matterhorn
-python3 setup.py install
+python3 setup.py develop
 ```
 
 Don't forget to add `sudo` if you are not the root user.
@@ -331,14 +333,14 @@ python3 examples/2_using_stdp.py
 
 ```sh
 cd matterhorn_cpp_extensions
-python3 setup.py install
+python3 setup.py develop
 ```
 
 if you have CUDA, you can install CUDA version:
 
 ```sh
 cd matterhorn_cuda_extensions
-python3 setup.py install
+python3 setup.py develop
 ```
 
 ### Neuromorphic Datasets
