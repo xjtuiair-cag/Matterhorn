@@ -50,6 +50,8 @@ python3 setup.py develop
 
 ## 3 模块解释
 
+如果您要查看与 SNNs 有关的具体变量、函数与模块，可以参见我们[详细的文档](./docs/zh_cn/snn/0_general.md)。
+
 ### 术语
 
 ANNs - 人工神经网络

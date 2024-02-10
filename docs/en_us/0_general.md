@@ -1,5 +1,9 @@
 # General Introduction
 
+[English](../en_us/0_general.md)
+
+[中文](../zh_cn/0_general.md)
+
 ## 1 `matterhorn_pytorch.data`: Neuromorphic Dataset
 
 This module stores common methods for handling neural morphology datasets, which can process datasets (in the form of compressed files, etc.) into PyTorch tensors.
