@@ -129,15 +129,15 @@ pip3 --help
 
 若您是双系统或虚拟机用户，请进行如下选择：
 
-![双系统或虚拟机请选择如下选项](../assets/0_1.png)
+![双系统或虚拟机请选择如下选项](../../assets/docs/install_1.png)
 
 若您是 WSL 用户，请进行如下选择：
 
-![WSL请选择如下选项](../assets/0_2.png)
+![WSL请选择如下选项](../../assets/docs/install_2.png)
 
 随后，页面下方会弹出相关命令行：
 
-![命令行示例](../assets/0_3.png)
+![命令行示例](../../assets/docs/install_3.png)
 
 请依次复制命令进行 CUDA 的安装。
 

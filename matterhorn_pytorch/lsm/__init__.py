@@ -4,7 +4,6 @@
 """
 
 
-from .functional import *
 from .io import Cast
 from .skeleton import LSM
 try:

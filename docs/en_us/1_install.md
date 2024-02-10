@@ -127,15 +127,15 @@ Click on the link [https://developer.nvidia.com/cuda-11-7-1-download-archive](ht
 
 If you are a dual-boot or virtual machine user, please make the following selection:
 
-![Select options for dual-boot or virtual machine](../assets/0_1.png)
+![Select options for dual-boot or virtual machine](../../assets/docs/install_1.png)
 
 If you are a WSL user, please make the following selection:
 
-![Select options for WSL](../assets/0_2.png)
+![Select options for WSL](../../assets/docs/install_2.png)
 
 Then, relevant command lines will pop up at the bottom of the page:
 
-![Example of command lines](../assets/0_3.png)
+![Example of command lines](../../assets/docs/install_3.png)
 
 Please copy and execute the commands in sequence for CUDA installation.
 
