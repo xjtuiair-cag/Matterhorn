@@ -180,3 +180,4 @@ if __name__ == "__main__":
     # a = translate("(1.0/tau_m)*(-a_0*(h-u_rest)*(h-u_c)+x)*sin(x)")
     expr_tree, param_list = translate("1.0/tau_m*(-(h-u_rest)+x)")
     print(expr_tree)
+    print(param_list)
