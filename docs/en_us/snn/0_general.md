@@ -36,7 +36,7 @@ This module defines some common functions in SNNs, such as the Heaviside step fu
 
 You can read the documentation to learn more about the usage of functions.
 
-## `matterhorn_pytorch.snn.layer`: Pulse-to-Pulse Operations for SNNs
+## `matterhorn_pytorch.snn.layer`: Spike-to-Spike Operations for SNNs
 
 The units in this module, both input and output are spike sequences. It contains SRM0 neurons, pooling layers, etc.
 
