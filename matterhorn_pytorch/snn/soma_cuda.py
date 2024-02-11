@@ -11,7 +11,7 @@ import torch.nn as nn
 
 
 from matterhorn_pytorch.snn.skeleton import Module
-from matterhorn_pytorch.snn.soma import Soma
+from matterhorn_pytorch.snn.soma import LIF as _LIF
 from matterhorn_pytorch.snn import surrogate
 try:
     from matterhorn_cuda_extensions import cu_fp_lif, cu_bp_lif
@@ -94,7 +94,7 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
         return grad_x, grad_u_init, grad_tau_m, None, None, None, None, None
 
 
-class LIF(Soma):
+class LIF(_LIF):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。

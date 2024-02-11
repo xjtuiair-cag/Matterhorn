@@ -11,7 +11,7 @@ import torch.nn as nn
 
 
 from matterhorn_pytorch.snn.skeleton import Module
-from matterhorn_pytorch.snn.soma import Soma
+from matterhorn_pytorch.snn.soma import LIF as _LIF
 from matterhorn_pytorch.snn import surrogate
 from matterhorn_pytorch.snn.surrogate import Gaussian
 try:
@@ -102,7 +102,7 @@ class multi_time_step_lif(torch.autograd.Function):
         return grad_x, grad_u_init, grad_tau_m, None, None, None, None, None
 
 
-class LIF(Soma):
+class LIF(_LIF):
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
