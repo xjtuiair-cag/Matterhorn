@@ -20,14 +20,13 @@ class Soma(Module):
     supported_surrogate_gradients = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
 
 
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
         （2）通过当前电位$U_{i}^{l}(t)$计算当前脉冲$O_{i}^{l}(t)$；
         （3）通过当前脉冲$O_{i}^{l}(t)$重置当前电位$U_{i}^{l}(t)$。
         Args:
-            tau_m (float): 膜时间常数$τ_{m}$
             u_threshold (float): 阈电位$u_{th}$
             u_rest (float): 静息电位$u_{rest}$
             spiking_function (Module): 计算脉冲时所使用的阶跃函数
@@ -41,7 +40,6 @@ class Soma(Module):
             reset_after_process = reset_after_process
         )
         self.u = 0.0
-        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function
@@ -50,7 +48,6 @@ class Soma(Module):
         self.spiking_function_prototype = self.supported_surrogate_gradients.index(self.surrogate_str)
         self.hard_reset = hard_reset
         self.reset_function_prototype = 0 if self.hard_reset else 1
-        self.trainable = trainable
         self.reset()
 
 
@@ -60,7 +57,7 @@ class Soma(Module):
         Returns:
             repr_str (str): 参数表
         """
-        return "multi_time_step=%s, trainable=%s, reset=%s" % (str(self.multi_time_step), str(self.trainable), "'hard'" if self.hard_reset else "'soft'")
+        return "multi_time_step=%s, reset=%s" % (str(self.multi_time_step), str(self.trainable), "'hard'" if self.hard_reset else "'soft'")
 
 
     def init_tensor(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -105,7 +102,7 @@ class Soma(Module):
         Returns:
             u (torch.Tensor): 当前电位$U_{i}^{l}(t)$
         """
-        du = (1.0 / self.tau_m) * (-(h - self.u_rest) + x)
+        du = x
         u = h + du
         return u
 
@@ -186,7 +183,7 @@ class Soma(Module):
 
 
 class IF(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step = False) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True) -> None:
         """
         Integrate-and-Fire(IF)神经元。
         无泄漏过程，一阶电位变换公式为：
@@ -197,14 +194,15 @@ class IF(Soma):
             spiking_function (Module): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
             multi_time_step (bool): 是否调整为多个时间步模式
+            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(
-            tau_m = 1.0,
             u_threshold = u_threshold,
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
-            multi_time_step = multi_time_step
+            multi_time_step = multi_time_step,
+            reset_after_process = reset_after_process
         )
     
 
@@ -247,15 +245,14 @@ class LIF(Soma):
             trainable (bool): 参数是否可以训练
         """
         super().__init__(
-            tau_m = tau_m,
             u_threshold = u_threshold,
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process,
-            trainable = trainable
+            reset_after_process = reset_after_process
         )
+        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
 
 
     def extra_repr(self) -> str:
@@ -300,15 +297,14 @@ class QIF(Soma):
             trainable (bool): 参数是否可以训练
         """
         super().__init__(
-            tau_m = tau_m,
             u_threshold = u_threshold,
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process,
-            trainable = trainable
+            reset_after_process = reset_after_process
         )
+        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
         self.a_0 = nn.Parameter(torch.tensor(a_0), requires_grad = trainable)
         self.u_c = nn.Parameter(torch.tensor(u_c), requires_grad = trainable)
     
@@ -355,15 +351,14 @@ class ExpIF(Soma):
             trainable (bool): 参数是否可以训练
         """
         super().__init__(
-            tau_m = tau_m,
             u_threshold = u_threshold,
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process,
-            trainable = trainable
+            reset_after_process = reset_after_process
         )
+        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
         self.delta_t = nn.Parameter(torch.tensor(delta_t), requires_grad = trainable)
         self.u_t = nn.Parameter(torch.tensor(u_t), requires_grad = trainable)
     
@@ -399,7 +394,6 @@ class Izhikevich(Soma):
         $$\frac{du}{dt}=0.04u^{2}+5u+140-w+I$$
         $$\frac{dw}{dt}=a(bu-w)$$
         Args:
-            tau_m (float): 膜时间常数$τ_{m}$
             u_threshold (float): 阈电位$u_{th}$
             u_rest (float): 静息电位$u_{rest}$
             u_t (float): 参数$u_{T}$
@@ -412,14 +406,12 @@ class Izhikevich(Soma):
         """
         self.w = 0.0
         super().__init__(
-            tau_m = 1.0,
             u_threshold = u_threshold,
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process,
-            trainable = trainable
+            reset_after_process = reset_after_process
         )
         self.a = nn.Parameter(torch.tensor(a), requires_grad = trainable)
         self.b = nn.Parameter(torch.tensor(b), requires_grad = trainable)
@@ -488,14 +480,12 @@ class Response(Soma):
             trainable (bool): 参数是否可以训练
         """
         super().__init__(
-            tau_m = 1.0,
             u_threshold = u_threshold,
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process,
-            trainable = trainable
+            reset_after_process = reset_after_process
         )
         self.response_function = response_function
         self.param_list = [nn.Parameter(torch.tensor(x), requires_grad = trainable) for x in param_list]
@@ -514,7 +504,7 @@ class Response(Soma):
 
 
 class AnalogSoma(Soma):
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True) -> None:
         """
         带有模拟输出的Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -522,7 +512,6 @@ class AnalogSoma(Soma):
         （3）通过当前电位$U_{i}^{l}(t)$计算当前模拟输出$Y_{i}^{l}(t)$；
         （4）通过当前脉冲$O_{i}^{l}(t)$重置当前电位$U_{i}^{l}(t)$。
         Args:
-            tau_m (float): 膜时间常数$τ_{m}$
             u_threshold (float): 阈电位$u_{th}$
             u_rest (float): 静息电位$u_{rest}$
             spiking_function (Module): 计算脉冲时所使用的阶跃函数
@@ -530,17 +519,14 @@ class AnalogSoma(Soma):
             hard_reset (bool): 是否为硬重置
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
-            trainable (bool): 参数是否可以训练
         """
         super().__init__(
-            tau_m = tau_m,
             u_threshold = u_threshold,
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process,
-            trainable = trainable
+            reset_after_process = reset_after_process
         )
         self.activation_function = activation_function
     
@@ -573,7 +559,7 @@ class AnalogSoma(Soma):
 
 
 class KLIF(AnalogSoma):
-    def __init__(self, tau_m: float = 1, u_threshold: float = 1, u_rest: float = 0, k: float = 0.2, hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, k: float = 0.2, hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
         """
         KLIF神经元
         Args:
@@ -587,16 +573,15 @@ class KLIF(AnalogSoma):
             trainable (bool): 参数是否可以训练
         """
         super().__init__(
-            tau_m = tau_m,
             u_threshold = u_threshold,
             u_rest = u_rest,
             spiking_function = self.f_kspiking,
             activation_function = self.f_kspiking,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process,
-            trainable = trainable
+            reset_after_process = reset_after_process
         )
+        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
         self.k = nn.Parameter(torch.tensor(k), requires_grad = trainable)
         
 
@@ -650,16 +635,15 @@ class LIAF(AnalogSoma):
             trainable (bool): 参数是否可以训练
         """
         super().__init__(
-            tau_m = tau_m,
             u_threshold = u_threshold,
             u_rest = u_rest,
             spiking_function = spiking_function,
             activation_function = activation_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process,
-            trainable = trainable
+            reset_after_process = reset_after_process
         )
+        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
     
 
     def extra_repr(self) -> str:
