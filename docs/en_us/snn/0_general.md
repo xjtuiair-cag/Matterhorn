@@ -12,7 +12,7 @@ This module covers containers that can encapsulate SNN modules. Through these co
 
 Containing `matterhorn_pytorch.snn` modules: `Spatial`, `Temporal`, and `Sequential`.
 
-You can read the documentation to learn more about the usage of classes and variables.
+You can read [the documentation](./7_container.md) to learn more about the usage of classes and variables.
 
 ## `matterhorn_pytorch.snn.decoder`: Decoder for SNNs
 
@@ -20,7 +20,7 @@ This module contains decoders that transform spike sequences into analog values 
 
 Containing `matterhorn_pytorch.snn` modules: `SumSpikeDecoder`, `AvgSpikeDecoder`, `MinTimeDecoder`, and `AvgTimeDecoder`.
 
-You can read the documentation to learn more about the usage of classes and variables.
+You can read [the documentation](./9_decoder.md) to learn more about the usage of classes and variables.
 
 ## `matterhorn_pytorch.snn.encoder`: Encoder for SNNs
 
@@ -28,13 +28,13 @@ This module contains encoders that encode analog values along the temporal dimen
 
 Containing `matterhorn_pytorch.snn` modules: `DirectEncoder`, `PoissonEncoder`, `SoftMaxEncoder`, and `TemporalEncoder`.
 
-You can read the documentation to learn more about the usage of classes and variables.
+You can read [the documentation](./8_encoder.md) to learn more about the usage of classes and variables.
 
 ## `matterhorn_pytorch.snn.functional`: Related Functions for SNNs
 
 This module defines some common functions in SNNs, such as the Heaviside step function, etc.
 
-You can read the documentation to learn more about the usage of functions.
+You can read [the documentation](./1_functional.md) to learn more about the usage of functions.
 
 ## `matterhorn_pytorch.snn.layer`: Spike-to-Spike Operations for SNNs
 
@@ -42,7 +42,7 @@ The units in this module, both input and output are spike sequences. It contains
 
 Containing `matterhorn_pytorch.snn` modules: `SRM0Linear`, `STDPLinear`, `MaxPool1d`, `MaxPool2d`, `MaxPool3d`, `AvgPool1d`, `AvgPool2d`, `AvgPool3d`, `Flatten`, and `Unflatten`.
 
-You can read the documentation to learn more about the usage of classes and variables.
+You can read [the documentation](./6_layer.md) to learn more about the usage of classes and variables.
 
 ## `matterhorn_pytorch.snn.skeleton`: Base Class for SNN Modules
 
@@ -50,7 +50,7 @@ A base class inherited by all modules in `matterhorn_pytorch.snn`, serving as th
 
 Containing `matterhorn_pytorch.snn` modules: `Module`.
 
-You can read the documentation to learn more about the usage of classes and variables.
+You can read [the documentation](./2_skeleton.md) to learn more about the usage of classes and variables.
 
 ## `matterhorn_pytorch.snn.soma`: Soma of Spiking Neurons
 
@@ -58,7 +58,7 @@ This module defines the soma of SNNs, where the input is the membrane potential 
 
 Containing `matterhorn_pytorch.snn` modules: `IF`, `LIF`, `QIF`, `ExpIF`, `Izhikevich`, `KLIF`, and `LIAF`.
 
-You can read the documentation to learn more about the usage of classes and variables.
+You can read [the documentation](./4_soma.md) to learn more about the usage of classes and variables.
 
 ## `matterhorn_pytorch.snn.surrogate`: Surrogate Gradients for the Heaviside Step Function of Spiking Neurons
 
@@ -66,7 +66,7 @@ This module defines surrogate gradients for the Heaviside step function of spiki
 
 Containing `matterhorn_pytorch.snn` modules: `Rectangular`, `Polynomial`, `Sigmoid`, and `Gaussian`.
 
-You can read the documentation to learn more about the usage of classes and variables.
+You can read [the documentation](./3_surrogate.md) to learn more about the usage of classes and variables.
 
 ## `matterhorn_pytorch.snn.synapse`: Synapse of Spiking Neurons
 
@@ -74,7 +74,7 @@ This module defines the synapse of SNNs, where the input is a spike sequence and
 
 Containing `matterhorn_pytorch.snn` modules: `Linear`, `Conv1d`, `Conv2d`, `Conv3d`, `ConvTranspose1d`, `ConvTranspose2d`, `ConvTranspose3d`, `BatchNorm1d`, `BatchNorm2d`, `BatchNorm3d`, and `LayerNorm`.
 
-You can read the documentation to learn more about the usage of classes and variables.
+You can read [the documentation](./5_synapse.md) to learn more about the usage of classes and variables.
 
 ## References
 
