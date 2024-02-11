@@ -111,7 +111,7 @@ def backward_polynomial(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1
     Returns:
         grad_input (torch.Tensor): 输入梯度
     """
-    h = ((a ** 0.5) / 2.0 - a / 4.0 * x) * torch.sign(2.0 / (a ** 0.5) - x)
+    h = ((a ** 0.5) / 2.0 - a / 4.0 * torch.abs(x)) * torch.sign(2.0 / (a ** 0.5) - torch.abs(x)) * (torch.abs(x) < (2.0 / (a ** 0.5))).float()
     return h * grad_output
 
 

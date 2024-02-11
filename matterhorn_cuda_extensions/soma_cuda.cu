@@ -108,8 +108,8 @@ __device__ void bp_spiking_polynomial(float grad_o,
                                       float u,
                                       float u_threshold,
                                       float a) {
-    float ax = u - u_threshold;
-    grad_u += grad_o * (sqrtf(a) / 2.0f - a / 4.0f * ax) * sgnf(2.0f / sqrtf(a) - ax);
+    float ax = absf(u - u_threshold);
+    grad_u += grad_o * (sqrtf(a) / 2.0f - a / 4.0f * ax) * sgnf(2.0f / sqrtf(a) - ax) * ltf(ax, 2.0f / sqrtf(a));
 }
 
 /*

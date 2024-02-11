@@ -102,11 +102,12 @@ class MinTime(Decoder):
         return "reset_after_process=%s" % (str(self.reset_after_process),)
 
 
-    def reset(self) -> None:
+    def reset(self) -> Module:
         """
         重置编码器。
         """
         self.current_time_step = 0
+        return super().reset()
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -151,11 +152,12 @@ class AverageTime(Decoder):
         return "reset_after_process=%s" % (str(self.reset_after_process),)
 
 
-    def reset(self) -> None:
+    def reset(self) -> Module:
         """
         重置编码器。
         """
         self.current_time_step = 0
+        return super().reset()
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

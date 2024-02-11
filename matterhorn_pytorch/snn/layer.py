@@ -78,12 +78,13 @@ class SRM0Linear(Module):
         return "in_features=%d, out_features=%d, tau_m=%g, u_threshold=%g, u_rest=%g, multi_time_step=%s, trainable=%s" % (self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest, str(self.multi_time_step), str(self.trainable))
 
 
-    def reset(self) -> None:
+    def reset(self) -> Module:
         """
         重置整个神经元
         """
         self.s = 0.0
         self.r = 0.0
+        return super().reset()
 
 
     def init_tensor(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -289,7 +290,7 @@ class STDPLinear(Module, nn.Linear):
         return ", ".join([nn.Linear.extra_repr(self), "a_pos=%g, tau_pos=%g, a_neg=%g, tau_neg=%g, lr=%g" % (self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.lr)])
 
 
-    def step(self) -> None:
+    def step(self, *args, **kwargs) -> Module:
         """
         对整个神经元应用STDP使其更新。
         """
@@ -314,6 +315,7 @@ class STDPLinear(Module, nn.Linear):
         self.weight += self.lr * delta_weight
         self.input_spike_seq = []
         self.output_spike_seq = []
+        return super().step(*args, **kwargs)
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:

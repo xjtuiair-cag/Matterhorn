@@ -226,11 +226,12 @@ class Temporal(Encoder):
         return "time_steps=%d, max_value=%g, min_value=%g, prob=%g, reset_after_process=%s" % (self.time_steps, self.max_value, self.min_value, self.prob, str(self.reset_after_process))
 
 
-    def reset(self) -> None:
+    def reset(self) -> Module:
         """
         重置编码器
         """
         self.current_time_step = 0
+        return super().reset()
 
 
     def forward_single(self, x:torch.Tensor) -> torch.Tensor:

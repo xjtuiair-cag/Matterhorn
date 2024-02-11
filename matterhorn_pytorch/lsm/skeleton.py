@@ -91,13 +91,14 @@ class LSM(snn.Module):
         return y
 
 
-    def reset(self) -> None:
+    def reset(self) -> Module:
         """
         重置整个神经元。
         """
         if isinstance(self.soma, snn.Module):
             self.soma.reset()
         self.last_output = 0.0
+        return super().reset()
 
 
     def f_synapse(self, y_0: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -187,7 +188,7 @@ class STDPLSM(LSM):
         self.lr = lr
 
 
-    def step(self) -> None:
+    def step(self, *args, **kwargs) -> Module:
         """
         对整个神经元应用STDP使其更新。
         """
@@ -217,6 +218,7 @@ class STDPLSM(LSM):
         self.weight_input += self.lr * torch.diagonal(delta_weight_input)
         self.input_spike_seq = []
         self.output_spike_seq = []
+        return super().step(*args, **kwargs)
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

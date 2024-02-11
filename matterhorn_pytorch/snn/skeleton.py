@@ -103,7 +103,7 @@ class Module(nn.Module):
         return self
 
 
-    def reset(self) -> None:
+    def reset(self) -> nn.Module:
         """
         重置模型。
         """
@@ -111,9 +111,10 @@ class Module(nn.Module):
             is_snn_module = isinstance(module, Module)
             if is_snn_module:
                 module.reset()
+        return self
 
 
-    def detach(self) -> None:
+    def detach(self) -> nn.Module:
         """
         将模型中的某些变量从其计算图中分离。
         """
@@ -121,9 +122,10 @@ class Module(nn.Module):
             is_snn_module = isinstance(module, Module)
             if is_snn_module:
                 module.detach()
+        return self
     
 
-    def step(self) -> None:
+    def step(self, *args, **kwargs) -> nn.Module:
         """
         部署结点的自定义训练。
         """
@@ -132,3 +134,4 @@ class Module(nn.Module):
                 is_snn_module = isinstance(module, Module)
                 if is_snn_module:
                     module.step()
+        return self

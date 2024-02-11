@@ -64,21 +64,15 @@ def main():
             soma = snn.LIF(
                 tau_m = tau
             )
-        ),
-        snn.STDPLinear(
-            in_features = 80,
-            out_features = 10,
-            soma = snn.LIF(
-                tau_m = tau
-            )
         )
     )
     decoder = snn.Sequential(
         snn.AvgSpikeDecoder(),
         nn.Linear(
-            in_features = 10,
+            in_features = 80,
             out_features = 10
-        )
+        ),
+        nn.Sigmoid()
     )
     stdp_model = stdp_model.to(device)
     decoder = decoder.to(device)
@@ -122,7 +116,7 @@ def main():
     print(demo_data.shape)
 
     # 设置学习率，优化器，学习率衰减机制等等
-
+ 
     print(Panel(Text("Preparations for Training", justify = "center")))
 
     optimizer = torch.optim.Adam(decoder.parameters(), lr = learning_rate)

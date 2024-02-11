@@ -84,14 +84,16 @@ class Soma(Module):
         """
         self.detach()
         self.u = self.u_rest
+        return super().reset()
 
     
-    def detach(self) -> None:
+    def detach(self) -> Module:
         """
         将历史电位从计算图中分离，以停止在时间上进行反向传播。
         """
         if isinstance(self.u, torch.Tensor):
             self.u = self.u.clone().detach().requires_grad_(True)
+        return super().detach()
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -439,6 +441,7 @@ class Izhikevich(Soma):
         self.detach()
         self.u = 0.0
         self.w = 0.0
+        return super().reset()
 
     
     def detach(self) -> None:
@@ -449,6 +452,7 @@ class Izhikevich(Soma):
             self.u = self.u.detach().requires_grad_(True)
         if isinstance(self.w, torch.Tensor):
             self.w = self.w.detach().requires_grad_(True)
+        return super().detach()
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:

@@ -310,9 +310,9 @@ void bp_spiking_polynomial(at::Tensor grad_o,
                            at::Tensor u,
                            float u_threshold,
                            float a = 1.0f) {
-    at::Tensor ax = u - u_threshold;
+    at::Tensor ax = at::abs(u - u_threshold);
     grad_u += grad_o * (sqrtf(a) / 2.0f - a / 4.0f * ax) *
-              at::sign(2.0f / sqrtf(a) - ax);
+              at::sign(2.0f / sqrtf(a) - ax) * at::lt(ax, 2.0f / sqrtf(a));
 }
 
 /*

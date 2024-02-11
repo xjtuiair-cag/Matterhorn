@@ -12,7 +12,7 @@
 
 含有的 `matterhorn_pytorch.snn` 模块： `Spatial` 、 `Temporal` 和 `Sequential` 。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./7_container.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.snn.decoder` ： SNN 的解码机制
 
@@ -20,7 +20,7 @@
 
 含有的 `matterhorn_pytorch.snn` 模块： `SumSpikeDecoder` 、 `AvgSpikeDecoder` 、 `MinTimeDecoder` 和 `AvgTimeDecoder` 。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./9_decoder.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.snn.encoder` ： SNN 的编码机制
 
@@ -28,13 +28,13 @@
 
 含有的 `matterhorn_pytorch.snn` 模块： `DirectEncoder` 、 `PoissonEncoder` 、 `SoftMaxEncoder` 和 `TemporalEncoder` 。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./8_encoder.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.snn.functional` ： SNN 的相关函数
 
 该模块中定义了一些 SNNs 中常见的函数，如 Heaviside 阶跃函数等。
 
-您可以阅读文档以了解更多函数的使用方法。
+您可以阅读[文档](./1_functional.md)以了解更多函数的使用方法。
 
 ## `matterhorn_pytorch.snn.layer` ： SNN 的脉冲对脉冲操作
 
@@ -42,7 +42,7 @@
 
 含有的 `matterhorn_pytorch.snn` 模块： `SRM0Linear` 、 `STDPLinear` 、 `MaxPool1d` 、 `MaxPool2d` 、 `MaxPool3d` 、 `AvgPool1d` 、 `AvgPool2d` 、 `AvgPool3d` 、 `Flatten` 和 `Unflatten` 。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./6_layer.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.snn.skeleton` ： SNN 模块的基类
 
@@ -50,7 +50,7 @@
 
 含有的 `matterhorn_pytorch.snn` 模块： `Module` 。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./2_skeleton.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.snn.soma` ： 脉冲神经元的胞体
 
@@ -58,7 +58,7 @@
 
 含有的 `matterhorn_pytorch.snn` 模块： `IF` 、 `LIF` 、 `QIF` 、 `ExpIF` 、 `Izhikevich` 、 `KLIF` 和 `LIAF` 。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./4_soma.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.snn.surrogate` ： 脉冲神经元 Heaviside 阶跃函数的替代梯度
 
@@ -66,7 +66,7 @@
 
 含有的 `matterhorn_pytorch.snn` 模块： `Rectangular` 、 `Polynomial` 、 `Sigmoid` 和 `Gaussian` 。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./3_surrogate.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.snn.synapse` ： 脉冲神经元的突触
 
@@ -74,7 +74,7 @@
 
 含有的 `matterhorn_pytorch.snn` 模块： `Linear` 、 `Conv1d` 、 `Conv2d` 、 `Conv3d` 、 `ConvTranspose1d` 、 `ConvTranspose2d` 、 `ConvTranspose3d` 、 `BatchNorm1d` 、 `BatchNorm2d` 、 `BatchNorm3d` 和 `LayerNorm` 。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./5_synapse.md)以了解更多类与变量的使用方法。
 
 ## 参考文献
 
