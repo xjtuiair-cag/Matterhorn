@@ -14,11 +14,13 @@ The spiking neuron model originates from the biological neuron model: Hodgkin an
 
 However, these models have a similar characteristic: when the postsynaptic membrane receptors sense neurotransmitters, they generate excitatory or inhibitory signals, which eventually propagate to the soma along dendrites; excitatory signals accumulate in the soma; when the accumulated excitatory signal reaches a certain level, a neural impulse is generated in the neuron's soma, which then propagates along the axon to the synapse, releasing neurotransmitters. This process involves depolarization, hyperpolarization, and refractory period. The signal generated during this very short process is called a spike.
 
-![生物脉冲的产生](../../../assets/docs/snn/soma_1.png)
+![Generation of Spikes](../../../assets/docs/snn/soma_1.png)
 
 Since biological spikes are short in duration and have characteristics like "all or nothing", they can be represented by discrete values in computers: at a specific time step and a specific neuron, `1` represents a spike, and `0` represents no spike. Thus, a sequence of spikes existing in both time and space dimensions can be represented as a spike train.
 
 Matterhorn's synapse module integrates spikes from the layer above and sends the postsynaptic potential (PSP) to the soma. The soma module accepts the postsynaptic potential from synapses, accumulates it, determines whether to generate spikes, and decides whether to enter the refractory period based on the spike generation.
+
+## `matterhorn_pytorch.snn.soma.Soma`
 
 ```python
 Soma(

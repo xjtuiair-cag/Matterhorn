@@ -141,7 +141,7 @@ class Conv1d(Synapse, nn.Conv1d):
             out_channels (int): 输出的频道C_{out}
             kernel_size (_size_1_t): 卷积核的形状
             stride (_size_1_t): 卷积的输出步长，决定卷积输出的形状
-            padding (_size_1_t): | str 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            padding (_size_1_t | str): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
             dilation (_size_1_t): 卷积的输入步长
             groups (int): 分组进行卷积操作的组数
             bias (bool): 是否要加入偏置
@@ -200,7 +200,7 @@ class Conv2d(Synapse, nn.Conv2d):
             out_channels (int): 输出的频道C_{out}
             kernel_size (_size_2_t): 卷积核的形状
             stride (_size_2_t): 卷积的输出步长，决定卷积输出的形状
-            padding (_size_2_t): | str 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            padding (_size_2_t | str): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
             dilation (_size_2_t): 卷积的输入步长
             groups (int): 分组进行卷积操作的组数
             bias (bool): 是否要加入偏置
@@ -259,7 +259,7 @@ class Conv3d(Synapse, nn.Conv3d):
             out_channels (int): 输出的频道C_{out}
             kernel_size (_size_3_t): 卷积核的形状
             stride (_size_3_t): 卷积的输出步长，决定卷积输出的形状
-            padding (_size_3_t): | str 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            padding (_size_3_t | str): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
             dilation (_size_3_t): 卷积的输入步长
             groups (int): 分组进行卷积操作的组数
             bias (bool): 是否要加入偏置

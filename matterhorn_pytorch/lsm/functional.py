@@ -136,7 +136,7 @@ def merge(*models: LSM, connection: str = "uniform", threshold: float = 0.75) ->
     for m in models:
         adjacent[offset:offset + m.neuron_num, offset:offset + m.neuron_num] = m.adjacent
         offset += m.neuron_num
-        soma = m.soma
+        soma = m.soma # TODO: different neurons in the same LSM
         assert multi_time_step is None or multi_time_step == m.multi_time_step, "Not all models have same step mode."
         multi_time_step = m.multi_time_step
         assert reset_after_process is None or reset_after_process == m.reset_after_process, "Not all models have same reset mode."

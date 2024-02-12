@@ -20,6 +20,8 @@
 
 Matterhorn 的突触模块用于整合来自上一层的脉冲，并将突触后电位（PSP）送往胞体。而胞体模块则接受来自突触的突触后电位，并将其进行累计、判断是否发放脉冲，并根据脉冲的发放情况决定是否进入不应期。
 
+## `matterhorn_pytorch.snn.soma.Soma`
+
 ```python
 Soma(
     u_threshold: float = -0.055,
