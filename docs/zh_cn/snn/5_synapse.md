@@ -367,7 +367,7 @@ import torch
 import matterhorn_pytorch as mth
 
 
-convt = mth.snn.ConvTranspose2d(2, 8, 3, padding = 1) # [T, B, 2, H, W, L] -> [T, B, 8, H, W, L]
+convt = mth.snn.ConvTranspose2d(2, 8, 3, padding = 1) # [T, B, 2, H, W] -> [T, B, 8, H, W]
 ```
 
 ## `matterhorn_pytorch.snn.ConvTranspose3d` / `matterhorn_pytorch.snn.synapse.ConvTranspose3d`
