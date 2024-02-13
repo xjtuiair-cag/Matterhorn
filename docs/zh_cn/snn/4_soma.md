@@ -59,7 +59,7 @@ Soma(
 
 一般为通过 Heaviside 阶跃函数，判断当前电位是否超过了阈电位。
 
-$$O^{l}(t)=[U^{l}(t) \ge u_{th}]$$
+$$O^{l}(t)=(U^{l}(t) \ge u_{th})$$
 
 其中 $u_{th}$ 为阈电位， $\ge$ （`>=`）为代表 Heaviside 阶跃函数的算子。
 
@@ -67,7 +67,7 @@ $$O^{l}(t)=[U^{l}(t) \ge u_{th}]$$
 
 为设置不应期的函数。如果不存在不应期（只重置），就通过以下函数进行一次选择：
 
-$$H^{l}(t)=U^{l}(t)[1-O^{l}(t)]+u_{rest}O^{l}(t)$$
+$$H^{l}(t)=U^{l}(t)(1-O^{l}(t))+u_{rest}O^{l}(t)$$
 
 其中 $u_{rest}$ 为静息电位。如果存在不应期，则需要一个存储的张量用于记录不应期长度。
 
@@ -76,6 +76,10 @@ $$H^{l}(t)=U^{l}(t)[1-O^{l}(t)]+u_{rest}O^{l}(t)$$
 Integrate-and-Fire 脉冲神经元，反应函数为：
 
 $$\frac{du}{dt}=IR$$
+
+离散化后可以得到反应函数：
+
+$$U^{l}(t)=H^{l}(t-1)+X^{l}(t)$$
 
 ```python
 IF(
@@ -144,6 +148,10 @@ soma = mth.snn.IF(
 Leaky Integrate-and-Fire 脉冲神经元，反应函数为：
 
 $$\tau_{m} \frac{du}{dt}=-(u-u_{rest})+IR$$
+
+离散化后可以得到反应函数：
+
+$$U^{l}(t)=H^{l}(t-1)+\frac{1}{\tau_{m}}[-(H^{l}(t-1)-u_{rest})+X^{l}(t)]$$
 
 ```python
 LIF(
@@ -225,6 +233,10 @@ soma = mth.snn.LIF(
 Quadratic Integrate-and-Fire 脉冲神经元，反应函数为：
 
 $$\tau_{m} \frac{du}{dt}=a_{0}(u-u_{rest})(u-u_{c})+RI$$
+
+离散化后可以得到反应函数：
+
+$$U^{l}(t)=H^{l}(t-1)+\frac{1}{\tau_{m}}[a_{0}(H^{l}(t-1)-u_{rest})(H^{l}(t-1)-u_{c})+X^{l}(t)]$$
 
 ```python
 QIF(
@@ -314,6 +326,10 @@ soma = mth.snn.QIF(
 Exponential Integrate-and-Fire 脉冲神经元，反应函数为：
 
 $$\tau_{m} \frac{du}{dt}=-(u-u_{rest})+\Delta_{T}e^{\frac{u-u_{T}}{\Delta_{T}}}+RI$$
+
+离散化后可以得到反应函数：
+
+$$U^{l}(t)=H^{l}(t-1)+\frac{1}{\tau_{m}}[-(H^{l}(t-1)-u_{rest})+\Delta_{T}e^{\frac{H^{l}(t-1)-u_{T}}{\Delta_{T}}}+X^{l}(t)]$$
 
 ```python
 ExpIF(
@@ -408,6 +424,12 @@ $$\frac{dw}{dt}=a(bu-w)$$
 
 其中电位的单位为 $mV$ 。
 
+离散化后可以得到反应函数：
+
+$$W^{l}(t)=W^{l}(t-1)+a(bH^{l}(t-1)-W^{l}(t-1))$$
+
+$$U^{l}(t)=H^{l}(t-1)+0.04(H^{l}(t-1))^{2}+5H^{l}(t-1)+140-W^{l}(t)+X^{l}(t)$$
+
 ```python
 Izhikevich(
     u_threshold: float = -0.055,
@@ -489,7 +511,11 @@ soma = mth.snn.Izhikevich(
 
 ## `matterhorn_pytorch.snn.KLIF` / `matterhorn_pytorch.snn.soma.KLIF`
 
-K-LIF 脉冲神经元，输出为模拟值。详情可参考文献 [1] 。
+$K$-based leaky Integrate-and-Fire 脉冲神经元，输出为模拟值。其在 LIF 神经元的基础上，在反应函数和脉冲函数之间加入以下操作：
+
+$$U^{l}(t)=ReLU[k(U^{l}(t)-u_{rest})]+u_{rest}$$
+
+详情可参考文献 [1] 。
 
 ```python
 KLIF(
@@ -497,6 +523,7 @@ KLIF(
     u_threshold: float = 1.0,
     u_rest: float = 0.0,
     k: float = 0.2,
+    spiking_function: Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
@@ -515,6 +542,8 @@ KLIF(
 `u_rest (float)` ：静息电位 $u_{rest}$ 。
 
 `k (float)` ：参数 $k$ 。
+
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
 
@@ -554,7 +583,11 @@ soma = mth.snn.KLIF(
 
 ## `matterhorn_pytorch.snn.LIAF` / `matterhorn_pytorch.snn.soma.LIAF`
 
-Leaky Integrate and Analog Fire 脉冲神经元。在 LIF 神经元的基础上加入激活函数作为神经元的输出。详情可参考文献 [2] 。
+Leaky Integrate and Analog Fire 脉冲神经元。在 LIF 神经元的基础上加入激活函数：
+
+$$O_{A}^{l}(t)=ActFun(U^{l}(t)-u_{rest})$$
+
+作为神经元的输出。详情可参考文献 [2] 。
 
 ```python
 LIAF(

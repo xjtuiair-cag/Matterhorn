@@ -90,17 +90,19 @@ l1 = mth.snn.SRM0Linear(784, 10) # [T, B, 784] -> [T, B, 10]
 
 A fully connected layer employing the Spike Timing-Dependent Plasticity (STDP) learning mechanism. STDP, as a common pulse-based learning mechanism, follows the weight update formula:
 
-$$Δw_{ij}=\sum_{t_{j}}{\sum_{t_{i}}W(t_{i}-t_{j})}$$
+$$\Delta w_{ij}=\sum_{t_{j}}{\sum_{t_{i}}W(t_{i}-t_{j})}$$
 
 Where the weight function $W(x)$ is defined as:
 
 $$
 W(x)=
+\left \{
 \begin{aligned}
-A_{+}e^{-\frac{x}{τ_{+}}},x>0 \\\\
+A_{+}e^{-\frac{x}{\tau_{+}}},x>0 \\\\
 0,x=0 \\\\
--A_{-}e^{\frac{x}{τ_{-}}},x<0
+-A_{-}e^{\frac{x}{\tau_{-}}},x<0
 \end{aligned}
+\right .
 $$
 
 Where $t_{i}$ is the time step when the input spike of neuron with index $i$ is generated, and $t_{j}$ is the time step when the input spike of the synapse with index $j$ arrives.

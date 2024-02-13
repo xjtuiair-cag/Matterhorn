@@ -472,6 +472,59 @@ class Izhikevich(Soma):
         return u
 
 
+class KLIF(Soma):
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, k: float = 0.2, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
+        """
+        KLIF神经元
+        Args:
+            tau_m (float): 膜时间常数$τ_{m}$
+            u_threshold (float): 阈电位$u_{th}$
+            u_rest (float): 静息电位$u_{rest}$
+            k (float): 参数k
+            spiking_function (Module): 计算脉冲时所使用的阶跃函数
+            hard_reset (bool): 是否为硬重置
+            multi_time_step (bool): 是否调整为多个时间步模式
+            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
+            trainable (bool): 参数是否可以训练
+            device (torch.device): 所计算的设备
+            dtype: 所计算的数据类型
+        """
+        super().__init__(
+            u_threshold = u_threshold,
+            u_rest = u_rest,
+            spiking_function = spiking_function,
+            hard_reset = hard_reset,
+            multi_time_step = multi_time_step,
+            reset_after_process = reset_after_process
+        )
+        self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
+        self.k = nn.Parameter(torch.tensor(k, device = device, dtype = dtype), requires_grad = trainable)
+        
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g" % (self.tau_m, self.u_threshold, self.u_rest), super().extra_repr()])
+
+
+    def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+        """
+        通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
+        Args:
+            h (torch.Tensor): 上一时刻的电位$U_{i}^{l}(t-1)$
+            x (torch.Tensor): 输入电位$X_{i}^{l}(t)$
+        Returns:
+            u (torch.Tensor): 当前电位$U_{i}^{l}(t)$
+        """
+        du = (1.0 / self.tau_m) * (-(h - self.u_rest) + x)
+        u = h + du
+        f = nn.functional.relu(self.k * (u - self.u_rest)) + self.u_rest
+        return f
+
+
 class Response(Soma):
     def __init__(self, response_function: Callable, param_list: Iterable = [], u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
         """
@@ -566,69 +619,6 @@ class AnalogSoma(Soma):
         y = self.f_activation(self.u)
         self.u = self.f_reset(self.u, o)
         return y
-
-
-class KLIF(AnalogSoma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, k: float = 0.2, hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
-        """
-        KLIF神经元
-        Args:
-            tau_m (float): 膜时间常数$τ_{m}$
-            u_threshold (float): 阈电位$u_{th}$
-            u_rest (float): 静息电位$u_{rest}$
-            k (float): 参数k
-            hard_reset (bool): 是否为硬重置
-            multi_time_step (bool): 是否调整为多个时间步模式
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
-            trainable (bool): 参数是否可以训练
-            device (torch.device): 所计算的设备
-            dtype: 所计算的数据类型
-        """
-        super().__init__(
-            u_threshold = u_threshold,
-            u_rest = u_rest,
-            spiking_function = self.f_kspiking,
-            activation_function = self.f_kspiking,
-            hard_reset = hard_reset,
-            multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
-        )
-        self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
-        self.k = nn.Parameter(torch.tensor(k, device = device, dtype = dtype), requires_grad = trainable)
-        
-
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来。
-        Returns:
-            repr_str (str): 参数表
-        """
-        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g" % (self.tau_m, self.u_threshold, self.u_rest), super().extra_repr()])
-
-
-    def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
-        """
-        通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
-        Args:
-            h (torch.Tensor): 上一时刻的电位$U_{i}^{l}(t-1)$
-            x (torch.Tensor): 输入电位$X_{i}^{l}(t)$
-        Returns:
-            u (torch.Tensor): 当前电位$U_{i}^{l}(t)$
-        """
-        du = (1.0 / self.tau_m) * (-(h - self.u_rest) + x)
-        u = h + du
-        return u
-
-
-    def f_kspiking(self, u: torch.Tensor) -> torch.Tensor:
-        """
-        通过当前电位$U_{i}^{l}(t)$计算当前脉冲$O_{i}^{l}(t)$。
-        Args:
-            u (torch.Tensor): 当前电位$U_{i}^{l}(t)$
-        Returns:
-            o (torch.Tensor): 当前脉冲$O_{i}^{l}(t)$
-        """
-        return nn.functional.relu(self.k * u)
 
 
 class LIAF(AnalogSoma):

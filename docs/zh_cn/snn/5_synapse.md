@@ -34,7 +34,11 @@ Synapse(
 
 ## `matterhorn_pytorch.snn.Linear` / `matterhorn_pytorch.snn.synapse.Linear`
 
-突触的全连接操作。
+突触的全连接操作。可用如下公式表示：
+
+$$X^{l}(t)=W^{l}O^{l-1}(t)$$
+
+其中 $W^{l}$ 为权重矩阵。
 
 ```python
 Linear(
@@ -73,7 +77,11 @@ fc = mth.snn.Linear(784, 10) # [T, B, 784] -> [T, B, 10]
 
 ## `matterhorn_pytorch.snn.Conv1d` / `matterhorn_pytorch.snn.synapse.Conv1d`
 
-突触的一维卷积操作。
+突触的一维卷积操作。可用如下公式表示：
+
+$$X^{l}(t)=C^{l}*O^{l-1}(t)$$
+
+其中 $C^{l}$ 为卷积核。
 
 ```python
 Conv1d(
@@ -130,7 +138,13 @@ conv = mth.snn.Conv1d(2, 8, 3, padding = 1) # [T, B, 2, L] -> [T, B, 8, L]
 
 ## `matterhorn_pytorch.snn.Conv2d` / `matterhorn_pytorch.snn.synapse.Conv2d`
 
-突触的二维卷积操作。
+突触的二维卷积操作。可用如下公式表示：
+
+$$X^{l}(t)=C^{l}*O^{l-1}(t)$$
+
+其中 $C^{l}$ 为卷积核。
+
+![二维卷积示意图](../../../assets/docs/snn/synapse_1.png)
 
 ```python
 Conv2d(
@@ -156,8 +170,6 @@ Conv2d(
 `out_channels (int)` ：输出通道数 `CO` 。输入的形状为 `[B, CO, HO, WO]` （单时间步模式） 或 `[T, B, CO, HO, WO]` （多时间步模式）。
 
 `kernel_size (_size_2_t)` ：卷积核的形状。
-
-![二维卷积示意图](../../../assets/docs/snn/synapse_1.png)
 
 `stride (_size_2_t)` ：步长。在原图经过多少个像素后进行卷积。
 
@@ -195,7 +207,11 @@ conv = mth.snn.Conv2d(2, 8, 3, padding = 1) # [T, B, 2, H, W] -> [T, B, 8, H, W]
 
 ## `matterhorn_pytorch.snn.Conv3d` / `matterhorn_pytorch.snn.synapse.Conv3d`
 
-突触的三维卷积操作。
+突触的三维卷积操作。可用如下公式表示：
+
+$$X^{l}(t)=C^{l}*O^{l-1}(t)$$
+
+其中 $C^{l}$ 为卷积核。
 
 ```python
 Conv3d(

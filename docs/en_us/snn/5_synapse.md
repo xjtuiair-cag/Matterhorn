@@ -34,7 +34,11 @@ If synaptic computation depends on time steps, please override this function and
 
 ## `matterhorn_pytorch.snn.Linear` / `matterhorn_pytorch.snn.synapse.Linear`
 
-Full connection operation of synapses.
+Full connection operation of synapses. Can be represented as the formula below:
+
+$$X^{l}(t)=W^{l}O^{l-1}(t)$$
+
+Where $W^{l}$ is the weight matrix.
 
 ```python
 Linear(
@@ -73,7 +77,11 @@ fc = mth.snn.Linear(784, 10) # [T, B, 784] -> [T, B, 10]
 
 ## `matterhorn_pytorch.snn.Conv1d` / `matterhorn_pytorch.snn.synapse.Conv1d`
 
-One-dimensional convolution operation of synapses.
+One-dimensional convolution operation of synapses. Can be represented as the formula below:
+
+$$X^{l}(t)=C^{l}*O^{l-1}(t)$$
+
+Where $C^{l}$ is the convolution kernel.
 
 ```python
 Conv1d(
@@ -130,7 +138,13 @@ conv = mth.snn.Conv1d(2, 8, 3, padding = 1) # [T, B, 2, L] -> [T, B, 8, L]
 
 ## `matterhorn_pytorch.snn.Conv2d` / `matterhorn_pytorch.snn.synapse.Conv2d`
 
-Two-dimensional convolution operation of synapses.
+Two-dimensional convolution operation of synapses. Can be represented as the formula below:
+
+$$X^{l}(t)=C^{l}*O^{l-1}(t)$$
+
+Where $C^{l}$ is the convolution kernel.
+
+![2-dimensional Convolution](../../../assets/docs/snn/synapse_1.png)
 
 ```python
 Conv2d(
@@ -156,8 +170,6 @@ Conv2d(
 `out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO]` (single-time-step mode) or `[T, B, CO, HO, WO]` (multi-time-step mode).
 
 `kernel_size (_size_2_t)`: Shape of the convolution kernel.
-
-![2-dimensional Convolution](../../../assets/docs/snn/synapse_1.png)
 
 `stride (_size_2_t)`: Stride. How many pixels to perform convolution after passing through the original image.
 
@@ -195,7 +207,11 @@ conv = mth.snn.Conv2d(2, 8, 3, padding = 1) # [T, B, 2, H, W] -> [T, B, 8, H, W]
 
 ## `matterhorn_pytorch.snn.Conv3d` / `matterhorn_pytorch.snn.synapse.Conv3d`
 
-Three-dimensional convolution operation of synapses.
+Three-dimensional convolution operation of synapses. Can be represented as the formula below:
+
+$$X^{l}(t)=C^{l}*O^{l-1}(t)$$
+
+Where $C^{l}$ is the convolution kernel.
 
 ```python
 Conv3d(

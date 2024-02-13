@@ -59,7 +59,7 @@ Calculate the current potential $U^{l}(t)$ based on the postsynaptic potential $
 
 Typically, it uses the Heaviside step function to determine whether the current potential exceeds the threshold potential.
 
-$$O^{l}(t)=[U^{l}(t) \ge u_{th}]$$
+$$O^{l}(t)=(U^{l}(t) \ge u_{th})$$
 
 Where $u_{th}$ is the threshold potential, and $\ge$ (`>=`) represents the operator for the Heaviside step function.
 
@@ -67,7 +67,7 @@ Where $u_{th}$ is the threshold potential, and $\ge$ (`>=`) represents the opera
 
 This function sets the refractory period. If there is no refractory period (only reset), it performs a single selection through the following function:
 
-$$H^{l}(t)=U^{l}(t)[1-O^{l}(t)]+u_{rest}O^{l}(t)$$
+$$H^{l}(t)=U^{l}(t)(1-O^{l}(t))+u_{rest}O^{l}(t)$$
 
 Where $u_{rest}$ is the resting potential. If there is a refractory period, a stored tensor is needed to record the length of the refractory period.
 
@@ -76,6 +76,10 @@ Where $u_{rest}$ is the resting potential. If there is a refractory period, a st
 Integrate-and-Fire spiking neuron with the response function:
 
 $$\frac{du}{dt}=IR$$
+
+After discretization, the reaction function can be obtained:
+
+$$U^{l}(t)=H^{l}(t-1)+X^{l}(t)$$
 
 ```python
 IF(
@@ -144,6 +148,10 @@ soma = mth.snn.IF(
 Leaky Integrate-and-Fire spiking neuron with the response function:
 
 $$\tau_{m} \frac{du}{dt}=-(u-u_{rest})+IR$$
+
+After discretization, the reaction function can be obtained:
+
+$$U^{l}(t)=H^{l}(t-1)+\frac{1}{\tau_{m}}[-(H^{l}(t-1)-u_{rest})+X^{l}(t)]$$
 
 ```python
 LIF(
@@ -225,6 +233,10 @@ soma = mth.snn.LIF(
 Quadratic Integrate-and-Fire spiking neuron with the response function:
 
 $$\tau_{m} \frac{du}{dt}=a_{0}(u-u_{rest})(u-u_{c})+RI$$
+
+After discretization, the reaction function can be obtained:
+
+$$U^{l}(t)=H^{l}(t-1)+\frac{1}{\tau_{m}}[a_{0}(H^{l}(t-1)-u_{rest})(H^{l}(t-1)-u_{c})+X^{l}(t)]$$
 
 ```python
 QIF(
@@ -314,6 +326,10 @@ soma = mth.snn.QIF(
 Exponential Integrate-and-Fire spiking neuron with the response function:
 
 $$\tau_{m} \frac{du}{dt}=-(u-u_{rest})+\Delta_{T}e^{\frac{u-u_{T}}{\Delta_{T}}}+RI$$
+
+After discretization, the reaction function can be obtained:
+
+$$U^{l}(t)=H^{l}(t-1)+\frac{1}{\tau_{m}}[-(H^{l}(t-1)-u_{rest})+\Delta_{T}e^{\frac{H^{l}(t-1)-u_{T}}{\Delta_{T}}}+X^{l}(t)]$$
 
 ```python
 ExpIF(
@@ -408,6 +424,12 @@ $$\frac{dw}{dt}=a(bu-w)$$
 
 Where the level of potential is $mV$.
 
+After discretization, the reaction function can be obtained:
+
+$$W^{l}(t)=W^{l}(t-1)+a(bH^{l}(t-1)-W^{l}(t-1))$$
+
+$$U^{l}(t)=H^{l}(t-1)+0.04(H^{l}(t-1))^{2}+5H^{l}(t-1)+140-W^{l}(t)+X^{l}(t)$$
+
 ```python
 Izhikevich(
     u_threshold: float = -0.055,
@@ -489,7 +511,11 @@ soma = mth.snn.Izhikevich(
 
 ## `matterhorn_pytorch.snn.KLIF` / `matterhorn_pytorch.snn.soma.KLIF`
 
-K-LIF spiking neuron with continuous output. Refer to reference [1] for details.
+$K$-based leaky Integrate-and-Fire spiking neuron with continuous output. It is based on LIF spiking neuron, whereas add the processing between response function and firing function:
+
+$$U^{l}(t)=ReLU[k(U^{l}(t)-u_{rest})]+u_{rest}$$
+
+Refer to reference [1] for details.
 
 ```python
 KLIF(
@@ -497,6 +523,7 @@ KLIF(
     u_threshold: float = 1.0,
     u_rest: float = 0.0,
     k: float = 0.2,
+    spiking_function: Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
@@ -515,6 +542,8 @@ KLIF(
 `u_rest (float)`: The resting potential $u_{rest}$.
 
 `k (float)`: Parameter $k$.
+
+`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
 
@@ -554,7 +583,11 @@ soma = mth.snn.KLIF(
 
 ## `matterhorn_pytorch.snn.LIAF` / `matterhorn_pytorch.snn.soma.LIAF`
 
-Leaky Integrate and Analog Fire spiking neuron. An extension of the LIF neuron with an activation function as the neuron's output. Refer to reference [2] for details.
+Leaky Integrate and Analog Fire spiking neuron. An extension of the LIF neuron with an activation function:
+
+$$O_{A}^{l}(t)=ActFun(U^{l}(t)-u_{rest})$$
+
+as the neuron's output. Refer to reference [2] for details.
 
 ```python
 LIAF(
