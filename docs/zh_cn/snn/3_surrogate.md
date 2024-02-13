@@ -134,7 +134,7 @@ $$h(x)=\frac{1}{\sqrt{2\pi a}}e^{\frac{-x^{2}}{2a}}$$
 
 其中，参数 $a$ 越小，其越紧凑，最高点 $\frac{1}{\sqrt{2\pi a}}$ 也越高。
 
-![高斯函数替代梯度](../../../assets/docs/snn/surrogate_4.png)
+![高斯函数替代梯度](../../../assets/docs/snn/surrogate_5.png)
 
 ```py
 Gaussian(

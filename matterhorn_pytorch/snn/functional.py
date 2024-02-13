@@ -14,7 +14,7 @@ except:
     pass
 
 
-class val_to_spike(torch.autograd.Function):
+class _val_to_spike(torch.autograd.Function):
     @staticmethod
     def forward(ctx, x: torch.Tensor) -> torch.Tensor:
         """
@@ -39,6 +39,17 @@ class val_to_spike(torch.autograd.Function):
         return grad_output
 
 
+def val_to_spike(x: torch.Tensor) -> torch.Tensor:
+    """
+    模拟值转脉冲，以0.5为界
+    Args:
+        x (torch.Tensor): 模拟值
+    Returns:
+        o (torch.Tensor): 脉冲值（0、1）
+    """
+    return _val_to_spike.apply(x)
+
+
 @torch.jit.script
 def forward_heaviside(x: torch.Tensor) -> torch.Tensor:
     """
@@ -52,7 +63,7 @@ def forward_heaviside(x: torch.Tensor) -> torch.Tensor:
 
 
 @torch.jit.script
-def backward_rectangular(grad_output: torch.Tensor, x: torch.Tensor, a: float = 2.0) -> torch.Tensor:
+def backward_rectangular(grad_output: torch.Tensor, x: torch.Tensor, a: float) -> torch.Tensor:
     """
     阶跃函数的导数，矩形窗，
     详见文章[Spatio-Temporal Backpropagation for Training High-Performance Spiking Neural Networks](https://www.frontiersin.org/articles/10.3389/fnins.2018.00331/full)。
@@ -67,9 +78,9 @@ def backward_rectangular(grad_output: torch.Tensor, x: torch.Tensor, a: float = 
     return h * grad_output
 
 
-class heaviside_rectangular(torch.autograd.Function):
+class _heaviside_rectangular(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, a: float = 2.0) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, a: float) -> torch.Tensor:
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
@@ -99,8 +110,19 @@ class heaviside_rectangular(torch.autograd.Function):
         return backward_rectangular(grad_output, x, ctx.a), None
 
 
+def heaviside_rectangular(x: torch.Tensor, a: float) -> torch.Tensor:
+    """
+    Heaviside阶跃函数，使用矩形函数作为反向传播函数。
+    Args:
+        x (torch.Tensor): 模拟值
+    Returns:
+        o (torch.Tensor): 脉冲值（0、1）
+    """
+    return _heaviside_rectangular.apply(x, a)
+
+
 @torch.jit.script
-def backward_polynomial(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1.0) -> torch.Tensor:
+def backward_polynomial(grad_output: torch.Tensor, x: torch.Tensor, a: float) -> torch.Tensor:
     """
     阶跃函数的导数，一次函数窗，
     详见文章[Spatio-Temporal Backpropagation for Training High-Performance Spiking Neural Networks](https://www.frontiersin.org/articles/10.3389/fnins.2018.00331/full)。
@@ -115,9 +137,9 @@ def backward_polynomial(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1
     return h * grad_output
 
 
-class heaviside_polynomial(torch.autograd.Function):
+class _heaviside_polynomial(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, a: float = 1.0) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, a: float) -> torch.Tensor:
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
@@ -147,8 +169,19 @@ class heaviside_polynomial(torch.autograd.Function):
         return backward_polynomial(grad_output, x, ctx.a), None
 
 
+def heaviside_polynomial(x: torch.Tensor, a: float) -> torch.Tensor:
+    """
+    Heaviside阶跃函数，使用多项式函数作为反向传播函数。
+    Args:
+        x (torch.Tensor): 模拟值
+    Returns:
+        o (torch.Tensor): 脉冲值（0、1）
+    """
+    return _heaviside_polynomial.apply(x, a)
+
+
 @torch.jit.script
-def backward_sigmoid(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1.0) -> torch.Tensor:
+def backward_sigmoid(grad_output: torch.Tensor, x: torch.Tensor, a: float) -> torch.Tensor:
     """
     阶跃函数的导数，sigmoid函数窗，
     详见文章[Spatio-Temporal Backpropagation for Training High-Performance Spiking Neural Networks](https://www.frontiersin.org/articles/10.3389/fnins.2018.00331/full)。
@@ -164,9 +197,9 @@ def backward_sigmoid(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1.0)
     return h * grad_output
 
 
-class heaviside_sigmoid(torch.autograd.Function):
+class _heaviside_sigmoid(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, a: float = 1.0) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, a: float) -> torch.Tensor:
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
@@ -185,7 +218,7 @@ class heaviside_sigmoid(torch.autograd.Function):
     @staticmethod
     def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
-        使用sigmoid函数作为反向传播函数。
+        使用Sigmoid函数的导数作为反向传播函数。
         Args:
             ctx: 上下文
             grad_output (torch.Tensor): 输出梯度
@@ -196,8 +229,19 @@ class heaviside_sigmoid(torch.autograd.Function):
         return backward_sigmoid(grad_output, x, ctx.a), None
 
 
+def heaviside_sigmoid(x: torch.Tensor, a: float) -> torch.Tensor:
+    """
+    Heaviside阶跃函数，使用Sigmoid函数的导数作为反向传播函数。
+    Args:
+        x (torch.Tensor): 模拟值
+    Returns:
+        o (torch.Tensor): 脉冲值（0、1）
+    """
+    return _heaviside_sigmoid.apply(x, a)
+
+
 @torch.jit.script
-def backward_gaussian(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1.0) -> torch.Tensor:
+def backward_gaussian(grad_output: torch.Tensor, x: torch.Tensor, a: float) -> torch.Tensor:
     """
     阶跃函数的导数，高斯函数窗，
     详见文章[Spatio-Temporal Backpropagation for Training High-Performance Spiking Neural Networks](https://www.frontiersin.org/articles/10.3389/fnins.2018.00331/full)。
@@ -212,9 +256,9 @@ def backward_gaussian(grad_output: torch.Tensor, x: torch.Tensor, a: float = 1.0
     return h * grad_output
 
 
-class heaviside_gaussian(torch.autograd.Function):
+class _heaviside_gaussian(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, a: float = 1.0) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, a: float) -> torch.Tensor:
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
@@ -242,3 +286,14 @@ class heaviside_gaussian(torch.autograd.Function):
         """
         x, = ctx.saved_tensors
         return backward_gaussian(grad_output, x, ctx.a), None
+
+
+def heaviside_gaussian(x: torch.Tensor, a: float) -> torch.Tensor:
+    """
+    Heaviside阶跃函数，使用高斯函数作为反向传播函数。
+    Args:
+        x (torch.Tensor): 模拟值
+    Returns:
+        o (torch.Tensor): 脉冲值（0、1）
+    """
+    return _heaviside_gaussian.apply(x, a)

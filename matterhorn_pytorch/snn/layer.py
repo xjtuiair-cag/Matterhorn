@@ -437,7 +437,7 @@ class Layer(Module):
                 self.reset()
         else:
             y = self.forward_single_time_step(x)
-        y = val_to_spike.apply(y)
+        y = val_to_spike(y)
         return y
 
 

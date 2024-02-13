@@ -15,7 +15,7 @@ except:
 
 
 class Rectangular(Module):
-    def __init__(self, a: float = 2.0) -> None:
+    def __init__(self, a: float = 1.0) -> None:
         """
         Heaviside阶跃函数，替代梯度为矩形函数
         Args:
@@ -42,11 +42,11 @@ class Rectangular(Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return heaviside_rectangular.apply(x, self.a)
+        return heaviside_rectangular(x, self.a)
 
 
 class Polynomial(Module):
-    def __init__(self, a: float = 1.0) -> None:
+    def __init__(self, a: float = 4.0) -> None:
         """
         Heaviside阶跃函数，替代梯度为多项式函数
         Args:
@@ -73,11 +73,11 @@ class Polynomial(Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return heaviside_polynomial.apply(x, self.a)
+        return heaviside_polynomial(x, self.a)
 
 
 class Sigmoid(Module):
-    def __init__(self, a: float = 1.0) -> None:
+    def __init__(self, a: float = 0.25) -> None:
         """
         Heaviside阶跃函数，替代梯度为Sigmoid函数
         Args:
@@ -104,11 +104,11 @@ class Sigmoid(Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return heaviside_sigmoid.apply(x, self.a)
+        return heaviside_sigmoid(x, self.a)
 
 
 class Gaussian(Module):
-    def __init__(self, a: float = 1.0) -> None:
+    def __init__(self, a: float = 0.16) -> None:
         """
         Heaviside阶跃函数，替代梯度为高斯函数
         Args:
@@ -135,4 +135,4 @@ class Gaussian(Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return heaviside_gaussian.apply(x, self.a)
+        return heaviside_gaussian(x, self.a)

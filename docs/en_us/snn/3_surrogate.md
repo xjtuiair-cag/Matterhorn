@@ -134,7 +134,7 @@ $$h(x)=\frac{1}{\sqrt{2\pi a}}e^{\frac{-x^{2}}{2a}}$$
 
 Where the parameter $a$ is smaller, the tighter it is, and the higher the highest point $\frac{1}{\sqrt{2\pi a}}$.
 
-![Gaussian Surrogate Gradient](../../../assets/docs/snn/surrogate_4.png)
+![Gaussian Surrogate Gradient](../../../assets/docs/snn/surrogate_5.png)
 
 ```py
 Gaussian(
