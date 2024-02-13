@@ -40,9 +40,11 @@ Where the parameter $a$ is smaller, the narrower the rectangular window, and the
 
 ![Rectangular Window Surrogate Gradient](../../../assets/docs/snn/surrogate_2.png)
 
+Let $\frac{1}{a}=1$, we can get default value of parameter $a=1$.
+
 ```py
 Rectangular(
-    a: float = 2.0
+    a: float = 1.0
 )
 ```
 
@@ -72,9 +74,11 @@ Where the parameter $a$ is larger, the narrower the triangular window, and the h
 
 ![Polynomial Surrogate Gradient](../../../assets/docs/snn/surrogate_3.png)
 
+Let $\frac{\sqrt{a}}{2}=1$, we can get default value of parameter $a=2^{2}=4$.
+
 ```py
 Polynomial(
-    a: float = 1.0
+    a: float = 4.0
 )
 ```
 
@@ -104,9 +108,11 @@ Where the parameter $a$ is smaller, the tighter it is, and the higher the highes
 
 ![Sigmoid Derivative as Surrogate Gradient](../../../assets/docs/snn/surrogate_4.png)
 
+Let $\frac{1}{4a}=1$, we can get default value of parameter $a=\frac{1}{4}=0.25$.
+
 ```py
 Sigmoid(
-    a: float = 1.0
+    a: float = 0.25
 )
 ```
 
@@ -136,9 +142,11 @@ Where the parameter $a$ is smaller, the tighter it is, and the higher the highes
 
 ![Gaussian Surrogate Gradient](../../../assets/docs/snn/surrogate_5.png)
 
+Let $\frac{1}{\sqrt{2\pi a}}=1$, we can get default value of parameter $a=\frac{1}{2\pi}=0.16$.
+
 ```py
 Gaussian(
-    a: float = 1.0
+    a: float = 0.16
 )
 ```
 

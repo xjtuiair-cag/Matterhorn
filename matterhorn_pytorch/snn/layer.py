@@ -67,7 +67,6 @@ class SRM0Linear(Module):
         self.surrogate_str = spiking_function.__class__.__name__
         assert self.surrogate_str in self.supported_surrogate_gradients, "Unknown surrogate gradient."
         self.spiking_function_prototype = self.supported_surrogate_gradients.index(self.surrogate_str)
-        self.trainable = trainable
         self.reset()
 
 
@@ -77,7 +76,7 @@ class SRM0Linear(Module):
         Returns:
             repr_str (str): 参数表
         """
-        return "in_features=%d, out_features=%d, tau_m=%g, u_threshold=%g, u_rest=%g, multi_time_step=%s, trainable=%s" % (self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest, str(self.multi_time_step), str(self.trainable))
+        return "in_features=%d, out_features=%d, tau_m=%g, u_threshold=%g, u_rest=%g, multi_time_step=%s" % (self.in_features, self.out_features, self.tau_m, self.u_threshold, self.u_rest, str(self.multi_time_step))
 
 
     def reset(self) -> Module:
@@ -382,7 +381,6 @@ class Layer(Module):
         super().__init__(
             multi_time_step = multi_time_step
         )
-        self.trainable = True
 
 
     def extra_repr(self) -> str:
@@ -391,7 +389,7 @@ class Layer(Module):
         Returns:
             repr_str (str): 参数表
         """
-        return "multi_time_step=%s, trainable=%s" % (str(self.multi_time_step), str(self.trainable))
+        return "multi_time_step=%s" % (str(self.multi_time_step),)
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:

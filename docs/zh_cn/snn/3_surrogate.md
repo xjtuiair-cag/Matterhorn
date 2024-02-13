@@ -40,9 +40,11 @@ $$h(x)=\frac{1}{a}(|x|\le\frac{a}{2})$$
 
 ![矩形窗替代梯度](../../../assets/docs/snn/surrogate_2.png)
 
+令 $\frac{1}{a}=1$ ，可得默认值 $a=1$ 。
+
 ```py
 Rectangular(
-    a: float = 2.0
+    a: float = 1.0
 )
 ```
 
@@ -72,9 +74,11 @@ $$h(x)=(\frac{\sqrt{a}}{2}-\frac{a}{4}|x|)sgn(\frac{2}{\sqrt{a}}-|x|),|x|<\frac{
 
 ![多项式替代梯度](../../../assets/docs/snn/surrogate_3.png)
 
+令 $\frac{\sqrt{a}}{2}=1$ ，可得默认值 $a=2^{2}=4$ 。
+
 ```py
 Polynomial(
-    a: float = 1.0
+    a: float = 4.0
 )
 ```
 
@@ -104,9 +108,11 @@ $$h(x)=\frac{1}{a}\frac{e^{\frac{x}{a}}}{(1+e^{\frac{x}{a}})^{2}}$$
 
 ![Sigmoid 导数作为替代梯度](../../../assets/docs/snn/surrogate_4.png)
 
+令 $\frac{1}{4a}=1$ ，可得默认值 $a=\frac{1}{4}=0.25$ 。
+
 ```py
 Sigmoid(
-    a: float = 1.0
+    a: float = 0.25
 )
 ```
 
@@ -135,6 +141,8 @@ $$h(x)=\frac{1}{\sqrt{2\pi a}}e^{\frac{-x^{2}}{2a}}$$
 其中，参数 $a$ 越小，其越紧凑，最高点 $\frac{1}{\sqrt{2\pi a}}$ 也越高。
 
 ![高斯函数替代梯度](../../../assets/docs/snn/surrogate_5.png)
+
+令 $\frac{1}{\sqrt{2\pi a}}=1$ ，可得默认值 $a=\frac{1}{2\pi}=0.16$ 。
 
 ```py
 Gaussian(

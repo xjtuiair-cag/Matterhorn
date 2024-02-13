@@ -45,7 +45,6 @@ class LSM(snn.Module):
                 self.soma = soma.multi_time_step_(False)
             else:
                 self.soma = soma
-        self.trainable = trainable
         self.weight = nn.Parameter(torch.empty((self.neuron_num, self.neuron_num), device = device, dtype = dtype), requires_grad = trainable)
         nn.init.kaiming_uniform_(self.weight, a = math.sqrt(5))
         self.weight_input = nn.Parameter(torch.empty((self.neuron_num), device = device, dtype = dtype), requires_grad = trainable)

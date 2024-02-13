@@ -27,7 +27,6 @@ class Synapse(Module):
         super().__init__(
             multi_time_step = multi_time_step
         )
-        self.trainable = True
 
 
     def extra_repr(self) -> str:
@@ -36,7 +35,7 @@ class Synapse(Module):
         Returns:
             repr_str (str): 参数表
         """
-        return "multi_time_step=%s, trainable=%s" % (str(self.multi_time_step), str(self.trainable))
+        return "multi_time_step=%s" % (str(self.multi_time_step),)
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:

@@ -57,7 +57,7 @@ class Soma(Module):
         Returns:
             repr_str (str): 参数表
         """
-        return "multi_time_step=%s, reset=%s" % (str(self.multi_time_step), str(self.trainable), "'hard'" if self.hard_reset else "'soft'")
+        return "multi_time_step=%s, reset=%s" % (str(self.multi_time_step), "'hard'" if self.hard_reset else "'soft'")
 
 
     def init_tensor(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
