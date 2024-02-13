@@ -511,7 +511,7 @@ soma = mth.snn.Izhikevich(
 
 ## `matterhorn_pytorch.snn.KLIF` / `matterhorn_pytorch.snn.soma.KLIF`
 
-$K$-based leaky Integrate-and-Fire 脉冲神经元，输出为模拟值。其在 LIF 神经元的基础上，在反应函数和脉冲函数之间加入以下操作：
+$k$-based leaky Integrate-and-Fire 脉冲神经元，输出为模拟值。其在 LIF 神经元的基础上，在反应函数和脉冲函数之间加入以下操作：
 
 $$U^{l}(t)=ReLU[k(U^{l}(t)-u_{rest})]+u_{rest}$$
 

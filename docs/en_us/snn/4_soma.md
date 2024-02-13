@@ -511,7 +511,7 @@ soma = mth.snn.Izhikevich(
 
 ## `matterhorn_pytorch.snn.KLIF` / `matterhorn_pytorch.snn.soma.KLIF`
 
-$K$-based leaky Integrate-and-Fire spiking neuron with continuous output. It is based on LIF spiking neuron, whereas add the processing between response function and firing function:
+$k$-based leaky Integrate-and-Fire spiking neuron with continuous output. It is based on LIF spiking neuron, whereas add the processing between response function and firing function:
 
 $$U^{l}(t)=ReLU[k(U^{l}(t)-u_{rest})]+u_{rest}$$
 
