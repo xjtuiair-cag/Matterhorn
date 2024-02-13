@@ -37,7 +37,7 @@ class TemporalWiseAttention(snn.Module):
         self.fc2 = snn.Linear(math.floor(self.time_steps / self.r), self.time_steps, bias = False)
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
-        self.heaviside = snn.Rectangular()
+        self.heaviside = snn.Gaussian()
     
 
     def f_train(self, s: torch.Tensor) -> torch.Tensor:

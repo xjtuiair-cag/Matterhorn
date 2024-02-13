@@ -90,7 +90,7 @@ class ResIAND(snn.Module):
         return (1.0 - a) * s
 
 
-def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: int = 1, tau_m: float = 2.0, spiking_function: snn.Module = snn.Rectangular(), trainable: bool = False):
+def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: int = 1, tau_m: float = 2.0, spiking_function: snn.Module = snn.Gaussian(), trainable: bool = False):
     """
     绑定卷积神经元（突触）和LIF神经元（胞体）
     Args:
@@ -122,7 +122,7 @@ def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: i
 
 
 class SEWBlock(snn.Module):
-    def __init__(self, in_channels: int, out_channels: int, tau_m: float = 2.0, spiking_function: snn.Module = snn.Rectangular(), residual_connection: snn.Module = ResADD(), down_sampling: bool = False, trainable: bool = False) -> None:
+    def __init__(self, in_channels: int, out_channels: int, tau_m: float = 2.0, spiking_function: snn.Module = snn.Gaussian(), residual_connection: snn.Module = ResADD(), down_sampling: bool = False, trainable: bool = False) -> None:
         """
         Spiking Element-Wise Block， SEW ResNet的单元。
         Args:
@@ -200,7 +200,7 @@ class SEWBlock(snn.Module):
 
 
 class SEWRes18(snn.Module):
-    def __init__(self, input_h_w: Tuple[int] = (128, 128), num_classes: int = 10, tau_m: float = 2.0, spiking_function: snn.Module = snn.Rectangular(), residual_connection: snn.Module = ResADD(), trainable: bool = False) -> None:
+    def __init__(self, input_h_w: Tuple[int] = (128, 128), num_classes: int = 10, tau_m: float = 2.0, spiking_function: snn.Module = snn.Gaussian(), residual_connection: snn.Module = ResADD(), trainable: bool = False) -> None:
         """
         Spiking Element-Wise Block， SEW ResNet的单元。
         Args:
