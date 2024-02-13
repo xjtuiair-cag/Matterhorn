@@ -49,9 +49,9 @@ Linear(
 
 ### Constructor Parameters
 
-`in_features (int)`: Input length `I`. The input shape is `[B, I]` (single time-step mode) or `[T, B, I]` (multi-time-step mode).
+`in_features (int)`: Input length `I`. The input shape is `[B, I]` (single-time-step mode) or `[T, B, I]` (multi-time-step mode).
 
-`out_features (int)`: Output length `O`. The output shape is `[B, O]` (single time-step mode) or `[T, B, O]` (multi-time-step mode).
+`out_features (int)`: Output length `O`. The output shape is `[B, O]` (single-time-step mode) or `[T, B, O]` (multi-time-step mode).
 
 `bias (bool)`: Whether to include bias. If `True`, it performs $W\vec{x}+\vec{b}$, otherwise $W\vec{x}$.
 
@@ -94,9 +94,9 @@ Conv1d(
 
 ### Constructor Parameters
 
-`in_channels (int)`: Input channel size `CI`. The input shape is `[B, CI, LI]` (single time-step mode) or `[T, B, CI, LI]` (multi-time-step mode).
+`in_channels (int)`: Input channel size `CI`. The input shape is `[B, CI, LI]` (single-time-step mode) or `[T, B, CI, LI]` (multi-time-step mode).
 
-`out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, LO]` (single time-step mode) or `[T, B, CO, LO]` (multi-time-step mode).
+`out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, LO]` (single-time-step mode) or `[T, B, CO, LO]` (multi-time-step mode).
 
 `kernel_size (_size_1_t)`: Shape of the convolution kernel.
 
@@ -151,9 +151,9 @@ Conv2d(
 
 ### Constructor Parameters
 
-`in_channels (int)`: Input channel size `CI`. The input shape is `[B, CI, HI, WI]` (single time-step mode) or `[T, B, CI, HI, WI]` (multi-time-step mode).
+`in_channels (int)`: Input channel size `CI`. The input shape is `[B, CI, HI, WI]` (single-time-step mode) or `[T, B, CI, HI, WI]` (multi-time-step mode).
 
-`out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO]` (single time-step mode) or `[T, B, CO, HO, WO]` (multi-time-step mode).
+`out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO]` (single-time-step mode) or `[T, B, CO, HO, WO]` (multi-time-step mode).
 
 `kernel_size (_size_2_t)`: Shape of the convolution kernel.
 
@@ -216,9 +216,9 @@ Conv3d(
 
 ### Constructor Parameters
 
-`in_channels (int)`: Input channel size `CI`. The input shape is `[B, CI, HI, WI, LI]` (single time-step mode) or `[T, B, CI, HI, WI, LI]` (multi-time-step mode).
+`in_channels (int)`: Input channel size `CI`. The input shape is `[B, CI, HI, WI, LI]` (single-time-step mode) or `[T, B, CI, HI, WI, LI]` (multi-time-step mode).
 
-`out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO, LO]` (single time-step mode) or `[T, B, CO, HO, WO, LO]` (multi-time-step mode).
+`out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO, LO]` (single-time-step mode) or `[T, B, CO, HO, WO, LO]` (multi-time-step mode).
 
 `kernel_size (_size_3_t)`: Shape of the convolution kernel.
 
@@ -274,9 +274,9 @@ ConvTranspose1d(
 
 ### Constructor Parameters
 
-`in_channels (int)`: Input channel size `CI`. The input shape is `[B, CI, LI]` (single time-step mode) or `[T, B, CI, LI]` (multi-time-step mode).
+`in_channels (int)`: Input channel size `CI`. The input shape is `[B, CI, LI]` (single-time-step mode) or `[T, B, CI, LI]` (multi-time-step mode).
 
-`out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, LO]` (single time-step mode) or `[T, B, CO, LO]` (multi-time-step mode).
+`out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, LO]` (single-time-step mode) or `[T, B, CO, LO]` (multi-time-step mode).
 
 `kernel_size (_size_1_t)`: Shape of the convolution kernel.
 
@@ -334,9 +334,9 @@ ConvTranspose2d(
 
 ### Constructor Parameters
 
-`in_channels (int)`: Input channel size `CI`. The input shape is `[B, CI, HI, WI]` (single time-step mode) or `[T, B, CI, HI, WI]` (multi-time-step mode).
+`in_channels (int)`: Input channel size `CI`. The input shape is `[B, CI, HI, WI]` (single-time-step mode) or `[T, B, CI, HI, WI]` (multi-time-step mode).
 
-`out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO]` (single time-step mode) or `[T, B, CO, HO, WO]` (multi-time-step mode).
+`out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO]` (single-time-step mode) or `[T, B, CO, HO, WO]` (multi-time-step mode).
 
 `kernel_size (_size_2_t)`: Shape of the convolution kernel.
 
@@ -394,9 +394,9 @@ Three-dimensional transposed convolution (deconvolution) operation of synapses.
 
 ### Constructor Parameters
 
-`in_channels (int)`: Input channel size `CI`. The input shape is `[B, CI, HI, WI, LI]` (single time-step mode) or `[T, B, CI, HI, WI, LI]` (multi-time-step mode).
+`in_channels (int)`: Input channel size `CI`. The input shape is `[B, CI, HI, WI, LI]` (single-time-step mode) or `[T, B, CI, HI, WI, LI]` (multi-time-step mode).
 
-`out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO, LO]` (single time-step mode) or `[T, B, CO, HO, WO, LO]` (multi-time-step mode).
+`out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO, LO]` (single-time-step mode) or `[T, B, CO, HO, WO, LO]` (multi-time-step mode).
 
 `kernel_size (_size_3_t)`: Shape of the convolution kernel.
 

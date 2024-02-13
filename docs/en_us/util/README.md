@@ -6,8 +6,8 @@
 
 [中文](../../zh_cn/util/README.md)
 
-## `matterhorn_pytorch.util.plotter` ： 画图小工具
+## `matterhorn_pytorch.util.plotter`: Plotting Utilities
 
-该模块是 Matterhorn 的画图小工具，通过该小工具，您可以较为方便地打印事件。
+This module is the plotting utility of Matterhorn, through which you can conveniently print events.
 
-您可以阅读[文档](./1_plotter.md)以了解更多函数的使用方法。
+You can read [the documentation](./1_plotter.md) for more information on how to use the functions.

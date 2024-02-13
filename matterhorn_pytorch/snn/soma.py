@@ -229,7 +229,7 @@ class IF(Soma):
 
 
 class LIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
@@ -243,6 +243,8 @@ class LIF(Soma):
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
+            device (torch.device): 所计算的设备
+            dtype: 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -252,7 +254,7 @@ class LIF(Soma):
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
         )
-        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
+        self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
 
 
     def extra_repr(self) -> str:
@@ -279,7 +281,7 @@ class LIF(Soma):
 
 
 class QIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_c: float = 1.0, a_0: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_c: float = 1.0, a_0: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
         """
         Quadratic Integrate-and-Fire(QIF)神经元。
         一阶电位变换公式为：
@@ -295,6 +297,8 @@ class QIF(Soma):
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
+            device (torch.device): 所计算的设备
+            dtype: 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -304,9 +308,9 @@ class QIF(Soma):
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
         )
-        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
-        self.a_0 = nn.Parameter(torch.tensor(a_0), requires_grad = trainable)
-        self.u_c = nn.Parameter(torch.tensor(u_c), requires_grad = trainable)
+        self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
+        self.a_0 = nn.Parameter(torch.tensor(a_0, device = device, dtype = dtype), requires_grad = trainable)
+        self.u_c = nn.Parameter(torch.tensor(u_c, device = device, dtype = dtype), requires_grad = trainable)
     
 
     def extra_repr(self) -> str:
@@ -333,7 +337,7 @@ class QIF(Soma):
 
 
 class ExpIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
         """
         Exponential Integrate-and-Fire(ExpIF)神经元。
         一阶电位变换公式为：
@@ -349,6 +353,8 @@ class ExpIF(Soma):
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
+            device (torch.device): 所计算的设备
+            dtype: 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -358,9 +364,9 @@ class ExpIF(Soma):
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
         )
-        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
-        self.delta_t = nn.Parameter(torch.tensor(delta_t), requires_grad = trainable)
-        self.u_t = nn.Parameter(torch.tensor(u_t), requires_grad = trainable)
+        self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
+        self.delta_t = nn.Parameter(torch.tensor(delta_t, device = device, dtype = dtype), requires_grad = trainable)
+        self.u_t = nn.Parameter(torch.tensor(u_t, device = device, dtype = dtype), requires_grad = trainable)
     
 
     def extra_repr(self) -> str:
@@ -387,7 +393,7 @@ class ExpIF(Soma):
 
 
 class Izhikevich(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, a: float = 1.0, b: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, a: float = 1.0, b: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
         """, 
         Izhikevich神经元。
         一阶电位变换公式为：
@@ -403,6 +409,8 @@ class Izhikevich(Soma):
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
+            device (torch.device): 所计算的设备
+            dtype: 所计算的数据类型
         """
         self.w = 0.0
         super().__init__(
@@ -413,8 +421,8 @@ class Izhikevich(Soma):
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
         )
-        self.a = nn.Parameter(torch.tensor(a), requires_grad = trainable)
-        self.b = nn.Parameter(torch.tensor(b), requires_grad = trainable)
+        self.a = nn.Parameter(torch.tensor(a, device = device, dtype = dtype), requires_grad = trainable)
+        self.b = nn.Parameter(torch.tensor(b, device = device, dtype = dtype), requires_grad = trainable)
     
 
     def extra_repr(self) -> str:
@@ -465,7 +473,7 @@ class Izhikevich(Soma):
 
 
 class Response(Soma):
-    def __init__(self, response_function: Callable, param_list: Iterable = [], u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, response_function: Callable, param_list: Iterable = [], u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
         """
         可以自定义反应函数的胞体。
         Args:
@@ -478,6 +486,8 @@ class Response(Soma):
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
+            device (torch.device): 所计算的设备
+            dtype: 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -488,7 +498,7 @@ class Response(Soma):
             reset_after_process = reset_after_process
         )
         self.response_function = response_function
-        self.param_list = [nn.Parameter(torch.tensor(x), requires_grad = trainable) for x in param_list]
+        self.param_list = [nn.Parameter(torch.tensor(x, device = device, dtype = dtype), requires_grad = trainable) for x in param_list]
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -559,7 +569,7 @@ class AnalogSoma(Soma):
 
 
 class KLIF(AnalogSoma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, k: float = 0.2, hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, k: float = 0.2, hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
         """
         KLIF神经元
         Args:
@@ -571,6 +581,8 @@ class KLIF(AnalogSoma):
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
+            device (torch.device): 所计算的设备
+            dtype: 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -581,8 +593,8 @@ class KLIF(AnalogSoma):
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
         )
-        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
-        self.k = nn.Parameter(torch.tensor(k), requires_grad = trainable)
+        self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
+        self.k = nn.Parameter(torch.tensor(k, device = device, dtype = dtype), requires_grad = trainable)
         
 
     def extra_repr(self) -> str:
@@ -620,7 +632,7 @@ class KLIF(AnalogSoma):
 
 
 class LIAF(AnalogSoma):
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
         """
         Leaky Integrate-and-Analog-Fire(LIAF)神经元
         Args:
@@ -633,6 +645,8 @@ class LIAF(AnalogSoma):
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
+            device (torch.device): 所计算的设备
+            dtype: 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -643,7 +657,7 @@ class LIAF(AnalogSoma):
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
         )
-        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
+        self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
     
 
     def extra_repr(self) -> str:

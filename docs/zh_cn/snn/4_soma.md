@@ -154,7 +154,9 @@ LIF(
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
-    trainable: bool = False
+    trainable: bool = False,
+    device = None,
+    dtype = None
 )
 ```
 
@@ -175,6 +177,10 @@ LIF(
 `reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 是否可以被训练。
+
+`device (torch.device)` ：计算所使用的计算设备。
+
+`dtype` ：计算所使用的数据类型。
 
 ### 示例用法
 
@@ -231,7 +237,9 @@ QIF(
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
-    trainable: bool = False
+    trainable: bool = False,
+    device = None,
+    dtype = None
 )
 ```
 
@@ -256,6 +264,10 @@ QIF(
 `reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 、 $u_{c}$ 和 $a_{0}$ 是否可以被训练。
+
+`device (torch.device)` ：计算所使用的计算设备。
+
+`dtype` ：计算所使用的数据类型。
 
 ### 示例用法
 
@@ -314,7 +326,9 @@ ExpIF(
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
-    trainable: bool = False
+    trainable: bool = False,
+    device = None,
+    dtype = None
 )
 ```
 
@@ -339,6 +353,10 @@ ExpIF(
 `reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 、 $u_{T}$ 和 $\Delta_{T}$ 是否可以被训练。
+
+`device (torch.device)` ：计算所使用的计算设备。
+
+`dtype` ：计算所使用的数据类型。
 
 ### 示例用法
 
@@ -388,6 +406,8 @@ $$\frac{du}{dt}=0.04u^{2}+5u+140-w+I$$
 
 $$\frac{dw}{dt}=a(bu-w)$$
 
+其中电位的单位为 $mV$ 。
+
 ```python
 Izhikevich(
     u_threshold: float = -0.055,
@@ -398,7 +418,9 @@ Izhikevich(
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
-    trainable: bool = False
+    trainable: bool = False,
+    device = None,
+    dtype = None
 )
 ```
 
@@ -421,6 +443,10 @@ Izhikevich(
 `reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 `trainable (bool)` ：参数 $a$ 和 $b$ 是否可以被训练。
+
+`device (torch.device)` ：计算所使用的计算设备。
+
+`dtype` ：计算所使用的数据类型。
 
 ### 示例用法
 
@@ -474,7 +500,9 @@ KLIF(
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
-    trainable: bool = False
+    trainable: bool = False,
+    device = None,
+    dtype = None
 )
 ```
 
@@ -495,6 +523,10 @@ KLIF(
 `reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 和 $k$ 是否可以被训练。
+
+`device (torch.device)` ：计算所使用的计算设备。
+
+`dtype` ：计算所使用的数据类型。
 
 ### 示例用法
 
@@ -534,7 +566,9 @@ LIAF(
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
-    trainable: bool = False
+    trainable: bool = False,
+    device = None,
+    dtype = None
 )
 ```
 
@@ -557,6 +591,10 @@ LIAF(
 `reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 是否可以被训练。
+
+`device (torch.device)` ：计算所使用的计算设备。
+
+`dtype` ：计算所使用的数据类型。
 
 ### 示例用法
 

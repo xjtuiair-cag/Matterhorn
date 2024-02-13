@@ -26,7 +26,7 @@ class SRM0Linear(Module):
     supported_surrogate_gradients = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
 
 
-    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: nn.Module = surrogate.Gaussian(), multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False) -> None:
+    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: nn.Module = surrogate.Gaussian(), multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
         """
         SRM0神经元，突触响应的神经元
         电位公式较为复杂：
@@ -49,6 +49,8 @@ class SRM0Linear(Module):
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
+            device (torch.device): 所计算的设备
+            dtype: 所计算的数据类型
         """
         super().__init__(
             multi_time_step = multi_time_step,
@@ -56,9 +58,9 @@ class SRM0Linear(Module):
         )
         self.in_features = in_features
         self.out_features = out_features
-        self.weight = nn.Parameter(torch.empty((out_features, in_features)), requires_grad = True)
+        self.weight = nn.Parameter(torch.empty((out_features, in_features), device = device, dtype = dtype), requires_grad = True)
         nn.init.kaiming_uniform_(self.weight, a = math.sqrt(5))
-        self.tau_m = nn.Parameter(torch.tensor(tau_m), requires_grad = trainable)
+        self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function
@@ -246,6 +248,8 @@ class STDPLinear(Module, nn.Linear):
             a_neg (float): STDP参数A-
             tau_neg (float): STDP参数tau-
             multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
+            dtype: 所计算的数据类型
         """
         Module.__init__(
             self,
@@ -438,7 +442,7 @@ class Layer(Module):
 
 
 class MaxPool1d(Layer, nn.MaxPool1d):
-    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step: bool = False) -> None:
         """
         一维最大池化。
         Args:
@@ -487,7 +491,7 @@ class MaxPool1d(Layer, nn.MaxPool1d):
 
 
 class MaxPool2d(Layer, nn.MaxPool2d):
-    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step: bool = False) -> None:
         """
         二维最大池化。
         Args:
@@ -536,7 +540,7 @@ class MaxPool2d(Layer, nn.MaxPool2d):
 
 
 class MaxPool3d(Layer, nn.MaxPool3d):
-    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step: bool = False) -> None:
         """
         三维最大池化。
         Args:
@@ -585,7 +589,7 @@ class MaxPool3d(Layer, nn.MaxPool3d):
 
 
 class AvgPool1d(Layer, nn.AvgPool1d):
-    def __init__(self, kernel_size: _size_1_t, stride: _size_1_t = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, multi_time_step = False) -> None:
+    def __init__(self, kernel_size: _size_1_t, stride: Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, multi_time_step: bool = False) -> None:
         """
         一维平均池化。
         Args:
@@ -632,7 +636,7 @@ class AvgPool1d(Layer, nn.AvgPool1d):
 
 
 class AvgPool2d(Layer, nn.AvgPool2d):
-    def __init__(self, kernel_size: _size_2_t, stride: Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None, multi_time_step = False) -> None:
+    def __init__(self, kernel_size: _size_2_t, stride: Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None, multi_time_step: bool = False) -> None:
         """
         二维平均池化。
         Args:
@@ -681,7 +685,7 @@ class AvgPool2d(Layer, nn.AvgPool2d):
 
 
 class AvgPool3d(Layer, nn.AvgPool3d):
-    def __init__(self, kernel_size: _size_3_t, stride: Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None, multi_time_step = False) -> None:
+    def __init__(self, kernel_size: _size_3_t, stride: Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None, multi_time_step: bool = False) -> None:
         """
         三维平均池化。
         Args:
@@ -730,7 +734,7 @@ class AvgPool3d(Layer, nn.AvgPool3d):
 
 
 class Flatten(Layer, nn.Flatten):
-    def __init__(self, start_dim: int = 1, end_dim: int = -1, multi_time_step = False) -> None:
+    def __init__(self, start_dim: int = 1, end_dim: int = -1, multi_time_step: bool = False) -> None:
         """
         展平层。
         Args:
@@ -771,7 +775,7 @@ class Flatten(Layer, nn.Flatten):
 
 
 class Unflatten(Layer, nn.Unflatten):
-    def __init__(self, dim: Union[int, str], unflattened_size: _size, multi_time_step = False) -> None:
+    def __init__(self, dim: Union[int, str], unflattened_size: _size, multi_time_step: bool = False) -> None:
         """
         反展开层。
         Args:

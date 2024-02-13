@@ -154,7 +154,9 @@ LIF(
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
-    trainable: bool = False
+    trainable: bool = False,
+    device = None,
+    dtype = None
 )
 ```
 
@@ -175,6 +177,10 @@ LIF(
 `reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 `trainable (bool)`: Whether the parameter $\tau_{m}$ can be trained.
+
+`device (torch.device)`: Computational device to use.
+
+`dtype`: Data type to use for computation.
 
 ### Example Usage
 
@@ -231,7 +237,9 @@ QIF(
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
-    trainable: bool = False
+    trainable: bool = False,
+    device = None,
+    dtype = None
 )
 ```
 
@@ -256,6 +264,10 @@ QIF(
 `reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 `trainable (bool)`: Whether the parameters $\tau_{m}$, $u_{c}$, and $a_{0}$ can be trained.
+
+`device (torch.device)`: Computational device to use.
+
+`dtype`: Data type to use for computation.
 
 ### Example Usage
 
@@ -314,7 +326,9 @@ ExpIF(
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
-    trainable: bool = False
+    trainable: bool = False,
+    device = None,
+    dtype = None
 )
 ```
 
@@ -339,6 +353,10 @@ ExpIF(
 `reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 `trainable (bool)`: Whether the parameters $\tau_{m}$, $u_{T}$, and $\Delta_{T}$ can be trained.
+
+`device (torch.device)`: Computational device to use.
+
+`dtype`: Data type to use for computation.
 
 ### Example Usage
 
@@ -388,6 +406,8 @@ $$\frac{du}{dt}=0.04u^{2}+5u+140-w+I$$
 
 $$\frac{dw}{dt}=a(bu-w)$$
 
+Where the level of potential is $mV$.
+
 ```python
 Izhikevich(
     u_threshold: float = -0.055,
@@ -398,7 +418,9 @@ Izhikevich(
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
-    trainable: bool = False
+    trainable: bool = False,
+    device = None,
+    dtype = None
 )
 ```
 
@@ -421,6 +443,10 @@ Izhikevich(
 `reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 `trainable (bool)`: Whether the parameters $a$ and $b$ can be trained.
+
+`device (torch.device)`: Computational device to use.
+
+`dtype`: Data type to use for computation.
 
 ### Example Usage
 
@@ -474,7 +500,9 @@ KLIF(
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
-    trainable: bool = False
+    trainable: bool = False,
+    device = None,
+    dtype = None
 )
 ```
 
@@ -495,6 +523,10 @@ KLIF(
 `reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 `trainable (bool)`: Whether the parameter $\tau_{m}$ and $k$ can be trained.
+
+`device (torch.device)`: Computational device to use.
+
+`dtype`: Data type to use for computation.
 
 ### Example Usage
 
@@ -534,7 +566,9 @@ LIAF(
     hard_reset: bool = True,
     multi_time_step: bool = False,
     reset_after_process: bool = True,
-    trainable: bool = False
+    trainable: bool = False,
+    device = None,
+    dtype = None
 )
 ```
 
@@ -557,6 +591,10 @@ LIAF(
 `reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 `trainable (bool)`: Whether the parameter $\tau_{m}$ can be trained.
+
+`device (torch.device)`: Computational device to use.
+
+`dtype`: Data type to use for computation.
 
 ### Example Usage
 

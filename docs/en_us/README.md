@@ -44,7 +44,7 @@ You can read the documentation to learn more about the usage of classes and vari
 
 This module carries some utilities useful for researching and deploying spike-based neural networks, such as plotting tools, etc.
 
-You can read the documentation to learn more about the usage of classes and variables.
+You can read [the documentation](./util/README.md) to learn more about the usage of classes and variables.
 
 ## References
 
