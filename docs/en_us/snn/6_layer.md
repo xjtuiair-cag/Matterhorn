@@ -462,7 +462,7 @@ import matterhorn_pytorch as mth
 lf = mth.snn.Flatten() # [T, B, H, W] -> [T, B, H * W]
 ```
 
-## `matterhorn_pytorch.snn.Flatten` / `matterhorn_pytorch.snn.layer.Flatten`
+## `matterhorn_pytorch.snn.Unflatten` / `matterhorn_pytorch.snn.layer.Unflatten`
 
 Unflattening layer, re-folds the flattened tensor.
 

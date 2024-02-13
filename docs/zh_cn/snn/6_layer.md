@@ -462,7 +462,7 @@ import matterhorn_pytorch as mth
 lf = mth.snn.Flatten() # [T, B, H, W] -> [T, B, H * W]
 ```
 
-## `matterhorn_pytorch.snn.Flatten` / `matterhorn_pytorch.snn.layer.Flatten`
+## `matterhorn_pytorch.snn.Unflatten` / `matterhorn_pytorch.snn.layer.Unflatten`
 
 反展平层，将展开的张量重新折叠。
 
