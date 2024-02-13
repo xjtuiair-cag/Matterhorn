@@ -142,11 +142,11 @@ $$h(x)=\frac{1}{\sqrt{2\pi a}}e^{\frac{-x^{2}}{2a}}$$
 
 ![高斯函数替代梯度](../../../assets/docs/snn/surrogate_5.png)
 
-令 $\frac{1}{\sqrt{2\pi a}}=1$ ，可得默认值 $a=\frac{1}{2\pi}=0.16$ 。
+令 $\frac{1}{\sqrt{2\pi a}}=1$ ，可得默认值 $a=\frac{1}{2\pi} \approx 0.16$ 。
 
 ```py
 Gaussian(
-    a: float = 1.0
+    a: float = 0.16
 )
 ```
 

@@ -142,7 +142,7 @@ Where the parameter $a$ is smaller, the tighter it is, and the higher the highes
 
 ![Gaussian Surrogate Gradient](../../../assets/docs/snn/surrogate_5.png)
 
-Let $\frac{1}{\sqrt{2\pi a}}=1$, we can get default value of parameter $a=\frac{1}{2\pi}=0.16$.
+Let $\frac{1}{\sqrt{2\pi a}}=1$, we can get default value of parameter $a=\frac{1}{2\pi} \approx 0.16$.
 
 ```py
 Gaussian(
