@@ -1,8 +1,8 @@
 # `matterhorn_pytorch`
 
-[English](../en_us/0_general.md)
+[English](../en_us/README.md)
 
-[中文](../zh_cn/0_general.md)
+[中文](../zh_cn/README.md)
 
 ## `matterhorn_pytorch.data` ：神经形态数据集
 
@@ -26,7 +26,7 @@
 
 该模块是 Matterhorn 最主要的部分。该模块存储了脉冲神经网络（SNNs）的脉冲神经元、突触、容器、编码机制等常用组件，借此实现 SNNs 的部署。
 
-您可以阅读[文档](./snn/0_general.md)以了解更多类与变量的使用方法。
+您可以阅读[文档](./snn/README.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.tnn` ： Temporal Neural Networks
 

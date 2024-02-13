@@ -46,7 +46,7 @@ def transition_color(val: float, min_val: float = 0., max_val: float = 1., min_c
     return res
 
 
-def event_plot_1d(data: torch.Tensor, indices_pos: np.ndarray, indices_neg: np.ndarray = None, color_pos: str = "#0000ff", color_neg: str = "#ff0000", title: str = None, index_0: str = "t", prec: int = 8) -> None:
+def event_plot_1d(indices_pos: np.ndarray, indices_neg: np.ndarray = None, color_pos: str = "#0000ff", color_neg: str = "#ff0000", title: str = None, index_0: str = "t", prec: int = 8) -> None:
     """
     单次一维事件数据打印。
     Args:
@@ -86,7 +86,7 @@ def event_plot_2d(indices_pos: np.ndarray, indices_neg: np.ndarray = None, value
         title (str): 图片的标题
         index_0 (str): 最外维度的索引
         index_1 (str): 最内维度的索引
-        shape (Tuple): 画幅的形状
+        shape (Iterable): 画幅的形状
         shift (float): 给事件加上的偏移量，方便同时打印正负事件
     """
     def draw(indices: np.ndarray, values: np.ndarray, color: str, shift: float) -> None:
@@ -115,26 +115,27 @@ def event_plot_2d(indices_pos: np.ndarray, indices_neg: np.ndarray = None, value
         plt.title(title)
 
 
-def event_tensor_plot_yx(data: torch.Tensor, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def event_tensor_plot_yx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
     二维空间的事件张量数据打印。
     Args:
-        data (torch.Tensor): 需要打印的数据（可以是2、3、4维）
-        polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[C(P), H, W]（3维）或[B, C(P), H, W]（4维）；如果为False，则传入的数据为[H, W]（2维）或[B, H, W]（3维）
+        data (np.ndarray | torch.Tensor):需要打印的数据（可以是2、3、4维）
+        polarity (bool): 是否将第1个维度作为极性维度，如果为True，则传入的数据为[C(P), H, W]（3维）或[B, C(P), H, W]（4维）；如果为False，则传入的数据为[H, W]（2维）或[B, H, W]（3维）
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles (str*): 每张图都是什么标题
         figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
+    if isinstance(data, torch.Tensor):
+        data = data.numpy()
     dim = len(data.shape)
-    data_numpy = data.numpy()
-    indices = np.array(data_numpy.nonzero())
+    indices = np.array(data.nonzero())
     fig = plt.figure(figsize = figsize)
     if dim == 2: # [H, W]
         event_plot_2d(
             indices[[1, 0]].T,
-            values_pos = data_numpy[indices[0], indices[1]],
+            values_pos = data[indices[0], indices[1]],
             color_pos = "#00ff00",
             title = get_title(0),
             index_0 = "x",
@@ -148,15 +149,15 @@ def event_tensor_plot_yx(data: torch.Tensor, polarity: bool = True, show: bool =
             event_plot_2d(
                 indices_pos[[1, 0]].T,
                 indices_neg[[1, 0]].T,
-                values_pos = data_numpy[1, indices_pos[0], indices_pos[1]],
-                values_neg = data_numpy[0, indices_neg[0], indices_neg[1]],
+                values_pos = data[1, indices_pos[0], indices_pos[1]],
+                values_neg = data[0, indices_neg[0], indices_neg[1]],
                 title = get_title(0),
                 index_0 = "x",
                 index_1 = "y",
                 shape = (data.shape[2], data.shape[1])
             )
         else: # [B, H, W]
-            batch_size = data_numpy.shape[0]
+            batch_size = data.shape[0]
             rows = batch_size
             cols = 1
             if not rows % 2:
@@ -167,7 +168,7 @@ def event_tensor_plot_yx(data: torch.Tensor, polarity: bool = True, show: bool =
                 plt.subplot(rows, cols, b + 1)
                 event_plot_2d(
                     indices_this_batch[[1, 0]].T,
-                    values_pos = data_numpy[b, indices_this_batch[0], indices_this_batch[1]],
+                    values_pos = data[b, indices_this_batch[0], indices_this_batch[1]],
                     color_pos = "#00ff00",
                     title = get_title(b),
                     index_0 = "x",
@@ -175,7 +176,7 @@ def event_tensor_plot_yx(data: torch.Tensor, polarity: bool = True, show: bool =
                     shape = (data.shape[2], data.shape[1])
                 )
     if dim == 4: # [B, C(P), H, W]
-        batch_size = data_numpy.shape[0]
+        batch_size = data.shape[0]
         rows = batch_size
         cols = 1
         if not rows % 2:
@@ -189,8 +190,8 @@ def event_tensor_plot_yx(data: torch.Tensor, polarity: bool = True, show: bool =
             event_plot_2d(
                 indices_pos[[1, 0]].T,
                 indices_neg[[1, 0]].T,
-                values_pos = data_numpy[b, 1, indices_pos[0], indices_pos[1]],
-                values_neg = data_numpy[b, 0, indices_neg[0], indices_neg[1]],
+                values_pos = data[b, 1, indices_pos[0], indices_pos[1]],
+                values_neg = data[b, 0, indices_neg[0], indices_neg[1]],
                 title = get_title(b),
                 index_0 = "x",
                 index_1 = "y",
@@ -204,12 +205,12 @@ def event_tensor_plot_yx(data: torch.Tensor, polarity: bool = True, show: bool =
         plt.close()
 
 
-def event_seq_plot_yx(data: np.ndarray, shape: Tuple, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def event_seq_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
     二维空间的事件序列数据打印。
     Args:
-        data (np.ndarray): 需要打印的数据（可以是2、3维）
-        shape (Tuple): 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
+        data (np.ndarray | torch.Tensor): 需要打印的数据（可以是2、3维）
+        shape (Iterable): 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles (str*): 每张图都是什么标题
@@ -217,6 +218,8 @@ def event_seq_plot_yx(data: np.ndarray, shape: Tuple, show: bool = True, save: s
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
     get_shape = lambda i: shape[i] if shape is not None and len(shape) > i and shape[i] > 0 else (np.max(data[:, i]) - np.min(data[:, i]) + 1)
+    if isinstance(data, torch.Tensor):
+        data = data.numpy()
     data, values = np.unique(data, axis = 0, return_counts = True)
     dim = data.shape[1]
     fig = plt.figure(figsize = figsize)
@@ -233,7 +236,7 @@ def event_seq_plot_yx(data: np.ndarray, shape: Tuple, show: bool = True, save: s
             title = get_title(0),
             index_0 = "x",
             index_1 = "y",
-            shape = (get_shape(1), get_shape(2))
+            shape = (get_shape(2), get_shape(1))
         )
     elif dim == 2: # [H, W]
         event_plot_2d(
@@ -243,7 +246,7 @@ def event_seq_plot_yx(data: np.ndarray, shape: Tuple, show: bool = True, save: s
             title = get_title(0),
             index_0 = "x",
             index_1 = "y",
-            shape = (get_shape(0), get_shape(1))
+            shape = (get_shape(1), get_shape(0))
         )
     if show:
         fig.canvas.set_window_title("Event Plotter Result")
@@ -253,13 +256,13 @@ def event_seq_plot_yx(data: np.ndarray, shape: Tuple, show: bool = True, save: s
         plt.close()
 
 
-def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> None:
+def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> None:
     """
     二维空间的事件数据打印。
     Args:
-        data (np.ndarray): | torch.Tensor 需要打印的数据
-        shape (Tuple): 图的形状（打印序列用）
-        polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[C(P), H, W]（3维）或[B, C(P), H, W]（4维）；如果为False，则传入的数据为[H, W]（2维）或[B, H, W]（3维）
+        data (np.ndarray | torch.Tensor): 需要打印的数据
+        shape (Iterable): 图的形状（打印序列用）
+        polarity (bool): 是否将第1个维度作为极性维度，如果为True，则传入的数据为[C(P), H, W]（3维）或[B, C(P), H, W]（4维）；如果为False，则传入的数据为[H, W]（2维）或[B, H, W]（3维）
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles (str*): 每张图都是什么标题
@@ -286,11 +289,11 @@ def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, po
         )
 
 
-def event_tensor_plot_tx(data: torch.Tensor, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def event_tensor_plot_tx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
     一维空间+一维时间的事件张量数据打印。
     Args:
-        data (torch.Tensor): 需要打印的数据（可以是2、3、4维）
+        data (np.ndarray | torch.Tensor):需要打印的数据（可以是2、3、4维）
         polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), L]（3维）或[B, T, C(P), L]（4维）；如果为False，则传入的数据为[T, L]（2维）或[B, T, L]（3维）
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
@@ -298,14 +301,15 @@ def event_tensor_plot_tx(data: torch.Tensor, polarity: bool = True, show: bool =
         figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
+    if isinstance(data, torch.Tensor):
+        data = data.numpy()
     dim = len(data.shape)
-    data_numpy = data.numpy()
-    indices = np.array(data_numpy.nonzero())
+    indices = np.array(data.nonzero())
     fig = plt.figure(figsize = figsize)
     if dim == 2: # [T, L]
         event_plot_2d(
             indices[[0, 1]].T,
-            values_pos = data_numpy[indices[0], indices[1]],
+            values_pos = data[indices[0], indices[1]],
             color_pos = "#00ff00",
             title = get_title(0),
             shape = (data.shape[0], data.shape[1])
@@ -318,13 +322,13 @@ def event_tensor_plot_tx(data: torch.Tensor, polarity: bool = True, show: bool =
             event_plot_2d(
                 indices_pos[[0, 1]].T,
                 indices_neg[[0, 1]].T,
-                values_pos = data_numpy[1, indices_pos[0], indices_pos[1]],
-                values_neg = data_numpy[0, indices_neg[0], indices_neg[1]],
+                values_pos = data[indices_pos[0], 1, indices_pos[1]],
+                values_neg = data[indices_neg[0], 0, indices_neg[1]],
                 title = get_title(0),
                 shape = (data.shape[0], data.shape[2])
             )
         else: # [B, T, L]
-            batch_size = data_numpy.shape[0]
+            batch_size = data.shape[0]
             rows = batch_size
             cols = 1
             if not rows % 2:
@@ -335,13 +339,13 @@ def event_tensor_plot_tx(data: torch.Tensor, polarity: bool = True, show: bool =
                 plt.subplot(rows, cols, b + 1)
                 event_plot_2d(
                     indices_this_batch[[0, 1]].T,
-                    values_pos = data_numpy[b, indices_this_batch[0], indices_this_batch[1]],
+                    values_pos = data[b, indices_this_batch[0], indices_this_batch[1]],
                     color_pos = "#00ff00",
                     title = get_title(b),
                     shape = (data.shape[1], data.shape[2])
                 )
     if dim == 4: # [B, T, C(P), L]
-        batch_size = data_numpy.shape[0]
+        batch_size = data.shape[0]
         rows = batch_size
         cols = 1
         if not rows % 2:
@@ -355,8 +359,8 @@ def event_tensor_plot_tx(data: torch.Tensor, polarity: bool = True, show: bool =
             event_plot_2d(
                 indices_pos[[0, 1]].T,
                 indices_neg[[0, 1]].T,
-                values_pos = data_numpy[b, indices_pos[0], 1, indices_pos[1]],
-                values_neg = data_numpy[b, indices_neg[0], 0, indices_neg[1]],
+                values_pos = data[b, indices_pos[0], 1, indices_pos[1]],
+                values_neg = data[b, indices_neg[0], 0, indices_neg[1]],
                 title = get_title(b),
                 shape = (data.shape[1], data.shape[3])
             )
@@ -368,12 +372,12 @@ def event_tensor_plot_tx(data: torch.Tensor, polarity: bool = True, show: bool =
         plt.close()
 
 
-def event_seq_plot_tx(data: np.ndarray, shape: Tuple, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def event_seq_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
     一维空间+一维时间的事件序列数据打印。
     Args:
-        data (np.ndarray): 需要打印的数据（可以是2、3维）
-        shape (Tuple): 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
+        data (np.ndarray | torch.Tensor): 需要打印的数据（可以是2、3维）
+        shape (Iterable): 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles (str*): 每张图都是什么标题
@@ -381,6 +385,8 @@ def event_seq_plot_tx(data: np.ndarray, shape: Tuple, show: bool = True, save: s
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
     get_shape = lambda i: shape[i] if shape is not None and len(shape) > i and shape[i] > 0 else (np.max(data[:, i]) - np.min(data[:, i]) + 1)
+    if isinstance(data, torch.Tensor):
+        data = data.numpy()
     data, values = np.unique(data, axis = 0, return_counts = True)
     dim = data.shape[1]
     fig = plt.figure(figsize = figsize)
@@ -413,12 +419,12 @@ def event_seq_plot_tx(data: np.ndarray, shape: Tuple, show: bool = True, save: s
         plt.close()
 
 
-def event_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> None:
+def event_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> None:
     """
     一维空间+一维时间的事件数据打印。
     Args:
-        data (np.ndarray): | torch.Tensor 需要打印的数据
-        shape (Tuple): 图的形状（打印序列用）
+        data (np.ndarray | torch.Tensor): 需要打印的数据
+        shape (Iterable): 图的形状（打印序列用）
         polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), L]（3维）或[B, T, C(P), L]（4维）；如果为False，则传入的数据为[T, L]（2维）或[B, T, L]（3维）（打印张量用）
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
@@ -461,7 +467,7 @@ def event_plot_3d(ax: Axes3D, indices_pos: np.ndarray, indices_neg: np.ndarray =
         index_0 (str): 最外维度的索引
         index_1 (str): 中间维度的索引
         index_2 (str): 最内维度的索引
-        shape (Tuple): 画幅的形状
+        shape (Iterable): 画幅的形状
         shift (float): 给事件加上的偏移量，方便同时打印正负事件
     """
     def draw(ax: Axes3D, indices: np.ndarray, values: np.ndarray, color: str, shift: float) -> None:
@@ -492,11 +498,11 @@ def event_plot_3d(ax: Axes3D, indices_pos: np.ndarray, indices_neg: np.ndarray =
         ax.set_title(title)
 
 
-def event_tensor_plot_tyx(data: torch.Tensor, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def event_tensor_plot_tyx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
     二维空间+一维时间的事件张量数据打印。
     Args:
-        data (torch.Tensor): 需要打印的数据（可以是3、4、5维）
+        data (np.ndarray | torch.Tensor):需要打印的数据（可以是3、4、5维）
         polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), H, W]（4维）或[B, T, C(P), H, W]（5维）；如果为False，则传入的数据为[T, H, W]（3维）或[B, T, H, W]（4维）
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
@@ -504,16 +510,17 @@ def event_tensor_plot_tyx(data: torch.Tensor, polarity: bool = True, show: bool 
         figSize (Tuple): 图像大小
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
+    if isinstance(data, torch.Tensor):
+        data = data.numpy()
     dim = len(data.shape)
-    data_numpy = data.numpy()
-    indices = np.array(data_numpy.nonzero())
+    indices = np.array(data.nonzero())
     fig = plt.figure(figsize = figsize)
     if dim == 3: # [T, H, W]
         ax = fig.add_subplot(projection='3d')
         event_plot_3d(
             ax,
             indices[[0, 1, 2]].T,
-            values_pos = data_numpy[indices[0], indices[1], indices[2]],
+            values_pos = data[indices[0], indices[1], indices[2]],
             color_pos = "#00ff00",
             title = get_title(0),
             shape = (data.shape[0], data.shape[1], data.shape[2])
@@ -527,13 +534,13 @@ def event_tensor_plot_tyx(data: torch.Tensor, polarity: bool = True, show: bool 
                 ax,
                 indices_pos[[0, 1, 2]].T,
                 indices_neg[[0, 1, 2]].T,
-                values_pos = data_numpy[indices_pos[0], 1, indices_pos[1], indices_pos[2]],
-                values_neg = data_numpy[indices_neg[0], 0, indices_neg[1], indices_neg[2]],
+                values_pos = data[indices_pos[0], 1, indices_pos[1], indices_pos[2]],
+                values_neg = data[indices_neg[0], 0, indices_neg[1], indices_neg[2]],
                 title = get_title(0),
                 shape = (data.shape[0], data.shape[2], data.shape[3])
             )
         else: # [B, T, H, W]
-            batch_size = data_numpy.shape[0]
+            batch_size = data.shape[0]
             rows = batch_size
             cols = 1
             if not rows % 3:
@@ -548,14 +555,14 @@ def event_tensor_plot_tyx(data: torch.Tensor, polarity: bool = True, show: bool 
                 event_plot_3d(
                     ax,
                     indices_this_batch[[0, 1, 2]].T,
-                    values_pos = data_numpy[b, indices_this_batch[0], indices_this_batch[1], indices_this_batch[2]],
+                    values_pos = data[b, indices_this_batch[0], indices_this_batch[1], indices_this_batch[2]],
                     color_pos = "#00ff00",
                     title = get_title(b),
                     shape = (data.shape[1], data.shape[2], data.shape[3])
                 )
                 event_plot_3d(ax, data[b], indices[:, indices[0] == b][[1, 2, 3]], color_pos = "#00ff00", title = get_title(b))
     if dim == 5: # [B, T, C(P), H, W]
-        batch_size = data_numpy.shape[0]
+        batch_size = data.shape[0]
         rows = batch_size
         cols = 1
         if not rows % 3:
@@ -573,8 +580,8 @@ def event_tensor_plot_tyx(data: torch.Tensor, polarity: bool = True, show: bool 
                 ax,
                 indices_pos[[0, 1, 2]].T,
                 indices_neg[[0, 1, 2]].T,
-                values_pos = data_numpy[b, indices_pos[0], 1, indices_pos[1], indices_pos[2]],
-                values_neg = data_numpy[b, indices_neg[0], 0, indices_neg[1], indices_neg[2]],
+                values_pos = data[b, indices_pos[0], 1, indices_pos[1], indices_pos[2]],
+                values_neg = data[b, indices_neg[0], 0, indices_neg[1], indices_neg[2]],
                 title = get_title(b),
                 shape = (data.shape[1], data.shape[3], data.shape[4])
             )
@@ -586,12 +593,12 @@ def event_tensor_plot_tyx(data: torch.Tensor, polarity: bool = True, show: bool 
         plt.close()
 
 
-def event_seq_plot_tyx(data: np.ndarray, shape: Tuple, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def event_seq_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
     二维空间+一维时间的事件序列数据打印。
     Args:
-        data (np.ndarray): 需要打印的数据（可以是3、4维）
-        shape (Tuple): 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
+        data (np.ndarray | torch.Tensor): 需要打印的数据（可以是3、4维）
+        shape (Iterable): 图的形状（长度为data列数的元组），若不指定（或为0）则为数据的长度
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存
         titles (str*): 每张图都是什么标题
@@ -599,6 +606,8 @@ def event_seq_plot_tyx(data: np.ndarray, shape: Tuple, show: bool = True, save: 
     """
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
     get_shape = lambda i: shape[i] if shape is not None and len(shape) > i and shape[i] > 0 else (np.max(data[:, i]) - np.min(data[:, i]) + 1)
+    if isinstance(data, torch.Tensor):
+        data = data.numpy()
     data, values = np.unique(data, axis = 0, return_counts = True)
     dim = data.shape[1]
     fig = plt.figure(figsize = figsize)
@@ -634,12 +643,12 @@ def event_seq_plot_tyx(data: np.ndarray, shape: Tuple, show: bool = True, save: 
         plt.close()
 
 
-def event_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Tuple = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> None:
+def event_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> None:
     """
     二维空间+一维时间的事件数据打印。
     Args:
-        data (np.ndarray): | torch.Tensor 需要打印的数据
-        shape (Tuple): 图的形状（打印序列用）
+        data (np.ndarray | torch.Tensor): 需要打印的数据
+        shape (Iterable): 图的形状（打印序列用）
         polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), H, W]（4维）或[B, T, C(P), H, W]（5维）；如果为False，则传入的数据为[T, H, W]（3维）或[B, T, H, W]（4维）（打印张量用）
         show (bool): 是否展示图像，默认展示
         save (str): 是否保存图像，若传入路径，则保存图像；否则不保存

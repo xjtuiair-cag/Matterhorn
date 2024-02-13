@@ -50,7 +50,7 @@ Don't forget to add `sudo` if you are not the root user.
 
 ## 3 Module Explanation
 
-For the references on specialized variables, functions or modules of SNNs, you can refer to [the detailed version of the document](./docs/zh_cn/snn/0_general.md).
+For the references on specialized variables, functions or modules of SNNs, you can refer to [the detailed version of the document](./docs/zh_cn/snn/README.md).
 
 ### Terms
 

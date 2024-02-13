@@ -1,6 +1,6 @@
 # `matterhorn_pytorch.snn.skeleton`
 
-[Back to `matterhorn_pytorch.snn`](./0_general.md)
+[Back to `matterhorn_pytorch.snn`](./README.md)
 
 [English](../../en_us/snn/2_skeleton.md)
 

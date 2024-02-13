@@ -1,8 +1,8 @@
 # `matterhorn_pytorch`
 
-[English](../en_us/0_general.md)
+[English](../en_us/README.md)
 
-[中文](../zh_cn/0_general.md)
+[中文](../zh_cn/README.md)
 
 ## `matterhorn_pytorch.data`: Neuromorphic Dataset
 
@@ -26,7 +26,7 @@ You can read the documentation to learn more about the usage of classes and vari
 
 This module is the main part of Matterhorn. It stores commonly used components of Spiking Neural Networks (SNNs), such as spiking neurons, synapses, containers, encoding mechanisms, etc., to implement the deployment of SNNs.
 
-You can read [the documentation](./snn/0_general.md) to learn more about the usage of classes and variables.
+You can read [the documentation](./snn/README.md) to learn more about the usage of classes and variables.
 
 ## `matterhorn_pytorch.tnn`: Temporal Neural Networks
 

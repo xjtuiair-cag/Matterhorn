@@ -1,6 +1,6 @@
 # `matterhorn_pytorch.snn.synapse`
 
-[回到 `matterhorn_pytorch.snn`](./0_general.md)
+[回到 `matterhorn_pytorch.snn`](./README.md)
 
 [English](../../en_us/snn/5_synapse.md)
 

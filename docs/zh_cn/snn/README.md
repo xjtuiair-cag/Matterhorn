@@ -1,10 +1,10 @@
 # `matterhorn_pytorch.snn`
 
-[回到 `matterhorn_pytorch`](../0_general.md)
+[回到 `matterhorn_pytorch`](../README.md)
 
-[English](../../en_us/snn/0_general.md)
+[English](../../en_us/snn/README.md)
 
-[中文](../../zh_cn/snn/0_general.md)
+[中文](../../zh_cn/snn/README.md)
 
 ## `matterhorn_pytorch.snn.container` ： SNN 模块的容器
 
