@@ -129,36 +129,6 @@ class Poisson(Encoder):
         return y
 
 
-class SoftMax(Poisson):
-    def __init__(self, time_steps: int = 1) -> None:
-        """
-        SoftMax编码，先将值进行SoftMax处理，随后在进行泊松编码。
-        Args:
-            time_steps (int): 生成的时间步长
-        """
-        super().__init__(
-            time_steps = time_steps
-        )
-
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Softmax编码的前向传播函数，将值$V$转化为该时间步$t$内的脉冲$O^{0}(t)$
-        Args:
-            x (torch.Tensor): 输入张量，形状为[B,...]
-        Returns:
-            y (torch.Tensor): 输出张量，形状为[T,B,...]
-        """
-        x = torch.exp(x)
-        x /= torch.sum(x)
-        print(x)
-        if self.time_steps <= 1:
-            y = self.forward_single(x)
-        else:
-            y = self.forward_multiple(x)
-        return y
-
-
 class Temporal(Encoder):
     def __init__(self, time_steps: int = 1, prob: float = 1.0, transform: Callable = lambda x: x, reset_after_process: bool = True) -> None:
         """

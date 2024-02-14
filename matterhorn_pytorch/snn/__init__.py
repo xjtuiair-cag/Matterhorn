@@ -7,7 +7,7 @@
 from . import functional
 from .container import Spatial, Temporal, Sequential
 from .decoder import SumSpike as SumSpikeDecoder, AverageSpike as AvgSpikeDecoder, MinTime as MinTimeDecoder, AverageTime as AvgTimeDecoder
-from .encoder import Direct as DirectEncoder, Poisson as PoissonEncoder, SoftMax as SoftMaxEncoder, Temporal as TemporalEncoder
+from .encoder import Direct as DirectEncoder, Poisson as PoissonEncoder, Temporal as TemporalEncoder
 from .layer import SRM0Linear, STDPLinear, MaxPool1d, MaxPool2d, MaxPool3d, AvgPool1d, AvgPool2d, AvgPool3d, Flatten, Unflatten
 from .skeleton import Module
 from .soma import IF, LIF, QIF, ExpIF, Izhikevich, KLIF, LIAF

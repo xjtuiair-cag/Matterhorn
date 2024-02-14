@@ -26,7 +26,7 @@ You can read [the documentation](./9_decoder.md) to learn more about the usage o
 
 This module contains encoders that encode analog values along the temporal dimension into spike sequences. It serves as a bridge for the output of ANNs to be used as input for SNNs.
 
-Containing `matterhorn_pytorch.snn` modules: `DirectEncoder`, `PoissonEncoder`, `SoftMaxEncoder`, and `TemporalEncoder`.
+Containing `matterhorn_pytorch.snn` modules: `DirectEncoder`, `PoissonEncoder`, and `TemporalEncoder`.
 
 You can read [the documentation](./8_encoder.md) to learn more about the usage of classes and variables.
 

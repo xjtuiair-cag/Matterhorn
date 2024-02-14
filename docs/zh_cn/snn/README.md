@@ -26,7 +26,7 @@
 
 该模块中含有将模拟值在时间维度上编码，转化为脉冲序列的编码器。是 ANN 的输出作为 SNN 的输入的桥梁。
 
-含有的 `matterhorn_pytorch.snn` 模块： `DirectEncoder` 、 `PoissonEncoder` 、 `SoftMaxEncoder` 和 `TemporalEncoder` 。
+含有的 `matterhorn_pytorch.snn` 模块： `DirectEncoder` 、 `PoissonEncoder` 和 `TemporalEncoder` 。
 
 您可以阅读[文档](./8_encoder.md)以了解更多类与变量的使用方法。
 
