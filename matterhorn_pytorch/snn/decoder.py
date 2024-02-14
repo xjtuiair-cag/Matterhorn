@@ -7,7 +7,9 @@
 
 import torch
 import torch.nn as nn
+from matterhorn_pytorch.snn.functional import heaviside_gaussian
 from matterhorn_pytorch.snn.skeleton import Module
+from typing import Callable
 try:
     from rich import print
 except:
@@ -79,17 +81,18 @@ class AverageSpike(Decoder):
 
 
 class MinTime(Decoder):
-    def __init__(self, reset_after_process: bool = True) -> None:
+    def __init__(self, transform: Callable = lambda x: x, reset_after_process: bool = True) -> None:
         """
-        取张量在时间维度上的时间加权平均值。
-        $$o_{i}=\frac{1}{T}\sum_{t=1}^{T}{tO_{i}^{K}(t)}$$
+        取张量在时间维度上的最小值。
+        $$o_{i}=min(tO_{i}^{K}(t))$$
         Args:
+            transform (Callable): 将结果y如何变形
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(
-            reset_after_process = True
+            reset_after_process = reset_after_process
         )
-        self.current_time_step = 0
+        self.transform = transform
         self.reset()
 
 
@@ -119,26 +122,29 @@ class MinTime(Decoder):
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
         y = torch.argmax(x, dim = 0) + self.current_time_step
-        mask = x.mean(dim = 0).le(0).to(x).detach().requires_grad_(True)
+        y = y.to(x)
+        mask = heaviside_gaussian(0.0 - x.mean(dim = 0)) # 0 - mean_x >= 0 -> mean_x <= 0
         y -= mask
         self.current_time_step += x.shape[0]
         if self.reset_after_process:
             self.reset()
+        y = self.transform(y)
         return y
 
 
 class AverageTime(Decoder):
-    def __init__(self, reset_after_process: bool = True) -> None:
+    def __init__(self, transform: Callable = lambda x: x, reset_after_process: bool = True) -> None:
         """
         取张量在时间维度上的时间加权平均值
         $$o_{i}=\frac{1}{T}\sum_{t=1}^{T}{tO_{i}^{K}(t)}$$
         Args:
+            transform (Callable): 将结果y如何变形
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(
             reset_after_process = reset_after_process
         )
-        self.current_time_step = 0
+        self.transform = transform
         self.time_mul = lambda x: x.permute(*torch.arange(x.ndim - 1, -1, -1))
         self.reset()
 
@@ -174,9 +180,10 @@ class AverageTime(Decoder):
         xTt /= x.shape[0]
         y = self.time_mul(xTt) + self.current_time_step
         y = y.mean(dim = 0)
-        mask = x.mean(dim = 0).le(0).to(x).detach().requires_grad_(True)
+        mask = heaviside_gaussian(0.0 - x.mean(dim = 0)) # 0 - mean_x >= 0 -> mean_x <= 0
         y -= mask
         self.current_time_step += x.shape[0]
         if self.reset_after_process:
             self.reset()
+        y = self.transform(y)
         return y

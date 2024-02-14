@@ -110,7 +110,7 @@ class _heaviside_rectangular(torch.autograd.Function):
         return backward_rectangular(grad_output, x, ctx.a), None
 
 
-def heaviside_rectangular(x: torch.Tensor, a: float) -> torch.Tensor:
+def heaviside_rectangular(x: torch.Tensor, a: float = 1.0) -> torch.Tensor:
     """
     Heaviside阶跃函数，使用矩形函数作为反向传播函数。
     Args:
@@ -169,7 +169,7 @@ class _heaviside_polynomial(torch.autograd.Function):
         return backward_polynomial(grad_output, x, ctx.a), None
 
 
-def heaviside_polynomial(x: torch.Tensor, a: float) -> torch.Tensor:
+def heaviside_polynomial(x: torch.Tensor, a: float = 4.0) -> torch.Tensor:
     """
     Heaviside阶跃函数，使用多项式函数作为反向传播函数。
     Args:
@@ -229,7 +229,7 @@ class _heaviside_sigmoid(torch.autograd.Function):
         return backward_sigmoid(grad_output, x, ctx.a), None
 
 
-def heaviside_sigmoid(x: torch.Tensor, a: float) -> torch.Tensor:
+def heaviside_sigmoid(x: torch.Tensor, a: float = 0.25) -> torch.Tensor:
     """
     Heaviside阶跃函数，使用Sigmoid函数的导数作为反向传播函数。
     Args:
@@ -288,7 +288,7 @@ class _heaviside_gaussian(torch.autograd.Function):
         return backward_gaussian(grad_output, x, ctx.a), None
 
 
-def heaviside_gaussian(x: torch.Tensor, a: float) -> torch.Tensor:
+def heaviside_gaussian(x: torch.Tensor, a: float = 0.16) -> torch.Tensor:
     """
     Heaviside阶跃函数，使用高斯函数作为反向传播函数。
     Args:

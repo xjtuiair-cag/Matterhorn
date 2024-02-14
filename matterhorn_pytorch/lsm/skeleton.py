@@ -19,7 +19,7 @@ except:
 
 
 class LSM(snn.Module):
-    def __init__(self, adjacent: torch.Tensor, soma: snn.Module, multi_time_step: bool = True, reset_after_process: bool = True, trainable: bool = True, device = None, dtype = None) -> None:
+    def __init__(self, adjacent: torch.Tensor, soma: snn.Module, multi_time_step: bool = True, reset_after_process: bool = True, device = None, dtype = None) -> None:
         """
         液体状态机。
         Args:
@@ -45,9 +45,9 @@ class LSM(snn.Module):
                 self.soma = soma.multi_time_step_(False)
             else:
                 self.soma = soma
-        self.weight = nn.Parameter(torch.empty((self.neuron_num, self.neuron_num), device = device, dtype = dtype), requires_grad = trainable)
+        self.weight = nn.Parameter(torch.empty((self.neuron_num, self.neuron_num), device = device, dtype = dtype), requires_grad = True)
         nn.init.kaiming_uniform_(self.weight, a = math.sqrt(5))
-        self.weight_input = nn.Parameter(torch.empty((self.neuron_num), device = device, dtype = dtype), requires_grad = trainable)
+        self.weight_input = nn.Parameter(torch.empty((self.neuron_num), device = device, dtype = dtype), requires_grad = True)
         nn.init.normal_(self.weight_input)
         self.reset()
 
@@ -156,13 +156,12 @@ class LSM(snn.Module):
 
 
 class STDPLSM(LSM):
-    def __init__(self, adjacent: torch.Tensor, soma: Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, reset_after_process: bool = True, trainable: bool = True, device = None, dtype = None) -> None:
+    def __init__(self, adjacent: torch.Tensor, soma: Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, reset_after_process: bool = True, device = None, dtype = None) -> None:
         super().__init__(
             adjacent = adjacent,
             soma = soma,
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process,
-            trainable = trainable,
             device = device,
             dtype = dtype
         )

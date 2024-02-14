@@ -86,10 +86,6 @@ def main():
 
     print(model)
 
-    from matterhorn_pytorch.util.plotter import graph_plot_by_adjacent
-    graph_plot_by_adjacent(model[3].adjacent[:50, :50])
-    exit()
-
     # 调取数据集，本次使用的数据集为MNIST
 
     print(Panel(Text("Dataset", justify = "center")))

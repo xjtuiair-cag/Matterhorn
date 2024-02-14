@@ -138,6 +138,7 @@ examples/data/
 examples/logs/
 *.pyc
 test
+render.html
 
 # Apple computer
 .DS_Store

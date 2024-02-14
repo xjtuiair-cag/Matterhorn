@@ -132,7 +132,6 @@ def merge(*models: LSM, connection: str = "uniform", threshold: float = 0.75) ->
     soma = None
     multi_time_step = None
     reset_after_process = None
-    trainable = True
     for m in models:
         adjacent[offset:offset + m.neuron_num, offset:offset + m.neuron_num] = m.adjacent
         offset += m.neuron_num
@@ -141,6 +140,5 @@ def merge(*models: LSM, connection: str = "uniform", threshold: float = 0.75) ->
         multi_time_step = m.multi_time_step
         assert reset_after_process is None or reset_after_process == m.reset_after_process, "Not all models have same reset mode."
         reset_after_process = m.reset_after_process
-        trainable = trainable and m.trainable
-    res = LSM(adjacent, soma, multi_time_step, reset_after_process, trainable, m.adjacent.device)
+    res = LSM(adjacent, soma, multi_time_step, reset_after_process, m.adjacent.device)
     return res
