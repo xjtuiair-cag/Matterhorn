@@ -4,6 +4,7 @@
 """
 
 
+from . import functional
 from .container import Spatial, Temporal, Sequential
 from .decoder import SumSpike as SumSpikeDecoder, AverageSpike as AvgSpikeDecoder, MinTime as MinTimeDecoder, AverageTime as AvgTimeDecoder
 from .encoder import Direct as DirectEncoder, Poisson as PoissonEncoder, SoftMax as SoftMaxEncoder, Temporal as TemporalEncoder

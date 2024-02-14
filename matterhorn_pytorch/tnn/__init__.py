@@ -4,6 +4,7 @@
 """
 
 
+from . import functional
 try:
     from rich import print
 except:

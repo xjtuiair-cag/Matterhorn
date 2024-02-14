@@ -5,3 +5,174 @@
 [English](../../en_us/snn/1_functional.md)
 
 [中文](../../zh_cn/snn/1_functional.md)
+
+## 模块简介
+
+该模块为 `matterhorn_pytorch.snn` 模块的函数库，存储所被调用的函数。
+
+## `matterhorn_pytorch.snn.functional.val_to_spike`
+
+以 $x \ge 0.5$ 为界，将值转为脉冲（有或无）。
+
+```python
+val_to_spike(
+    x: torch.Tensor
+) -> torch.Tensor
+```
+
+### 参数
+
+`x (torch.Tensor)` ：输入 $x$ 。
+
+### 示例用法
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+x = torch.rand(2, 3)
+print(x)
+y = mth.snn.functional.val_to_spike(x)
+print(y)
+```
+
+## `matterhorn_pytorch.snn.functional.heaviside_rectangular`
+
+Heaviside 阶跃函数：
+
+$$u(x)=x \ge 0 ? 1 : 0$$
+
+以矩形窗作为反向传播的梯度。您可以在参考文献 [1] 中找到关于它们的详细定义。
+
+```python
+heaviside_rectangular(
+    x: torch.Tensor,
+    a: float
+) -> torch.Tensor
+```
+
+### 参数
+
+`x (torch.Tensor)` ：输入 $x$ 。
+
+`a (float)` ：参数 $a$ 。
+
+### 示例用法
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+x = torch.randint(-2, 3, size = (2, 3))
+print(x)
+y = mth.snn.functional.heaviside_rectangular(x, 1.0)
+print(y)
+```
+
+## `matterhorn_pytorch.snn.functional.heaviside_polynomial`
+
+Heaviside 阶跃函数：
+
+$$u(x)=x \ge 0 ? 1 : 0$$
+
+以三角形窗作为反向传播的梯度。您可以在参考文献 [1] 中找到关于它们的详细定义。
+
+```python
+heaviside_polynomial(
+    x: torch.Tensor,
+    a: float
+) -> torch.Tensor
+```
+
+### 参数
+
+`x (torch.Tensor)` ：输入 $x$ 。
+
+`a (float)` ：参数 $a$ 。
+
+### 示例用法
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+x = torch.randint(-2, 3, size = (2, 3))
+print(x)
+y = mth.snn.functional.heaviside_polynomial(x, 4.0)
+print(y)
+```
+
+## `matterhorn_pytorch.snn.functional.heaviside_sigmoid`
+
+Heaviside 阶跃函数：
+
+$$u(x)=x \ge 0 ? 1 : 0$$
+
+以 Sigmoid 函数的梯度作为反向传播的梯度。您可以在参考文献 [1] 中找到关于它们的详细定义。
+
+```python
+heaviside_sigmoid(
+    x: torch.Tensor,
+    a: float
+) -> torch.Tensor
+```
+
+### 参数
+
+`x (torch.Tensor)` ：输入 $x$ 。
+
+`a (float)` ：参数 $a$ 。
+
+### 示例用法
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+x = torch.randint(-2, 3, size = (2, 3))
+print(x)
+y = mth.snn.functional.heaviside_sigmoid(x, 0.25)
+print(y)
+```
+
+## `matterhorn_pytorch.snn.functional.heaviside_gaussian`
+
+Heaviside 阶跃函数：
+
+$$u(x)=x \ge 0 ? 1 : 0$$
+
+以高斯函数作为反向传播的梯度。您可以在参考文献 [1] 中找到关于它们的详细定义。
+
+```python
+heaviside_gaussian(
+    x: torch.Tensor,
+    a: float
+) -> torch.Tensor
+```
+
+### 参数
+
+`x (torch.Tensor)` ：输入 $x$ 。
+
+`a (float)` ：参数 $a$ 。
+
+### 示例用法
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+x = torch.randint(-2, 3, size = (2, 3))
+print(x)
+y = mth.snn.functional.heaviside_gaussian(x, 0.16)
+print(y)
+```
+
+## 参考文献
+
+[1] Wu Y, Deng L, Li G, et al. Spatio-temporal backpropagation for training high-performance spiking neural networks[J]. Frontiers in neuroscience, 2018, 12: 331.

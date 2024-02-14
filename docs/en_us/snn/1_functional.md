@@ -5,3 +5,174 @@
 [English](../../en_us/snn/1_functional.md)
 
 [中文](../../zh_cn/snn/1_functional.md)
+
+## Module Introduction
+
+This module is a function library for the `matterhorn_pytorch.snn` module, storing functions that are called.
+
+## `matterhorn_pytorch.snn.functional.val_to_spike`
+
+Converts values to spikes (either on or off) with $x \ge 0.5$ as the threshold.
+
+```python
+val_to_spike(
+    x: torch.Tensor
+) -> torch.Tensor
+```
+
+### Parameters
+
+`x (torch.Tensor)`: Input $x$.
+
+### Example Usage
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+x = torch.rand(2, 3)
+print(x)
+y = mth.snn.functional.val_to_spike(x)
+print(y)
+```
+
+## `matterhorn_pytorch.snn.functional.heaviside_rectangular`
+
+Heaviside step function:
+
+$$u(x)=x \ge 0 ? 1 : 0$$
+
+With a rectangular window as the gradient for backpropagation. Detailed definitions can be found in reference [1].
+
+```python
+heaviside_rectangular(
+    x: torch.Tensor,
+    a: float
+) -> torch.Tensor
+```
+
+### Parameters
+
+`x (torch.Tensor)`: Input $x$.
+
+`a (float)`: Parameter $a$.
+
+### Example Usage
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+x = torch.randint(-2, 3, size = (2, 3))
+print(x)
+y = mth.snn.functional.heaviside_rectangular(x, 1.0)
+print(y)
+```
+
+## `matterhorn_pytorch.snn.functional.heaviside_polynomial`
+
+Heaviside step function:
+
+$$u(x)=x \ge 0 ? 1 : 0$$
+
+With a triangular window as the gradient for backpropagation. Detailed definitions can be found in reference [1].
+
+```python
+heaviside_polynomial(
+    x: torch.Tensor,
+    a: float
+) -> torch.Tensor
+```
+
+### Parameters
+
+`x (torch.Tensor)`: Input $x$.
+
+`a (float)`: Parameter $a$.
+
+### Example Usage
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+x = torch.randint(-2, 3, size = (2, 3))
+print(x)
+y = mth.snn.functional.heaviside_polynomial(x, 4.0)
+print(y)
+```
+
+## `matterhorn_pytorch.snn.functional.heaviside_sigmoid`
+
+Heaviside step function:
+
+$$u(x)=x \ge 0 ? 1 : 0$$
+
+With the gradient of the Sigmoid function for backpropagation. Detailed definitions can be found in reference [1].
+
+```python
+heaviside_sigmoid(
+    x: torch.Tensor,
+    a: float
+) -> torch.Tensor
+```
+
+### Parameters
+
+`x (torch.Tensor)`: Input $x$.
+
+`a (float)`: Parameter $a$.
+
+### Example Usage
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+x = torch.randint(-2, 3, size = (2, 3))
+print(x)
+y = mth.snn.functional.heaviside_sigmoid(x, 0.25)
+print(y)
+```
+
+## `matterhorn_pytorch.snn.functional.heaviside_gaussian`
+
+Heaviside step function:
+
+$$u(x)=x \ge 0 ? 1 : 0$$
+
+With a Gaussian function as the gradient for backpropagation. Detailed definitions can be found in reference [1].
+
+```python
+heaviside_gaussian(
+    x: torch.Tensor,
+    a: float
+) -> torch.Tensor
+```
+
+### Parameters
+
+`x (torch.Tensor)`: Input $x$.
+
+`a (float)`: Parameter $a$.
+
+### Example Usage
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+x = torch.randint(-2, 3, size = (2, 3))
+print(x)
+y = mth.snn.functional.heaviside_gaussian(x, 0.16)
+print(y)
+```
+
+## References
+
+[1] Wu Y, Deng L, Li G, et al. Spatio-temporal backpropagation for training high-performance spiking neural networks[J]. Frontiers in neuroscience, 2018, 12: 331.
