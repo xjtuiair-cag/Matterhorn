@@ -22,7 +22,11 @@ val_to_spike(
 
 ### Parameters
 
-`x (torch.Tensor)`: Input $x$.
+`x (torch.Tensor)`: Input $X$, analog value.
+
+### Returns
+
+`o (torch.Tensor)`: Output $O$, spike train.
 
 ### Example Usage
 
@@ -48,15 +52,19 @@ With a rectangular window as the gradient for backpropagation. Detailed definiti
 ```python
 heaviside_rectangular(
     x: torch.Tensor,
-    a: float
+    a: float = 1.0
 ) -> torch.Tensor
 ```
 
 ### Parameters
 
-`x (torch.Tensor)`: Input $x$.
+`x (torch.Tensor)`: Input $X$, membrane voltage.
 
 `a (float)`: Parameter $a$.
+
+### Returns
+
+`o (torch.Tensor)`: Output $O$, spike train.
 
 ### Example Usage
 
@@ -82,15 +90,19 @@ With a triangular window as the gradient for backpropagation. Detailed definitio
 ```python
 heaviside_polynomial(
     x: torch.Tensor,
-    a: float
+    a: float = 4.0
 ) -> torch.Tensor
 ```
 
 ### Parameters
 
-`x (torch.Tensor)`: Input $x$.
+`x (torch.Tensor)`: Input $X$, membrane voltage.
 
 `a (float)`: Parameter $a$.
+
+### Returns
+
+`o (torch.Tensor)`: Output $O$, spike train.
 
 ### Example Usage
 
@@ -116,15 +128,19 @@ With the gradient of the Sigmoid function for backpropagation. Detailed definiti
 ```python
 heaviside_sigmoid(
     x: torch.Tensor,
-    a: float
+    a: float = 0.25
 ) -> torch.Tensor
 ```
 
 ### Parameters
 
-`x (torch.Tensor)`: Input $x$.
+`x (torch.Tensor)`: Input $X$, membrane voltage.
 
 `a (float)`: Parameter $a$.
+
+### Returns
+
+`o (torch.Tensor)`: Output $O$, spike train.
 
 ### Example Usage
 
@@ -150,15 +166,19 @@ With a Gaussian function as the gradient for backpropagation. Detailed definitio
 ```python
 heaviside_gaussian(
     x: torch.Tensor,
-    a: float
+    a: float = 0.16
 ) -> torch.Tensor
 ```
 
 ### Parameters
 
-`x (torch.Tensor)`: Input $x$.
+`x (torch.Tensor)`: Input $X$, membrane voltage.
 
 `a (float)`: Parameter $a$.
+
+### Returns
+
+`o (torch.Tensor)`: Output $O$, spike train.
 
 ### Example Usage
 

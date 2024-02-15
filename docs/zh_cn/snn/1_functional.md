@@ -22,7 +22,11 @@ val_to_spike(
 
 ### 参数
 
-`x (torch.Tensor)` ：输入 $x$ 。
+`x (torch.Tensor)` ：输入 $X$ ，模拟值。
+
+### 返回值
+
+`o (torch.Tensor)` ：输出 $O$ ，脉冲序列。
 
 ### 示例用法
 
@@ -48,15 +52,19 @@ $$u(x)=x \ge 0 ? 1 : 0$$
 ```python
 heaviside_rectangular(
     x: torch.Tensor,
-    a: float
+    a: float = 1.0
 ) -> torch.Tensor
 ```
 
 ### 参数
 
-`x (torch.Tensor)` ：输入 $x$ 。
+`x (torch.Tensor)` ：输入 $X$ ，电位值。
 
 `a (float)` ：参数 $a$ 。
+
+### 返回值
+
+`o (torch.Tensor)` ：输出 $O$ ，脉冲序列。
 
 ### 示例用法
 
@@ -82,15 +90,19 @@ $$u(x)=x \ge 0 ? 1 : 0$$
 ```python
 heaviside_polynomial(
     x: torch.Tensor,
-    a: float
+    a: float = 4.0
 ) -> torch.Tensor
 ```
 
 ### 参数
 
-`x (torch.Tensor)` ：输入 $x$ 。
+`x (torch.Tensor)` ：输入 $X$ ，电位值。
 
 `a (float)` ：参数 $a$ 。
+
+### 返回值
+
+`o (torch.Tensor)` ：输出 $O$ ，脉冲序列。
 
 ### 示例用法
 
@@ -116,15 +128,19 @@ $$u(x)=x \ge 0 ? 1 : 0$$
 ```python
 heaviside_sigmoid(
     x: torch.Tensor,
-    a: float
+    a: float = 0.25
 ) -> torch.Tensor
 ```
 
 ### 参数
 
-`x (torch.Tensor)` ：输入 $x$ 。
+`x (torch.Tensor)` ：输入 $X$ ，电位值。
 
 `a (float)` ：参数 $a$ 。
+
+### 返回值
+
+`o (torch.Tensor)` ：输出 $O$ ，脉冲序列。
 
 ### 示例用法
 
@@ -150,15 +166,19 @@ $$u(x)=x \ge 0 ? 1 : 0$$
 ```python
 heaviside_gaussian(
     x: torch.Tensor,
-    a: float
+    a: float = 0.16
 ) -> torch.Tensor
 ```
 
 ### 参数
 
-`x (torch.Tensor)` ：输入 $x$ 。
+`x (torch.Tensor)` ：输入 $X$ ，电位值。
 
 `a (float)` ：参数 $a$ 。
+
+### 返回值
+
+`o (torch.Tensor)` ：输出 $O$ ，脉冲序列。
 
 ### 示例用法
 

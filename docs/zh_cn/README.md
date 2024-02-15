@@ -8,19 +8,19 @@
 
 该模块存储了常见的神经形态数据集处理方式，它可以将数据集（压缩包等形态）处理为 PyTorch 的张量。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./data/README.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.lsm` ：液体状态机
 
 该模块实现了液体状态机（LSMs）。液体状态机的结构和功能可以参考文献 [1] 。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./lsm/README.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.model` ：预定义模型
 
 该模块定义了一些较为有名的 SNN 模型。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./model/README.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.snn` ：脉冲神经网络
 
@@ -32,13 +32,13 @@
 
 该模块实现了 Temporal Neural Networks （TNNs）。 Temporal Neural Networks 的结构和功能可以参考文献 [2] 。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./tnn/README.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.training` ：基于脉冲的训练
 
 除反向传播之外，脉冲神经元有专属的训练方式。该模块定义了脉冲神经元的训练方式，如脉冲时序依赖可塑性（STDP）等。
 
-您可以阅读文档以了解更多类与变量的使用方法。
+您可以阅读[文档](./training/README.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.util` ：小工具
 
