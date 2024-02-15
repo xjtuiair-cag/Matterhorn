@@ -8,9 +8,9 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from torchvision.datasets.utils import check_integrity
-from typing import Tuple, Union, Callable, Optional
+from typing import Tuple, Iterable, Union, Callable, Optional
 import os
-import random
+import shutil
 try:
     from rich import print
 except:
@@ -88,6 +88,19 @@ class EventDataset(Dataset):
             res (str): 张量缓存位置
         """
         return os.path.join(self.root, self.__class__.__name__, "cached")
+    
+
+    def clear_cache(self) -> None:
+        """
+        清除缓存。
+        """
+        event_seq_folder = os.path.join(self.root, self.__class__.__name__, "processed")
+        if os.path.isdir(event_seq_folder):
+            event_seq_list = os.listdir(event_seq_folder)
+            for folder in event_seq_list:
+                shutil.rmtree(os.path.join(event_seq_folder, folder))
+        if os.path.isdir(self.cached_folder):
+            shutil.rmtree(self.cached_folder)
 
 
     def check_exists(self) -> bool:
@@ -151,7 +164,6 @@ class EventDataset(Dataset):
         self.data_target = self.load_data()
         self.data_target = self.data_target[self.data_target[:, 2] == (1 if self.train else 0)][:, :2]
         self.data_target = self.data_target.tolist()
-        random.shuffle(self.data_target)
     
 
     def compress_event_data(self, data: np.ndarray) -> np.ndarray:
@@ -221,7 +233,7 @@ class EventDataset1d(EventDataset):
     original_size = (1, 2, 128)
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, t_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, t_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, float]] = None) -> None:
         """
         一维事件数据集框架
         Args:
@@ -235,12 +247,12 @@ class EventDataset1d(EventDataset):
             t_size (int): 时间维度的大小
             x_size (int): 空间维度的大小
             polarity (bool): 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或Iterable（开头与结尾）
         """
         self.t_size = t_size
         self.p_size = 2 if polarity else 1
         self.x_size = x_size
-        if isinstance(clipped, Tuple):
+        if isinstance(clipped, Iterable):
             assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
         self.clipped = clipped
         super().__init__(
@@ -269,7 +281,7 @@ class EventDataset1d(EventDataset):
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
-            elif isinstance(self.clipped, Tuple):
+            elif isinstance(self.clipped, Iterable):
                 data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
         data[:, 0] -= np.min(data[:, 0])
         data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
@@ -297,7 +309,7 @@ class EventDataset1d(EventDataset):
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
-            elif isinstance(self.clipped, Tuple):
+            elif isinstance(self.clipped, Iterable):
                 data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
         data[:, 0] -= np.min(data[:, 0])
         data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
@@ -328,7 +340,7 @@ class EventDataset2d(EventDataset):
     original_size = (1, 2, 128, 128)
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, t_size: int = 128, y_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, t_size: int = 128, y_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, float]] = None) -> None:
         """
         二维事件数据集框架
         Args:
@@ -343,13 +355,13 @@ class EventDataset2d(EventDataset):
             y_size (int): 第一个空间维度的大小
             x_size (int): 第二个空间维度的大小
             polarity (bool): 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或Iterable（开头与结尾）
         """
         self.t_size = t_size
         self.p_size = 2 if polarity else 1
         self.y_size = y_size
         self.x_size = x_size
-        if isinstance(clipped, Tuple):
+        if isinstance(clipped, Iterable):
             assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
         self.clipped = clipped
         super().__init__(
@@ -378,7 +390,7 @@ class EventDataset2d(EventDataset):
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
-            elif isinstance(self.clipped, Tuple):
+            elif isinstance(self.clipped, Iterable):
                 data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
         data[:, 0] -= np.min(data[:, 0])
         data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
@@ -407,7 +419,7 @@ class EventDataset2d(EventDataset):
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 data = data[data[:, 0] < self.clipped]
-            elif isinstance(self.clipped, Tuple):
+            elif isinstance(self.clipped, Iterable):
                 data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
         data[:, 0] -= np.min(data[:, 0])
         np.set_printoptions(threshold = np.inf)

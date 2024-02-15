@@ -5,11 +5,9 @@ NMNIST数据集。
 
 
 import numpy as np
-import torch
 import os
-import random
 from torchvision.datasets.utils import check_integrity, download_url, extract_archive
-from typing import Any, List, Tuple, Union, Callable, Optional
+from typing import Iterable, Union, Callable, Optional
 from urllib.error import URLError
 from zipfile import BadZipFile
 from rich import print
@@ -32,7 +30,7 @@ class NMNIST(EventDataset2d):
     labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 34, height: int = 34, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 34, height: int = 34, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
         """
         NMNIST数据集，将MNIST数据集动态变换后，转为事件的形式。
         Args:
@@ -47,7 +45,7 @@ class NMNIST(EventDataset2d):
             width (int): 最终数据集的宽度
             height (int): 最终数据集的高度
             polarity (bool): 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或Iterable（开头与结尾）
         """
         super().__init__(
             root = root,
@@ -160,6 +158,7 @@ class NMNIST(EventDataset2d):
             file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
             return file_list
         self.unzip()
+        self.clear_cache()
         os.makedirs(self.processed_folder, exist_ok = True)
         file_list = []
         file_idx = 0

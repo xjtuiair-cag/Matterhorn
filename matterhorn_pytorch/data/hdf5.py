@@ -5,12 +5,10 @@ HDF5类数据集（后缀名为.h5）。
 
 
 import numpy as np
-import torch
 import os
-import random
 import h5py
 from torchvision.datasets.utils import check_integrity, download_url, extract_archive
-from typing import Any, List, Tuple, Union, Callable, Optional
+from typing import Iterable, Union, Callable, Optional
 from urllib.error import URLError
 from zipfile import BadZipFile
 from rich import print
@@ -32,7 +30,7 @@ class HDF5(EventDataset1d):
     labels = []
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, precision: int = 1e9, time_steps: int = 128, length: int = 128, clipped: Optional[Union[Tuple, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 128, clipped: Optional[Union[Iterable, float]] = None) -> None:
         """
         原始数据后缀名为.hdf5的数据集
         Args:
@@ -55,6 +53,7 @@ class HDF5(EventDataset1d):
             target_transform = target_transform,
             download = download,
             sampling = sampling,
+            count = count,
             t_size = time_steps,
             x_size = length,
             polarity = False,
@@ -94,7 +93,7 @@ class SpikingHeidelbergDigits(HDF5):
     labels = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun"]
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 700, clipped: Optional[Union[Tuple, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, precision: float = 1e9, time_steps: int = 128, length: int = 700, clipped: Optional[Union[Iterable, float]] = None) -> None:
         """
         Spiking Heidelberg Digits数据集，记录下英文和德语的0-9（总共20类），并转换成长度为700的脉冲。
         Args:
@@ -105,10 +104,10 @@ class SpikingHeidelbergDigits(HDF5):
             download (bool): 如果数据集不存在，是否应该下载
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
-            precision (int): 最终数据集的时间精度
+            precision (float): 最终数据集的时间精度
             time_steps (int): 最终的数据集总共含有多少个时间步
             length (int): 最终数据集的空间精度
-            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或Iterable（开头与结尾）
         """
         super().__init__(
             root = root,
@@ -186,6 +185,7 @@ class SpikingHeidelbergDigits(HDF5):
             file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
             return file_list
         self.unzip()
+        self.clear_cache()
         os.makedirs(self.processed_folder, exist_ok = True)
         file_list = []
         file_idx = 0
@@ -199,7 +199,7 @@ class SpikingHeidelbergDigits(HDF5):
                 event_data = np.zeros((len(x), 2), dtype = "uint32")
                 event_data[:, 0] = t
                 event_data[:, 1] = x
-                res = res[np.argsort(res[:, 0])]
+                event_data = event_data[np.argsort(event_data[:, 0])]
                 if self.sampling > 1:
                     event_data = event_data[::self.sampling]
                 label = label_list[idx]

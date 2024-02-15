@@ -5,14 +5,11 @@ AEDAT类数据集（后缀名为.aedat）。
 
 
 import numpy as np
-import torch
-import torch.nn as nn
 import os
 import re
 import shutil
-import random
 from torchvision.datasets.utils import check_integrity, download_url, extract_archive
-from typing import Any, List, Tuple, Union, Callable, Optional
+from typing import Iterable, Union, Callable, Optional
 from urllib.error import URLError
 from zipfile import BadZipFile
 from rich import print
@@ -38,7 +35,7 @@ class AEDAT(EventDataset2d):
     p_shift = 0
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4", clipped: Optional[Union[Tuple, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4", clipped: Optional[Union[Iterable, int]] = None) -> None:
         """
         原始数据后缀名为.aedat的数据集
         Args:
@@ -166,7 +163,7 @@ class CIFAR10DVS(AEDAT):
     p_shift = 0
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
         """
         CIFAR-10 DVS数据集，将CIFAR10数据集投影至LCD屏幕后，用事件相机录制的数据集
         Args:
@@ -181,7 +178,7 @@ class CIFAR10DVS(AEDAT):
             width (int): 最终数据集的宽度
             height (int): 最终数据集的高度
             polarity (bool): 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或Iterable（开头与结尾）
         """
         super().__init__(
             root = root,
@@ -198,7 +195,7 @@ class CIFAR10DVS(AEDAT):
             endian = ">",
             datatype = "u4"
         )
-        if isinstance(clipped, Tuple):
+        if isinstance(clipped, Iterable):
             assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
         self.clipped = clipped
 
@@ -276,6 +273,7 @@ class CIFAR10DVS(AEDAT):
             file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
             return file_list
         self.unzip()
+        self.clear_cache()
         os.makedirs(self.processed_folder, exist_ok = True)
         file_list = []
         file_idx = 0
@@ -311,7 +309,7 @@ class DVS128Gesture(AEDAT):
     p_shift = 1
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Tuple, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
         """
         DVS128 Gesture数据集，用事件相机录制手势形成的数据集
         Args:
@@ -326,7 +324,7 @@ class DVS128Gesture(AEDAT):
             width (int): 最终数据集的宽度
             height (int): 最终数据集的高度
             polarity (bool): 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或tuple（开头与结尾）
+            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或Iterable（开头与结尾）
         """
         super().__init__(
             root = root,
@@ -343,7 +341,7 @@ class DVS128Gesture(AEDAT):
             endian = "<",
             datatype = "u4"
         )
-        if isinstance(clipped, Tuple):
+        if isinstance(clipped, Iterable):
             assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
         self.clipped = clipped
 
@@ -456,6 +454,7 @@ class DVS128Gesture(AEDAT):
             file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
             return file_list
         self.unzip()
+        self.clear_cache()
         aedat_file_dir = os.path.join(self.extracted_folder, "DvsGesture")
         aedat_files = os.listdir(aedat_file_dir)
         os.makedirs(self.processed_folder, exist_ok = True)
