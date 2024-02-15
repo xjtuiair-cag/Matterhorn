@@ -15,10 +15,10 @@ Encoder for SNNs, encoding analog values into spike sequences.
 Encoder for direct encoding. After extracting data from the `DataLoader`, where the first dimension represents batches, the shape of the data is `[B, T, ...]`. In this case, this encoder is needed to transpose the first two dimensions, changing the shape from `[B, T, ...]` to `[T, B, ...]`, to make the SNN model work properly.
 
 ```python
-DirectEncoder()
+Direct()
 ```
 
-## Example Usage
+### Example Usage
 
 ```python
 import torch
@@ -41,7 +41,7 @@ $$O_{i}^{0}(t) = rand(t) \le X_{i} ? 1 : 0$$
 where $rand(\cdot)$ is a random number function that generates random numbers in the interval $[0,1)$.
 
 ```python
-PoissonEncoder(
+Poisson(
     time_steps: int = 1
 )
 ```
@@ -50,7 +50,7 @@ PoissonEncoder(
 
 `time_steps (int)`: Length of the tensor after Poisson encoding, denoted as `T`.
 
-## Example Usage
+### Example Usage
 
 ```python
 import torch
@@ -99,7 +99,7 @@ Temporal(
 
 `reset_after_process (bool)`: Whether to reset automatically after execution. If `False`, manual reset is required.
 
-## Example Usage
+### Example Usage
 
 ```python
 import torch

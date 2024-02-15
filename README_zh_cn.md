@@ -1,5 +1,7 @@
 # Matterhorn （中文文档）
 
+[详细文档](./docs/zh_cn/README.md)
+
 [English](./README.md)
 
 [中文](./README_zh_cn.md)

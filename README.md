@@ -1,5 +1,7 @@
 # Matterhorn
 
+[Technical Documentation](./docs/en_us/README.md)
+
 [English](./README.md)
 
 [中文](./README_zh_cn.md)
@@ -50,7 +52,7 @@ Don't forget to add `sudo` if you are not the root user.
 
 ## 3 Module Explanation
 
-For the references on specialized variables, functions or modules of SNNs, you can refer to [the detailed version of the document](./docs/zh_cn/snn/README.md).
+For the references on specialized variables, functions or modules of SNNs, you can refer to [the detailed version of the document](./docs/en_us/snn/README.md).
 
 ### Terms
 

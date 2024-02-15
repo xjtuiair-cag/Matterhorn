@@ -80,18 +80,19 @@ class AverageSpike(Decoder):
         return y
 
 
-class MinTime(Decoder):
-    def __init__(self, transform: Callable = lambda x: x, reset_after_process: bool = True) -> None:
+class TimeBased(Decoder):
+    def __init__(self, empty_fill: float = -1, transform: Callable = lambda x: x, reset_after_process: bool = True) -> None:
         """
-        取张量在时间维度上的最小值。
-        $$o_{i}=min(tO_{i}^{K}(t))$$
+        基于时间的解码器。
         Args:
+            empty_fill (float): 如果脉冲序列为全0序列，值应该用什么替代，在TNN中该参数应设为torch.inf
             transform (Callable): 将结果y如何变形
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(
             reset_after_process = reset_after_process
         )
+        self.empty_fill = empty_fill
         self.transform = transform
         self.reset()
 
@@ -102,7 +103,7 @@ class MinTime(Decoder):
         Returns:
             repr_str (str): 参数表
         """
-        return "reset_after_process=%s" % (str(self.reset_after_process),)
+        return "empty_fill=%g, reset_after_process=%s" % (self.empty_fill, str(self.reset_after_process))
 
 
     def reset(self) -> Module:
@@ -111,7 +112,7 @@ class MinTime(Decoder):
         """
         self.current_time_step = 0
         return super().reset()
-    
+
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -121,10 +122,10 @@ class MinTime(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        y = torch.argmax(x, dim = 0) + self.current_time_step
+        y = self.f_decode(x).to(x)
         y = y.to(x)
-        mask = heaviside_gaussian(0.0 - x.mean(dim = 0)) # 0 - mean_x >= 0 -> mean_x <= 0
-        y -= mask
+        mask = x.mean(dim = 0) > 0
+        y = torch.where(mask, y, torch.full_like(y, self.empty_fill))
         self.current_time_step += x.shape[0]
         if self.reset_after_process:
             self.reset()
@@ -132,58 +133,64 @@ class MinTime(Decoder):
         return y
 
 
-class AverageTime(Decoder):
-    def __init__(self, transform: Callable = lambda x: x, reset_after_process: bool = True) -> None:
+class MinTime(TimeBased):
+    def __init__(self, empty_fill: float = -1, transform: Callable = lambda x: x, reset_after_process: bool = True) -> None:
         """
-        取张量在时间维度上的时间加权平均值
-        $$o_{i}=\frac{1}{T}\sum_{t=1}^{T}{tO_{i}^{K}(t)}$$
+        取张量在时间维度上的最小值。
+        $$o_{i}=min(tO_{i}^{K}(t))$$
         Args:
+            empty_fill (float): 如果脉冲序列为全0序列，值应该用什么替代，在TNN中该参数应设为torch.inf
             transform (Callable): 将结果y如何变形
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(
+            empty_fill = empty_fill,
+            transform = transform,
             reset_after_process = reset_after_process
         )
-        self.transform = transform
-        self.time_mul = lambda x: x.permute(*torch.arange(x.ndim - 1, -1, -1))
-        self.reset()
 
 
-    def extra_repr(self) -> str:
+    def f_decode(self, x: torch.Tensor) -> torch.Tensor:
         """
-        额外的表达式，把参数之类的放进来。
-        Returns:
-            repr_str (str): 参数表
-        """
-        return "reset_after_process=%s" % (str(self.reset_after_process),)
-
-
-    def reset(self) -> Module:
-        """
-        重置编码器。
-        """
-        self.current_time_step = 0
-        return super().reset()
-    
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        前向传播函数。
+        解码函数。
         Args:
             x (torch.Tensor): 输入张量，形状为[T,B,...]
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        t = torch.arange(x.shape[0]).to(x)
-        xT = self.time_mul(x)
-        xTt = xT * t
-        xTt /= x.shape[0]
-        y = self.time_mul(xTt) + self.current_time_step
-        y = y.mean(dim = 0)
-        mask = heaviside_gaussian(0.0 - x.mean(dim = 0)) # 0 - mean_x >= 0 -> mean_x <= 0
-        y -= mask
-        self.current_time_step += x.shape[0]
-        if self.reset_after_process:
-            self.reset()
-        y = self.transform(y)
+        y = torch.argmax(x, dim = 0) + self.current_time_step
+        return y
+
+
+class AverageTime(TimeBased):
+    def __init__(self, empty_fill: float = -1, transform: Callable = lambda x: x, reset_after_process: bool = True) -> None:
+        """
+        取张量在时间维度上的时间加权平均值
+        $$o_{i}=\frac{1}{T}\sum_{t=1}^{T}{tO_{i}^{K}(t)}$$
+        Args:
+            empty_fill (float): 如果脉冲序列为全0序列，值应该用什么替代，在TNN中该参数应设为torch.inf
+            transform (Callable): 将结果y如何变形
+            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
+        """
+        super().__init__(
+            empty_fill = empty_fill,
+            transform = transform,
+            reset_after_process = reset_after_process
+        )
+
+
+    def f_decode(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        解码函数。
+        Args:
+            x (torch.Tensor): 输入张量，形状为[T,B,...]
+        Returns:
+            y (torch.Tensor): 输出张量，形状为[B,...]
+        """
+        T = lambda x: x.permute(*torch.arange(x.ndim - 1, -1, -1))
+        xt = T(T(x) * torch.arange(x.shape[0]))
+        tsum = torch.sum(xt, dim = 0)
+        xsum = torch.sum(x, dim = 0)
+        mask = xsum > 0
+        y = torch.where(mask, tsum / xsum, torch.zeros_like(xsum))
         return y

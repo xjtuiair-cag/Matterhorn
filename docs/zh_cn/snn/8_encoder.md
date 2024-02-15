@@ -12,13 +12,13 @@ SNNs 的编码器，将模拟值编码为脉冲序列。
 
 ## `matterhorn_pytorch.snn.DirectEncoder` / `matterhorn_pytorch.snn.encoder.Direct`
 
-直接编码的编码器。将数据从 `DataLoader` 中提取出来后，数据的第一位是批，即数据的形状为 `[B, T, ...]` ，此时需要通过该编码器转置前两个维度，即将形状由 `[B, T, ...]` 改变为 `[T, B, ...]` ，以使 SNN 模型正常工作。
+直接编码的编码器。将数据从 `DataLoader` 中提取出来后，数据的第一维是批，即数据的形状为 `[B, T, ...]` ，此时需要通过该编码器转置前两个维度，即将形状由 `[B, T, ...]` 改变为 `[T, B, ...]` ，以使 SNN 模型正常工作。
 
 ```python
-DirectEncoder()
+Direct()
 ```
 
-## 示例用法
+### 示例用法
 
 ```python
 import torch
@@ -41,16 +41,16 @@ $$O_{i}^{0}(t) = rand(t) \le X_{i} ? 1 : 0$$
 其中 $rand(\cdot)$ 为随机数函数，生成 $[0,1)$ 区间内的随机数。
 
 ```python
-PoissonEncoder(
+Poisson(
     time_steps: int = 1
 )
 ```
 
-## 构造函数参数
+### 构造函数参数
 
 `time_steps (int)` ：经过泊松编码后，生成的张量时间步长 `T` 。
 
-## 示例用法
+### 示例用法
 
 ```python
 import torch
@@ -89,7 +89,7 @@ Temporal(
 )
 ```
 
-## 构造函数参数
+### 构造函数参数
 
 `time_steps (int)` ：经过时间编码后，生成的张量时间步长 `T` 。
 
@@ -99,7 +99,7 @@ Temporal(
 
 `reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
-## 示例用法
+### 示例用法
 
 ```python
 import torch
