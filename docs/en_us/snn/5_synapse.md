@@ -8,7 +8,7 @@
 
 ## Module Introduction
 
-SNNs and ANNs are fundamentally similar in synaptic computation. The synapses of SNNs take pulse sequences as input signals, undergo certain processing, and output postsynaptic potentials (PSP).
+SNNs and ANNs are fundamentally similar in synaptic computation. The synapses of SNNs take spike trains as input signals, undergo certain processing, and output postsynaptic potentials (PSP).
 
 ## `matterhorn.snn.synapse.Synapse`
 

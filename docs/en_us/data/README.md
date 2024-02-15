@@ -45,7 +45,7 @@ CIFAR10DVS(
 
 `sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs.
 
-`count (bool)`: Whether to output the event count for each point as pulse output. If `False`, the pulse sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
+`count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
 
 `time_steps (int)`: Time steps `T` for the output tensor.
 
@@ -113,7 +113,7 @@ DVS128Gesture(
 
 `sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs.
 
-`count (bool)`: Whether to output the event count for each point as pulse output. If `False`, the pulse sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
+`count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
 
 `time_steps (int)`: Time steps `T` for the output tensor.
 
@@ -178,7 +178,7 @@ CIFAR10DVS(
 
 `sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs.
 
-`count (bool)`: Whether to output the event count for each point as pulse output. If `False`, the pulse sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
+`count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
 
 `precision (float)`: Precision of the dataset. Keep the default value `1e9`.
 
@@ -242,7 +242,7 @@ NMNIST(
 
 `sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs.
 
-`count (bool)`: Whether to output the event count for each point as pulse output. If `False`, the pulse sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
+`count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
 
 `time_steps (int)`: Time steps `T` for the output tensor.
 

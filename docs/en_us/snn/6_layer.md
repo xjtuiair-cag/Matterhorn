@@ -88,7 +88,7 @@ l1 = mth.snn.SRM0Linear(784, 10) # [T, B, 784] -> [T, B, 10]
 
 ## `matterhorn_pytorch.snn.STDPLinear` / `matterhorn_pytorch.snn.layer.STDPLinear`
 
-A fully connected layer employing the Spike Timing-Dependent Plasticity (STDP) learning mechanism. STDP, as a common pulse-based learning mechanism, follows the weight update formula:
+A fully connected layer employing the Spike Timing-Dependent Plasticity (STDP) learning mechanism. STDP, as a common spike-based learning mechanism, follows the weight update formula:
 
 $$\Delta w_{ij}=\sum_{t_{j}}{\sum_{t_{i}}W(t_{i}-t_{j})}$$
 
