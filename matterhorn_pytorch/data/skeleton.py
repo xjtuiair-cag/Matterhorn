@@ -174,26 +174,35 @@ class EventDataset(Dataset):
                 return
         self.clear_cache()
         os.makedirs(self.cached_folder, exist_ok = True)
+
+        def create_cache_file(source, dest, convert):
+            if os.path.isfile(dest):
+                return
+            data = np.load(source)
+            data = convert(data)
+            torch.save(data, dest)
+        
         print(multiprocessing.cpu_count())
-        with ThreadPoolExecutor(max_workers = multiprocessing.cpu_count() * 4) as t:
-            def create_cache_file(source, dest, convert):
-                if os.path.isfile(dest):
-                    return
-                data = np.load(source)
-                data = convert(data)
-                torch.save(data, dest)
-            task_pool = []
-            for data_target in self.data_target:
-                data_idx = data_target[0]
-                source_dir = os.path.join(self.processed_folder, "%d.npy" % (data_idx,))
-                target_dir = os.path.join(self.cached_folder, "%d.pt" % (data_idx,))
-                task_pool.append(t.submit(create_cache_file, source_dir, target_dir, self.event_data_to_tensor))
-            wait(task_pool)
-            for idx in range(len(task_pool)):
-                t = task_pool[idx]
-                if t.exception():
-                    print("[red bold]Error occured in thread %d:[/red bold]" % (idx,))
-                    print(t.exception())
+        workers_num = multiprocessing.cpu_count() * 2
+        batch_size = workers_num * 2
+        looping = ((len(self.data_target) - 1) // batch_size) + 1
+        for i in track(range(looping), description = "Making cache"):
+            with ThreadPoolExecutor(max_workers = workers_num) as t:
+                task_pool = []
+                for j in range(batch_size):
+                    idx = i * batch_size + j
+                    if idx >= len(self.data_target):
+                        break
+                    data_idx = self.data_target[idx][0]
+                    source_dir = os.path.join(self.processed_folder, "%d.npy" % (data_idx,))
+                    target_dir = os.path.join(self.cached_folder, "%d.pt" % (data_idx,))
+                    task_pool.append(t.submit(create_cache_file, source_dir, target_dir, self.event_data_to_tensor))
+                wait(task_pool)
+                for k in range(len(task_pool)):
+                    t = task_pool[k]
+                    if t.exception():
+                        print("[red bold]Error occured in thread %d:[/red bold]" % (k,))
+                        print(t.exception())
         with open(os.path.join(self.cached_folder, "__info__.json"), "w", encoding = "utf-8") as f:
             json.dump(cache_info, f)
 
@@ -218,7 +227,7 @@ class EventDataset(Dataset):
                     cache_info = json.load(f)
                 cache_type = cache_info["type"]
                 cache_mtime = cache_info["last_modified"]
-                if cache_type != demanded_type or now - cache_mtime > 24 * 60 * 60:
+                if cache_type != demanded_type or now - cache_mtime > 60 * 60:
                     shutil.rmtree(cur_path)
 
 
