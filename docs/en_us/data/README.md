@@ -58,7 +58,7 @@ CIFAR10DVS(
 
 `polarity (bool)`: Whether the output tensor contains polarity. If `True`, the output tensor contains polarity, `P = 2`; otherwise, it does not, `P = 1`.
 
-`clipped (Iterable | int | None)`: Whether to clip the original time to start and end times. It can take a tuple like `(start, end)`, representing the end timestamp as an integer, or `None` (no clipping).
+`clipped (Iterable | int | None)`: How the events be clipped. By inputting a tuple `(start, end)` means clipping the events that have timestamp between `start` and `end`; by inputting an integer `end` means clipping the events that have timestamp no later than `end`. If the input is `None`, clipping will not happen.
 
 ### Example Usage
 
@@ -129,7 +129,7 @@ DVS128Gesture(
 
 `polarity (bool)`: Whether the output tensor contains polarity. If `True`, the output tensor contains polarity, `P = 2`; otherwise, it does not, `P = 1`.
 
-`clipped (Iterable | int | None)`: Whether to clip the original time to start and end times. It can take a tuple like `(start, end)`, representing the end timestamp as an integer, or `None` (no clipping).
+`clipped (Iterable | int | None)`: How the events be clipped. By inputting a tuple `(start, end)` means clipping the events that have timestamp between `start` and `end`; by inputting an integer `end` means clipping the events that have timestamp no later than `end`. If the input is `None`, clipping will not happen.
 
 ### Example Usage
 
@@ -195,7 +195,7 @@ CIFAR10DVS(
 
 `length (int)`: Spatial length `L` of the output tensor.
 
-`clipped (Iterable | int | None)`: Whether to clip the original time to start and end times. It can take a tuple like `(start, end)`, representing the end timestamp as an integer, or `None` (no clipping).
+`clipped (Iterable | int | None)`: How the events be clipped. By inputting a tuple `(start, end)` means clipping the events that have timestamp between `start` and `end`; by inputting an integer `end` means clipping the events that have timestamp no later than `end`. If the input is `None`, clipping will not happen.
 
 ### Example Usage
 
@@ -264,7 +264,7 @@ NMNIST(
 
 `polarity (bool)`: Whether the output tensor contains polarity. If `True`, the output tensor contains polarity, `P = 2`; otherwise, it does not, `P = 1`.
 
-`clipped (Iterable | int | None)`: Whether to clip the original time to start and end times. It can take a tuple like `(start, end)`, representing the end timestamp as an integer, or `None` (no clipping).
+`clipped (Iterable | int | None)`: How the events be clipped. By inputting a tuple `(start, end)` means clipping the events that have timestamp between `start` and `end`; by inputting an integer `end` means clipping the events that have timestamp no later than `end`. If the input is `None`, clipping will not happen.
 
 ### Example Usage
 
