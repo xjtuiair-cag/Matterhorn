@@ -21,6 +21,7 @@ CIFAR10DVS(
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     download: bool = False,
+    cached: bool = True,
     sampling: int = 1,
     count: bool = False,
     time_steps: int = 128,
@@ -42,6 +43,8 @@ CIFAR10DVS(
 `target_transform (Callable | None)`: Transformation applied to the labels in the dataset.
 
 `download (bool)`: Whether to attempt downloading the dataset resources if not available locally.
+
+`cached (bool)`: Whether to use cache. Cache will make costs on disk space but save the time used for training and validating.
 
 `sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs.
 
@@ -89,6 +92,7 @@ DVS128Gesture(
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     download: bool = False,
+    cached: bool = True,
     sampling: int = 1,
     count: bool = False,
     time_steps: int = 128,
@@ -110,6 +114,8 @@ DVS128Gesture(
 `target_transform (Callable | None)`: Transformation applied to the labels in the dataset.
 
 `download (bool)`: Whether to attempt downloading the dataset resources if not available locally.
+
+`cached (bool)`: Whether to use cache. Cache will make costs on disk space but save the time used for training and validating.
 
 `sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs.
 
@@ -155,6 +161,7 @@ CIFAR10DVS(
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     download: bool = False,
+    cached: bool = True,
     sampling: int = 1,
     count: bool = False,
     precision: float = 1e9,
@@ -175,6 +182,8 @@ CIFAR10DVS(
 `target_transform (Callable | None)`: Transformation applied to the labels in the dataset.
 
 `download (bool)`: Whether to attempt downloading the dataset resources if not available locally.
+
+`cached (bool)`: Whether to use cache. Cache will make costs on disk space but save the time used for training and validating.
 
 `sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs.
 
@@ -218,6 +227,7 @@ NMNIST(
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     download: bool = False,
+    cached: bool = True,
     sampling: int = 1,
     count: bool = False,
     time_steps: int = 128,
@@ -239,6 +249,8 @@ NMNIST(
 `target_transform (Callable | None)`: Transformation applied to the labels in the dataset.
 
 `download (bool)`: Whether to attempt downloading the dataset resources if not available locally.
+
+`cached (bool)`: Whether to use cache. Cache will make costs on disk space but save the time used for training and validating.
 
 `sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs.
 

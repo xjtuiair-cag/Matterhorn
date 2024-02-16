@@ -15,10 +15,6 @@ from zipfile import BadZipFile
 from rich import print
 from rich.progress import track
 from matterhorn_pytorch.data.skeleton import EventDataset2d
-try:
-    from rich import print
-except:
-    pass
 
 
 class AEDAT(EventDataset2d):
@@ -35,7 +31,7 @@ class AEDAT(EventDataset2d):
     p_shift = 0
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4", clipped: Optional[Union[Iterable, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4", clipped: Optional[Union[Iterable, int]] = None) -> None:
         """
         原始数据后缀名为.aedat的数据集
         Args:
@@ -44,6 +40,7 @@ class AEDAT(EventDataset2d):
             transform (Callable | None): 数据如何变换
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
+            cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             time_steps (int): 最终的数据集总共含有多少个时间步
@@ -61,6 +58,7 @@ class AEDAT(EventDataset2d):
             transform = transform,
             target_transform = target_transform,
             download = download,
+            cached = cached,
             sampling = sampling,
             count = count,
             t_size = time_steps,
@@ -71,7 +69,7 @@ class AEDAT(EventDataset2d):
         )
 
 
-    def filename_2_data(self, filename: str) -> np.ndarray:
+    def filename_to_data(self, filename: str) -> np.ndarray:
         """
         输入文件名，读取文件内容。
         Args:
@@ -92,7 +90,7 @@ class AEDAT(EventDataset2d):
         return data
     
     
-    def data_2_tpyx(self, data: np.ndarray) -> np.ndarray:
+    def data_to_tpyx(self, data: np.ndarray) -> np.ndarray:
         """
         将数据分割为t,p,y,x数组。
         Args:
@@ -163,7 +161,7 @@ class CIFAR10DVS(AEDAT):
     p_shift = 0
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
         """
         CIFAR-10 DVS数据集，将CIFAR10数据集投影至LCD屏幕后，用事件相机录制的数据集
         Args:
@@ -172,6 +170,7 @@ class CIFAR10DVS(AEDAT):
             transform (Callable | None): 数据如何变换
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
+            cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             time_steps (int): 最终的数据集总共含有多少个时间步
@@ -186,6 +185,7 @@ class CIFAR10DVS(AEDAT):
             transform = transform,
             target_transform = target_transform,
             download = download,
+            cached = cached,
             sampling = sampling,
             count = count,
             time_steps = time_steps,
@@ -268,12 +268,12 @@ class CIFAR10DVS(AEDAT):
         Returns:
             data_label (np.ndarray): 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
         """
-        list_filename = os.path.join(self.processed_folder, "__main__.csv")
+        list_filename = os.path.join(self.processed_folder, self.idx_filename)
         if os.path.isfile(list_filename):
             file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
             return file_list
         self.unzip()
-        self.clear_cache()
+        self.clear_processed()
         os.makedirs(self.processed_folder, exist_ok = True)
         file_list = []
         file_idx = 0
@@ -282,8 +282,8 @@ class CIFAR10DVS(AEDAT):
             aedat_files = os.listdir(os.path.join(self.extracted_folder, label_str))
             aedat_file_count = len(aedat_files)
             for filename in track(aedat_files, description = "Processing label %s" % (label_str,)):
-                raw_data = self.filename_2_data(os.path.join(self.extracted_folder, label_str, filename))
-                event_data = self.data_2_tpyx(raw_data)
+                raw_data = self.filename_to_data(os.path.join(self.extracted_folder, label_str, filename))
+                event_data = self.data_to_tpyx(raw_data)
                 self.save_event_data(file_idx, event_data)
                 file_list.append([file_idx, label, 1 if self.is_train(label, file_idx % aedat_file_count) else 0])
                 file_idx += 1
@@ -309,7 +309,7 @@ class DVS128Gesture(AEDAT):
     p_shift = 1
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
         """
         DVS128 Gesture数据集，用事件相机录制手势形成的数据集
         Args:
@@ -318,6 +318,7 @@ class DVS128Gesture(AEDAT):
             transform (Callable | None): 数据如何变换
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
+            cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             time_steps (int): 最终的数据集总共含有多少个时间步
@@ -332,6 +333,7 @@ class DVS128Gesture(AEDAT):
             transform = transform,
             target_transform = target_transform,
             download = download,
+            cached = cached,
             sampling = sampling,
             count = count,
             time_steps = time_steps,
@@ -421,7 +423,7 @@ class DVS128Gesture(AEDAT):
         return data
     
 
-    def filename_2_data(self, filename: str) -> np.ndarray:
+    def filename_to_data(self, filename: str) -> np.ndarray:
         """
         输入文件名，读取文件内容。
         Args:
@@ -449,12 +451,12 @@ class DVS128Gesture(AEDAT):
         Returns:
             data_label (np.ndarray): 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
         """
-        list_filename = os.path.join(self.processed_folder, "__main__.csv")
+        list_filename = os.path.join(self.processed_folder, self.idx_filename)
         if os.path.isfile(list_filename):
             file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
             return file_list
         self.unzip()
-        self.clear_cache()
+        self.clear_processed()
         aedat_file_dir = os.path.join(self.extracted_folder, "DvsGesture")
         aedat_files = os.listdir(aedat_file_dir)
         os.makedirs(self.processed_folder, exist_ok = True)
@@ -463,8 +465,8 @@ class DVS128Gesture(AEDAT):
         for filename in track(aedat_files, description = "Processing"):
             if not filename.endswith(".aedat"):
                 continue
-            raw_data = self.filename_2_data(os.path.join(aedat_file_dir, filename))
-            event_data = self.data_2_tpyx(raw_data)
+            raw_data = self.filename_to_data(os.path.join(aedat_file_dir, filename))
+            event_data = self.data_to_tpyx(raw_data)
             event_data[:, 2] = self.original_size[2] - 1 - event_data[:, 2]
             event_data[:, 3] = self.original_size[3] - 1 - event_data[:, 3]
             class_info = np.loadtxt(os.path.join(aedat_file_dir, filename.replace(".aedat", "_labels.csv")), dtype = "uint32", delimiter = ",", skiprows = 1)

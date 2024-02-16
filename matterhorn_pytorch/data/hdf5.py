@@ -14,10 +14,6 @@ from zipfile import BadZipFile
 from rich import print
 from rich.progress import track
 from matterhorn_pytorch.data.skeleton import EventDataset1d
-try:
-    from rich import print
-except:
-    pass
 
 
 class HDF5(EventDataset1d):
@@ -30,7 +26,7 @@ class HDF5(EventDataset1d):
     labels = []
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 128, clipped: Optional[Union[Iterable, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 128, clipped: Optional[Union[Iterable, float]] = None) -> None:
         """
         原始数据后缀名为.hdf5的数据集
         Args:
@@ -39,6 +35,7 @@ class HDF5(EventDataset1d):
             transform (Callable | None): 数据如何变换
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
+            cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             precision (int): 最终数据集的时间精度
@@ -52,6 +49,7 @@ class HDF5(EventDataset1d):
             transform = transform,
             target_transform = target_transform,
             download = download,
+            cached = cached,
             sampling = sampling,
             count = count,
             t_size = time_steps,
@@ -70,7 +68,7 @@ class HDF5(EventDataset1d):
         return None
 
 
-    def filename_2_data(self, filename: str) -> h5py.File:
+    def filename_to_data(self, filename: str) -> h5py.File:
         """
         输入文件名，读取文件内容。
         Args:
@@ -93,7 +91,7 @@ class SpikingHeidelbergDigits(HDF5):
     labels = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun"]
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, precision: float = 1e9, time_steps: int = 128, length: int = 700, clipped: Optional[Union[Iterable, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, precision: float = 1e9, time_steps: int = 128, length: int = 700, clipped: Optional[Union[Iterable, float]] = None) -> None:
         """
         Spiking Heidelberg Digits数据集，记录下英文和德语的0-9（总共20类），并转换成长度为700的脉冲。
         Args:
@@ -102,6 +100,7 @@ class SpikingHeidelbergDigits(HDF5):
             transform (Callable | None): 数据如何变换
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
+            cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             precision (float): 最终数据集的时间精度
@@ -115,6 +114,7 @@ class SpikingHeidelbergDigits(HDF5):
             transform = transform,
             target_transform = target_transform,
             download = download,
+            cached = cached,
             sampling = sampling,
             count = count,
             precision = precision,
@@ -180,18 +180,18 @@ class SpikingHeidelbergDigits(HDF5):
         Returns:
             data_label (np.ndarray): 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
         """
-        list_filename = os.path.join(self.processed_folder, "__main__.csv")
+        list_filename = os.path.join(self.processed_folder, self.idx_filename)
         if os.path.isfile(list_filename):
             file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
             return file_list
         self.unzip()
-        self.clear_cache()
+        self.clear_processed()
         os.makedirs(self.processed_folder, exist_ok = True)
         file_list = []
         file_idx = 0
         for is_train in range(2):
             is_train_str = "train" if is_train else "test"
-            raw_data = self.filename_2_data(os.path.join(self.extracted_folder, "shd_%s.h5" % (is_train_str,)))
+            raw_data = self.filename_to_data(os.path.join(self.extracted_folder, "shd_%s.h5" % (is_train_str,)))
             label_list = raw_data["labels"][:]
             for idx in track(range(len(label_list)), description = "Processing %sing set" % (is_train_str,)):
                 t = np.floor(raw_data["spikes"]["times"][idx] * self.precision).astype("uint32")

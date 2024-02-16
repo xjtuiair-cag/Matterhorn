@@ -21,6 +21,7 @@ CIFAR10DVS(
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     download: bool = False,
+    cached: bool = True,
     sampling: int = 1,
     count: bool = False,
     time_steps: int = 128,
@@ -42,6 +43,8 @@ CIFAR10DVS(
 `target_transform (Callable | None)` ：对数据集中标签的变换。
 
 `download (bool)` ：如果本地没有数据集的资源，是否尝试从网上下载。
+
+`cached (bool)` ：是否占用本地空间建立缓存。缓存会消耗空间资源，但会减少后续训练和验证的时间成本。
 
 `sampling (int)` ：每隔多少个事件取一个事件，默认为 `1` ，即选取数据集中全部的事件。该参数为了防止事件过密，从而节约计算成本。
 
@@ -89,6 +92,7 @@ DVS128Gesture(
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     download: bool = False,
+    cached: bool = True,
     sampling: int = 1,
     count: bool = False,
     time_steps: int = 128,
@@ -110,6 +114,8 @@ DVS128Gesture(
 `target_transform (Callable | None)` ：对数据集中标签的变换。
 
 `download (bool)` ：如果本地没有数据集的资源，是否尝试从网上下载。
+
+`cached (bool)` ：是否占用本地空间建立缓存。缓存会消耗空间资源，但会减少后续训练和验证的时间成本。
 
 `sampling (int)` ：每隔多少个事件取一个事件，默认为 `1` ，即选取数据集中全部的事件。该参数为了防止事件过密，从而节约计算成本。
 
@@ -155,6 +161,7 @@ CIFAR10DVS(
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     download: bool = False,
+    cached: bool = True,
     sampling: int = 1,
     count: bool = False,
     precision: float = 1e9,
@@ -175,6 +182,8 @@ CIFAR10DVS(
 `target_transform (Callable | None)` ：对数据集中标签的变换。
 
 `download (bool)` ：如果本地没有数据集的资源，是否尝试从网上下载。
+
+`cached (bool)` ：是否占用本地空间建立缓存。缓存会消耗空间资源，但会减少后续训练和验证的时间成本。
 
 `sampling (int)` ：每隔多少个事件取一个事件，默认为 `1` ，即选取数据集中全部的事件。该参数为了防止事件过密，从而节约计算成本。
 
@@ -218,6 +227,7 @@ NMNIST(
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     download: bool = False,
+    cached: bool = True,
     sampling: int = 1,
     count: bool = False,
     time_steps: int = 128,
@@ -239,6 +249,8 @@ NMNIST(
 `target_transform (Callable | None)` ：对数据集中标签的变换。
 
 `download (bool)` ：如果本地没有数据集的资源，是否尝试从网上下载。
+
+`cached (bool)` ：是否占用本地空间建立缓存。缓存会消耗空间资源，但会减少后续训练和验证的时间成本。
 
 `sampling (int)` ：每隔多少个事件取一个事件，默认为 `1` ，即选取数据集中全部的事件。该参数为了防止事件过密，从而节约计算成本。
 

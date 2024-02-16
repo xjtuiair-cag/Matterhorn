@@ -13,10 +13,6 @@ from zipfile import BadZipFile
 from rich import print
 from rich.progress import track
 from matterhorn_pytorch.data.skeleton import EventDataset2d
-try:
-    from rich import print
-except:
-    pass
 
 
 class NMNIST(EventDataset2d):
@@ -30,7 +26,7 @@ class NMNIST(EventDataset2d):
     labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 34, height: int = 34, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 34, height: int = 34, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
         """
         NMNIST数据集，将MNIST数据集动态变换后，转为事件的形式。
         Args:
@@ -39,6 +35,7 @@ class NMNIST(EventDataset2d):
             transform (Callable | None): 数据如何变换
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
+            cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             time_steps (int): 最终的数据集总共含有多少个时间步
@@ -53,6 +50,7 @@ class NMNIST(EventDataset2d):
             transform = transform,
             target_transform = target_transform,
             download = download,
+            cached = cached,
             sampling = sampling,
             count = count,
             t_size = time_steps,
@@ -113,7 +111,7 @@ class NMNIST(EventDataset2d):
             raise RuntimeError("There are error(s) in unzipping files.")
 
 
-    def filename_2_data(self, filename: str) -> np.ndarray:
+    def filename_to_data(self, filename: str) -> np.ndarray:
         """
         输入文件名，读取文件内容。
         Args:
@@ -128,7 +126,7 @@ class NMNIST(EventDataset2d):
         return data
 
 
-    def data_2_tpyx(self, data: np.ndarray) -> np.ndarray:
+    def data_to_tpyx(self, data: np.ndarray) -> np.ndarray:
         """
         将数据分割为t,p,y,x数组。
         Args:
@@ -153,12 +151,12 @@ class NMNIST(EventDataset2d):
         Returns:
             data_label (np.ndarray): 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
         """
-        list_filename = os.path.join(self.processed_folder, "__main__.csv")
+        list_filename = os.path.join(self.processed_folder, self.idx_filename)
         if os.path.isfile(list_filename):
             file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
             return file_list
         self.unzip()
-        self.clear_cache()
+        self.clear_processed()
         os.makedirs(self.processed_folder, exist_ok = True)
         file_list = []
         file_idx = 0
@@ -169,8 +167,8 @@ class NMNIST(EventDataset2d):
                 raw_file_dir = os.path.join(self.extracted_folder, is_train_str, label_str)
                 raw_file_list = os.listdir(raw_file_dir)
                 for raw_filename in raw_file_list:
-                    raw_data = self.filename_2_data(os.path.join(raw_file_dir, raw_filename))
-                    event_data = self.data_2_tpyx(raw_data)
+                    raw_data = self.filename_to_data(os.path.join(raw_file_dir, raw_filename))
+                    event_data = self.data_to_tpyx(raw_data)
                     self.save_event_data(file_idx, event_data)
                     file_list.append([file_idx, label, is_train])
                     file_idx += 1
