@@ -16,7 +16,7 @@ import json
 import time
 import shutil
 import multiprocessing
-from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED
+from concurrent.futures import ThreadPoolExecutor, wait
 import hashlib
 
 
@@ -155,40 +155,47 @@ class EventDataset(Dataset):
         创建缓存。
         """
         demanded_type = hashlib.md5(("%d" % (self.sampling,)).encode("utf-8")).hexdigest()
-        if os.path.isdir(self.cached_folder) and os.path.isfile(os.path.join(self.cached_folder, "__info__.json")):
-            cache_info = json.load(os.path.join(self.cached_folder, "__info__.json"))
-            cache_type = cache_info["type"]
-            cache_size = cache_info["object_num"]
-            cache_mtime = cache_info["last_modified"]
-            if cache_type == demanded_type and cache_size == len(self.data_target):
+        cache_info = {
+            "type": demanded_type,
+            "object_num": len(self.data_target),
+            "last_modified": time.time()
+        }
+        if os.path.isdir(self.cached_folder) and os.path.isfile(os.path.join(self.cached_folder, "__info__.json")):   
+            with open(os.path.join(self.cached_folder, "__info__.json"), "r", encoding = "utf-8") as f:
+                old_cache_info = json.load(f)
+            cache_type = old_cache_info["type"]
+            cache_size = old_cache_info["object_num"]
+            cache_mtime = old_cache_info["last_modified"]
+            file_num = len(os.listdir(self.cached_folder)) - 1
+            if cache_type == demanded_type and cache_size == len(self.data_target) and cache_size == file_num:
                 print("[green]Using cache file.[/green]")
-                json.dump({
-                    "type": demanded_type,
-                    "object_num": len(self.data_target),
-                    "last_modified": time.time()
-                }, os.path.join(self.cached_folder, "__info__.json"))
+                with open(os.path.join(self.cached_folder, "__info__.json"), "w", encoding = "utf-8") as f:
+                    json.dump(cache_info, f)
                 return
         self.clear_cache()
         os.makedirs(self.cached_folder, exist_ok = True)
-        with ThreadPoolExecutor(max_workers = multiprocessing.cpu_count()) as t:
-            def create_cache_file(source, dest):
+        print(multiprocessing.cpu_count())
+        with ThreadPoolExecutor(max_workers = multiprocessing.cpu_count() * 4) as t:
+            def create_cache_file(source, dest, convert):
                 if os.path.isfile(dest):
                     return
                 data = np.load(source)
-                data = self.event_data_to_tensor(data)
+                data = convert(data)
                 torch.save(data, dest)
             task_pool = []
             for data_target in self.data_target:
                 data_idx = data_target[0]
                 source_dir = os.path.join(self.processed_folder, "%d.npy" % (data_idx,))
                 target_dir = os.path.join(self.cached_folder, "%d.pt" % (data_idx,))
-                task_pool.append(t.submit(create_cache_file, (source_dir, target_dir)))
-            wait(task_pool, return_when = ALL_COMPLETED)
-        json.dump({
-            "type": hashlib.md5(("%d" % (self.sampling,)).encode("utf-8")).hexdigest(),
-            "object_num": len(self.data_target),
-            "last_modified": time.time()
-        }, os.path.join(self.cached_folder, "__info__.json"))
+                task_pool.append(t.submit(create_cache_file, source_dir, target_dir, self.event_data_to_tensor))
+            wait(task_pool)
+            for idx in range(len(task_pool)):
+                t = task_pool[idx]
+                if t.exception():
+                    print("[red bold]Error occured in thread %d:[/red bold]" % (idx,))
+                    print(t.exception())
+        with open(os.path.join(self.cached_folder, "__info__.json"), "w", encoding = "utf-8") as f:
+            json.dump(cache_info, f)
 
 
     def clear_cache(self) -> None:
@@ -204,7 +211,11 @@ class EventDataset(Dataset):
                 cur_path = os.path.join(cached_folder, folder)
                 if cur_path == self.cached_subfolder:
                     continue
-                cache_info = json.load(os.path.join(self.cached_folder, "__info__.json"))
+                if not os.path.isfile(os.path.join(self.cached_folder, "__info__.json")):
+                    shutil.rmtree(cur_path)
+                    continue
+                with open(os.path.join(self.cached_folder, "__info__.json"), "r", encoding = "utf-8") as f:
+                    cache_info = json.load(f)
                 cache_type = cache_info["type"]
                 cache_mtime = cache_info["last_modified"]
                 if cache_type != demanded_type or now - cache_mtime > 24 * 60 * 60:
