@@ -174,8 +174,8 @@ class EventDataset(Dataset):
                 return
         self.clear_cache()
         os.makedirs(self.cached_folder, exist_ok = True)
-        print(multiprocessing.cpu_count())
-        with ThreadPoolExecutor(max_workers = multiprocessing.cpu_count() * 4) as t:
+        print("[blue]Making cache, please wait ...[/blue]")
+        with ThreadPoolExecutor(max_workers = multiprocessing.cpu_count() * 2) as t:
             def create_cache_file(source, dest, convert):
                 if os.path.isfile(dest):
                     return
@@ -193,7 +193,8 @@ class EventDataset(Dataset):
                 t = task_pool[idx]
                 if t.exception():
                     print("[red bold]Error occured in thread %d:[/red bold]" % (idx,))
-                    print(t.exception())
+                    raise RuntimeError(t.exception())
+        print("[green]Successfully made cache of %d data.[/green]" % (len(self.data_target,)))
         with open(os.path.join(self.cached_folder, "__info__.json"), "w", encoding = "utf-8") as f:
             json.dump(cache_info, f)
 
