@@ -174,6 +174,27 @@ class EventDataset(Dataset):
                 return
         self.clear_cache()
         os.makedirs(self.cached_folder, exist_ok = True)
+        print("[blue]Making cache, please wait ...[/blue]")
+        with ThreadPoolExecutor(max_workers = multiprocessing.cpu_count() * 2) as t:
+            def create_cache_file(source, dest, convert):
+                if os.path.isfile(dest):
+                    return
+                data = np.load(source)
+                data = convert(data)
+                torch.save(data, dest)
+            task_pool = []
+            for data_target in self.data_target:
+                data_idx = data_target[0]
+                source_dir = os.path.join(self.processed_folder, "%d.npy" % (data_idx,))
+                target_dir = os.path.join(self.cached_folder, "%d.pt" % (data_idx,))
+                task_pool.append(t.submit(create_cache_file, source_dir, target_dir, self.event_data_to_tensor))
+            wait(task_pool)
+            for idx in range(len(task_pool)):
+                t = task_pool[idx]
+                if t.exception():
+                    print("[red bold]Error occured in thread %d:[/red bold]" % (idx,))
+                    raise RuntimeError(t.exception())
+        print("[green]Successfully made cache of %d data.[/green]" % (len(self.data_target,)))
 
         def create_cache_file(source, dest, convert):
             if os.path.isfile(dest):
