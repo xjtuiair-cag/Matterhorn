@@ -46,7 +46,7 @@ CIFAR10DVS(
 
 `cached (bool)`: Whether to use cache. Cache will make costs on disk space but save the time used for training and validating.
 
-`sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs.
+`sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs. **Note:** Please make sure that this parameter is same in both training set and testing set, otherwise errors will occur.
 
 `count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
 
@@ -117,7 +117,7 @@ DVS128Gesture(
 
 `cached (bool)`: Whether to use cache. Cache will make costs on disk space but save the time used for training and validating.
 
-`sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs.
+`sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs. **Note:** Please make sure that this parameter is same in both training set and testing set, otherwise errors will occur.
 
 `count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
 
@@ -185,7 +185,7 @@ CIFAR10DVS(
 
 `cached (bool)`: Whether to use cache. Cache will make costs on disk space but save the time used for training and validating.
 
-`sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs.
+`sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs. **Note:** Please make sure that this parameter is same in both training set and testing set, otherwise errors will occur.
 
 `count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
 
@@ -252,7 +252,7 @@ NMNIST(
 
 `cached (bool)`: Whether to use cache. Cache will make costs on disk space but save the time used for training and validating.
 
-`sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs.
+`sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs. **Note:** Please make sure that this parameter is same in both training set and testing set, otherwise errors will occur.
 
 `count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
 

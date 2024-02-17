@@ -155,39 +155,57 @@ class EventDataset(Dataset):
         创建缓存。
         """
         demanded_type = hashlib.md5(("%d" % (self.sampling,)).encode("utf-8")).hexdigest()
+        info_json = os.path.join(self.cached_folder, "__info__.json")
         cache_info = {
             "type": demanded_type,
             "object_num": len(self.data_target),
             "last_modified": time.time()
         }
-        if os.path.isdir(self.cached_folder) and os.path.isfile(os.path.join(self.cached_folder, "__info__.json")):   
-            with open(os.path.join(self.cached_folder, "__info__.json"), "r", encoding = "utf-8") as f:
+
+        # 打开缓存文件夹，查看基本信息
+        if os.path.isdir(self.cached_folder) and os.path.isfile(info_json):   
+            with open(info_json, "r", encoding = "utf-8") as f:
                 old_cache_info = json.load(f)
             cache_type = old_cache_info["type"]
             cache_size = old_cache_info["object_num"]
             cache_mtime = old_cache_info["last_modified"]
             file_num = len(os.listdir(self.cached_folder)) - 1
+
+            # 如果类型对得上，且文件个数一致，就更新基本信息，使用原缓存
             if cache_type == demanded_type and cache_size == len(self.data_target) and cache_size == file_num:
                 print("[green]Using cache file.[/green]")
-                with open(os.path.join(self.cached_folder, "__info__.json"), "w", encoding = "utf-8") as f:
+                with open(info_json, "w", encoding = "utf-8") as f:
                     json.dump(cache_info, f)
                 return
+        
+        # 若打不开缓存文件夹或缓存文件夹不满足条件，清除原有的其它缓存，重建新的缓存
         self.clear_cache()
         os.makedirs(self.cached_folder, exist_ok = True)
         print("[blue]Making cache, please wait ...[/blue]")
 
-        def create_cache_file(source, dest, convert):
+        def create_cache_file(source: str, dest: str, convert: Callable) -> None:
+            """
+            将数据从源地址加载出来后，经过转换，放入目标地址。
+            Args:
+                source (str): 源地址
+                dest (str): 目标地址
+                convert (Callable): 转换规则
+            """
             if os.path.isfile(dest):
                 return
             data = np.load(source)
             data = convert(data)
             torch.save(data, dest)
         
+        # 使用多线程进行转换。为保险起见，用最多2*CPU个worker，每次处理4*CPU个数据
         workers_num = multiprocessing.cpu_count() * 2
         batch_size = workers_num * 4
         looping = ((len(self.data_target) - 1) // batch_size) + 1
+
+        # 循环处理每个数据，得到缓存
         for i in track(range(looping), description = "Making cache"):
             with ThreadPoolExecutor(max_workers = workers_num) as t:
+                # 执行线程
                 task_pool = []
                 for j in range(batch_size):
                     idx = i * batch_size + j
@@ -198,14 +216,17 @@ class EventDataset(Dataset):
                     target_dir = os.path.join(self.cached_folder, "%d.pt" % (data_idx,))
                     task_pool.append(t.submit(create_cache_file, source_dir, target_dir, self.event_data_to_tensor))
                 wait(task_pool)
+
+                # 检查线程有无出错
                 for k in range(len(task_pool)):
                     t = task_pool[k]
                     if t.exception():
                         print("[red bold]Error occured in thread %d:[/red bold]" % (idx,))
                         raise RuntimeError(t.exception())
         
+        # 写入基本信息
         print("[green]Successfully made cache of %d data.[/green]" % (len(self.data_target,)))
-        with open(os.path.join(self.cached_folder, "__info__.json"), "w", encoding = "utf-8") as f:
+        with open(info_json, "w", encoding = "utf-8") as f:
             json.dump(cache_info, f)
 
 
@@ -216,21 +237,34 @@ class EventDataset(Dataset):
         demanded_type = hashlib.md5(("%d" % (self.sampling,)).encode("utf-8")).hexdigest()
         now = time.time()
         cached_folder = os.path.join(self.root, self.__class__.__name__, "cached")
+
         if os.path.isdir(cached_folder):
             cached_list = os.listdir(cached_folder)
-            for folder in cached_list:
-                cur_path = os.path.join(cached_folder, folder)
+            # 遍历缓存文件夹的子文件夹
+            for sub_folder in cached_list:
+                cur_path = os.path.join(cached_folder, sub_folder)
+                info_json = os.path.join(cur_path, "__info__.json")
+
+                # 检查缓存文件夹是否是当前需要的文件夹（子文件夹名字是否一致），如果一致就跳过该文件夹
                 if cur_path == self.cached_subfolder:
                     continue
-                if not os.path.isfile(os.path.join(self.cached_folder, "__info__.json")):
+
+                # 允许同标签且较新的所有缓存文件夹存在。如果文件夹内的信息不存在，当作无效缓存，删除处理
+                if not os.path.isfile(info_json):
+                    print("[yellow]Invalid cache folder %s found, trying to remove.[/yellow]" % (sub_folder,))
                     shutil.rmtree(cur_path)
+                    print("[green]Successfully removed cache %d.[/green]" % (sub_folder,))
                     continue
-                with open(os.path.join(self.cached_folder, "__info__.json"), "r", encoding = "utf-8") as f:
+
+                # 检查文件夹内的信息，如果标签不匹配或未使用时间超过一周，当作无效缓存，删除处理
+                with open(info_json, "r", encoding = "utf-8") as f:
                     cache_info = json.load(f)
                 cache_type = cache_info["type"]
                 cache_mtime = cache_info["last_modified"]
-                if cache_type != demanded_type or now - cache_mtime > 60 * 60:
+                if cache_type != demanded_type or now - cache_mtime > 7 * 24 * 60 * 60:
+                    print("[yellow]Outdated cache folder %s found, trying to remove.[/yellow]" % (sub_folder,))
                     shutil.rmtree(cur_path)
+                    print("[green]Successfully removed cache %d.[/green]" % (sub_folder,))
 
 
     def check_exists(self) -> bool:

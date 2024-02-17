@@ -8,7 +8,7 @@ TNN的相关函数。
 import torch
 import torch.nn as nn
 from typing import Any
-from matterhorn_pytorch.snn.functional import backward_gaussian
+from matterhorn_pytorch.snn.functional import forward_heaviside, backward_gaussian, heaviside_gaussian
 try:
     from rich import print
 except:
@@ -44,7 +44,6 @@ def t_delta(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     return out
 
 
-@torch.jit.script
 def t_to_s(t: torch.Tensor, time_steps: int, t_offset: int = 0) -> torch.Tensor:
     """
     将脉冲时间转换为脉冲序列。
@@ -55,11 +54,11 @@ def t_to_s(t: torch.Tensor, time_steps: int, t_offset: int = 0) -> torch.Tensor:
     Returns:
         s (torch.Tensor): 脉冲序列，形状为[T, ...]
     """
-    s_seq = []
-    for t_s in range(time_steps):
-        s = (t <= (t_s + t_offset)).to(t)
-        s_seq.append(s)
-    s = torch.stack(s_seq)
+    t_size = time_steps + t_offset
+    T = lambda x: x.permute(*torch.arange(x.ndim - 1, -1, -1))
+    spike_ts = torch.ones([t_size] + list(t.shape)) * (t + t_offset)
+    current_ts = T(T(torch.ones_like(spike_ts)) * torch.arange(t_size)).to(spike_ts)
+    s = heaviside_gaussian(current_ts - spike_ts) # t - ts >= 0 -> t >= ts
     return s
 
 
@@ -232,7 +231,7 @@ class t_rl_inh(torch.autograd.Function):
         """
         delta, = ctx.saved_tensors
         mask = ~torch.isinf(delta)
-        grad_delta = grad_output * -backward_gaussian(torch.ones_like(grad_output), delta)
+        grad_delta = -backward_gaussian(grad_output, delta)
         grad_x = torch.where(mask, grad_delta, torch.zeros_like(grad_output))
         grad_y = -torch.where(mask, grad_delta, torch.zeros_like(grad_output))
         return grad_x, grad_y
@@ -381,7 +380,6 @@ def t_ge(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     return out
 
 
-@torch.jit.script
 def s_to_t(s: torch.Tensor) -> torch.Tensor:
     """
     将脉冲序列转换为脉冲时间。若脉冲序列上无脉冲，则将其转为inf。
@@ -390,7 +388,7 @@ def s_to_t(s: torch.Tensor) -> torch.Tensor:
     Returns:
         t (torch.Tensor): 时间序列，形状为[...]
     """
-    t = torch.where(torch.sum(s, dim = 0) > 0, torch.argmax(s, dim = 0), torch.full_like(s[0], torch.inf))
+    t = torch.where(torch.sum(s, dim = 0).nonzero(), torch.argmax(s, dim = 0), torch.full_like(s[0], torch.inf))
     return t
 
 
