@@ -256,7 +256,7 @@ class EventDataset(Dataset):
                 if not os.path.isfile(info_json):
                     print("[yellow]Invalid cache folder %s found, trying to remove.[/yellow]" % (sub_folder,))
                     shutil.rmtree(cur_path)
-                    print("[green]Successfully removed cache %d.[/green]" % (sub_folder,))
+                    print("[green]Successfully removed cache %s.[/green]" % (sub_folder,))
                     continue
 
                 # 检查文件夹内的信息，如果标签不匹配或未使用时间超过一周，当作无效缓存，删除处理
@@ -267,7 +267,7 @@ class EventDataset(Dataset):
                 if cache_type != demanded_type or now - cache_mtime > 7 * 24 * 60 * 60:
                     print("[yellow]Outdated cache folder %s found, trying to remove.[/yellow]" % (sub_folder,))
                     shutil.rmtree(cur_path)
-                    print("[green]Successfully removed cache %d.[/green]" % (sub_folder,))
+                    print("[green]Successfully removed cache %s.[/green]" % (sub_folder,))
 
 
     def check_exists(self) -> bool:
