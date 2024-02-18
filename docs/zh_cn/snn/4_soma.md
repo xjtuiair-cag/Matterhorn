@@ -163,8 +163,8 @@ LIF(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -188,7 +188,7 @@ LIF(
 
 `device (torch.device)` ：计算所使用的计算设备。
 
-`dtype` ：计算所使用的数据类型。
+`dtype (torch.dtype)` ：计算所使用的数据类型。
 
 ### 示例用法
 
@@ -250,8 +250,8 @@ QIF(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -279,7 +279,7 @@ QIF(
 
 `device (torch.device)` ：计算所使用的计算设备。
 
-`dtype` ：计算所使用的数据类型。
+`dtype (torch.dtype)` ：计算所使用的数据类型。
 
 ### 示例用法
 
@@ -343,8 +343,8 @@ ExpIF(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -372,7 +372,7 @@ ExpIF(
 
 `device (torch.device)` ：计算所使用的计算设备。
 
-`dtype` ：计算所使用的数据类型。
+`dtype (torch.dtype)` ：计算所使用的数据类型。
 
 ### 示例用法
 
@@ -441,8 +441,8 @@ Izhikevich(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -468,7 +468,7 @@ Izhikevich(
 
 `device (torch.device)` ：计算所使用的计算设备。
 
-`dtype` ：计算所使用的数据类型。
+`dtype (torch.dtype)` ：计算所使用的数据类型。
 
 ### 示例用法
 
@@ -528,8 +528,8 @@ KLIF(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -555,7 +555,7 @@ KLIF(
 
 `device (torch.device)` ：计算所使用的计算设备。
 
-`dtype` ：计算所使用的数据类型。
+`dtype (torch.dtype)` ：计算所使用的数据类型。
 
 ### 示例用法
 
@@ -600,8 +600,8 @@ LIAF(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -627,7 +627,7 @@ LIAF(
 
 `device (torch.device)` ：计算所使用的计算设备。
 
-`dtype` ：计算所使用的数据类型。
+`dtype (torch.dtype)` ：计算所使用的数据类型。
 
 ### 示例用法
 

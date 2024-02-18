@@ -19,7 +19,7 @@ except:
 
 
 class LSM(snn.Module):
-    def __init__(self, adjacent: torch.Tensor, soma: snn.Module, multi_time_step: bool = True, reset_after_process: bool = True, device = None, dtype = None) -> None:
+    def __init__(self, adjacent: torch.Tensor, soma: snn.Module, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         液体状态机。
         Args:
@@ -156,7 +156,7 @@ class LSM(snn.Module):
 
 
 class STDPLSM(LSM):
-    def __init__(self, adjacent: torch.Tensor, soma: Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, reset_after_process: bool = True, device = None, dtype = None) -> None:
+    def __init__(self, adjacent: torch.Tensor, soma: Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         super().__init__(
             adjacent = adjacent,
             soma = soma,

@@ -163,8 +163,8 @@ LIF(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -188,7 +188,7 @@ LIF(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -250,8 +250,8 @@ QIF(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -279,7 +279,7 @@ QIF(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -343,8 +343,8 @@ ExpIF(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -372,7 +372,7 @@ ExpIF(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -441,8 +441,8 @@ Izhikevich(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -468,7 +468,7 @@ Izhikevich(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -528,8 +528,8 @@ KLIF(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -555,7 +555,7 @@ KLIF(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -600,8 +600,8 @@ LIAF(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -627,7 +627,7 @@ LIAF(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 

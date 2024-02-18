@@ -5,6 +5,7 @@ AEDAT类数据集（后缀名为.aedat）。
 
 
 import numpy as np
+import torch
 import os
 import re
 import shutil
@@ -31,7 +32,7 @@ class AEDAT(EventDataset2d):
     p_shift = 0
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4", clipped: Optional[Union[Iterable, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4", clipped: Optional[Union[Iterable, int]] = None) -> None:
         """
         原始数据后缀名为.aedat的数据集
         Args:
@@ -41,6 +42,7 @@ class AEDAT(EventDataset2d):
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
+            cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             time_steps (int): 最终的数据集总共含有多少个时间步
@@ -59,6 +61,7 @@ class AEDAT(EventDataset2d):
             target_transform = target_transform,
             download = download,
             cached = cached,
+            cache_dtype = cache_dtype,
             sampling = sampling,
             count = count,
             t_size = time_steps,
@@ -161,7 +164,7 @@ class CIFAR10DVS(AEDAT):
     p_shift = 0
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
         """
         CIFAR-10 DVS数据集，将CIFAR10数据集投影至LCD屏幕后，用事件相机录制的数据集
         Args:
@@ -171,6 +174,7 @@ class CIFAR10DVS(AEDAT):
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
+            cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             time_steps (int): 最终的数据集总共含有多少个时间步
@@ -186,6 +190,7 @@ class CIFAR10DVS(AEDAT):
             target_transform = target_transform,
             download = download,
             cached = cached,
+            cache_dtype = cache_dtype,
             sampling = sampling,
             count = count,
             time_steps = time_steps,
@@ -309,7 +314,7 @@ class DVS128Gesture(AEDAT):
     p_shift = 1
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
         """
         DVS128 Gesture数据集，用事件相机录制手势形成的数据集
         Args:
@@ -319,6 +324,7 @@ class DVS128Gesture(AEDAT):
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
+            cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             time_steps (int): 最终的数据集总共含有多少个时间步
@@ -334,6 +340,7 @@ class DVS128Gesture(AEDAT):
             target_transform = target_transform,
             download = download,
             cached = cached,
+            cache_dtype = cache_dtype,
             sampling = sampling,
             count = count,
             time_steps = time_steps,

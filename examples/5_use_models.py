@@ -1,10 +1,12 @@
 import torch
 from torch.utils.data import DataLoader
 import matterhorn_pytorch as mth
+from matterhorn_pytorch.model.sew import SEWRes18
+from matterhorn_pytorch.data import CIFAR10DVS
 from functions import *
 from rich import print
 
-
+ 
 def main():
     print_title("Example 5", style = "bold blue")
 
@@ -28,7 +30,7 @@ def main():
 
     print_title("Model")
 
-    model = mth.model.SEWRes18(
+    model = SEWRes18(
         input_h_w = (128, 128),
         num_classes = 10,
         tau_m = tau
@@ -38,13 +40,13 @@ def main():
 
     print_title("Dataset")
 
-    train_dataset = mth.data.CIFAR10DVS(
+    train_dataset = CIFAR10DVS(
         root = "./examples/data",
         train = True,
         download = True,
         time_steps = time_steps
     )
-    test_dataset = mth.data.CIFAR10DVS(
+    test_dataset = CIFAR10DVS(
         root = "./examples/data",
         train = False,
         download = True,

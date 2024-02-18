@@ -26,7 +26,7 @@ class SRM0Linear(Module):
     supported_surrogate_gradients = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
 
 
-    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: nn.Module = surrogate.Gaussian(), multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
+    def __init__(self, in_features: int, out_features: int, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: nn.Module = surrogate.Gaussian(), multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         SRM0神经元，突触响应的神经元
         电位公式较为复杂：
@@ -50,7 +50,7 @@ class SRM0Linear(Module):
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
-            dtype: 所计算的数据类型
+            dtype (torch.dtype): 所计算的数据类型
         """
         super().__init__(
             multi_time_step = multi_time_step,
@@ -235,7 +235,7 @@ class SRM0Linear(Module):
 
 
 class STDPLinear(Module, nn.Linear):
-    def __init__(self, in_features: int, out_features: int, soma: Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, device = None, dtype = None) -> None:
+    def __init__(self, in_features: int, out_features: int, soma: Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层
         Args:
@@ -248,7 +248,7 @@ class STDPLinear(Module, nn.Linear):
             tau_neg (float): STDP参数tau-
             multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
-            dtype: 所计算的数据类型
+            dtype (torch.dtype): 所计算的数据类型
         """
         Module.__init__(
             self,

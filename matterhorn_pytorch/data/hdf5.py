@@ -5,6 +5,7 @@ HDF5类数据集（后缀名为.h5）。
 
 
 import numpy as np
+import torch
 import os
 import h5py
 from torchvision.datasets.utils import check_integrity, download_url, extract_archive
@@ -26,7 +27,7 @@ class HDF5(EventDataset1d):
     labels = []
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 128, clipped: Optional[Union[Iterable, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 128, clipped: Optional[Union[Iterable, float]] = None) -> None:
         """
         原始数据后缀名为.hdf5的数据集
         Args:
@@ -36,6 +37,7 @@ class HDF5(EventDataset1d):
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
+            cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             precision (int): 最终数据集的时间精度
@@ -50,6 +52,7 @@ class HDF5(EventDataset1d):
             target_transform = target_transform,
             download = download,
             cached = cached,
+            cache_dtype = cache_dtype,
             sampling = sampling,
             count = count,
             t_size = time_steps,
@@ -91,7 +94,7 @@ class SpikingHeidelbergDigits(HDF5):
     labels = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun"]
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, precision: float = 1e9, time_steps: int = 128, length: int = 700, clipped: Optional[Union[Iterable, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False, precision: float = 1e9, time_steps: int = 128, length: int = 700, clipped: Optional[Union[Iterable, float]] = None) -> None:
         """
         Spiking Heidelberg Digits数据集，记录下英文和德语的0-9（总共20类），并转换成长度为700的脉冲。
         Args:
@@ -101,6 +104,7 @@ class SpikingHeidelbergDigits(HDF5):
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
+            cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             precision (float): 最终数据集的时间精度
@@ -115,6 +119,7 @@ class SpikingHeidelbergDigits(HDF5):
             target_transform = target_transform,
             download = download,
             cached = cached,
+            cache_dtype = cache_dtype,
             sampling = sampling,
             count = count,
             precision = precision,

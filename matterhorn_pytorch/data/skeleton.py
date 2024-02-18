@@ -32,7 +32,7 @@ class EventDataset(Dataset):
     data_target = []
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False) -> None:
         """
         事件数据集框架
         Args:
@@ -42,6 +42,7 @@ class EventDataset(Dataset):
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
+            cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
         """
@@ -51,6 +52,7 @@ class EventDataset(Dataset):
         self.target_transform = target_transform
         self.train = train
         self.cached = cached
+        self.cache_dtype = cache_dtype
         self.sampling = sampling
         self.count = count
         if download:
@@ -129,7 +131,7 @@ class EventDataset(Dataset):
         Returns:
             res (str): 张量缓存子文件夹
         """
-        appendix = ""
+        appendix = "_%s" % (str(self.cache_dtype))
         if self.clipped is not None:
             if isinstance(self.clipped, int):
                 appendix += "_0_%d" % (self.clipped,)
@@ -183,7 +185,7 @@ class EventDataset(Dataset):
         os.makedirs(self.cached_folder, exist_ok = True)
         print("[blue]Making cache, please wait ...[/blue]")
 
-        def create_cache_file(source: str, dest: str, convert: Callable) -> None:
+        def create_cache_file(source: str, dest: str, convert: Callable, dtype: torch.dtype) -> None:
             """
             将数据从源地址加载出来后，经过转换，放入目标地址。
             Args:
@@ -195,6 +197,7 @@ class EventDataset(Dataset):
                 return
             data = np.load(source)
             data = convert(data)
+            data = data.to(dtype)
             torch.save(data, dest)
         
         # 使用多线程进行转换。为保险起见，用最多2*CPU个worker，每次处理4*CPU个数据
@@ -214,7 +217,7 @@ class EventDataset(Dataset):
                     data_idx = self.data_target[idx][0]
                     source_dir = os.path.join(self.processed_folder, "%d.npy" % (data_idx,))
                     target_dir = os.path.join(self.cached_folder, "%d.pt" % (data_idx,))
-                    task_pool.append(t.submit(create_cache_file, source_dir, target_dir, self.event_data_to_tensor))
+                    task_pool.append(t.submit(create_cache_file, source_dir, target_dir, self.event_data_to_tensor, self.cache_dtype))
                 wait(task_pool)
 
                 # 检查线程有无出错
@@ -363,6 +366,7 @@ class EventDataset(Dataset):
         data_idx = self.data_target[index][0]
         if self.cached:
             data = torch.load(os.path.join(self.cached_folder, "%d.pt" % (data_idx,)))
+            data = data.to(torch.float)
         else:
             source_dir = os.path.join(self.processed_folder, "%d.npy" % (data_idx,))
             data = np.load(source_dir)
@@ -379,7 +383,7 @@ class EventDataset1d(EventDataset):
     original_size = (1, 2, 128)
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, t_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False, t_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, float]] = None) -> None:
         """
         一维事件数据集框架
         Args:
@@ -389,6 +393,7 @@ class EventDataset1d(EventDataset):
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
+            cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             t_size (int): 时间维度的大小
@@ -410,6 +415,7 @@ class EventDataset1d(EventDataset):
             target_transform = target_transform,
             download = download,
             cached = cached,
+            cache_dtype = cache_dtype,
             sampling = sampling,
             count = count
         )
@@ -489,7 +495,7 @@ class EventDataset2d(EventDataset):
     original_size = (1, 2, 128, 128)
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, t_size: int = 128, y_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False, t_size: int = 128, y_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, float]] = None) -> None:
         """
         二维事件数据集框架
         Args:
@@ -499,6 +505,7 @@ class EventDataset2d(EventDataset):
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
+            cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             t_size (int): 时间维度的大小
@@ -522,6 +529,7 @@ class EventDataset2d(EventDataset):
             target_transform = target_transform,
             download = download,
             cached = cached,
+            cache_dtype = cache_dtype,
             sampling = sampling,
             count = count
         )

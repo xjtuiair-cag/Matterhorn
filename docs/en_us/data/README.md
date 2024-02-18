@@ -46,6 +46,8 @@ CIFAR10DVS(
 
 `cached (bool)`: Whether to use cache. Cache will make costs on disk space but save the time used for training and validating.
 
+`cache_dtype (torch.dtype)` ：If using cache, this parameter indicates the data type of cache. Default is `torch.uint8`. Set it to `torch.float` to use higher precision to save the count data when the parameter `count = True`.
+
 `sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs. **Note:** Please make sure that this parameter is same in both training set and testing set, otherwise errors will occur.
 
 `count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
@@ -65,9 +67,10 @@ CIFAR10DVS(
 ```python
 import torch
 import matterhorn_pytorch as mth
+from matterhorn_pytorch.data import CIFAR10DVS
 
 
-test_dataset = mth.data.CIFAR10DVS(
+test_dataset = CIFAR10DVS(
     root = './examples/data',
     train = False,
     download = True,
@@ -117,6 +120,8 @@ DVS128Gesture(
 
 `cached (bool)`: Whether to use cache. Cache will make costs on disk space but save the time used for training and validating.
 
+`cache_dtype (torch.dtype)` ：If using cache, this parameter indicates the data type of cache. Default is `torch.uint8`. Set it to `torch.float` to use higher precision to save the count data when the parameter `count = True`.
+
 `sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs. **Note:** Please make sure that this parameter is same in both training set and testing set, otherwise errors will occur.
 
 `count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
@@ -136,9 +141,10 @@ DVS128Gesture(
 ```python
 import torch
 import matterhorn_pytorch as mth
+from matterhorn_pytorch.data import DVS128Gesture
 
 
-test_dataset = mth.data.DVS128Gesture(
+test_dataset = DVS128Gesture(
     root = './examples/data',
     train = False,
     download = True,
@@ -185,6 +191,8 @@ CIFAR10DVS(
 
 `cached (bool)`: Whether to use cache. Cache will make costs on disk space but save the time used for training and validating.
 
+`cache_dtype (torch.dtype)` ：If using cache, this parameter indicates the data type of cache. Default is `torch.uint8`. Set it to `torch.float` to use higher precision to save the count data when the parameter `count = True`.
+
 `sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs. **Note:** Please make sure that this parameter is same in both training set and testing set, otherwise errors will occur.
 
 `count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
@@ -202,9 +210,10 @@ CIFAR10DVS(
 ```python
 import torch
 import matterhorn_pytorch as mth
+from matterhorn_pytorch.data import SpikingHeidelbergDigits
 
 
-test_dataset = mth.data.SpikingHeidelbergDigits(
+test_dataset = SpikingHeidelbergDigits(
     root = './examples/data',
     train = False,
     download = True,
@@ -252,6 +261,8 @@ NMNIST(
 
 `cached (bool)`: Whether to use cache. Cache will make costs on disk space but save the time used for training and validating.
 
+`cache_dtype (torch.dtype)` ：If using cache, this parameter indicates the data type of cache. Default is `torch.uint8`. Set it to `torch.float` to use higher precision to save the count data when the parameter `count = True`.
+
 `sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs. **Note:** Please make sure that this parameter is same in both training set and testing set, otherwise errors will occur.
 
 `count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
@@ -271,9 +282,10 @@ NMNIST(
 ```python
 import torch
 import matterhorn_pytorch as mth
+from matterhorn_pytorch.data import NMNIST
 
 
-test_dataset = mth.data.NMNIST(
+test_dataset = NMNIST(
     root = './examples/data',
     train = False,
     download = True,

@@ -46,8 +46,8 @@ Linear(
     out_features: int,
     bias: bool = True,
     multi_time_step: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -63,7 +63,7 @@ Linear(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -95,8 +95,8 @@ Conv1d(
     bias: bool = True,
     padding_mode: str = "zeros",
     multi_time_step: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -124,7 +124,7 @@ Conv1d(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -158,8 +158,8 @@ Conv2d(
     bias: bool = True,
     padding_mode: str = "zeros",
     multi_time_step: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -193,7 +193,7 @@ Conv2d(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -225,8 +225,8 @@ Conv3d(
     bias: bool = True,
     padding_mode: str = "zeros",
     multi_time_step: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -254,7 +254,7 @@ Conv3d(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -283,8 +283,8 @@ ConvTranspose1d(
     dilation: _size_1_t = 1,
     padding_mode: str = "zeros",
     multi_time_step: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -314,7 +314,7 @@ ConvTranspose1d(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -343,8 +343,8 @@ ConvTranspose2d(
     dilation: _size_2_t = 1,
     padding_mode: str = "zeros",
     ulti_time_step: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -374,7 +374,7 @@ ConvTranspose2d(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -401,8 +401,8 @@ ConvTranspose3d(
     dilation: _size_3_t = 1,
     padding_mode: str = "zeros",
     multi_time_step: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -434,7 +434,7 @@ Three-dimensional transposed convolution (deconvolution) operation of synapses.
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -462,8 +462,8 @@ BatchNorm1d(
     affine: bool = True,
     track_running_stats: bool = True,
     multi_time_step: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -483,7 +483,7 @@ BatchNorm1d(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -511,8 +511,8 @@ BatchNorm2d(
     affine: bool = True,
     track_running_stats: bool = True,
     multi_time_step: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -532,7 +532,7 @@ BatchNorm2d(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -560,8 +560,8 @@ BatchNorm3d(
     affine: bool = True,
     track_running_stats: bool = True,
     multi_time_step: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -581,7 +581,7 @@ BatchNorm3d(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 
@@ -607,8 +607,8 @@ LayerNorm(
     eps: float = 0.00001,
     elementwise_affine: bool = True,
     multi_time_step: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -624,7 +624,7 @@ LayerNorm(
 
 `device (torch.device)`: Computational device to use.
 
-`dtype`: Data type to use for computation.
+`dtype (torch.dtype)`: Data type to use for computation.
 
 ### Example Usage
 

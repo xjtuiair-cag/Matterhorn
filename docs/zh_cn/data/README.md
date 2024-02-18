@@ -46,6 +46,8 @@ CIFAR10DVS(
 
 `cached (bool)` ：是否占用本地空间建立缓存。缓存会消耗空间资源，但会减少后续训练和验证的时间成本。
 
+`cache_dtype (torch.dtype)` ：若占用本地空间建立缓存，缓存的数据类型。默认为 `torch.uint8` 。若您需要将每个点的事件个数作为脉冲输出，您可能需要设置这个参数为 `torch.float` ，以使用更高精度的缓存。
+
 `sampling (int)` ：每隔多少个事件取一个事件，默认为 `1` ，即选取数据集中全部的事件。该参数为了防止事件过密，从而节约计算成本。 **注意：** 请在训练集和测试集中保证该参数一致，否则会出现错误。 **注意：** 请在训练集和测试集中保证该参数一致，否则会出现错误。
 
 `count (bool)` ：是否将每个点的事件个数作为脉冲输出。若为 `False` ，脉冲序列只会有 `0` 和 `1` ，否则输出的是该点的事件个数。
@@ -65,9 +67,10 @@ CIFAR10DVS(
 ```python
 import torch
 import matterhorn_pytorch as mth
+from matterhorn_pytorch.data import CIFAR10DVS
 
 
-test_dataset = mth.data.CIFAR10DVS(
+test_dataset = CIFAR10DVS(
     root = './examples/data',
     train = False,
     download = True,
@@ -117,6 +120,8 @@ DVS128Gesture(
 
 `cached (bool)` ：是否占用本地空间建立缓存。缓存会消耗空间资源，但会减少后续训练和验证的时间成本。
 
+`cache_dtype (torch.dtype)` ：若占用本地空间建立缓存，缓存的数据类型。默认为 `torch.uint8` 。若您需要将每个点的事件个数作为脉冲输出，您可能需要设置这个参数为 `torch.float` ，以使用更高精度的缓存。
+
 `sampling (int)` ：每隔多少个事件取一个事件，默认为 `1` ，即选取数据集中全部的事件。该参数为了防止事件过密，从而节约计算成本。 **注意：** 请在训练集和测试集中保证该参数一致，否则会出现错误。
 
 `count (bool)` ：是否将每个点的事件个数作为脉冲输出。若为 `False` ，脉冲序列只会有 `0` 和 `1` ，否则输出的是该点的事件个数。
@@ -136,9 +141,10 @@ DVS128Gesture(
 ```python
 import torch
 import matterhorn_pytorch as mth
+from matterhorn_pytorch.data import DVS128Gesture
 
 
-test_dataset = mth.data.DVS128Gesture(
+test_dataset = DVS128Gesture(
     root = './examples/data',
     train = False,
     download = True,
@@ -185,6 +191,8 @@ CIFAR10DVS(
 
 `cached (bool)` ：是否占用本地空间建立缓存。缓存会消耗空间资源，但会减少后续训练和验证的时间成本。
 
+`cache_dtype (torch.dtype)` ：若占用本地空间建立缓存，缓存的数据类型。默认为 `torch.uint8` 。若您需要将每个点的事件个数作为脉冲输出，您可能需要设置这个参数为 `torch.float` ，以使用更高精度的缓存。
+
 `sampling (int)` ：每隔多少个事件取一个事件，默认为 `1` ，即选取数据集中全部的事件。该参数为了防止事件过密，从而节约计算成本。 **注意：** 请在训练集和测试集中保证该参数一致，否则会出现错误。
 
 `count (bool)` ：是否将每个点的事件个数作为脉冲输出。若为 `False` ，脉冲序列只会有 `0` 和 `1` ，否则输出的是该点的事件个数。
@@ -202,9 +210,10 @@ CIFAR10DVS(
 ```python
 import torch
 import matterhorn_pytorch as mth
+from matterhorn_pytorch.data import SpikingHeidelbergDigits
 
 
-test_dataset = mth.data.SpikingHeidelbergDigits(
+test_dataset = SpikingHeidelbergDigits(
     root = './examples/data',
     train = False,
     download = True,
@@ -252,6 +261,8 @@ NMNIST(
 
 `cached (bool)` ：是否占用本地空间建立缓存。缓存会消耗空间资源，但会减少后续训练和验证的时间成本。
 
+`cache_dtype (torch.dtype)` ：若占用本地空间建立缓存，缓存的数据类型。默认为 `torch.uint8` 。若您需要将每个点的事件个数作为脉冲输出，您可能需要设置这个参数为 `torch.float` ，以使用更高精度的缓存。
+
 `sampling (int)` ：每隔多少个事件取一个事件，默认为 `1` ，即选取数据集中全部的事件。该参数为了防止事件过密，从而节约计算成本。 **注意：** 请在训练集和测试集中保证该参数一致，否则会出现错误。
 
 `count (bool)` ：是否将每个点的事件个数作为脉冲输出。若为 `False` ，脉冲序列只会有 `0` 和 `1` ，否则输出的是该点的事件个数。
@@ -271,9 +282,10 @@ NMNIST(
 ```python
 import torch
 import matterhorn_pytorch as mth
+from matterhorn_pytorch.data import NMNIST
 
 
-test_dataset = mth.data.NMNIST(
+test_dataset = NMNIST(
     root = './examples/data',
     train = False,
     download = True,

@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import matterhorn_pytorch as mth
 import matterhorn_pytorch.snn as snn
+from matterhorn_pytorch.data import NMNIST
 from functions import *
 from rich import print
 
@@ -46,13 +47,13 @@ def main():
 
     print_title("Dataset")
 
-    train_dataset = mth.data.NMNIST(
+    train_dataset = NMNIST(
         root = "./examples/data",
         train = True,
         download = True,
         time_steps = time_steps
     )
-    test_dataset = mth.data.NMNIST(
+    test_dataset = NMNIST(
         root = "./examples/data",
         train = False,
         download = True,

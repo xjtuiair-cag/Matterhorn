@@ -47,8 +47,8 @@ SRM0Linear(
     multi_time_step: bool = False,
     reset_after_process: bool = True,
     trainable: bool = False,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -74,7 +74,7 @@ SRM0Linear(
 
 `device (torch.device)` ：计算所使用的计算设备。
 
-`dtype` ：计算所使用的数据类型。
+`dtype (torch.dtype)` ：计算所使用的数据类型。
 
 ### 示例用法
 
@@ -118,8 +118,8 @@ STDPLinear(
     tau_neg: float = 2.0,
     lr: float = 0.01,
     multi_time_step: bool = True,
-    device = None,
-    dtype = None
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -145,7 +145,7 @@ STDPLinear(
 
 `device (torch.device)` ：计算所使用的计算设备。
 
-`dtype` ：计算所使用的数据类型。
+`dtype (torch.dtype)` ：计算所使用的数据类型。
 
 ### 示例用法
 

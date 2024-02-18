@@ -4,9 +4,10 @@
 """
 
 
-from . import data
-from . import model
+from matterhorn_pytorch.__func__ import cpp_available, cuda_available
+from . import lsm
 from . import snn
+from . import tnn
 from . import training
 from . import util
 try:

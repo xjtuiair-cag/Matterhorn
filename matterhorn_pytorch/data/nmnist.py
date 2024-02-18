@@ -5,6 +5,7 @@ NMNIST数据集。
 
 
 import numpy as np
+import torch
 import os
 from torchvision.datasets.utils import check_integrity, download_url, extract_archive
 from typing import Iterable, Union, Callable, Optional
@@ -26,7 +27,7 @@ class NMNIST(EventDataset2d):
     labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 34, height: int = 34, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 34, height: int = 34, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
         """
         NMNIST数据集，将MNIST数据集动态变换后，转为事件的形式。
         Args:
@@ -36,6 +37,7 @@ class NMNIST(EventDataset2d):
             target_transform (Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
+            cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
             sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             time_steps (int): 最终的数据集总共含有多少个时间步
@@ -51,6 +53,7 @@ class NMNIST(EventDataset2d):
             target_transform = target_transform,
             download = download,
             cached = cached,
+            cache_dtype = cache_dtype,
             sampling = sampling,
             count = count,
             t_size = time_steps,

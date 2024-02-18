@@ -229,7 +229,7 @@ class IF(Soma):
 
 
 class LIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
@@ -244,7 +244,7 @@ class LIF(Soma):
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
-            dtype: 所计算的数据类型
+            dtype (torch.dtype): 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -281,7 +281,7 @@ class LIF(Soma):
 
 
 class QIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_c: float = 1.0, a_0: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_c: float = 1.0, a_0: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Quadratic Integrate-and-Fire(QIF)神经元。
         一阶电位变换公式为：
@@ -298,7 +298,7 @@ class QIF(Soma):
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
-            dtype: 所计算的数据类型
+            dtype (torch.dtype): 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -337,7 +337,7 @@ class QIF(Soma):
 
 
 class ExpIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Exponential Integrate-and-Fire(ExpIF)神经元。
         一阶电位变换公式为：
@@ -354,7 +354,7 @@ class ExpIF(Soma):
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
-            dtype: 所计算的数据类型
+            dtype (torch.dtype): 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -393,7 +393,7 @@ class ExpIF(Soma):
 
 
 class Izhikevich(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, a: float = 1.0, b: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, a: float = 1.0, b: float = 1.0, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """, 
         Izhikevich神经元。
         一阶电位变换公式为：
@@ -410,7 +410,7 @@ class Izhikevich(Soma):
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
-            dtype: 所计算的数据类型
+            dtype (torch.dtype): 所计算的数据类型
         """
         self.w = 0.0
         super().__init__(
@@ -473,7 +473,7 @@ class Izhikevich(Soma):
 
 
 class KLIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, k: float = 0.2, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, k: float = 0.2, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         KLIF神经元
         Args:
@@ -487,7 +487,7 @@ class KLIF(Soma):
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
-            dtype: 所计算的数据类型
+            dtype (torch.dtype): 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -526,7 +526,7 @@ class KLIF(Soma):
 
 
 class Response(Soma):
-    def __init__(self, response_function: Callable, param_list: Iterable = [], u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
+    def __init__(self, response_function: Callable, param_list: Iterable = [], u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         可以自定义反应函数的胞体。
         Args:
@@ -540,7 +540,7 @@ class Response(Soma):
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
-            dtype: 所计算的数据类型
+            dtype (torch.dtype): 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -622,7 +622,7 @@ class AnalogSoma(Soma):
 
 
 class LIAF(AnalogSoma):
-    def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device = None, dtype = None) -> None:
+    def __init__(self, tau_m: float = 1.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Leaky Integrate-and-Analog-Fire(LIAF)神经元
         Args:
@@ -636,7 +636,7 @@ class LIAF(AnalogSoma):
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
-            dtype: 所计算的数据类型
+            dtype (torch.dtype): 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,

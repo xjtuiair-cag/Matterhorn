@@ -12,7 +12,7 @@ from rich.progress import track
 from rich.table import Table
 
 
-def train_one_epoch(model: Union[torch.nn.Module, Tuple], data_loader: DataLoader, rule: Union[str, Tuple] = "bp", optimizer: torch.optim.Optimizer = None, device: torch.device = None, dtype = None) -> Tuple[torch.nn.Module, float, float]:
+def train_one_epoch(model: Union[torch.nn.Module, Tuple], data_loader: DataLoader, rule: Union[str, Tuple] = "bp", optimizer: torch.optim.Optimizer = None, device: torch.device = None, dtype: torch.dtype = None) -> Tuple[torch.nn.Module, float, float]:
     """
     一个轮次的训练。
     Args:
@@ -21,7 +21,7 @@ def train_one_epoch(model: Union[torch.nn.Module, Tuple], data_loader: DataLoade
         rule (str | torch.nn.Module*): 所使用的训练规则
         optimizer (torch.optim.Optimizer): 所使用的参数优化器
         device (torch.device): 所使用的计算设备
-        dtype: 所使用的数据类型
+        dtype (torch.dtype): 所使用的数据类型
     """
     if isinstance(model, Tuple):
         for idx in range(len(model)):
@@ -69,14 +69,14 @@ def train_one_epoch(model: Union[torch.nn.Module, Tuple], data_loader: DataLoade
     return model, train_loss, train_acc
 
 
-def test_one_epoch(model: Union[torch.nn.Module, Tuple], data_loader: DataLoader, device: torch.device = None, dtype = None) -> Tuple[torch.nn.Module, float, float]:
+def test_one_epoch(model: Union[torch.nn.Module, Tuple], data_loader: DataLoader, device: torch.device = None, dtype: torch.dtype = None) -> Tuple[torch.nn.Module, float, float]:
     """
     一个轮次的测试。
     Args:
         model (torch.nn.Module | torch.nn.Module*): 所使用的模型
         data_loader (DataLoader): 所使用的数据集
         device (torch.device): 所使用的计算设备
-        dtype: 所使用的数据类型
+        dtype (torch.dtype): 所使用的数据类型
     """
     if isinstance(model, Tuple):
         for idx in range(len(model)):
@@ -220,7 +220,7 @@ def print_result(ep: int, data: Tuple[float], last_data: Tuple[float], max_test_
     print(result_table)
 
 
-def train_and_test(epochs: int, model: Union[torch.nn.Module, Tuple], train_data_loader: DataLoader, test_data_loader: DataLoader, rule: Union[str, Tuple] = "bp", optimizer: torch.optim.Optimizer = None, scheduler: torch.optim.lr_scheduler._LRScheduler = None, log_dir: str = "./logs/", device: torch.device = None, dtype = None) -> None:
+def train_and_test(epochs: int, model: Union[torch.nn.Module, Tuple], train_data_loader: DataLoader, test_data_loader: DataLoader, rule: Union[str, Tuple] = "bp", optimizer: torch.optim.Optimizer = None, scheduler: torch.optim.lr_scheduler._LRScheduler = None, log_dir: str = "./logs/", device: torch.device = None, dtype: torch.dtype = None) -> None:
     """
     训练模型。
     Args:
@@ -233,7 +233,7 @@ def train_and_test(epochs: int, model: Union[torch.nn.Module, Tuple], train_data
         scheduler (torch.optim.lr_scheduler._LRScheduler): 所使用的学习率衰减器
         log_dir (str): 存放日志的文件夹
         device (torch.device): 所使用的计算设备
-        dtype: 所使用的数据类型
+        dtype (torch.dtype): 所使用的数据类型
     """
     max_test_acc = 0.0
     last_data = (torch.inf, 0.0, torch.inf, 0.0)
