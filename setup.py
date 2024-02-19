@@ -17,11 +17,8 @@ def get_cpp_files(root_path: str, exceptions: List[str]) -> List[str]:
 requirements = ["torch"]
 try:
     ext_modules = []
-    if platform.system() == "Windows":
-        nvcc_cmd = "nvcc --version"
-    else:
-        nvcc_cmd = "export PATH=$PATH:/usr/local/cuda/bin;nvcc --version"
-    cuda_available = not os.system(nvcc_cmd)
+    from torch.cuda import is_available
+    cuda_available = is_available()
     if cuda_available:
         print("\033[92mCUDA found on this device, installing Matterhorn CUDA extensions.\033[0m")
         from torch.utils.cpp_extension import CUDAExtension
