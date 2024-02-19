@@ -13,12 +13,12 @@ def main():
     print_title("Hyper Parameters")
 
     time_steps = 32
-    batch_size = 4
+    batch_size = 8
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 64
     learning_rate = 1e-3
     momentum = 0.9
-    tau = 1.1
+    tau = 2.0
     print_params({
         "Time Steps": time_steps,
         "Batch Size": batch_size,

@@ -16,7 +16,7 @@ def main():
     time_steps = 32
     batch_size = 128
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    epochs = 32
+    epochs = 64
     learning_rate = 1e-3
     momentum = 0.9
     tau = 2.0
