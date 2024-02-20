@@ -81,7 +81,7 @@ setup(
     version = "1.1.0",
     author = "CAG, IAIR, XJTU, Xi'an, China",
     author_email = "ericwang017@stu.xjtu.edu.cn",
-    description = "Matterhorn is a novel general SNN framework based on PyTorch.",
+    description = "Matterhorn is a novel general neuromorphic computing framework based on PyTorch.",
     long_description = long_description,
     long_description_content_type = "text/markdown",
     url = "https://github.com/xjtuiair-cag/Matterhorn",

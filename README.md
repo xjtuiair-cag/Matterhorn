@@ -10,7 +10,7 @@
 
 ![logo](./assets/logo.png)
 
-Matterhorn is a novel general SNN framework based on PyTorch.
+Matterhorn is a novel general neuromorphic computing framework based on PyTorch.
 
 ## 2 Installation
 

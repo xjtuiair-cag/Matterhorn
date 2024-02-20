@@ -10,7 +10,7 @@
 
 ![logo](./assets/logo.png)
 
-Matterhorn 是基于 PyTorch 的，全新的通用 SNN 框架。
+Matterhorn 是基于 PyTorch 的，全新的通用类脑学习框架。
 
 ## 2 Matterhorn 的安装
 
