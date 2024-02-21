@@ -7,7 +7,6 @@
 
 import torch
 import torch.nn as nn
-from matterhorn_pytorch.snn.functional import heaviside_gaussian
 from matterhorn_pytorch.snn.skeleton import Module
 from typing import Callable
 try:

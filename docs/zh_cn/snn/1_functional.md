@@ -32,12 +32,12 @@ val_to_spike(
 
 ```python
 import torch
-import matterhorn_pytorch as mth
+import matterhorn.snn.functional as SF
 
 
 x = torch.rand(2, 3)
 print(x)
-y = mth.snn.functional.val_to_spike(x)
+y = SF.val_to_spike(x)
 print(y)
 ```
 
@@ -70,12 +70,12 @@ heaviside_rectangular(
 
 ```python
 import torch
-import matterhorn_pytorch as mth
+import matterhorn.snn.functional as SF
 
 
 x = torch.randint(-2, 3, size = (2, 3))
 print(x)
-y = mth.snn.functional.heaviside_rectangular(x, 1.0)
+y = SF.heaviside_rectangular(x, 1.0)
 print(y)
 ```
 
@@ -108,12 +108,12 @@ heaviside_polynomial(
 
 ```python
 import torch
-import matterhorn_pytorch as mth
+import matterhorn.snn.functional as SF
 
 
 x = torch.randint(-2, 3, size = (2, 3))
 print(x)
-y = mth.snn.functional.heaviside_polynomial(x, 4.0)
+y = SF.heaviside_polynomial(x, 4.0)
 print(y)
 ```
 
@@ -146,12 +146,12 @@ heaviside_sigmoid(
 
 ```python
 import torch
-import matterhorn_pytorch as mth
+import matterhorn.snn.functional as SF
 
 
 x = torch.randint(-2, 3, size = (2, 3))
 print(x)
-y = mth.snn.functional.heaviside_sigmoid(x, 0.25)
+y = SF.heaviside_sigmoid(x, 0.25)
 print(y)
 ```
 
@@ -184,12 +184,12 @@ heaviside_gaussian(
 
 ```python
 import torch
-import matterhorn_pytorch as mth
+import matterhorn.snn.functional as SF
 
 
 x = torch.randint(-2, 3, size = (2, 3))
 print(x)
-y = mth.snn.functional.heaviside_gaussian(x, 0.16)
+y = SF.heaviside_gaussian(x, 0.16)
 print(y)
 ```
 

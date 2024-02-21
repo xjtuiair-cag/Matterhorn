@@ -6,8 +6,9 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import matterhorn_pytorch.snn as snn
-from matterhorn_pytorch.lsm.functional import init_adjacent_direct
+import matterhorn_pytorch.lsm.functional as LF
 from typing import Iterable
 try:
     from rich import print
@@ -34,7 +35,7 @@ class Cast(snn.Module):
         self.in_indices = list(in_indices)
         self.out_indices = list(out_indices)
         feature_num = max(in_features, out_features)
-        adjacent = init_adjacent_direct(feature_num, in_indices, out_indices)
+        adjacent = LF.init_adjacent_direct(feature_num, in_indices, out_indices)
         adjacent = adjacent[:in_features,:out_features]
         self.adjacent = nn.Parameter(adjacent, requires_grad = False)
     
@@ -47,4 +48,4 @@ class Cast(snn.Module):
         Returns:
             y (torch.Tensor): 当前输出
         """
-        return nn.functional.linear(x, self.adjacent.T, None)
+        return F.linear(x, self.adjacent.T, None)

@@ -6,7 +6,7 @@
 
 import torch
 import torch.nn as nn
-from matterhorn_pytorch.snn.functional import heaviside_rectangular, heaviside_polynomial, heaviside_sigmoid, heaviside_gaussian
+import matterhorn_pytorch.snn.functional as F
 from matterhorn_pytorch.snn.skeleton import Module
 try:
     from rich import print
@@ -42,7 +42,7 @@ class Rectangular(Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return heaviside_rectangular(x, self.a)
+        return F.heaviside_rectangular(x, self.a)
 
 
 class Polynomial(Module):
@@ -73,7 +73,7 @@ class Polynomial(Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return heaviside_polynomial(x, self.a)
+        return F.heaviside_polynomial(x, self.a)
 
 
 class Sigmoid(Module):
@@ -104,7 +104,7 @@ class Sigmoid(Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return heaviside_sigmoid(x, self.a)
+        return F.heaviside_sigmoid(x, self.a)
 
 
 class Gaussian(Module):
@@ -135,4 +135,4 @@ class Gaussian(Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return heaviside_gaussian(x, self.a)
+        return F.heaviside_gaussian(x, self.a)

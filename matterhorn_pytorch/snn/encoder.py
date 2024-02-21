@@ -7,7 +7,7 @@
 
 import torch
 import torch.nn as nn
-from matterhorn_pytorch.snn.functional import heaviside_gaussian
+import matterhorn_pytorch.snn.functional as SF
 from matterhorn_pytorch.snn.skeleton import Module
 from typing import Callable
 try:
@@ -90,7 +90,7 @@ class Poisson(Encoder):
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
         r = torch.rand_like(x)
-        y = heaviside_gaussian(x - r) # x - r >= 0 -> r <= x
+        y = SF.le(r, x)
         return y
     
 
@@ -173,8 +173,8 @@ class Temporal(Encoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        f = heaviside_gaussian(self.current_time_step + 0.0 - x) # time_step - x >= 0 -> x <= time_step
-        r = heaviside_gaussian(self.prob - torch.rand_like(x)) # prob - r >= 0 -> r <= prob
+        f = SF.le(x, self.current_time_step)
+        r = SF.le(torch.rand_like(x), self.prob)
         y = f * r
         self.current_time_step += 1
         return y

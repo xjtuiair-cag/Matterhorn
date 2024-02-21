@@ -9,10 +9,11 @@ import math
 from typing import Optional, Union
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
 from matterhorn_pytorch.snn.container import Temporal
-from matterhorn_pytorch.snn.functional import val_to_spike
+import matterhorn_pytorch.snn.functional as SF
 from matterhorn_pytorch.snn.skeleton import Module
 from matterhorn_pytorch.snn import surrogate
 from matterhorn_pytorch.training.functional import stdp
@@ -128,7 +129,7 @@ class SRM0Linear(Module):
         Returns:
             o (torch.Tensor): 当前电位$U_{i}^{l}(t)$
         """
-        u = nn.functional.linear(s, w)
+        u = F.linear(s, w)
         return u
 
 
@@ -152,7 +153,7 @@ class SRM0Linear(Module):
         通过当前电位$U_{i}^{l}(t)$计算当前脉冲$O_{i}^{l}(t)$。
         该部分可用如下公式概括：
         $$U_{i}^{l}(t)=X_{i}^{l}(t)+R_{i}^{l}(t)+u_{rest}$$
-        $$O_{i}^{l}(t)=Heaviside(U_{i}^{l}(t)-u_{th})$$
+        $$O_{i}^{l}(t)=(U_{i}^{l}(t)>=u_{th})$$
         Args:
             u (torch.Tensor): 当前电位$U_{i}^{l}(t)$
         Returns:
@@ -435,7 +436,7 @@ class Layer(Module):
                 self.reset()
         else:
             y = self.forward_single_time_step(x)
-        y = val_to_spike(y)
+        y = SF.val_to_spike(y)
         return y
 
 

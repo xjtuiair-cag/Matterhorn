@@ -8,7 +8,7 @@ TNN的相关函数。
 import torch
 import torch.nn as nn
 from typing import Any
-from matterhorn_pytorch.snn.functional import forward_heaviside, backward_gaussian, heaviside_gaussian
+import matterhorn_pytorch.snn.functional as SF
 try:
     from rich import print
 except:
@@ -58,7 +58,7 @@ def t_to_s(t: torch.Tensor, time_steps: int, t_offset: int = 0) -> torch.Tensor:
     T = lambda x: x.permute(*torch.arange(x.ndim - 1, -1, -1))
     spike_ts = torch.ones([t_size] + list(t.shape)) * (t + t_offset)
     current_ts = T(T(torch.ones_like(spike_ts)) * torch.arange(t_size)).to(spike_ts)
-    s = heaviside_gaussian(current_ts - spike_ts) # t - ts >= 0 -> t >= ts
+    s = SF.ge(current_ts, spike_ts)
     return s
 
 
@@ -231,7 +231,7 @@ class t_rl_inh(torch.autograd.Function):
         """
         delta, = ctx.saved_tensors
         mask = ~torch.isinf(delta)
-        grad_delta = -backward_gaussian(grad_output, delta)
+        grad_delta = -SF.bp_gaussian(delta)
         grad_x = torch.where(mask, grad_delta, torch.zeros_like(grad_output))
         grad_y = -torch.where(mask, grad_delta, torch.zeros_like(grad_output))
         return grad_x, grad_y

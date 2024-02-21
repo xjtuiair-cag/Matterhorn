@@ -7,6 +7,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from matterhorn_pytorch.snn.skeleton import Module
 from matterhorn_pytorch.snn import surrogate
 from typing import Callable, Iterable
@@ -521,7 +522,7 @@ class KLIF(Soma):
         """
         du = (1.0 / self.tau_m) * (-(h - self.u_rest) + x)
         u = h + du
-        f = nn.functional.relu(self.k * (u - self.u_rest)) + self.u_rest
+        f = F.relu(self.k * (u - self.u_rest)) + self.u_rest
         return f
 
 

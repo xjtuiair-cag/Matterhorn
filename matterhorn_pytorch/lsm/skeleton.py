@@ -7,6 +7,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import math
 from matterhorn_pytorch import snn
 from matterhorn_pytorch.snn.container import Temporal
@@ -102,7 +103,7 @@ class LSM(snn.Module):
 
     def f_synapse(self, y_0: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         y_0 = self.init_tensor(y_0, x)
-        y = nn.functional.linear(y_0, self.weight * self.adjacent.T, None) + (x * self.weight_input)
+        y = F.linear(y_0, self.weight * self.adjacent.T, None) + (x * self.weight_input)
         return y
 
 
