@@ -18,6 +18,7 @@ import shutil
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor, wait
 import hashlib
+from matterhorn_pytorch.util.events import event_seq_to_tensor
 
 
 class EventDataset(Dataset):
@@ -332,6 +333,22 @@ class EventDataset(Dataset):
             self.create_cache()
         self.data_target = self.data_target[self.data_target[:, 2] == (1 if self.train else 0)][:, :2]
         self.data_target = self.data_target.tolist()
+    
+
+    def clip_events(self, data: np.ndarray) -> np.ndarray:
+        """
+        裁剪事件。
+        Args:
+            data (np.ndarray): 裁剪前的事件
+        Returns:
+            clipped_data (np.ndarray): 裁剪后的事件
+        """
+        if self.clipped is not None and data.shape[0]:
+            if isinstance(self.clipped, int):
+                data = data[data[:, 0] < self.clipped]
+            elif isinstance(self.clipped, Iterable):
+                data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
+        return data
 
 
     def event_data_to_tensor(self, data: np.ndarray) -> torch.Tensor:
@@ -429,23 +446,13 @@ class EventDataset1d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, L]
         """
-        data = data.astype("float32")
-        res = torch.zeros(self.t_size, self.x_size, dtype = torch.float)
-        if not data.shape[0]:
-            return res
-        if self.clipped is not None:
-            if isinstance(self.clipped, int):
-                data = data[data[:, 0] < self.clipped]
-            elif isinstance(self.clipped, Iterable):
-                data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
-        data[:, 0] -= np.min(data[:, 0])
-        data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
-        data[:, 1] = np.floor(data[:, 1] * self.x_size / self.original_size[2])
-        data, counts = np.unique(data, axis = 0, return_counts = True)
-        t_filter = (data[:, 0] >= 0) & (data[:, 0] < self.t_size)
-        data = data[t_filter].astype("int32")
-        counts = counts[t_filter].astype("float32")
-        res[data.T] = torch.tensor(counts, dtype = torch.float) if self.count else 1
+        data = self.clip_events(data)
+        res = event_seq_to_tensor(
+            event_seq = data,
+            shape = (self.t_size, self.x_size),
+            original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[2]),
+            count = self.count
+        )
         return res
     
 
@@ -457,24 +464,13 @@ class EventDataset1d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, C(P), L]
         """
-        data = data.astype("float32")
-        res = torch.zeros(self.t_size, self.p_size, self.x_size, dtype = torch.float)
-        if not data.shape[0]:
-            return res
-        if self.clipped is not None:
-            if isinstance(self.clipped, int):
-                data = data[data[:, 0] < self.clipped]
-            elif isinstance(self.clipped, Iterable):
-                data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
-        data[:, 0] -= np.min(data[:, 0])
-        data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
-        data[:, 1] = np.floor(data[:, 1] * self.p_size / self.original_size[1])
-        data[:, 2] = np.floor(data[:, 2] * self.x_size / self.original_size[2])
-        data, counts = np.unique(data, axis = 0, return_counts = True)
-        t_filter = (data[:, 0] >= 0) & (data[:, 0] < self.t_size)
-        data = data[t_filter].astype("int32")
-        counts = counts[t_filter].astype("float32")
-        res[data.T] = torch.tensor(counts, dtype = torch.float) if self.count else 1
+        data = self.clip_events(data)
+        res = event_seq_to_tensor(
+            event_seq = data,
+            shape = (self.t_size, self.p_size, self.x_size),
+            original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[1], self.original_size[2]),
+            count = self.count
+        )
         return res
 
 
@@ -543,24 +539,13 @@ class EventDataset2d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, H, W]
         """
-        data = data.astype("float32")
-        res = torch.zeros(self.t_size, self.y_size, self.x_size, dtype = torch.float)
-        if not data.shape[0]:
-            return res
-        if self.clipped is not None:
-            if isinstance(self.clipped, int):
-                data = data[data[:, 0] < self.clipped]
-            elif isinstance(self.clipped, Iterable):
-                data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
-        data[:, 0] -= np.min(data[:, 0])
-        data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
-        data[:, 1] = np.floor(data[:, 1] * self.y_size / self.original_size[2])
-        data[:, 2] = np.floor(data[:, 2] * self.x_size / self.original_size[3])
-        data, counts = np.unique(data, axis = 0, return_counts = True)
-        t_filter = (data[:, 0] >= 0) & (data[:, 0] < self.t_size)
-        data = data[t_filter].astype("int32")
-        counts = counts[t_filter].astype("float32")
-        res[data.T] = torch.tensor(counts, dtype = torch.float) if self.count else 1
+        data = self.clip_events(data)
+        res = event_seq_to_tensor(
+            event_seq = data,
+            shape = (self.t_size, self.y_size, self.x_size),
+            original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[2], self.original_size[3]),
+            count = self.count
+        )
         return res
 
 
@@ -572,26 +557,13 @@ class EventDataset2d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, C(P), H, W]
         """
-        data = data.astype("float32")
-        res = torch.zeros(self.t_size, self.p_size, self.y_size, self.x_size, dtype = torch.float)
-        if not data.shape[0]:
-            return res
-        if self.clipped is not None:
-            if isinstance(self.clipped, int):
-                data = data[data[:, 0] < self.clipped]
-            elif isinstance(self.clipped, Iterable):
-                data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
-        data[:, 0] -= np.min(data[:, 0])
-        np.set_printoptions(threshold = np.inf)
-        data[:, 0] = np.floor(data[:, 0] * self.t_size / max(np.max(data[:, 0]) + 1, self.original_size[0]))
-        data[:, 1] = np.floor(data[:, 1] * self.p_size / self.original_size[1])
-        data[:, 2] = np.floor(data[:, 2] * self.y_size / self.original_size[2])
-        data[:, 3] = np.floor(data[:, 3] * self.x_size / self.original_size[3])
-        data, counts = np.unique(data, axis = 0, return_counts = True)
-        t_filter = (data[:, 0] >= 0) & (data[:, 0] < self.t_size)
-        data = data[t_filter].astype("int32")
-        counts = counts[t_filter].astype("float32")
-        res[data.T] = torch.tensor(counts, dtype = torch.float) if self.count else 1
+        data = self.clip_events(data)
+        res = event_seq_to_tensor(
+            event_seq = data,
+            shape = (self.t_size, self.p_size, self.y_size, self.x_size),
+            original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[1], self.original_size[2], self.original_size[3]),
+            count = self.count
+        )
         return res
 
 
