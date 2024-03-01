@@ -115,9 +115,9 @@ def event_plot_2d(indices_pos: np.ndarray, indices_neg: np.ndarray = None, value
         plt.title(title)
 
 
-def event_tensor_plot_yx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def spike_train_plot_yx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
-    二维空间的事件张量数据打印。
+    二维空间的脉冲序列数据打印。
     Args:
         data (np.ndarray | torch.Tensor):需要打印的数据（可以是2、3、4维）
         polarity (bool): 是否将第1个维度作为极性维度，如果为True，则传入的数据为[C(P), H, W]（3维）或[B, C(P), H, W]（4维）；如果为False，则传入的数据为[H, W]（2维）或[B, H, W]（3维）
@@ -279,7 +279,7 @@ def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None,
             figsize = figsize
         )
     else:
-        event_tensor_plot_yx(
+        spike_train_plot_yx(
             data = data,
             polarity = polarity,
             show = show,
@@ -289,9 +289,9 @@ def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None,
         )
 
 
-def event_tensor_plot_tx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def spike_train_plot_tx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
-    一维空间+一维时间的事件张量数据打印。
+    一维空间+一维时间的脉冲序列数据打印。
     Args:
         data (np.ndarray | torch.Tensor):需要打印的数据（可以是2、3、4维）
         polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), L]（3维）或[B, T, C(P), L]（4维）；如果为False，则传入的数据为[T, L]（2维）或[B, T, L]（3维）
@@ -442,7 +442,7 @@ def event_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None,
             figsize = figsize
         )
     else:
-        event_tensor_plot_tx(
+        spike_train_plot_tx(
             data = data,
             polarity = polarity,
             show = show,
@@ -498,9 +498,9 @@ def event_plot_3d(ax: Axes3D, indices_pos: np.ndarray, indices_neg: np.ndarray =
         ax.set_title(title)
 
 
-def event_tensor_plot_tyx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def spike_train_plot_tyx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
     """
-    二维空间+一维时间的事件张量数据打印。
+    二维空间+一维时间的脉冲序列数据打印。
     Args:
         data (np.ndarray | torch.Tensor):需要打印的数据（可以是3、4、5维）
         polarity (bool): 是否将第2个维度作为极性维度，如果为True，则传入的数据为[T, C(P), H, W]（4维）或[B, T, C(P), H, W]（5维）；如果为False，则传入的数据为[T, H, W]（3维）或[B, T, H, W]（4维）
@@ -666,7 +666,7 @@ def event_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None
             figsize = figsize
         )
     else:
-        event_tensor_plot_tyx(
+        spike_train_plot_tyx(
             data = data,
             polarity = polarity,
             show = show,

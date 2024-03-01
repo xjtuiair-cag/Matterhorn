@@ -3,16 +3,16 @@ import torch
 from typing import Iterable
 
 
-def event_seq_to_tensor(event_seq: torch.Tensor, shape: Iterable = None, original_shape: Iterable = None, count: bool = False) -> torch.Tensor:
+def event_seq_to_spike_train(event_seq: torch.Tensor, shape: Iterable = None, original_shape: Iterable = None, count: bool = False) -> torch.Tensor:
     """
-    将事件序列转为事件张量。
+    将事件序列转为脉冲序列。
     Args:
         event_seq (torch.Tensor): 事件序列，形状为[N, A]
-        shape (int*): 输出事件张量的形状
-        original_shape (int*): 事件张量原本的形状，若置空，则视为与事件张量大小一致
+        shape (int*): 输出脉冲序列的形状
+        original_shape (int*): 事件原本的画幅，若置空，则视为与脉冲序列形状一致
         count (bool): 是否输出事件计数，默认为False，即只输出脉冲（0或1）
     Return:
-        event_tensor (torch.Tensor): 事件张量，形状为[T, C, ...]
+        event_tensor (torch.Tensor): 脉冲序列，形状为[T, C, ...]
     """
     if not isinstance(event_seq, torch.Tensor):
         if isinstance(event_seq, np.ndarray):
@@ -42,11 +42,11 @@ def event_seq_to_tensor(event_seq: torch.Tensor, shape: Iterable = None, origina
     return event_tensor
 
 
-def event_tensor_to_seq(event_tensor: torch.Tensor) -> torch.Tensor:
+def spike_train_to_event_seq(event_tensor: torch.Tensor) -> torch.Tensor:
     """
-    将事件张量转为事件序列。
+    将脉冲序列转为事件序列。
     Args:
-        event_tensor (torch.Tensor): 事件张量，形状为[T, C, ...]
+        event_tensor (torch.Tensor): 脉冲序列，形状为[T, C, ...]
     Return:
         event_seq (torch.Tensor): 事件序列，形状为[N, A]
     """

@@ -29,7 +29,7 @@ event_plot_yx(
 
 ### 参数
 
-`data (np.ndarray | torch.Tensor)` ：需要打印的数据（可以是 2 、 3 、 4 维事件张量，也可以是 2 、 3 列事件序列）。
+`data (np.ndarray | torch.Tensor)` ：需要打印的数据（可以是 2 、 3 、 4 维脉冲序列，也可以是 2 、 3 列事件序列）。
 
 `shape (Iterable)` ：如果要打印的数据是事件序列，请指定其大小。假设事件序列的形状是 `[N, 3]` ，那么就要在此传入 3 列代表的数据各自的大小。
 
@@ -43,11 +43,11 @@ event_plot_yx(
 
 `figSize (Tuple)` ：图像大小。
 
-`is_seq (bool)` ：事件是否为序列。若为 `True` 则是事件序列，为 `False` 则是事件张量。
+`is_seq (bool)` ：事件是否为序列。若为 `True` 则是事件序列，为 `False` 则是脉冲序列。
 
 ### 示例用法
 
-（1）打印事件张量：
+（1）打印脉冲序列：
 
 ```python
 import torch
@@ -97,7 +97,7 @@ event_plot_tx(
 
 ### 参数
 
-`data (np.ndarray | torch.Tensor)` ：需要打印的数据（可以是 2 、 3 、 4 维事件张量，也可以是 2 、 3 列事件序列）。
+`data (np.ndarray | torch.Tensor)` ：需要打印的数据（可以是 2 、 3 、 4 维脉冲序列，也可以是 2 、 3 列事件序列）。
 
 `shape (Iterable)` ：如果要打印的数据是事件序列，请指定其大小。假设事件序列的形状是 `[N, 3]` ，那么就要在此传入 3 列代表的数据各自的大小。
 
@@ -111,11 +111,11 @@ event_plot_tx(
 
 `figSize (Tuple)` ：图像大小。
 
-`is_seq (bool)` ：事件是否为序列。若为 `True` 则是事件序列，为 `False` 则是事件张量。
+`is_seq (bool)` ：事件是否为序列。若为 `True` 则是事件序列，为 `False` 则是脉冲序列。
 
 ### 示例用法
 
-（1）打印事件张量：
+（1）打印脉冲序列：
 
 ```python
 import torch
@@ -165,7 +165,7 @@ event_plot_tyx(
 
 ### 参数
 
-`data (np.ndarray | torch.Tensor)` ：需要打印的数据（可以是 3 、 4 、 5 维事件张量，也可以是 3 、 4 列事件序列）。
+`data (np.ndarray | torch.Tensor)` ：需要打印的数据（可以是 3 、 4 、 5 维脉冲序列，也可以是 3 、 4 列事件序列）。
 
 `shape (Iterable)` ：如果要打印的数据是事件序列，请指定其大小。假设事件序列的形状是 `[N, 4]` ，那么就要在此传入 4 列代表的数据各自的大小。
 
@@ -179,11 +179,11 @@ event_plot_tyx(
 
 `figSize (Tuple)` ：图像大小。
 
-`is_seq (bool)` ：事件是否为序列。若为 `True` 则是事件序列，为 `False` 则是事件张量
+`is_seq (bool)` ：事件是否为序列。若为 `True` 则是事件序列，为 `False` 则是脉冲序列
 
 ### 示例用法
 
-（1）打印事件张量：
+（1）打印脉冲序列：
 
 ```python
 import torch

@@ -18,7 +18,7 @@ import shutil
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor, wait
 import hashlib
-from matterhorn_pytorch.util.events import event_seq_to_tensor
+from matterhorn_pytorch.util.events import event_seq_to_spike_train
 
 
 class EventDataset(Dataset):
@@ -447,7 +447,7 @@ class EventDataset1d(EventDataset):
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, L]
         """
         data = self.clip_events(data)
-        res = event_seq_to_tensor(
+        res = event_seq_to_spike_train(
             event_seq = data,
             shape = (self.t_size, self.x_size),
             original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[2]),
@@ -465,7 +465,7 @@ class EventDataset1d(EventDataset):
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, C(P), L]
         """
         data = self.clip_events(data)
-        res = event_seq_to_tensor(
+        res = event_seq_to_spike_train(
             event_seq = data,
             shape = (self.t_size, self.p_size, self.x_size),
             original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[1], self.original_size[2]),
@@ -540,7 +540,7 @@ class EventDataset2d(EventDataset):
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, H, W]
         """
         data = self.clip_events(data)
-        res = event_seq_to_tensor(
+        res = event_seq_to_spike_train(
             event_seq = data,
             shape = (self.t_size, self.y_size, self.x_size),
             original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[2], self.original_size[3]),
@@ -558,7 +558,7 @@ class EventDataset2d(EventDataset):
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, C(P), H, W]
         """
         data = self.clip_events(data)
-        res = event_seq_to_tensor(
+        res = event_seq_to_spike_train(
             event_seq = data,
             shape = (self.t_size, self.p_size, self.y_size, self.x_size),
             original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[1], self.original_size[2], self.original_size[3]),

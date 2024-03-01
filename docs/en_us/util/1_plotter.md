@@ -29,7 +29,7 @@ event_plot_yx(
 
 ### Parameters
 
-`data (np.ndarray | torch.Tensor)`: Data to be printed (can be a 2D, 3D, or 4D event tensor, or a 2 or 3 column event sequence).
+`data (np.ndarray | torch.Tensor)`: Data to be printed (can be a 2D, 3D, or 4D spike train, or a 2 or 3 column event sequence).
 
 `shape (Iterable)`: If the data to be printed is an event sequence, specify its size. For example, if the shape of the event sequence is `[N, 3]`, then specify the sizes of the 3 columns respectively.
 
@@ -43,11 +43,11 @@ event_plot_yx(
 
 `figSize (Tuple)`: Size of the image.
 
-`is_seq (bool)`: Whether the event is a sequence. If `True`, it is an event sequence; if `False`, it is an event tensor.
+`is_seq (bool)`: Whether the event is a sequence. If `True`, it is an event sequence; if `False`, it is an spike train.
 
 ### Example Usage
 
-(1) Print event tensor:
+(1) Print spike train:
 
 ```python
 import torch
@@ -97,7 +97,7 @@ event_plot_tx(
 
 ### Parameters
 
-`data (np.ndarray | torch.Tensor)`: Data to be printed (can be a 2D, 3D, or 4D event tensor, or a 2 or 3 column event sequence).
+`data (np.ndarray | torch.Tensor)`: Data to be printed (can be a 2D, 3D, or 4D spike train, or a 2 or 3 column event sequence).
 
 `shape (Iterable)`: If the data to be printed is an event sequence, specify its size. For example, if the shape of the event sequence is `[N, 3]`, then specify the sizes of the 3 columns respectively.
 
@@ -111,11 +111,11 @@ event_plot_tx(
 
 `figSize (Tuple)`: Size of the image.
 
-`is_seq (bool)`: Whether the event is a sequence. If `True`, it is an event sequence; if `False`, it is an event tensor.
+`is_seq (bool)`: Whether the event is a sequence. If `True`, it is an event sequence; if `False`, it is an spike train.
 
 ### Example Usage
 
-(1) Print event tensor:
+(1) Print spike train:
 
 ```python
 import torch
@@ -165,7 +165,7 @@ event_plot_tyx(
 
 ### Parameters
 
-`data (np.ndarray | torch.Tensor)`: Data to be printed (can be a 3D, 4D, or 5D event tensor, or a 3 or 4 column event sequence).
+`data (np.ndarray | torch.Tensor)`: Data to be printed (can be a 3D, 4D, or 5D spike train, or a 3 or 4 column event sequence).
 
 `shape (Iterable)`: If the data to be printed is an event sequence, specify its size. For example, if the shape of the event sequence is `[N, 4]`, then specify the sizes of the 4 columns respectively.
 
@@ -179,11 +179,11 @@ event_plot_tyx(
 
 `figSize (Tuple)`: Size of the image.
 
-`is_seq (bool)`: Whether the event is a sequence. If `True`, it is an event sequence; if `False`, it is an event tensor.
+`is_seq (bool)`: Whether the event is a sequence. If `True`, it is an event sequence; if `False`, it is an spike train.
 
 ### Example Usage
 
-(1) Print event tensor:
+(1) Print spike train:
 
 ```python
 import torch
