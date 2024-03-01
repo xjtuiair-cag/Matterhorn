@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from typing import Iterable
 
@@ -14,7 +15,9 @@ def event_seq_to_tensor(event_seq: torch.Tensor, shape: Iterable = None, origina
         event_tensor (torch.Tensor): 事件张量，形状为[T, C, ...]
     """
     if not isinstance(event_seq, torch.Tensor):
-        event_seq = torch.tensor(event_seq, dtype = torch.int)
+        if isinstance(event_seq, np.ndarray):
+            event_seq = event_seq.tolist()
+        event_seq = torch.tensor(event_seq, dtype = torch.long)
     event_seq = event_seq.to(torch.float)
     if shape is None:
         shape = tuple([torch.max(event_seq[:, idx]) for idx in event_seq.shape[1]])
@@ -34,7 +37,6 @@ def event_seq_to_tensor(event_seq: torch.Tensor, shape: Iterable = None, origina
     event_seq, counts = torch.unique(event_seq, dim = 0, return_counts = True)
     event_seq = event_seq.permute(1, 0).to(torch.long)
     counts = counts.to(torch.float)
-    print(event_seq.shape)
     event_tensor[event_seq.tolist()] = (counts if count else 1.0)
     event_tensor = event_tensor.to(event_seq.device)
     return event_tensor
