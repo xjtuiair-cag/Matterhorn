@@ -18,7 +18,7 @@ import shutil
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor, wait
 import hashlib
-from matterhorn_pytorch.util.events import event_seq_to_spike_train
+from matterhorn_pytorch.util.transforms import event_seq_to_spike_train
 
 
 class EventDataset(Dataset):

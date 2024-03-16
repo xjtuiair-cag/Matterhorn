@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 from typing import Any
 import matterhorn_pytorch.snn.functional as SF
+from matterhorn_pytorch.util.transforms import spike_train_to_spike_times, spike_times_to_spike_train
 try:
     from rich import print
 except:
@@ -54,12 +55,7 @@ def t_to_s(t: torch.Tensor, time_steps: int, t_offset: int = 0) -> torch.Tensor:
     Returns:
         s (torch.Tensor): 脉冲序列，形状为[T, ...]
     """
-    t_size = time_steps + t_offset
-    T = lambda x: x.permute(*torch.arange(x.ndim - 1, -1, -1))
-    spike_ts = torch.ones([t_size] + list(t.shape)) * (t + t_offset)
-    current_ts = T(T(torch.ones_like(spike_ts)) * torch.arange(t_size)).to(spike_ts)
-    s = SF.ge(current_ts, spike_ts)
-    return s
+    return spike_times_to_spike_train(t, time_steps, t_offset)
 
 
 @torch.jit.script
@@ -388,7 +384,7 @@ def s_to_t(s: torch.Tensor) -> torch.Tensor:
     Returns:
         t (torch.Tensor): 时间序列，形状为[...]
     """
-    t = torch.where(torch.sum(s, dim = 0).nonzero(), torch.argmax(s, dim = 0), torch.full_like(s[0], torch.inf))
+    t = spike_train_to_spike_times(s, torch.inf)
     return t
 
 
