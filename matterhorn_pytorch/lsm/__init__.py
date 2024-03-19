@@ -6,7 +6,7 @@
 
 from . import functional
 from .io import Cast
-from .skeleton import LSM
+from .skeleton import LSM, STDPLSM
 try:
     from rich import print
 except:
