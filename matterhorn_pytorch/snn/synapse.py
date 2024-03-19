@@ -714,4 +714,5 @@ class EI(Synapse):
             o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}(t)$
         """
         o = torch.abs(o)
-        return torch.where(self.mask, o, -o)
+        mask = torch.stack([self.mask] * o.shape[0]).to(o.device)
+        return torch.where(mask, o, -o)
