@@ -733,11 +733,11 @@ class AvgPool3d(Layer, nn.AvgPool3d):
 
 
 class Flatten(Layer, nn.Flatten):
-    def __init__(self, start_dim: int = 1, end_dim: int = -1, multi_time_step: bool = False) -> None:
+    def __init__(self, start_dim: int = 2, end_dim: int = -1, multi_time_step: bool = False) -> None:
         """
         展平层。
         Args:
-            start_dim (int): 起始维度
+            start_dim (int): 起始维度，默认为2（除去[T, B]之后的维度）
             end_dim (int): 终止维度
             multi_time_step (bool): 是否调整为多个时间步模式
         """
@@ -747,8 +747,8 @@ class Flatten(Layer, nn.Flatten):
         )
         nn.Flatten.__init__(
             self,
-            start_dim = start_dim,
-            end_dim = end_dim
+            start_dim = max(start_dim - 1, 0) if start_dim >= 0 else start_dim,
+            end_dim = max(end_dim - 1, 0) if end_dim >= 0 else end_dim
         )
 
 
@@ -778,7 +778,7 @@ class Unflatten(Layer, nn.Unflatten):
         """
         反展开层。
         Args:
-            dim (int): | str 在哪个维度反展开
+            dim (int | str): 在哪个维度反展开
             unflattened_size: 这个维度上的张量要反展开成什么形状
             multi_time_step (bool): 是否调整为多个时间步模式
         """
@@ -788,7 +788,7 @@ class Unflatten(Layer, nn.Unflatten):
         )
         nn.Unflatten.__init__(
             self,
-            dim = dim,
+            dim = max(dim - 1, 0) if dim >= 0 else dim,
             unflattened_size = unflattened_size
         )
 
@@ -811,4 +811,132 @@ class Unflatten(Layer, nn.Unflatten):
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
         y = nn.Unflatten.forward(self, x)
+        return y
+
+
+class Dropout(Layer, nn.Dropout):
+    def __init__(self, p: float = 0.5, inplace: bool = False, multi_time_step: bool = False) -> None:
+        """
+        遗忘层。
+        Args:
+            p (float): 遗忘概率
+            inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
+            multi_time_step (bool): 是否调整为多个时间步模式
+        """
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
+        nn.Dropout.__init__(
+            self,
+            p = p,
+            inplace = inplace
+        )
+
+
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        y = nn.Dropout.forward(self, x)
+        return y
+
+
+class Dropout1d(Layer, nn.Dropout1d):
+    def __init__(self, p: float = 0.5, inplace: bool = False, multi_time_step: bool = False) -> None:
+        """
+        一维遗忘层。
+        Args:
+            p (float): 遗忘概率
+            inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
+            multi_time_step (bool): 是否调整为多个时间步模式
+        """
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
+        nn.Dropout1d.__init__(
+            self,
+            p = p,
+            inplace = inplace
+        )
+
+
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        y = nn.Dropout1d.forward(self, x)
+        return y
+
+
+class Dropout2d(Layer, nn.Dropout2d):
+    def __init__(self, p: float = 0.5, inplace: bool = False, multi_time_step: bool = False) -> None:
+        """
+        二维遗忘层。
+        Args:
+            p (float): 遗忘概率
+            inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
+            multi_time_step (bool): 是否调整为多个时间步模式
+        """
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
+        nn.Dropout2d.__init__(
+            self,
+            p = p,
+            inplace = inplace
+        )
+
+
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        y = nn.Dropout2d.forward(self, x)
+        return y
+
+
+class Dropout3d(Layer, nn.Dropout3d):
+    def __init__(self, p: float = 0.5, inplace: bool = False, multi_time_step: bool = False) -> None:
+        """
+        三维遗忘层。
+        Args:
+            p (float): 遗忘概率
+            inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
+            multi_time_step (bool): 是否调整为多个时间步模式
+        """
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
+        nn.Dropout3d.__init__(
+            self,
+            p = p,
+            inplace = inplace
+        )
+
+
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        y = nn.Dropout3d.forward(self, x)
         return y

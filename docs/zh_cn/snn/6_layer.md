@@ -440,7 +440,7 @@ pooling = mth.snn.AvgPool3d(2) # [T, B, H, W, L] -> [T, B, H // 2, W // 2, L // 
 
 ```python
 Flatten(
-    start_dim: int = 1,
+    start_dim: int = 2,
     end_dim: int = -1,
     multi_time_step: bool = False
 )

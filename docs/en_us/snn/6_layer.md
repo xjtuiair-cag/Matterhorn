@@ -440,7 +440,7 @@ Flattening layer, reshapes and flattens the tensor. Generally used to connect co
 
 ```python
 Flatten(
-    start_dim: int = 1,
+    start_dim: int = 2,
     end_dim: int = -1,
     multi_time_step: bool = False
 )

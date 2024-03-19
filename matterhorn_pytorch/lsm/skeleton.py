@@ -157,7 +157,7 @@ class LSM(snn.Module):
 
 
 class STDPLSM(LSM):
-    def __init__(self, adjacent: torch.Tensor, soma: Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, adjacent: torch.Tensor, soma: Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, weight_always_positive: bool = False, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         super().__init__(
             adjacent = adjacent,
             soma = soma,
@@ -170,6 +170,10 @@ class STDPLSM(LSM):
         self.output_spike_seq = []
         self.weight.requires_grad_(False)
         self.weight_input.requires_grad_(False)
+        self.weight_always_positive = weight_always_positive
+        if self.weight_always_positive:
+            self.weight = torch.abs(self.weight)
+            self.weight_input = torch.abs(self.weight_input)
         if self.multi_time_step:
             if soma.supports_multi_time_step():
                 self.soma = soma.multi_time_step_(True)
@@ -215,6 +219,9 @@ class STDPLSM(LSM):
         delta_weight_input = torch.zeros_like(self.weight)
         delta_weight_input = stdp(delta_weight_input, input_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
         self.weight_input += self.lr * torch.diagonal(delta_weight_input)
+        if self.weight_always_positive:
+            self.weight = torch.max(self.weight, torch.zeros_like(self.weight))
+            self.weight_input = torch.max(self.weight_input, torch.zeros_like(self.weight_input))
         self.input_spike_seq = []
         self.output_spike_seq = []
         return super().step(*args, **kwargs)

@@ -689,3 +689,29 @@ class LayerNorm(Synapse, nn.LayerNorm):
         """
         x = nn.LayerNorm.forward(self, x)
         return x
+
+
+class EI(Synapse):
+    def __init__(self, mask: torch.Tensor, multi_time_step = False) -> None:
+        """
+        兴奋性神经元。
+        Args:
+            mask (torch.Tensor): 一个布尔类型的张量，形状与单个时间步内的数据张量一致，元素为True代表兴奋性神经元，为False代表抑制性神经元
+            multi_time_step (bool): 是否调整为多个时间步模式
+        """
+        super().__init__(
+            multi_time_step = multi_time_step
+        )
+        self.mask = mask
+    
+
+    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
+        """
+        单个时间步的前向传播函数。
+        Args:
+            o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}(t)$
+        Returns:
+            o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}(t)$
+        """
+        o = torch.abs(o)
+        return torch.where(self.mask, o, -o)
