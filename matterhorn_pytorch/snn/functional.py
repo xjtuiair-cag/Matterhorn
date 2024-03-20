@@ -24,7 +24,7 @@ class _val_to_spike(torch.autograd.Function):
         Returns:
             o (torch.Tensor): 脉冲值（0、1）
         """
-        return x.ge(0.5).to(x)
+        return abs(x).ge(0.5).to(x)
 
 
     @staticmethod

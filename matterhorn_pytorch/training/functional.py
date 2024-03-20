@@ -106,5 +106,5 @@ def stdp(delta_weight: torch.Tensor, input_spike_train: torch.Tensor, output_spi
         delta_weight = delta_weight_cpu.to(delta_weight)
     else:
         delta_weight = stdp_py(delta_weight, input_shape, output_shape, time_steps, input_spike_train, output_spike_train, a_pos, tau_pos, a_neg, tau_neg, batch_size)
-    delta_weight = torch.where(torch.abs(delta_weight) >= precision, delta_weight, torch.zeros_like(delta_weight))
+    # delta_weight = torch.where(torch.abs(delta_weight) >= precision, delta_weight, torch.zeros_like(delta_weight))
     return delta_weight

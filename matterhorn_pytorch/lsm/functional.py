@@ -7,7 +7,7 @@
 
 import torch
 import torch.nn as nn
-from matterhorn_pytorch.lsm.skeleton import LSM
+from matterhorn_pytorch.lsm.layer import LSM
 from typing import Iterable
 try:
     from rich import print

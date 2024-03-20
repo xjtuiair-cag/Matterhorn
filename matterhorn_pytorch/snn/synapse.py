@@ -691,10 +691,10 @@ class LayerNorm(Synapse, nn.LayerNorm):
         return x
 
 
-class EI(Synapse):
+class Neurotransmitter(Synapse):
     def __init__(self, mask: torch.Tensor, multi_time_step = False) -> None:
         """
-        兴奋性神经元。
+        神经递质，分为兴奋性神经递质和抑制性神经递质，加在胞体后面。
         Args:
             mask (torch.Tensor): 一个布尔类型的张量，形状与单个时间步内的数据张量一致，元素为True代表兴奋性神经元，为False代表抑制性神经元
             multi_time_step (bool): 是否调整为多个时间步模式
@@ -714,5 +714,6 @@ class EI(Synapse):
             o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}(t)$
         """
         o = torch.abs(o)
-        mask = torch.stack([self.mask] * o.shape[0]).to(o.device)
-        return torch.where(mask, o, -o)
+        mask = self.mask.to(torch.bool).to(o.device)
+        o = torch.where(mask, o, -o)
+        return o

@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 from matterhorn_pytorch import snn
+import matterhorn_pytorch.snn.functional as SF
 from matterhorn_pytorch.snn.container import Temporal
 from matterhorn_pytorch.snn.skeleton import Module
 from matterhorn_pytorch.training.functional import stdp
@@ -77,20 +78,6 @@ class LSM(snn.Module):
         return u
 
 
-    def permute_t_b(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        将时间步与批大小对调。
-        Args:
-            x (torch.Tensor): 输入张量
-        Returns:
-            y (torch.Tensor): 输出张量
-        """
-        idx = [i for i, j in enumerate(x.shape)]
-        idx[0], idx[1] = idx[1], idx[0]
-        y = x.permute(*idx)
-        return y
-
-
     def reset(self) -> Module:
         """
         重置整个神经元。
@@ -141,14 +128,12 @@ class LSM(snn.Module):
         """
         前向传播函数。
         Args:
-            x (torch.Tensor): 当前输入，形状为[B, I]（单步）或[B, T, I]（多步）
+            x (torch.Tensor): 当前输入，形状为[B, I]（单步）或[T, B, I]（多步）
         Returns:
-            y (torch.Tensor): 当前输出，形状为[B, O]（单步）或[B, T, O]（多步）
+            y (torch.Tensor): 当前输出，形状为[B, O]（单步）或[T, B, O]（多步）
         """
         if self.multi_time_step:
-            x = self.permute_t_b(x)
             y = self.forward_multi_time_step(x)
-            y = self.permute_t_b(y)
             if self.reset_after_process:
                 self.reset()
         else:
@@ -168,12 +153,12 @@ class STDPLSM(LSM):
         )
         self.input_spike_seq = []
         self.output_spike_seq = []
-        self.weight.requires_grad_(False)
-        self.weight_input.requires_grad_(False)
+        self.weight = self.weight.requires_grad_(False)
+        self.weight_input = self.weight_input.requires_grad_(False)
         self.weight_always_positive = weight_always_positive
         if self.weight_always_positive:
-            self.weight = torch.abs(self.weight)
-            self.weight_input = torch.abs(self.weight_input)
+            self.weight[:] = torch.abs(self.weight)
+            self.weight_input[:] = torch.abs(self.weight_input)
         if self.multi_time_step:
             if soma.supports_multi_time_step():
                 self.soma = soma.multi_time_step_(True)
@@ -203,13 +188,11 @@ class STDPLSM(LSM):
         else:
             input_spike_train = torch.stack(self.input_spike_seq)
             output_spike_train = torch.stack(self.output_spike_seq)
-        is_batched = input_spike_train.ndim >= 3
-        if is_batched:
-            input_spike_train = input_spike_train.permute(1, 0, 2)
-            output_spike_train = output_spike_train.permute(1, 0, 2)
-        else:
+        if input_spike_train.ndim == 2:
             input_spike_train = input_spike_train.reshape(input_spike_train.shape[0], 1, input_spike_train.shape[1])
             output_spike_train = output_spike_train.reshape(output_spike_train.shape[0], 1, output_spike_train.shape[1])
+        input_spike_train = SF.val_to_spike(input_spike_train)
+        output_spike_train = SF.val_to_spike(output_spike_train)
         # 将不同维度的输入与输出张量形状统一转为[T, B, L]
         recurrent_spike_train = torch.zeros_like(output_spike_train)
         recurrent_spike_train[1:] = output_spike_train[:-1]
@@ -220,8 +203,8 @@ class STDPLSM(LSM):
         delta_weight_input = stdp(delta_weight_input, input_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
         self.weight_input += self.lr * torch.diagonal(delta_weight_input)
         if self.weight_always_positive:
-            self.weight = torch.max(self.weight, torch.zeros_like(self.weight))
-            self.weight_input = torch.max(self.weight_input, torch.zeros_like(self.weight_input))
+            self.weight[:] = torch.max(self.weight, torch.zeros_like(self.weight))
+            self.weight_input[:] = torch.max(self.weight_input, torch.zeros_like(self.weight_input))
         self.input_spike_seq = []
         self.output_spike_seq = []
         return super().step(*args, **kwargs)
@@ -231,17 +214,15 @@ class STDPLSM(LSM):
         """
         前向传播函数。
         Args:
-            x (torch.Tensor): 当前输入，形状为[B, I]（单步）或[B, T, I]（多步）
+            x (torch.Tensor): 当前输入，形状为[B, I]（单步）或[T, B, I]（多步）
         Returns:
-            y (torch.Tensor): 当前输出，形状为[B, O]（单步）或[B, T, O]（多步）
+            y (torch.Tensor): 当前输出，形状为[B, O]（单步）或[T, B, O]（多步）
         """
         if self.multi_time_step:
-            x = self.permute_t_b(x)
             y = self.forward_multi_time_step(x)
             if self.training:
                 self.input_spike_seq.append(x.clone().detach())
                 self.output_spike_seq.append(y.clone().detach())
-            y = self.permute_t_b(y)
             if self.reset_after_process:
                 self.reset()
         else:
