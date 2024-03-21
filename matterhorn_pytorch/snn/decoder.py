@@ -7,6 +7,7 @@
 
 import torch
 import torch.nn as nn
+from matterhorn_pytorch.__func__ import transpose
 from matterhorn_pytorch.snn.skeleton import Module
 from typing import Callable
 try:
@@ -186,8 +187,7 @@ class AverageTime(TimeBased):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        T = lambda x: x.permute(*torch.arange(x.ndim - 1, -1, -1))
-        xt = T(T(x) * torch.arange(x.shape[0]).to(x))
+        xt = transpose(transpose(x) * torch.arange(x.shape[0]).to(x))
         tsum = torch.sum(xt, dim = 0)
         xsum = torch.sum(x, dim = 0)
         mask = xsum > 0

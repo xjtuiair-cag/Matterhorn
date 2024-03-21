@@ -7,6 +7,7 @@
 import numpy as np
 import torch
 from typing import Iterable
+from matterhorn_pytorch.__func__ import transpose
 import matterhorn_pytorch.snn.functional as SF
 
 
@@ -88,8 +89,7 @@ def spike_times_to_spike_train(spike_times: torch.Tensor, t_max: int, t_offset: 
         spike_train (torch.Tensor): 脉冲序列，形状为[T, ...]
     """
     time_steps = t_max + t_offset
-    T = lambda x: x.permute(*torch.arange(x.ndim - 1, -1, -1))
     spike_ts = torch.ones([time_steps] + list(spike_times.shape)) * (spike_times + t_offset)
-    current_ts = T(T(torch.ones_like(spike_ts)) * torch.arange(time_steps)).to(spike_ts)
+    current_ts = transpose(transpose(torch.ones_like(spike_ts)) * torch.arange(time_steps)).to(spike_ts)
     spike_train = SF.ge(current_ts, spike_ts)
     return spike_train

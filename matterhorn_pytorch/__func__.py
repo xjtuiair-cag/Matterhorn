@@ -4,6 +4,11 @@ import torch
 
 
 def cpp_available() -> bool:
+    """
+    判断C++扩展是否可用。
+    Returns:
+        is_available (bool): C++扩展是否可用
+    """
     try:
         import matterhorn_cpp_extensions as __mth_cppext__
         del __mth_cppext__
@@ -13,6 +18,11 @@ def cpp_available() -> bool:
 
 
 def cuda_available() -> bool:
+    """
+    判断CUDA扩展是否可用。
+    Returns:
+        is_available (bool): CUDA扩展是否可用
+    """
     if not torch.cuda.is_available():
         return False
     try:
@@ -21,3 +31,14 @@ def cuda_available() -> bool:
         return True
     except:
         return False
+
+
+def transpose(x: torch.Tensor) -> torch.Tensor:
+    """
+    转置一个张量。
+    Args:
+        x (torch.Tensor): 转置前的张量
+    Returns:
+        x (torch.Tensor): 转置后的张量
+    """
+    return x.permute(*torch.arange(x.ndim - 1, -1, -1))

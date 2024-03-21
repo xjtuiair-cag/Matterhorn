@@ -4,7 +4,7 @@
 """
 
 
-from matterhorn_pytorch.__func__ import cpp_available, cuda_available
+from matterhorn_pytorch.__func__ import cpp_available, cuda_available, transpose
 from . import lsm
 from . import snn
 from . import tnn
