@@ -90,6 +90,7 @@ def main():
         model = model,
         train_data_loader = train_data_loader,
         test_data_loader = test_data_loader,
+        num_classes = 10,
         optimizer = optimizer,
         scheduler = lr_scheduler,
         log_dir = log_dir,

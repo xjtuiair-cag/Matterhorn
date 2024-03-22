@@ -104,6 +104,7 @@ def main():
         model = (stdp_model, decoder),
         train_data_loader = train_data_loader,
         test_data_loader = test_data_loader,
+        num_classes = 10,
         rule = ("stdp", "bp"),
         optimizer = optimizer,
         scheduler = lr_scheduler,
