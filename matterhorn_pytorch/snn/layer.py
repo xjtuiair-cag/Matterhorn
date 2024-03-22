@@ -266,7 +266,7 @@ class STDPLinear(Module, nn.Linear):
         )
         self.input_spike_seq = []
         self.output_spike_seq = []
-        self.weight.requires_grad_(False)
+        self.weight[:] = self.weight.requires_grad_(False)
         if self.multi_time_step:
             if soma.supports_multi_time_step():
                 self.soma = soma.multi_time_step_(True)
