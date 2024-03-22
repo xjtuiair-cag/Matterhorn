@@ -149,10 +149,10 @@ def stdp(delta_weight: torch.Tensor, input_spike_train: torch.Tensor, output_spi
     delta_weight = torch.zeros_like(delta_weight)
     if device_type == "cuda" and stdp_cuda is not None:
         stdp_cuda(delta_weight, input_shape, output_shape, time_steps, input_spike_train, output_spike_train, a_pos, tau_pos, a_neg, tau_neg, batch_size)
-    elif stdp_cpp is not None:
-        delta_weight_cpu = delta_weight.cpu()
-        stdp_cpp(delta_weight_cpu, input_shape, output_shape, time_steps, input_spike_train.cpu(), output_spike_train.cpu(), a_pos, tau_pos, a_neg, tau_neg, batch_size)
-        delta_weight = delta_weight_cpu.to(delta_weight)
+    # elif stdp_cpp is not None:
+    #     delta_weight_cpu = delta_weight.cpu()
+    #     stdp_cpp(delta_weight_cpu, input_shape, output_shape, time_steps, input_spike_train.cpu(), output_spike_train.cpu(), a_pos, tau_pos, a_neg, tau_neg, batch_size)
+    #     delta_weight = delta_weight_cpu.to(delta_weight)
     else:
         delta_weight = stdp_py(delta_weight, input_spike_train, output_spike_train, a_pos, tau_pos, a_neg, tau_neg)
     delta_weight = torch.where(torch.abs(delta_weight) >= precision, delta_weight, torch.zeros_like(delta_weight))
