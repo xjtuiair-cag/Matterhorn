@@ -252,35 +252,6 @@ cd Matterhorn
 python3 examples/1_starting.py
 ```
 
-In most cases, neurons of SNNs can be divided into 1 synapse operation and 3 soma operations. However, there are always some special cases. SRM0 neuron model is one of them, whose response is calculated in each synapse. We can use 5 operations to represent SRM0 neurons, 2 for synapses and 3 for soma:
-
-**Operation 1**: **synapse response function**
-
-$$R_{j}^{l}(t)=(1-\frac{1}{\tau_{m}})R_{j}^{l}(t-1)+O_{j}^{l}(t)$$
-
-**Operation 2**: **synapse function**
-
-$$X_{i}^{l}(t)=\sum_{j}{w_{ij}R_{j}^{l}(t)}$$
-
-**Operation 3**: **response function**
-
-$$U_{i}^{l}(t)=X_{i}^{l}(t)H_{i}^{l}(t-1)$$
-
-**Operation 4**: **firing function**
-
-$$O_{i}^{l}(t)=Heaviside(U_{i}^{l}(t))$$
-
-**Operation 5**: **reset function**
-
-$$H_{i}^{l}(t)=1-O_{i}^{l}(t)$$
-
-With 5 operations resembled we can build a SRM0 neuron. For further experience, you can refer to [examples/3_using_srm0_neuron.py](./examples/3_using_srm0_neuron.py).
-
-```sh
-cd Matterhorn
-python3 examples/3_using_srm0_neuron.py
-```
-
 ### Why Should We Need Surrogate Gradient
 
 In spiking neurons, we usually use Heaviside step function $u(t)$ to decide whether to generate a spike:
@@ -349,11 +320,11 @@ python3 setup.py develop
 
 ### Neuromorphic Datasets
 
-Matterhorn provides several neuromorphic datasets for training SNNs. You can experience provided neuromorphic dataset in Matterhorn by example [examples/4_convolution_and_event_datasets.py](./examples/4_convolution_and_event_datasets.py).
+Matterhorn provides several neuromorphic datasets for training SNNs. You can experience provided neuromorphic dataset in Matterhorn by example [examples/3_convolution_and_event_datasets.py](./examples/3_convolution_and_event_datasets.py).
 
 ```sh
 cd Matterhorn
-python3 examples/4_convolution_and_event_datasets.py
+python3 examples/3_convolution_and_event_datasets.py
 ```
 
 #### NMNIST

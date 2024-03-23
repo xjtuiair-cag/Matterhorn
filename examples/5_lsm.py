@@ -2,12 +2,13 @@ import torch
 import torchvision
 from torch.utils.data import DataLoader
 import matterhorn_pytorch.snn as snn
+import matterhorn_pytorch.lsm as lsm
 from functions import *
 from rich import print
 
 
 def main():
-    print_title("Example 3", style = "bold blue")
+    print_title("Example 6", style = "bold blue")
 
     print_title("Hyper Parameters")
 
@@ -31,16 +32,36 @@ def main():
 
     model = snn.Sequential(
         snn.PoissonEncoder(
-            time_steps = time_steps,
+            time_steps = time_steps
         ),
         snn.Flatten(),
-        snn.SRM0Linear(28 * 28, 80, tau_m = tau),
-        snn.SRM0Linear(80, 10, tau_m = tau),
-        snn.AvgSpikeDecoder()
+        lsm.Cast(
+            28 * 28,
+            28 * 28 + 10,
+            range(28 * 28),
+            range(28 * 28)
+        ),
+        lsm.functional.merge(
+            lsm.LSM(
+                adjacent = lsm.functional.init_adjacent_dist_2d(28, 28, 0.4),
+                soma = snn.LIF()
+            ),
+            lsm.LSM(
+                adjacent = lsm.functional.init_adjacent_norm(10, 0.4),
+                soma = snn.LIF()
+            )
+        ),
+        lsm.Cast(
+            28 * 28 + 10,
+            10,
+            range(28 * 28, 28 * 28 + 10),
+            range(10)
+        ),
+        snn.AvgSpikeDecoder(),
     )
     model = model.to(device)
     print_model(model)
-
+    
     print_title("Dataset")
 
     train_dataset = torchvision.datasets.MNIST(
@@ -70,13 +91,13 @@ def main():
         pin_memory = True
     )
     print_dataset(test_dataset)
-
+    
     print_title("Preparations for Training")
 
     optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
     log_dir = "./examples/logs"
-    sub_dir = "3_srm0" + "_" + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+    sub_dir = "5_lsm" + "_" + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
     log_dir = os.path.join(log_dir, sub_dir)
     init_logs(
         log_dir = log_dir,

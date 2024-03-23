@@ -252,35 +252,6 @@ cd Matterhorn
 python3 examples/1_starting.py
 ```
 
-在大多数情况下， SNNs 的神经元可以分为 1 个突触函数和 3 个胞体函数。然而，总会有一些特殊情况。 SRM0 神经元模型是其中之一，其响应在每个突触中计算。可以使用 5 个函数来表示 SRM0 神经元，其中 2 个是突触函数，3 个是胞体函数：
-
-**函数1** ： **突触响应函数**
-
-$$R_{j}^{l}(t)=(1-\frac{1}{\tau_{m}})R_{j}^{l}(t-1)+O_{j}^{l}(t)$$
-
-**函数2** ： **突触函数**
-
-$$X_{i}^{l}(t)=\sum_{j}{w_{ij}R_{j}^{l}(t)}$$
-
-**函数3** ： **响应函数**
-
-$$U_{i}^{l}(t)=X_{i}^{l}(t)H_{i}^{l}(t-1)$$
-
-**函数4** ： **脉冲函数**
-
-$$O_{i}^{l}(t)=Heaviside(U_{i}^{l}(t))$$
-
-**函数5** ： **重置函数**
-
-$$H_{i}^{l}(t)=1-O_{i}^{l}(t)$$
-
-通过 5 个相似的函数，可以构建一个 SRM0 神经元。要进行更深入的体验，您可以参考 [examples/3_using_srm0_neuron.py](./examples/3_using_srm0_neuron.py) 。
-
-```sh
-cd Matterhorn
-python3 examples/3_using_srm0_neuron.py
-```
-
 ### 为什么需要替代梯度
 
 在脉冲神经元中，通常使用 Heaviside 阶跃函数 $u(t)$ 来决定是否生成脉冲：
@@ -349,11 +320,11 @@ python3 setup.py develop
 
 ### 神经形态数据集
 
-Matterhorn 提供了一些神经形态数据集用来训练 SNNs 。您可以通过示例 [examples/4_convolution_and_event_datasets.py](./examples/4_convolution_and_event_datasets.py) 体验 Matterhorn 中预设神经形态数据集的用法。
+Matterhorn 提供了一些神经形态数据集用来训练 SNNs 。您可以通过示例 [examples/3_convolution_and_event_datasets.py](./examples/3_convolution_and_event_datasets.py) 体验 Matterhorn 中预设神经形态数据集的用法。
 
 ```sh
 cd Matterhorn
-python3 examples/4_convolution_and_event_datasets.py
+python3 examples/3_convolution_and_event_datasets.py
 ```
 
 #### NMNIST

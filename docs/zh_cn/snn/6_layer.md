@@ -32,60 +32,6 @@ Layer(
 
 若突触的运算与时间步有关，请重载这一函数，并用变量指明不同时间步之间的关联。
 
-## `matterhorn_pytorch.snn.SRM0Linear` / `matterhorn_pytorch.snn.layer.SRM0Linear`
-
-全连接 SRM0 神经元。
-
-```python
-SRM0Linear(
-    in_features: int,
-    out_features: int,
-    tau_m: float = 2.0,
-    u_threshold: float = -0.055,
-    u_rest: float = -0.07,
-    spiking_function: nn.Module = surrogate.Gaussian(),
-    multi_time_step: bool = False,
-    reset_after_process: bool = True,
-    trainable: bool = False,
-    device: torch.device = None,
-    dtype: torch.dtype = None
-)
-```
-
-### 构造函数参数
-
-`in_features (int)` ：输入的长度 `I` 。输入的形状为 `[B, I]` （单时间步模式） 或 `[T, B, I]` （多时间步模式）。
-
-`out_features (int)` ：输出的长度 `O` 。输出的形状为 `[B, O]` （单时间步模式） 或 `[T, B, O]` （多时间步模式）。
-
-`tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
-
-`u_threshold (float)` ：阈电位 $u_{th}$ 。
-
-`u_rest (float)` ：静息电位 $u_{rest}$ 。
-
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
-
-`trainable (bool)` ：参数 $\tau_{m}$ 是否可以被训练。
-
-`device (torch.device)` ：计算所使用的计算设备。
-
-`dtype (torch.dtype)` ：计算所使用的数据类型。
-
-### 示例用法
-
-```python
-import torch
-import matterhorn_pytorch as mth
-
-
-l1 = mth.snn.SRM0Linear(784, 10) # [T, B, 784] -> [T, B, 10]
-```
-
 ## `matterhorn_pytorch.snn.STDPLinear` / `matterhorn_pytorch.snn.layer.STDPLinear`
 
 采用脉冲时序依赖可塑性（STDP）学习机制的全连接层。 STDP 作为常见的基于脉冲的学习机制，其权重更新遵循公式：
@@ -493,3 +439,45 @@ import matterhorn_pytorch as mth
 
 lf = mth.snn.Unflatten(1, (1, 28, 28)) # [T, B, 784] -> [T, B, 1, 28, 28]
 ```
+
+## `matterhorn_pytorch.snn.Dropout` / `matterhorn_pytorch.snn.layer.Dropout`
+
+遗忘层，以一定概率将元素置为 `0` 。
+
+```python
+Dropout(
+    p: float = 0.5,
+    inplace: bool = False,
+    multi_time_step: bool = False
+)
+```
+
+### 构造函数参数
+
+`p (float)` ：遗忘概率。
+
+`unflattened_size (_size)` ：是否在原有张量上改动，若为 `True` 则直接改原张量，否则新建一个张量。
+
+`multi_time_step (bool)` ：是否调整为多个时间步模式。
+
+### 示例用法
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+ld = mth.snn.Dropout(0.5)
+```
+
+## `matterhorn_pytorch.snn.Dropout1d` / `matterhorn_pytorch.snn.layer.Dropout1d`
+
+一维遗忘层，以一定概率将元素置为 `0` 。详情请参考 `matterhorn_pytorch.snn.Dropout` 。
+
+## `matterhorn_pytorch.snn.Dropout2d` / `matterhorn_pytorch.snn.layer.Dropout2d`
+
+二维遗忘层，以一定概率将元素置为 `0` 。详情请参考 `matterhorn_pytorch.snn.Dropout` 。
+
+## `matterhorn_pytorch.snn.Dropout3d` / `matterhorn_pytorch.snn.layer.Dropout3d`
+
+三维遗忘层，以一定概率将元素置为 `0` 。详情请参考 `matterhorn_pytorch.snn.Dropout` 。

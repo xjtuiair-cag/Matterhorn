@@ -38,9 +38,9 @@
 
 ## `matterhorn_pytorch.snn.layer` ： SNN 的脉冲对脉冲操作
 
-该模块中的单元，输入和输出皆为脉冲序列。含有 SRM0 神经元、池化层等。
+该模块中的单元，输入和输出皆为脉冲序列。含有展开层、池化层等。
 
-含有的 `matterhorn_pytorch.snn` 模块： `SRM0Linear` 、 `STDPLinear` 、 `MaxPool1d` 、 `MaxPool2d` 、 `MaxPool3d` 、 `AvgPool1d` 、 `AvgPool2d` 、 `AvgPool3d` 、 `Flatten` 和 `Unflatten` 。
+含有的 `matterhorn_pytorch.snn` 模块： `STDPLinear` 、 `MaxPool1d` 、 `MaxPool2d` 、 `MaxPool3d` 、 `AvgPool1d` 、 `AvgPool2d` 、 `AvgPool3d` 、 `Flatten` 、 `Unflatten` 、 `Dropout` 、 `Dropout1d` 、 `Dropout2d` 和 `Dropout3d` 。
 
 您可以阅读[文档](./6_layer.md)以了解更多类与变量的使用方法。
 

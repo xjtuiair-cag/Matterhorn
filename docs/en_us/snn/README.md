@@ -38,9 +38,9 @@ You can read [the documentation](./1_functional.md) to learn more about the usag
 
 ## `matterhorn_pytorch.snn.layer`: Spike-to-Spike Operations for SNNs
 
-The units in this module, both input and output are spike sequences. It contains SRM0 neurons, pooling layers, etc.
+The units in this module, both input and output are spike sequences. It contains flattening layers, pooling layers, etc.
 
-Containing `matterhorn_pytorch.snn` modules: `SRM0Linear`, `STDPLinear`, `MaxPool1d`, `MaxPool2d`, `MaxPool3d`, `AvgPool1d`, `AvgPool2d`, `AvgPool3d`, `Flatten`, and `Unflatten`.
+Containing `matterhorn_pytorch.snn` modules: `STDPLinear`, `MaxPool1d`, `MaxPool2d`, `MaxPool3d`, `AvgPool1d`, `AvgPool2d`, `AvgPool3d`, `Flatten`, `Unflatten`, `Dropout`, `Dropout1d`, `Dropout2d`, and `Dropout3d`.
 
 You can read [the documentation](./6_layer.md) to learn more about the usage of classes and variables.
 

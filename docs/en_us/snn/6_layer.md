@@ -32,60 +32,6 @@ Synaptic function within a single time step. Since synaptic operations are indep
 
 If synaptic operations are related to time steps, please override this function and specify the association between different time steps using variables.
 
-## `matterhorn_pytorch.snn.SRM0Linear` / `matterhorn_pytorch.snn.layer.SRM0Linear`
-
-Fully connected SRM0 neurons.
-
-```python
-SRM0Linear(
-    in_features: int,
-    out_features: int,
-    tau_m: float = 2.0,
-    u_threshold: float = -0.055,
-    u_rest: float = -0.07,
-    spiking_function: nn.Module = surrogate.Gaussian(),
-    multi_time_step: bool = False,
-    reset_after_process: bool = True,
-    trainable: bool = False,
-    device: torch.device = None,
-    dtype: torch.dtype = None
-)
-```
-
-### Constructor Arguments
-
-`in_features (int)`: Length of the input `I`. The shape of the input is `[B, I]` (single-time-step mode) or `[T, B, I]` (multi-time-step mode).
-
-`out_features (int)`: Length of the output `O`. The shape of the output is `[B, O]` (single-time-step mode) or `[T, B, O]` (multi-time-step mode).
-
-`tau_m (float)`: Membrane potential time constant $\tau_{m}$.
-
-`u_threshold (float)`: Threshold potential $u_{th}$.
-
-`u_rest (float)`: Resting potential $u_{rest}$.
-
-`spiking_function (torch.nn.Module)`: Step function used to calculate spikes, see details in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If `False`, manual reset is required.
-
-`trainable (bool)`: Whether parameter $\tau_{m}$ can be trained.
-
-`device (torch.device)`: Computational device used.
-
-`dtype (torch.dtype)`: Data type used for computation.
-
-### Example Usage
-
-```python
-import torch
-import matterhorn_pytorch as mth
-
-
-l1 = mth.snn.SRM0Linear(784, 10) # [T, B, 784] -> [T, B, 10]
-```
-
 ## `matterhorn_pytorch.snn.STDPLinear` / `matterhorn_pytorch.snn.layer.STDPLinear`
 
 A fully connected layer employing the Spike Timing-Dependent Plasticity (STDP) learning mechanism. STDP, as a common spike-based learning mechanism, follows the weight update formula:
@@ -493,3 +439,45 @@ import matterhorn_pytorch as mth
 
 lf = mth.snn.Unflatten(1, (1, 28, 28)) # [T, B, 784] -> [T, B, 1, 28, 28]
 ```
+
+## `matterhorn_pytorch.snn.Dropout` / `matterhorn_pytorch.snn.layer.Dropout`
+
+Dropout layer, which sets elements to `0` with a certain probability.
+
+```python
+Dropout(
+    p: float = 0.5,
+    inplace: bool = False,
+    multi_time_step: bool = False
+)
+```
+
+### Constructor Arguments
+
+`p (float)`: The dropout probability.
+
+`unflattened_size (_size)`: Whether to modify the original tensor. If `True`, modifies the original tensor; otherwise, creates a new tensor.
+
+`multi_time_step (bool)`: Whether to adjust for multiple time steps mode.
+
+### Example Usage
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+ld = mth.snn.Dropout(0.5)
+```
+
+## `matterhorn_pytorch.snn.Dropout1d` / `matterhorn_pytorch.snn.layer.Dropout1d`
+
+One-dimensional dropout layer, which sets elements to `0` with a certain probability. Refer to `matterhorn_pytorch.snn.Dropout` for more information.
+
+## `matterhorn_pytorch.snn.Dropout2d` / `matterhorn_pytorch.snn.layer.Dropout2d`
+
+Two-dimensional dropout layer, which sets elements to `0` with a certain probability. Refer to `matterhorn_pytorch.snn.Dropout` for more information.
+
+## `matterhorn_pytorch.snn.Dropout3d` / `matterhorn_pytorch.snn.layer.Dropout3d`
+
+Three-dimensional dropout layer, which sets elements to `0` with a certain probability. Refer to `matterhorn_pytorch.snn.Dropout` for more information.
