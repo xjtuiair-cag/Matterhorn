@@ -33,7 +33,7 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
         """
         多时间步LIF神经元前向传播的C++实现。
         Args:
-            ctx: 上下文
+            ctx (torch.Any): 上下文
             x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
             u_init (torch.Tensor): 初始电位
             tau_m (torch.Tensor): 膜时间常数$τ_{m}$
@@ -71,7 +71,7 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
         """
         多时间步LIF神经元反向传播的C++实现。
         Args:
-            ctx: 上下文
+            ctx (torch.Any): 上下文
             grad_o (torch.Tensor): 输出梯度
         Returns:
             grad_x (torch.Tensor): 输入梯度

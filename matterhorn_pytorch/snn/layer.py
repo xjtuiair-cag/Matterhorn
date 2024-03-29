@@ -91,6 +91,26 @@ class Layer(Module):
 class f_stdp_linear(torch.autograd.Function):
     @staticmethod
     def forward(ctx: torch.Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: Module, a_pos: float = 0.25, tau_pos: float = 2.0, a_neg: float = 0.25, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        利用STDP进行学习的液体状态机的前向传播函数。
+        Args:
+            ctx (torch.Any): 上下文
+            input (torch.Tensor): 输入脉冲序列
+            weight (torch.Tensor): 权重矩阵
+            input_trace (torch.Tensor): 输入的迹，累积的输入效应
+            output_trace (torch.Tensor): 输出的迹，累积的输出效应
+            soma (snn.Module): 胞体
+            a_pos (float): STDP参数A+
+            tau_pos (float): STDP参数tau+
+            a_neg (float): STDP参数A-
+            tau_neg (float): STDP参数tau-
+            training (bool): 是否正在训练
+            multi_time_step (bool): 是否为多时间步模式
+        Returns:
+            output (torch.Tensor): 输出脉冲序列
+            input_trace (torch.Tensor): 输入的迹，累积的输入效应
+            output_trace (torch.Tensor): 输出的迹，累积的输出效应
+        """
         if multi_time_step:
             input_spike_train = input.clone()
             time_steps = input.shape[0]
@@ -129,7 +149,28 @@ class f_stdp_linear(torch.autograd.Function):
 
     @staticmethod
     def backward(ctx: torch.Any, grad_output: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None]:
+        """
+        利用STDP进行学习的液体状态机的反向传播函数。
+        Args:
+            ctx (torch.Any): 上下文
+            grad_output (torch.Tensor): 输出脉冲序列梯度
+            grad_input_trace (torch.Tensor): 输入的迹梯度
+            grad_output_trace (torch.Tensor): 输出的迹梯度
+        Returns:
+            grad_input (torch.Tensor): 输入脉冲序列梯度
+            grad_weight (torch.Tensor): 权重矩阵梯度
+            grad_input_trace (torch.Tensor): 输入的迹梯度
+            grad_output_trace (torch.Tensor): 输出的迹梯度
+            grad_soma (None): 胞体的梯度，为None
+            grad_a_pos (None): STDP参数A+的梯度，为None
+            grad_tau_pos (None): STDP参数tau+的梯度，为None
+            grad_a_neg (None): STDP参数A-的梯度，为None
+            grad_tau_neg (None): STDP参数tau-的梯度，为None
+            grad_training (None): 是否正在训练的梯度，为None
+            grad_multi_time_step (None): 是否为多时间步模式的梯度，为None
+        """
         delta_weight, input = ctx.saved_tensors
+        delta_weight = -delta_weight
         return torch.zeros_like(input), delta_weight, torch.zeros_like(grad_input_trace), torch.zeros_like(grad_output_trace), None, None, None, None, None, None, None
 
 

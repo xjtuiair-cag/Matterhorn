@@ -115,7 +115,7 @@ class _heaviside_rectangular(torch.autograd.Function):
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
-            ctx: 上下文
+            ctx (torch.Any): 上下文
             x (torch.Tensor): 输入
             a (float): 参数a
         Returns:
@@ -132,7 +132,7 @@ class _heaviside_rectangular(torch.autograd.Function):
         """
         使用矩形函数作为反向传播函数。
         Args:
-            ctx: 上下文
+            ctx (torch.Any): 上下文
             grad_output (torch.Tensor): 输出梯度
         Returns:
             grad_input (torch.Tensor): 输入梯度
@@ -173,7 +173,7 @@ class _heaviside_polynomial(torch.autograd.Function):
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
-            ctx: 上下文
+            ctx (torch.Any): 上下文
             x (torch.Tensor): 输入
             a (float): 参数a
         Returns:
@@ -190,7 +190,7 @@ class _heaviside_polynomial(torch.autograd.Function):
         """
         使用多项式函数作为反向传播函数。
         Args:
-            ctx: 上下文
+            ctx (torch.Any): 上下文
             grad_output (torch.Tensor): 输出梯度
         Returns:
             grad_input (torch.Tensor): 输入梯度
@@ -232,7 +232,7 @@ class _heaviside_sigmoid(torch.autograd.Function):
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
-            ctx: 上下文
+            ctx (torch.Any): 上下文
             x (torch.Tensor): 输入
             a (float): 参数a
         Returns:
@@ -249,7 +249,7 @@ class _heaviside_sigmoid(torch.autograd.Function):
         """
         使用Sigmoid函数的导数作为反向传播函数。
         Args:
-            ctx: 上下文
+            ctx (torch.Any): 上下文
             grad_output (torch.Tensor): 输出梯度
         Returns:
             grad_input (torch.Tensor): 输入梯度
@@ -290,7 +290,7 @@ class _heaviside_gaussian(torch.autograd.Function):
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
-            ctx: 上下文
+            ctx (torch.Any): 上下文
             x (torch.Tensor): 输入
             a (float): 参数a
         Returns:
@@ -307,7 +307,7 @@ class _heaviside_gaussian(torch.autograd.Function):
         """
         使用高斯函数作为反向传播函数。
         Args:
-            ctx: 上下文
+            ctx (torch.Any): 上下文
             grad_output (torch.Tensor): 输出梯度
         Returns:
             grad_input (torch.Tensor): 输入梯度
