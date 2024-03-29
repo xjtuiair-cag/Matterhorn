@@ -12,23 +12,18 @@ from rich.progress import track
 from rich.table import Table
 
 
-def train_one_epoch(model: Union[torch.nn.Module, Tuple], data_loader: DataLoader, num_classes: int, rule: Union[str, Tuple] = "bp", optimizer: torch.optim.Optimizer = None, device: torch.device = None, dtype: torch.dtype = None) -> Tuple[torch.nn.Module, float, float]:
+def train_one_epoch(model: torch.nn.Module, data_loader: DataLoader, num_classes: int, optimizer: torch.optim.Optimizer = None, device: torch.device = None, dtype: torch.dtype = None) -> Tuple[torch.nn.Module, float, float]:
     """
     一个轮次的训练。
     Args:
-        model (torch.nn.Module | torch.nn.Module*): 所使用的模型
+        model (torch.nn.Module): 所使用的模型
         data_loader (DataLoader): 所使用的数据集
         num_classes (int): 最终类别个数
-        rule (str | torch.nn.Module*): 所使用的训练规则
         optimizer (torch.optim.Optimizer): 所使用的参数优化器
         device (torch.device): 所使用的计算设备
         dtype (torch.dtype): 所使用的数据类型
     """
-    if isinstance(model, Tuple):
-        for idx in range(len(model)):
-            model[idx].train()
-    else:
-        model.train()
+    model.train()
     train_loss = 0.0
     train_acc = 0.0
     train_samples = 0
@@ -39,23 +34,8 @@ def train_one_epoch(model: Union[torch.nn.Module, Tuple], data_loader: DataLoade
         x = x.to(device)
         y = y.to(device)
         y0 = torch.nn.functional.one_hot(y, num_classes = num_classes).float()
-
-        if isinstance(model, Tuple):
-            o = x
-            for idx in range(len(model)):
-                o = model[idx](o)
-                if rule[idx] == "stdp":
-                    o = o.detach().requires_grad_(True)
-        else:
-            o = model(x)
+        o = model(x)
         loss = torch.nn.functional.mse_loss(o, y0)
-        if isinstance(model, Tuple):
-            for idx in range(len(model)):
-                if rule[idx] == "stdp":
-                    model[idx].step()
-        else:
-            if rule == "stdp":
-                model.step()
         loss.backward()
         if optimizer is not None:
             optimizer.step()
@@ -70,21 +50,17 @@ def train_one_epoch(model: Union[torch.nn.Module, Tuple], data_loader: DataLoade
     return model, train_loss, train_acc
 
 
-def test_one_epoch(model: Union[torch.nn.Module, Tuple], data_loader: DataLoader, num_classes: int, device: torch.device = None, dtype: torch.dtype = None) -> Tuple[torch.nn.Module, float, float]:
+def test_one_epoch(model: torch.nn.Module, data_loader: DataLoader, num_classes: int, device: torch.device = None, dtype: torch.dtype = None) -> Tuple[torch.nn.Module, float, float]:
     """
     一个轮次的测试。
     Args:
-        model (torch.nn.Module | torch.nn.Module*): 所使用的模型
+        model (torch.nn.Module): 所使用的模型
         data_loader (DataLoader): 所使用的数据集
         num_classes (int): 最终类别个数
         device (torch.device): 所使用的计算设备
         dtype (torch.dtype): 所使用的数据类型
     """
-    if isinstance(model, Tuple):
-        for idx in range(len(model)):
-            model[idx].eval()
-    else:
-        model.eval()
+    model.eval()
     test_loss = 0.0
     test_acc = 0.0
     test_samples = 0
@@ -94,13 +70,8 @@ def test_one_epoch(model: Union[torch.nn.Module, Tuple], data_loader: DataLoader
             x = x.to(device)
             y = y.to(device)
             y0 = torch.nn.functional.one_hot(y, num_classes = num_classes).float()
-
-            if isinstance(model, Tuple):
-                o = x
-                for idx in range(len(model)):
-                    o = model[idx](o)
-            else:
-                o = model(x)
+            
+            o = model(x)
             loss = torch.nn.functional.mse_loss(o, y0)
 
             test_samples += y.numel()
@@ -113,7 +84,7 @@ def test_one_epoch(model: Union[torch.nn.Module, Tuple], data_loader: DataLoader
     return model, test_loss, test_acc
 
 
-def init_logs(log_dir: str, model: Union[torch.nn.Module, Tuple]) -> None:
+def init_logs(log_dir: str, model: torch.nn.Module) -> None:
     """
     初始化日志文件夹和日志文件。
     Args:
@@ -150,7 +121,7 @@ def print_params(param_dict: Dict) -> None:
     print(hyper_param_table)
 
 
-def save_model(path: str, name: str, model: Union[torch.nn.Module, Tuple]):
+def save_model(path: str, name: str, model: torch.nn.Module):
     """
     存储模型。
     Args:
@@ -158,27 +129,17 @@ def save_model(path: str, name: str, model: Union[torch.nn.Module, Tuple]):
         name (str): 模型文件的命名
         model (torch.nn.Module | torch.nn.Module*): 所使用的模型
     """
-    if isinstance(model, Tuple):
-        for idx in range(len(model)):
-            torch.save(model[idx], os.path.join(path, "%s_%d.pt" % (name, idx)))
-    else:
-        torch.save(model, os.path.join(path, "%s.pt" % (name)))
+    torch.save(model, os.path.join(path, "%s.pt" % (name)))
 
 
-def print_model(model: Union[torch.nn.Module, Tuple]) -> None:
+def print_model(model: torch.nn.Module) -> None:
     """
     打印模型。
     Args:
         model (torch.nn.Module | torch.nn.Module*): 所使用的模型
     """
-    if isinstance(model, Tuple):
-        for idx in range(len(model)):
-            print("Model %d" % (idx,))
-            print(model[idx])
-            print()
-    else:
-        print(model)
-        print()
+    print(model)
+    print()
 
 
 def print_dataset(dataset: Dataset) -> None:
@@ -222,7 +183,7 @@ def print_result(ep: int, data: Tuple[float], last_data: Tuple[float], max_test_
     print(result_table)
 
 
-def train_and_test(epochs: int, model: Union[torch.nn.Module, Tuple], train_data_loader: DataLoader, test_data_loader: DataLoader, num_classes: int, rule: Union[str, Tuple] = "bp", optimizer: torch.optim.Optimizer = None, scheduler: torch.optim.lr_scheduler._LRScheduler = None, log_dir: str = "./logs/", device: torch.device = None, dtype: torch.dtype = None) -> None:
+def train_and_test(epochs: int, model: torch.nn.Module, train_data_loader: DataLoader, test_data_loader: DataLoader, num_classes: int, optimizer: torch.optim.Optimizer = None, scheduler: torch.optim.lr_scheduler._LRScheduler = None, log_dir: str = "./logs/", device: torch.device = None, dtype: torch.dtype = None) -> None:
     """
     训练模型。
     Args:
@@ -231,7 +192,6 @@ def train_and_test(epochs: int, model: Union[torch.nn.Module, Tuple], train_data
         train_data_loader (DataLoader): 所使用的训练集
         test_data_loader (DataLoader): 所使用的测试集
         num_classes (int): 最终类别个数
-        rule (str | torch.nn.Module*): 所使用的训练规则
         optimizer (torch.optim.Optimizer): 所使用的参数优化器
         scheduler (torch.optim.lr_scheduler._LRScheduler): 所使用的学习率衰减器
         log_dir (str): 存放日志的文件夹
@@ -251,7 +211,6 @@ def train_and_test(epochs: int, model: Union[torch.nn.Module, Tuple], train_data
             model = model,
             data_loader = train_data_loader,
             num_classes = num_classes,
-            rule = rule,
             optimizer = optimizer,
             device = device
         )

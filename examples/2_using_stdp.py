@@ -12,8 +12,8 @@ def main():
 
     print_title("Hyper Parameters")
 
-    time_steps = 32
-    batch_size = 256
+    time_steps = 128
+    batch_size = 64
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 100
     learning_rate = 1e-3
@@ -29,8 +29,8 @@ def main():
     })
 
     print_title("Model")
-
-    stdp_model = snn.Sequential(
+    
+    model = snn.Sequential(
         snn.PoissonEncoder(
             time_steps = time_steps,
         ),
@@ -41,9 +41,7 @@ def main():
             soma = snn.LIF(
                 tau_m = tau
             )
-        )
-    )
-    decoder = snn.Sequential(
+        ),
         snn.AvgSpikeDecoder(),
         nn.Linear(
             in_features = 80,
@@ -51,9 +49,8 @@ def main():
         ),
         nn.Sigmoid()
     )
-    stdp_model = stdp_model.to(device)
-    decoder = decoder.to(device)
-    print_model((stdp_model, decoder))
+    model = model.to(device)
+    print_model(model)
 
     print_title("Dataset")
 
@@ -87,25 +84,24 @@ def main():
  
     print_title("Preparations for Training")
 
-    optimizer = torch.optim.Adam(decoder.parameters(), lr = learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
     log_dir = "./examples/logs"
     sub_dir = "2_stdp" + "_" + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
     log_dir = os.path.join(log_dir, sub_dir)
     init_logs(
         log_dir = log_dir,
-        model = (stdp_model, decoder)
+        model = model
     )
 
     print_title("Training")
 
     train_and_test(
         epochs = epochs,
-        model = (stdp_model, decoder),
+        model = model,
         train_data_loader = train_data_loader,
         test_data_loader = test_data_loader,
         num_classes = 10,
-        rule = ("stdp", "bp"),
         optimizer = optimizer,
         scheduler = lr_scheduler,
         log_dir = log_dir,

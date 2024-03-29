@@ -7,16 +7,48 @@
 
 import torch
 import torch.nn as nn
-from typing import Any
 try:
     from rich import print
 except:
     pass
 
 
+def init_tensor(u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    """
+    校正张量形状。
+    Args:
+        u (torch.Tensor): 待校正的数据，可能是张量或浮点值
+        x (torch.Tensor): 带有正确数据类型、所在设备和形状的张量
+    Returns:
+        u (torch.Tensor): 经过校正的张量
+    """
+    if isinstance(u, float):
+        u = torch.full_like(x, u)
+        u = u.detach().requires_grad_(True)
+    if u is None:
+        u = torch.zeros_like(u)
+        u = u.detach().requires_grad_(True)
+    return u
+
+
+def reset_tensor(u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    """
+    重置张量至指定值。
+    Args:
+        u (torch.Tensor): 待重置的张量
+        x (torch.Tensor): 重置的值
+    Returns:
+        u (torch.Tensor): 经过重置的值
+    """
+    if isinstance(u, torch.Tensor):
+        u = u.detach()
+    u = x
+    return u
+
+
 class _val_to_spike(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, x: torch.Tensor) -> torch.Tensor:
+    def forward(ctx: torch.Any, x: torch.Tensor) -> torch.Tensor:
         """
         模拟值转脉冲的前向传播函数，以0.5为界
         Args:
@@ -28,7 +60,7 @@ class _val_to_spike(torch.autograd.Function):
 
 
     @staticmethod
-    def backward(ctx, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: torch.Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         模拟值转脉冲的反向传播函数
         Args:
@@ -79,7 +111,7 @@ def bp_rectangular(x: torch.Tensor, a: float) -> torch.Tensor:
 
 class _heaviside_rectangular(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, a: float) -> torch.Tensor:
+    def forward(ctx: torch.Any, x: torch.Tensor, a: float) -> torch.Tensor:
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
@@ -96,7 +128,7 @@ class _heaviside_rectangular(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: torch.Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         使用矩形函数作为反向传播函数。
         Args:
@@ -137,7 +169,7 @@ def bp_polynomial(x: torch.Tensor, a: float) -> torch.Tensor:
 
 class _heaviside_polynomial(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, a: float) -> torch.Tensor:
+    def forward(ctx: torch.Any, x: torch.Tensor, a: float) -> torch.Tensor:
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
@@ -154,7 +186,7 @@ class _heaviside_polynomial(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: torch.Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         使用多项式函数作为反向传播函数。
         Args:
@@ -196,7 +228,7 @@ def bp_sigmoid(x: torch.Tensor, a: float) -> torch.Tensor:
 
 class _heaviside_sigmoid(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, a: float) -> torch.Tensor:
+    def forward(ctx: torch.Any, x: torch.Tensor, a: float) -> torch.Tensor:
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
@@ -213,7 +245,7 @@ class _heaviside_sigmoid(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: torch.Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         使用Sigmoid函数的导数作为反向传播函数。
         Args:
@@ -254,7 +286,7 @@ def bp_gaussian(x: torch.Tensor, a: float) -> torch.Tensor:
 
 class _heaviside_gaussian(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, a: float) -> torch.Tensor:
+    def forward(ctx: torch.Any, x: torch.Tensor, a: float) -> torch.Tensor:
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
@@ -271,7 +303,7 @@ class _heaviside_gaussian(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: torch.Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         使用高斯函数作为反向传播函数。
         Args:

@@ -13,6 +13,11 @@ except:
     pass
 
 
+def reset_hook(model: nn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
+    if isinstance(model, Module) and model.multi_time_step and model.reset_after_process:
+        model.reset()
+
+
 class Module(nn.Module):
     def __init__(self, multi_time_step: bool = False, reset_after_process: bool = False) -> None:
         """
@@ -26,7 +31,8 @@ class Module(nn.Module):
         self.a_ptr = reset_after_process
         if multi_time_step:
             self.multi_time_step_(multi_time_step)
-    
+        self.register_forward_hook(reset_hook)
+
 
     def extra_repr(self) -> str:
         """

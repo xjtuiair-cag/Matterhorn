@@ -16,7 +16,7 @@ except:
 
 
 class Container(Module):
-    def __init__(self, multi_time_step: bool = False, reset_after_process: bool = True) -> None:
+    def __init__(self, multi_time_step: bool = False, reset_after_process: bool = False) -> None:
         super().__init__(
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
@@ -40,7 +40,7 @@ class Spatial(Container, nn.Sequential):
 
 
 class Temporal(Container):
-    def __init__(self, module: nn.Module, reset_after_process: bool = True) -> None:
+    def __init__(self, module: nn.Module, reset_after_process: bool = False) -> None:
         """
         SNN的时间容器，在多个时间步之内执行脉冲神经网络。
         Args:
@@ -88,13 +88,11 @@ class Temporal(Container):
         for t in range(time_steps):
             result.append(self.module(x[t]))
         y = torch.stack(result)
-        if self.reset_after_process:
-            self.reset()
         return y
 
 
 class Sequential(Container, nn.Sequential):
-    def __init__(self, *args, reset_after_process: bool = True) -> None:
+    def __init__(self, *args, reset_after_process: bool = False) -> None:
         """
         对Sequential进行重写，涵盖ANN与SNN的网络。
         Args:
@@ -194,6 +192,4 @@ class Sequential(Container, nn.Sequential):
             y (torch.Tensor): 输出张量
         """
         y = nn.Sequential.forward(self, x)
-        if self.reset_after_process:
-            self.reset()
         return y

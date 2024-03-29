@@ -58,11 +58,10 @@ STDPLinear(
     in_features: int,
     out_features: int,
     soma: torch.nn.Module,
-    a_pos: float = 0.05,
+    a_pos: float = 0.25,
     tau_pos: float = 2.0,
-    a_neg: float = 0.05,
+    a_neg: float = 0.25,
     tau_neg: float = 2.0,
-    lr: float = 0.01,
     multi_time_step: bool = True,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -84,8 +83,6 @@ STDPLinear(
 `a_neg (float)` ： STDP 参数 $A_{-}$ 。
 
 `tau_neg (float)` ： STDP 参数 $\tau_{-}$ 。
-
-`lr (float)` ： STDP 的学习率。
 
 `multi_time_step (bool)` ：是否调整为多个时间步模式。
 

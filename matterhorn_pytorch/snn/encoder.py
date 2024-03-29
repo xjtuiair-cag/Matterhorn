@@ -208,6 +208,4 @@ class Temporal(Encoder):
             y = self.forward_single(x)
         else:
             y = self.forward_multiple(x, self.time_steps)
-        if self.reset_after_process:
-            self.reset()
         return y

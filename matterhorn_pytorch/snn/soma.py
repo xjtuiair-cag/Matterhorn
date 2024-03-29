@@ -8,6 +8,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import matterhorn_pytorch.snn.functional as SF
 from matterhorn_pytorch.snn.skeleton import Module
 from matterhorn_pytorch.snn import surrogate
 from typing import Callable, Iterable
@@ -36,11 +37,11 @@ class Soma(Module):
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             trainable (bool): 参数是否可以训练
         """
+        self.u = None
         super().__init__(
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
         )
-        self.u = 0.0
         self.u_threshold = u_threshold
         self.u_rest = u_rest
         self.spiking_function = spiking_function
@@ -61,27 +62,12 @@ class Soma(Module):
         return "multi_time_step=%s, reset=%s" % (str(self.multi_time_step), "'hard'" if self.hard_reset else "'soft'")
 
 
-    def init_tensor(self, u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
-        """
-        校正整个电位形状。
-        Args:
-            u (torch.Tensor): 待校正的电位，可能是张量或浮点值
-            x (torch.Tensor): 带有正确数据类型、所在设备和形状的张量
-        Returns:
-            u (torch.Tensor): 经过校正的电位张量
-        """
-        if isinstance(u, float):
-            u = torch.full_like(x, u)
-            u = u.detach().requires_grad_(True)
-        return u
-
-
     def reset(self) -> None:
         """
         重置整个神经元。
         """
         self.detach()
-        self.u = self.u_rest
+        self.u = SF.reset_tensor(self.u, self.u_rest)
         return super().reset()
 
     
@@ -143,7 +129,7 @@ class Soma(Module):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self.u = self.init_tensor(self.u, x)
+        self.u = SF.init_tensor(self.u, x)
         self.u = self.f_response(self.u, x)
         o = self.f_firing(self.u)
         self.u = self.f_reset(self.u, o)
@@ -176,8 +162,6 @@ class Soma(Module):
         """
         if self.multi_time_step:
             o = self.forward_multi_time_step(x)
-            if self.reset_after_process:
-                self.reset()
         else:
             o = self.forward_single_time_step(x)
         return o
@@ -413,7 +397,7 @@ class Izhikevich(Soma):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        self.w = 0.0
+        self.w = None
         super().__init__(
             u_threshold = u_threshold,
             u_rest = u_rest,
@@ -440,8 +424,8 @@ class Izhikevich(Soma):
         重置整个神经元
         """
         self.detach()
-        self.u = 0.0
-        self.w = 0.0
+        self.u = SF.reset_tensor(self.u, self.u_rest)
+        self.w = SF.reset_tensor(self.w, 0.0)
         return super().reset()
 
     
@@ -465,7 +449,7 @@ class Izhikevich(Soma):
         Returns:
             u (torch.Tensor): 当前电位$U_{i}^{l}(t)$
         """
-        self.w = self.init_tensor(self.w, h)
+        self.w = SF.init_tensor(self.w, h)
         dw = self.a * (self.b * h - self.w)
         self.w = self.w + dw
         du = 0.00004 * h * h + 0.005 * h + 0.14 + self.u_rest - self.w + x
@@ -614,7 +598,7 @@ class AnalogSoma(Soma):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self.u = self.init_tensor(self.u, x)
+        self.u = SF.init_tensor(self.u, x)
         self.u = self.f_response(self.u, x)
         o = self.f_firing(self.u)
         y = self.f_activation(self.u)

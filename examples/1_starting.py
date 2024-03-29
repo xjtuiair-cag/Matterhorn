@@ -11,8 +11,8 @@ def main():
 
     print_title("Hyper Parameters")
 
-    time_steps = 32
-    batch_size = 256
+    time_steps = 128
+    batch_size = 64
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 100
     learning_rate = 1e-3

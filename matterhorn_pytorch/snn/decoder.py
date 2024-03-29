@@ -127,8 +127,6 @@ class TimeBased(Decoder):
         mask = x.mean(dim = 0) > 0
         y = torch.where(mask, y, torch.full_like(y, self.empty_fill))
         self.current_time_step += x.shape[0]
-        if self.reset_after_process:
-            self.reset()
         y = self.transform(y)
         return y
 

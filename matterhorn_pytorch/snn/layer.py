@@ -5,8 +5,7 @@
 """
 
 
-import math
-from typing import Optional, Union
+from typing import Tuple, Callable, Optional, Union
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -16,148 +15,11 @@ from matterhorn_pytorch.snn.container import Temporal
 import matterhorn_pytorch.snn.functional as SF
 from matterhorn_pytorch.snn.skeleton import Module
 from matterhorn_pytorch.snn import surrogate
-from matterhorn_pytorch.training.functional import stdp
+from matterhorn_pytorch.training.functional import stdp_online
 try:
     from rich import print
 except:
     pass
-
-
-class STDPLinear(Module, nn.Linear):
-    def __init__(self, in_features: int, out_features: int, soma: Module, a_pos: float = 0.05, tau_pos: float = 2.0, a_neg: float = 0.05, tau_neg: float = 2.0, lr: float = 0.01, multi_time_step: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
-        """
-        使用STDP学习机制时的全连接层
-        Args:
-            in_features (int): 输入长度，用法同nn.Linear
-            out_features (int): 输出长度，用法同nn.Linear
-            soma (nn.Module): 使用的脉冲神经元胞体，在matterhorn_pytorch.snn.soma中选择
-            a_pos (float): STDP参数A+
-            tau_pos (float): STDP参数tau+
-            a_neg (float): STDP参数A-
-            tau_neg (float): STDP参数tau-
-            multi_time_step (bool): 是否调整为多个时间步模式
-            device (torch.device): 所计算的设备
-            dtype (torch.dtype): 所计算的数据类型
-        """
-        Module.__init__(
-            self,
-            multi_time_step = multi_time_step,
-            reset_after_process = False
-        )
-        nn.Linear.__init__(
-            self,
-            in_features = in_features, 
-            out_features = out_features,
-            bias = False,
-            device = device,
-            dtype = dtype
-        )
-        self.input_spike_seq = []
-        self.output_spike_seq = []
-        self.weight[:] = self.weight.requires_grad_(False)
-        if self.multi_time_step:
-            if soma.supports_multi_time_step():
-                self.soma = soma.multi_time_step_(True)
-            elif not soma.multi_time_step:
-                self.soma = Temporal(soma, reset_after_process = False)
-        else:
-            if soma.supports_single_time_step():
-                self.soma = soma.multi_time_step_(False)
-            else:
-                self.soma = soma
-        self.a_pos = a_pos
-        self.tau_pos = tau_pos
-        self.a_neg = a_neg
-        self.tau_neg = tau_neg
-        self.lr = lr
-        self.reset()
-
-
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来。
-        Returns:
-            repr_str (str): 参数表
-        """
-        return ", ".join([nn.Linear.extra_repr(self), "a_pos=%g, tau_pos=%g, a_neg=%g, tau_neg=%g, lr=%g" % (self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.lr)])
-
-
-    def step(self, *args, **kwargs) -> Module:
-        """
-        对整个神经元应用STDP使其更新。
-        """
-        if not self.training:
-            return
-        if self.multi_time_step:
-            input_spike_train = torch.cat(self.input_spike_seq)
-            output_spike_train = torch.cat(self.output_spike_seq)
-        else:
-            input_spike_train = torch.stack(self.input_spike_seq)
-            output_spike_train = torch.stack(self.output_spike_seq)
-        is_batched = input_spike_train.ndim >= 3
-        if is_batched:
-            input_spike_train = input_spike_train.permute(1, 0, 2)
-            output_spike_train = output_spike_train.permute(1, 0, 2)
-        else:
-            input_spike_train = input_spike_train.reshape(input_spike_train.shape[0], 1, input_spike_train.shape[1])
-            output_spike_train = output_spike_train.reshape(output_spike_train.shape[0], 1, output_spike_train.shape[1])
-        # 将不同维度的输入与输出张量形状统一转为[T, B, L]
-        delta_weight = torch.zeros_like(self.weight)
-        delta_weight = stdp(delta_weight, input_spike_train, output_spike_train, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg)
-        self.weight += self.lr * delta_weight
-        self.input_spike_seq = []
-        self.output_spike_seq = []
-        return super().step(*args, **kwargs)
-
-
-    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
-        """
-        单个时间步的前向传播函数。True
-        Args:
-            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[B, I]
-        Returns:
-            o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}(t)$，形状为[B, O]
-        """
-        x = nn.Linear.forward(self, o)
-        o = self.soma(x)
-        return o
-
-
-    def forward_multi_time_step(self, o: torch.Tensor) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}$，形状为[T, B, I]
-        Returns:
-            o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}$，形状为[T, B, O]
-        """
-        time_steps = o.shape[0]
-        batch_size = o.shape[1]
-        o = o.flatten(0, 1)
-        x = nn.Linear.forward(self, o)
-        output_shape = [time_steps, batch_size] + list(x.shape[1:])
-        x = x.reshape(output_shape)
-        o = self.soma(x)
-        return o
-
-
-    def forward(self, o: torch.Tensor) -> torch.Tensor:
-        """
-        前向传播函数。
-        Args:
-            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
-        Returns:
-            o (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
-        """
-        if self.training:
-            self.input_spike_seq.append(o.clone().detach())
-        if self.multi_time_step:
-            o = self.forward_multi_time_step(o)
-        else:
-            o = self.forward_single_time_step(o)
-        if self.training:
-            self.output_spike_seq.append(o.clone().detach())
-        return o
 
 
 class Layer(Module):
@@ -220,11 +82,128 @@ class Layer(Module):
         """
         if self.multi_time_step:
             y = self.forward_multi_time_step(x)
-            if self.reset_after_process:
-                self.reset()
         else:
             y = self.forward_single_time_step(x)
         y = SF.val_to_spike(y)
+        return y
+
+
+class f_stdp_linear(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx: torch.Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: Module, a_pos: float = 0.25, tau_pos: float = 2.0, a_neg: float = 0.25, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        if multi_time_step:
+            input_spike_train = input.clone()
+            time_steps = input.shape[0]
+            batch_size = input.shape[1]
+            flattened_input = input.flatten(0, 1)
+            psp = F.linear(flattened_input, weight, bias = None)
+            output_shape = [time_steps, batch_size] + list(psp.shape[1:])
+            psp = psp.reshape(output_shape)
+        else:
+            input_spike_train = input[None]
+            time_steps = 1
+            batch_size = input.shape[0]
+            psp = F.linear(input, weight, bias = None)
+        output = soma(psp)
+        if multi_time_step:
+            output_spike_train = output.clone()
+        else:
+            output_spike_train = output[None]
+        delta_weight = torch.zeros_like(weight)
+        if training:
+            for t in range(time_steps):
+                delta_weight, input_trace, output_trace = stdp_online(
+                    delta_weight = delta_weight,
+                    input_trace = input_trace,
+                    output_trace = output_trace,
+                    input_spike_train = input_spike_train[t],
+                    output_spike_train = output_spike_train[t],
+                    a_pos = a_pos,
+                    tau_pos = tau_pos,
+                    a_neg = a_neg,
+                    tau_neg = tau_neg
+                )
+        ctx.save_for_backward(delta_weight, input)
+        return output, input_trace, output_trace
+
+
+    @staticmethod
+    def backward(ctx: torch.Any, grad_output: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None]:
+        delta_weight, input = ctx.saved_tensors
+        return torch.zeros_like(input), delta_weight, torch.zeros_like(grad_input_trace), torch.zeros_like(grad_output_trace), None, None, None, None, None, None, None
+
+
+class STDPLinear(Module):
+    def __init__(self, in_features: int, out_features: int, soma: Module, a_pos: float = 0.25, tau_pos: float = 2.0, a_neg: float = 0.25, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+        """
+        使用STDP学习机制时的全连接层。
+        Args:
+            in_features (int): 输入长度，用法同nn.Linear
+            out_features (int): 输出长度，用法同nn.Linear
+            soma (nn.Module): 使用的脉冲神经元胞体，在matterhorn_pytorch.snn.soma中选择
+            a_pos (float): STDP参数A+
+            tau_pos (float): STDP参数tau+
+            a_neg (float): STDP参数A-
+            tau_neg (float): STDP参数tau-
+            multi_time_step (bool): 是否调整为多个时间步模式
+            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
+            device (torch.device): 所计算的设备
+            dtype (torch.dtype): 所计算的数据类型
+        """
+        self.input_trace = None
+        self.output_trace = None
+        super().__init__(
+            multi_time_step = multi_time_step,
+            reset_after_process = reset_after_process
+        )
+        self.in_features = in_features
+        self.out_features = out_features
+        self.weight = nn.Parameter(torch.empty((out_features, in_features), device = device, dtype = dtype))
+        nn.init.kaiming_uniform_(self.weight, a = 5.0 ** 0.5)
+        if self.multi_time_step:
+            if soma.supports_multi_time_step():
+                self.soma = soma.multi_time_step_(True)
+            elif not soma.multi_time_step:
+                self.soma = Temporal(soma, reset_after_process = False)
+        else:
+            if soma.supports_single_time_step():
+                self.soma = soma.multi_time_step_(False)
+            else:
+                self.soma = soma
+        self.a_pos = a_pos
+        self.tau_pos = tau_pos
+        self.a_neg = a_neg
+        self.tau_neg = tau_neg
+        self.reset()
+
+
+    def reset(self) -> nn.Module:
+        """
+        重置模型。
+        """
+        self.input_trace = SF.reset_tensor(self.input_trace, 0.0)
+        self.output_trace = SF.reset_tensor(self.output_trace, 0.0)
+        return super().reset()
+
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        if self.multi_time_step:
+            time_steps = x.shape[0]
+            batch_size = x.shape[1]
+        else:
+            time_steps = 1
+            batch_size = x.shape[0]
+        trace_shape = torch.zeros_like(self.weight)[None].repeat_interleave(batch_size, dim = 0)
+        self.input_trace = SF.init_tensor(self.input_trace, trace_shape)
+        self.output_trace = SF.init_tensor(self.output_trace, trace_shape)
+        y, self.input_trace, self.output_trace = f_stdp_linear.apply(x, self.weight, self.input_trace, self.output_trace, self.soma, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_time_step)
         return y
 
 
