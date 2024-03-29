@@ -591,7 +591,7 @@ as the neuron's output. Refer to reference [2] for details.
 
 ```python
 LIAF(
-    tau_m: float = 1.0,
+    tau_m: float = 2.0,
     u_threshold: float = -0.055,
     u_rest: float = -0.07,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
