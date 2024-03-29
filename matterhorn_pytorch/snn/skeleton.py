@@ -129,15 +129,3 @@ class Module(nn.Module):
             if is_snn_module:
                 module.detach()
         return self
-    
-
-    def step(self, *args, **kwargs) -> nn.Module:
-        """
-        部署结点的自定义训练。
-        """
-        if self.training:
-            for module in self.children():
-                is_snn_module = isinstance(module, Module)
-                if is_snn_module:
-                    module.step()
-        return self
