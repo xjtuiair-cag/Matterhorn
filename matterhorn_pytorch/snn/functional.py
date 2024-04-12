@@ -42,7 +42,7 @@ def reset_tensor(u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
     """
     if isinstance(u, torch.Tensor):
         u = u.detach()
-    u = torch.ones_like(x) * x
+    u = torch.zeros_like(x) + x
     return u
 
 
