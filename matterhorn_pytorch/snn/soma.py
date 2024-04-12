@@ -22,7 +22,7 @@ class Soma(Module):
     supported_surrogate_gradients = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
 
 
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -35,15 +35,16 @@ class Soma(Module):
             hard_reset (bool): 是否为硬重置
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
-            trainable (bool): 参数是否可以训练
+            device (torch.device): 所计算的设备
+            dtype (torch.dtype): 所计算的数据类型
         """
         self.u = None
         super().__init__(
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
         )
-        self.u_threshold = u_threshold
-        self.u_rest = u_rest
+        self.u_threshold = nn.Parameter(torch.tensor(u_threshold, device = device, dtype = dtype), requires_grad = False)
+        self.u_rest = nn.Parameter(torch.tensor(u_rest, device = device, dtype = dtype), requires_grad = False)
         self.spiking_function = spiking_function
         self.surrogate_str = spiking_function.__class__.__name__
         assert self.surrogate_str in self.supported_surrogate_gradients, "Unknown surrogate gradient."
@@ -168,7 +169,7 @@ class Soma(Module):
 
 
 class IF(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Integrate-and-Fire(IF)神经元。
         无泄漏过程，一阶电位变换公式为：
@@ -180,6 +181,8 @@ class IF(Soma):
             hard_reset (bool): 是否为硬重置
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
+            device (torch.device): 所计算的设备
+            dtype (torch.dtype): 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -187,7 +190,9 @@ class IF(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            reset_after_process = reset_after_process,
+            device = device,
+            dtype = dtype
         )
     
 
@@ -237,7 +242,9 @@ class LIF(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            reset_after_process = reset_after_process,
+            device = device,
+            dtype = dtype
         )
         self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
 
@@ -291,7 +298,9 @@ class QIF(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            reset_after_process = reset_after_process,
+            device = device,
+            dtype = dtype
         )
         self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
         self.a_0 = nn.Parameter(torch.tensor(a_0, device = device, dtype = dtype), requires_grad = trainable)
@@ -347,7 +356,9 @@ class ExpIF(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            reset_after_process = reset_after_process,
+            device = device,
+            dtype = dtype
         )
         self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
         self.delta_t = nn.Parameter(torch.tensor(delta_t, device = device, dtype = dtype), requires_grad = trainable)
@@ -404,7 +415,9 @@ class Izhikevich(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            reset_after_process = reset_after_process,
+            device = device,
+            dtype = dtype
         )
         self.a = nn.Parameter(torch.tensor(a, device = device, dtype = dtype), requires_grad = trainable)
         self.b = nn.Parameter(torch.tensor(b, device = device, dtype = dtype), requires_grad = trainable)
@@ -480,7 +493,9 @@ class KLIF(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            reset_after_process = reset_after_process,
+            device = device,
+            dtype = dtype
         )
         self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
         self.k = nn.Parameter(torch.tensor(k, device = device, dtype = dtype), requires_grad = trainable)
@@ -533,7 +548,9 @@ class Response(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            reset_after_process = reset_after_process,
+            device = device,
+            dtype = dtype
         )
         self.response_function = response_function
         self.param_list = [nn.Parameter(torch.tensor(x, device = device, dtype = dtype), requires_grad = trainable) for x in param_list]
@@ -552,7 +569,7 @@ class Response(Soma):
 
 
 class AnalogSoma(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: Module = surrogate.Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         带有模拟输出的Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -567,6 +584,8 @@ class AnalogSoma(Soma):
             hard_reset (bool): 是否为硬重置
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
+            device (torch.device): 所计算的设备
+            dtype (torch.dtype): 所计算的数据类型
         """
         super().__init__(
             u_threshold = u_threshold,
@@ -574,7 +593,9 @@ class AnalogSoma(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            reset_after_process = reset_after_process,
+            device = device,
+            dtype = dtype
         )
         self.activation_function = activation_function
     
@@ -630,7 +651,9 @@ class LIAF(AnalogSoma):
             activation_function = activation_function,
             hard_reset = hard_reset,
             multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            reset_after_process = reset_after_process,
+            device = device,
+            dtype = dtype
         )
         self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
     
