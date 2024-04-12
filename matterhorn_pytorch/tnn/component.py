@@ -95,7 +95,7 @@ class Firing(Module):
             multi_time_step = True,
             reset_after_process = True
         )
-        self.u_threshold = u_threshold
+        self.u_threshold = nn.Parameter(torch.tensor(u_threshold), requires_grad = False)
     
 
     def forward(self, u: torch.Tensor, d: torch.Tensor) -> torch.Tensor:
