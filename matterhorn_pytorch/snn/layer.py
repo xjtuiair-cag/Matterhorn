@@ -90,7 +90,7 @@ class Layer(Module):
 
 class f_stdp_linear(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: torch.Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: Module, a_pos: float = 1.0, tau_pos: float = 2.0, a_neg: float = 1.0, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(ctx: torch.Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: Module, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         利用STDP进行学习的液体状态机的前向传播函数。
         Args:
@@ -175,7 +175,7 @@ class f_stdp_linear(torch.autograd.Function):
 
 
 class STDPLinear(Module):
-    def __init__(self, in_features: int, out_features: int, soma: Module, a_pos: float = 1.0, tau_pos: float = 2.0, a_neg: float = 1.0, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, in_features: int, out_features: int, soma: Module, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层。
         Args:

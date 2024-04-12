@@ -3,6 +3,7 @@ import torch.nn as nn
 import torchvision
 from torch.utils.data import DataLoader
 import matterhorn_pytorch.snn as snn
+from matterhorn_pytorch.data.nmnist import NMNIST
 from functions import *
 from rich import print
 
@@ -18,7 +19,7 @@ def main():
     epochs = 100
     learning_rate = 1e-3
     momentum = 0.9
-    tau = 1.1
+    tau = 2.0
     print_params({
         "Time Steps": time_steps,
         "Batch Size": batch_size,
@@ -31,39 +32,34 @@ def main():
     print_title("Model")
     
     model = snn.Sequential(
-        snn.PoissonEncoder(
-            time_steps = time_steps,
-        ),
+        snn.DirectEncoder(),
         snn.Flatten(),
         snn.STDPLinear(
-            in_features = 28 * 28,
-            out_features = 80,
+            in_features = 2 * 34 * 34,
+            out_features = 256,
             soma = snn.LIF(
                 tau_m = tau
             )
         ),
-        snn.AvgSpikeDecoder(),
-        nn.Linear(
-            in_features = 80,
-            out_features = 10
-        ),
-        nn.Sigmoid()
+        snn.Linear(256, 10, bias = False),
+        snn.LIF(),
+        snn.AvgSpikeDecoder()
     )
     model = model.to(device)
     print_model(model)
 
     print_title("Dataset")
 
-    train_dataset = torchvision.datasets.MNIST(
+    train_dataset = NMNIST(
         root = "./examples/data",
         train = True,
-        transform = torchvision.transforms.ToTensor(),
+        time_steps = time_steps,
         download=True
     )
-    test_dataset = torchvision.datasets.MNIST(
+    test_dataset = NMNIST(
         root = "./examples/data",
         train = False,
-        transform = torchvision.transforms.ToTensor(),
+        time_steps = time_steps,
         download = True
     )
     train_data_loader = DataLoader(

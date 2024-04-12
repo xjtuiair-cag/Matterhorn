@@ -33,12 +33,12 @@ def main():
 
     model = snn.Sequential(
         snn.DirectEncoder(),
-        snn.Conv2d(in_channels = 2, out_channels = 8, kernel_size = 3, stride = 2, padding = 1), # [T, 8, 17, 17]
+        snn.Conv2d(in_channels = 2, out_channels = 8, kernel_size = 3, stride = 2, padding = 1, bias = False), # [T, 8, 17, 17]
         snn.LIF(tau_m = tau),
-        snn.Conv2d(in_channels = 8, out_channels = 32, kernel_size = 3, stride = 2, padding = 1), # [T, 32, 9, 9]
+        snn.Conv2d(in_channels = 8, out_channels = 32, kernel_size = 3, stride = 2, padding = 1, bias = False), # [T, 32, 9, 9]
         snn.LIF(tau_m = tau),
         snn.Flatten(),
-        snn.Linear(2592, 10),
+        snn.Linear(2592, 10, bias = False),
         snn.AvgSpikeDecoder(),
         nn.Softmax()
     )

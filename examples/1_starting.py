@@ -35,9 +35,9 @@ def main():
         ),
         snn.Flatten(),
         snn.Linear(28 * 28, 80, bias = False),
-        snn.LIF(trainable = True),
+        snn.LIF(),
         snn.Linear(80, 10, bias = False),
-        snn.LIF(trainable = True),
+        snn.LIF(),
         snn.AvgSpikeDecoder()
     )
     model = model.to(device)
