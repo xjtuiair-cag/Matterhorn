@@ -22,6 +22,8 @@ def init_tensor(u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
     Returns:
         u (torch.Tensor): 经过校正的张量
     """
+    if isinstance(u, torch.Tensor):
+        u = torch.zeros_like(x) + u.to(x)
     if isinstance(u, float):
         u = torch.full_like(x, u)
         u = u.detach().requires_grad_(True)
