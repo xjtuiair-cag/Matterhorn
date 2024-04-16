@@ -9,7 +9,7 @@ from rich import print
 
 
 def main():
-    print_title("Example 4", style = "bold blue")
+    print_title("Example 3", style = "bold blue")
 
     print_title("Hyper Parameters")
 
@@ -33,14 +33,13 @@ def main():
 
     model = snn.Sequential(
         snn.DirectEncoder(),
-        snn.Conv2d(in_channels = 2, out_channels = 8, kernel_size = 3, stride = 2, padding = 1, bias = False), # [T, 8, 17, 17]
+        snn.Conv2d(in_channels = 2, out_channels = 4, kernel_size = 3, stride = 2, padding = 0, bias = False), # [T, 4, 16, 16]
         snn.LIF(tau_m = tau),
-        snn.Conv2d(in_channels = 8, out_channels = 32, kernel_size = 3, stride = 2, padding = 1, bias = False), # [T, 32, 9, 9]
+        snn.Conv2d(in_channels = 4, out_channels = 8, kernel_size = 3, stride = 2, padding = 1, bias = False), # [T, 8, 8, 8]
         snn.LIF(tau_m = tau),
         snn.Flatten(),
-        snn.Linear(2592, 10, bias = False),
-        snn.AvgSpikeDecoder(),
-        nn.Softmax()
+        snn.Linear(512, 10, bias = False),
+        snn.AvgSpikeDecoder()
     )
     model = model.to(device)
     print_model(model)

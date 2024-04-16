@@ -408,20 +408,6 @@ test_dataset = DVS128Gesture(
 )
 ```
 
-**Warning:** You may have to set parameter `sampling` to save the disk space in your device.
-
-```python
-train_dataset = DVS128Gesture(
-    root = "your/data/path",
-    train = True,
-    download = True,
-    sampling = 600,
-    time_steps = time_steps
-)
-```
-
-Recommended sampling ratio is more than 100 (which means choose one from `sampling` events).
-
 #### Spiking Heidelberg Digits (SHD)
 
 SHD dataset records vocal number from 1 to 10 in both English and German and turns them into events. The shape of events in SHD dataset is `[T, 700]`.

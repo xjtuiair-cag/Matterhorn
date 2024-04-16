@@ -18,7 +18,7 @@ import shutil
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor, wait
 import hashlib
-from matterhorn_pytorch.util.transforms import event_seq_to_spike_train
+import matterhorn_pytorch.data.functional as DF
 
 
 class EventDataset(Dataset):
@@ -29,11 +29,10 @@ class EventDataset(Dataset):
     resources = []
     labels = []
     shape = None
-    clipped = None
     data_target = []
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False) -> None:
         """
         事件数据集框架
         Args:
@@ -44,7 +43,6 @@ class EventDataset(Dataset):
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
-            sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
         """
         super().__init__()
@@ -54,7 +52,6 @@ class EventDataset(Dataset):
         self.train = train
         self.cached = cached
         self.cache_dtype = cache_dtype
-        self.sampling = sampling
         self.count = count
         if download:
             self.download()
@@ -82,65 +79,13 @@ class EventDataset(Dataset):
 
 
     @property
-    def processed_subfolder(self) -> str:
-        """
-        处理过后的数据集子文件夹。
-        Returns:
-            res (str): 数据集子文件夹
-        """
-        return "%d" % (self.sampling,)
-
-
-    @property
     def processed_folder(self) -> str:
         """
         处理过后的数据集所存储的地方。
         Returns:
             res (str): 数据集存储位置
         """
-        return os.path.join(self.root, self.__class__.__name__, "processed", self.processed_subfolder)
-
-
-    def clear_processed(self, except_index: bool = False) -> None:
-        """
-        清空processed文件夹中的内容。
-        Args:
-            except_index (bool): 是否要排除"__main__.csv"
-        """
-        processed_folder = os.path.join(self.root, self.__class__.__name__, "processed")
-        if os.path.isdir(processed_folder):
-            event_seq_list = os.listdir(processed_folder)
-            for folder in event_seq_list:
-                cur_path = os.path.join(processed_folder, folder)
-                if except_index:
-                    idx_file_path = os.path.join(cur_path, self.idx_filename)
-                    if os.path.isfile(idx_file_path):
-                        shutil.move(idx_file_path, processed_folder)
-                shutil.rmtree(cur_path)
-                if except_index:
-                    idx_file_path = os.path.join(processed_folder, self.idx_filename)
-                    if os.path.isfile(idx_file_path):
-                        os.makedirs(cur_path, exist_ok = True)
-                        shutil.move(idx_file_path, cur_path)
-        self.clear_cache()
-
-
-    @property
-    def cached_subfolder(self) -> str:
-        """
-        张量缓存子文件夹。
-        Returns:
-            res (str): 张量缓存子文件夹
-        """
-        appendix = "_%s" % (str(self.cache_dtype))
-        if self.clipped is not None:
-            if isinstance(self.clipped, int):
-                appendix += "_0_%d" % (self.clipped,)
-            elif isinstance(self.clipped, Iterable):
-                appendix += "_%d_%d" % (self.clipped[0], self.clipped[1])
-        if self.count:
-            appendix += "_count"
-        return "x".join([str(i) for i in self.shape]) + appendix
+        return os.path.join(self.root, self.__class__.__name__, "processed")
 
 
     @property
@@ -150,17 +95,78 @@ class EventDataset(Dataset):
         Returns:
             res (str): 张量缓存位置
         """
-        return os.path.join(self.root, self.__class__.__name__, "cached", self.processed_subfolder + "_" + self.cached_subfolder)
-    
+        return os.path.join(self.root, self.__class__.__name__, "cached")
+
+
+    @property
+    def cache_tag(self) -> str:
+        """
+        张量缓存标签。
+        Returns:
+            res (str): 张量缓存标签
+        """
+        appendix = "_%s" % (str(self.cache_dtype))
+        if self.transform is not None:
+            appendix += "_" + hashlib.md5(repr(self.transform).encode("utf-8")).hexdigest()
+        if self.count:
+            appendix += "_count"
+        return "x".join([str(i) for i in self.shape]) + appendix
+
+
+    def check_exists(self) -> bool:
+        """
+        检查是否存在。
+        Returns:
+            if_exist (bool): 是否存在
+        """
+        return all(
+            check_integrity(os.path.join(self.raw_folder, filename)) for fileurl, filename, md5 in self.resources
+        )
+
+
+    @staticmethod
+    def clip_bits(data: np.ndarray, mask: int, shift: int) -> np.ndarray:
+        """
+        从事件数据中提取x,y,p值所用的函数。
+        Args:
+            data (np.ndarray): 事件数据
+            mask (int): 对应的掩模
+            shift (int): 对应的偏移量
+        Returns:
+            data (np.ndarray): 处理后的数据（x,y,p）
+        """
+        return (data >> shift) & mask
+
+
+    def create_processed(self, data_idx: int, event_data: np.ndarray) -> bool:
+        """
+        将预处理的数据存储至文件中。
+        Args:
+            data_idx (int): 数据序号
+            event_data (np.ndarray): 事件数据
+        """
+        np.save(os.path.join(self.processed_folder, "%d.npy" % (data_idx,)), event_data)
+        return True
+
+
+    def clear_processed(self, except_index: bool = False) -> None:
+        """
+        清空processed文件夹中的内容。
+        Args:
+            except_index (bool): 是否要排除"__main__.csv"
+        """
+        if os.path.isdir(self.processed_folder):
+            shutil.rmtree(self.processed_folder)
+        self.clear_cache()
+
 
     def create_cache(self) -> None:
         """
         创建缓存。
         """
-        demanded_type = hashlib.md5(("%d" % (self.sampling,)).encode("utf-8")).hexdigest()
         info_json = os.path.join(self.cached_folder, "__info__.json")
         cache_info = {
-            "type": demanded_type,
+            "type": self.cache_tag,
             "object_num": len(self.data_target),
             "last_modified": time.time()
         }
@@ -172,10 +178,10 @@ class EventDataset(Dataset):
             cache_type = old_cache_info["type"]
             cache_size = old_cache_info["object_num"]
             cache_mtime = old_cache_info["last_modified"]
-            file_num = len(os.listdir(self.cached_folder)) - 1
+            file_num = sum([1 if s.endswith(".pt") else 0 for s in os.listdir(self.cached_folder)])
 
             # 如果类型对得上，且文件个数一致，就更新基本信息，使用原缓存
-            if cache_type == demanded_type and cache_size == len(self.data_target) and cache_size == file_num:
+            if cache_type == self.cache_tag and cache_size == len(self.data_target) and cache_size == file_num:
                 print("[green]Using cache file.[/green]")
                 with open(info_json, "w", encoding = "utf-8") as f:
                     json.dump(cache_info, f)
@@ -238,48 +244,8 @@ class EventDataset(Dataset):
         """
         清除缓存。
         """
-        demanded_type = hashlib.md5(("%d" % (self.sampling,)).encode("utf-8")).hexdigest()
-        now = time.time()
-        cached_folder = os.path.join(self.root, self.__class__.__name__, "cached")
-
-        if os.path.isdir(cached_folder):
-            cached_list = os.listdir(cached_folder)
-            # 遍历缓存文件夹的子文件夹
-            for sub_folder in cached_list:
-                cur_path = os.path.join(cached_folder, sub_folder)
-                info_json = os.path.join(cur_path, "__info__.json")
-
-                # 检查缓存文件夹是否是当前需要的文件夹（子文件夹名字是否一致），如果一致就跳过该文件夹
-                if cur_path == self.cached_subfolder:
-                    continue
-
-                # 允许同标签且较新的所有缓存文件夹存在。如果文件夹内的信息不存在，当作无效缓存，删除处理
-                if not os.path.isfile(info_json):
-                    print("[yellow]Invalid cache folder %s found, trying to remove.[/yellow]" % (sub_folder,))
-                    shutil.rmtree(cur_path)
-                    print("[green]Successfully removed cache %s.[/green]" % (sub_folder,))
-                    continue
-
-                # 检查文件夹内的信息，如果标签不匹配或未使用时间超过一周，当作无效缓存，删除处理
-                with open(info_json, "r", encoding = "utf-8") as f:
-                    cache_info = json.load(f)
-                cache_type = cache_info["type"]
-                cache_mtime = cache_info["last_modified"]
-                if cache_type != demanded_type or now - cache_mtime > 7 * 24 * 60 * 60:
-                    print("[yellow]Outdated cache folder %s found, trying to remove.[/yellow]" % (sub_folder,))
-                    shutil.rmtree(cur_path)
-                    print("[green]Successfully removed cache %s.[/green]" % (sub_folder,))
-
-
-    def check_exists(self) -> bool:
-        """
-        检查是否存在。
-        Returns:
-            if_exist (bool): 是否存在
-        """
-        return all(
-            check_integrity(os.path.join(self.raw_folder, filename)) for fileurl, filename, md5 in self.resources
-        )
+        if os.path.isdir(self.cached_folder):
+            shutil.rmtree(self.cached_folder)
 
 
     def download(self) -> None:
@@ -289,38 +255,14 @@ class EventDataset(Dataset):
         return
 
 
-    def extract(self, data: np.ndarray, mask: int, shift: int) -> np.ndarray:
-        """
-        从事件数据中提取x,y,p值所用的函数。
-        Args:
-            data (np.ndarray): 事件数据
-            mask (int): 对应的掩模
-            shift (int): 对应的偏移量
-        Returns:
-            data (np.ndarray): 处理后的数据（x,y,p）
-        """
-        return (data >> shift) & mask
-
-
-    def load_data(self) -> np.ndarray:
+    def process(self) -> np.ndarray:
         """
         加载数据集。
         Returns:
             data_label (np.ndarray): 数据信息，包括3列：数据集、标签、其为训练集（1）还是测试集（0）。
         """
         return None
-    
 
-    def save_event_data(self, data_idx: int, event_data: np.ndarray) -> bool:
-        """
-        将预处理的数据存储至文件中。
-        Args:
-            data_idx (int): 数据序号
-            event_data (np.ndarray): 事件数据
-        """
-        np.save(os.path.join(self.processed_folder, "%d.npy" % (data_idx,)), event_data)
-        return True
-    
 
     def pre_process(self) -> None:
         """
@@ -328,27 +270,11 @@ class EventDataset(Dataset):
         """
         if not self.check_exists():
             raise RuntimeError("Dataset not found. You can use download=True to download it")
-        self.data_target = self.load_data()
+        self.data_target = self.process()
         if self.cached:
             self.create_cache()
         self.data_target = self.data_target[self.data_target[:, 2] == (1 if self.train else 0)][:, :2]
         self.data_target = self.data_target.tolist()
-    
-
-    def clip_events(self, data: np.ndarray) -> np.ndarray:
-        """
-        裁剪事件。
-        Args:
-            data (np.ndarray): 裁剪前的事件
-        Returns:
-            clipped_data (np.ndarray): 裁剪后的事件
-        """
-        if self.clipped is not None and data.shape[0]:
-            if isinstance(self.clipped, int):
-                data = data[data[:, 0] < self.clipped]
-            elif isinstance(self.clipped, Iterable):
-                data = data[(data[:, 0] >= self.clipped[0]) & (data[:, 0] < self.clipped[1])]
-        return data
 
 
     def event_data_to_tensor(self, data: np.ndarray) -> torch.Tensor:
@@ -359,7 +285,9 @@ class EventDataset(Dataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量
         """
-        return torch.tensor(data, dtype = torch.float)
+        if self.transform is not None:
+            data = self.transform(data)
+        return data
 
 
     def __len__(self) -> int:
@@ -389,8 +317,6 @@ class EventDataset(Dataset):
             data = np.load(source_dir)
             data = self.event_data_to_tensor(data)
         target = self.data_target[index][1]
-        if self.transform is not None:
-            data = self.transform(data)
         if self.target_transform is not None:
             target = self.target_transform(data)
         return data, target
@@ -400,7 +326,7 @@ class EventDataset1d(EventDataset):
     original_size = (1, 2, 128)
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False, t_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, t_size: int = 128, x_size: int = 128, polarity: bool = True) -> None:
         """
         一维事件数据集框架
         Args:
@@ -411,20 +337,15 @@ class EventDataset1d(EventDataset):
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
-            sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             t_size (int): 时间维度的大小
             x_size (int): 空间维度的大小
             polarity (bool): 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或Iterable（开头与结尾）
         """
         self.t_size = t_size
         self.p_size = 2 if polarity else 1
         self.x_size = x_size
         self.shape = (self.t_size, self.p_size, self.x_size)
-        if isinstance(clipped, Iterable):
-            assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
-        self.clipped = clipped
         super().__init__(
             root = root,
             train = train,
@@ -433,7 +354,6 @@ class EventDataset1d(EventDataset):
             download = download,
             cached = cached,
             cache_dtype = cache_dtype,
-            sampling = sampling,
             count = count
         )
     
@@ -446,8 +366,7 @@ class EventDataset1d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, L]
         """
-        data = self.clip_events(data)
-        res = event_seq_to_spike_train(
+        res = DF.event_seq_to_spike_train(
             event_seq = data,
             shape = (self.t_size, self.x_size),
             original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[2]),
@@ -464,8 +383,7 @@ class EventDataset1d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, C(P), L]
         """
-        data = self.clip_events(data)
-        res = event_seq_to_spike_train(
+        res = DF.event_seq_to_spike_train(
             event_seq = data,
             shape = (self.t_size, self.p_size, self.x_size),
             original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[1], self.original_size[2]),
@@ -482,6 +400,7 @@ class EventDataset1d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量
         """
+        data = super().event_data_to_tensor(data)
         if self.original_data_polarity_exists:
             return self.tpx_to_tensor(data)
         return self.tx_to_tensor(data)
@@ -491,7 +410,7 @@ class EventDataset2d(EventDataset):
     original_size = (1, 2, 128, 128)
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False, t_size: int = 128, y_size: int = 128, x_size: int = 128, polarity: bool = True, clipped: Optional[Union[Iterable, float]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, t_size: int = 128, y_size: int = 128, x_size: int = 128, polarity: bool = True) -> None:
         """
         二维事件数据集框架
         Args:
@@ -502,22 +421,17 @@ class EventDataset2d(EventDataset):
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
-            sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             t_size (int): 时间维度的大小
             y_size (int): 第一个空间维度的大小
             x_size (int): 第二个空间维度的大小
             polarity (bool): 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或Iterable（开头与结尾）
         """
         self.t_size = t_size
         self.p_size = 2 if polarity else 1
         self.y_size = y_size
         self.x_size = x_size
         self.shape = (self.t_size, self.p_size, self.y_size, self.x_size)
-        if isinstance(clipped, Iterable):
-            assert clipped[1] > clipped[0], "Clip end must be larger than clip start."
-        self.clipped = clipped
         super().__init__(
             root = root,
             train = train,
@@ -526,7 +440,6 @@ class EventDataset2d(EventDataset):
             download = download,
             cached = cached,
             cache_dtype = cache_dtype,
-            sampling = sampling,
             count = count
         )
 
@@ -539,8 +452,7 @@ class EventDataset2d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, H, W]
         """
-        data = self.clip_events(data)
-        res = event_seq_to_spike_train(
+        res = DF.event_seq_to_spike_train(
             event_seq = data,
             shape = (self.t_size, self.y_size, self.x_size),
             original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[2], self.original_size[3]),
@@ -557,8 +469,7 @@ class EventDataset2d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, C(P), H, W]
         """
-        data = self.clip_events(data)
-        res = event_seq_to_spike_train(
+        res = DF.event_seq_to_spike_train(
             event_seq = data,
             shape = (self.t_size, self.p_size, self.y_size, self.x_size),
             original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[1], self.original_size[2], self.original_size[3]),
@@ -575,6 +486,7 @@ class EventDataset2d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量
         """
+        data = super().event_data_to_tensor(data)
         if self.original_data_polarity_exists:
             return self.tpyx_to_tensor(data)
         return self.tyx_to_tensor(data)

@@ -408,20 +408,6 @@ test_dataset = DVS128Gesture(
 )
 ```
 
-**注意：** 您可能需要将参数 `sampling` 设置为在您的设备上节省磁盘空间。
-
-```python
-train_dataset = DVS128Gesture(
-    root = "your/data/path",
-    train = True,
-    download = True,
-    sampling = 600,
-    time_steps = time_steps
-)
-```
-
-建议设置为大于 100 （从每 `sampling` 个事件中选择一个）。
-
 #### Spiking Heidelberg Digits（SHD）
 
 SHD 数据集记录了从 1 到 10 的英语和德语口语数字，并将它们转换为事件。 SHD 数据集中事件的形状为 `[T, 700]` 。

@@ -7,8 +7,8 @@ TNN的相关函数。
 
 import torch
 import torch.nn as nn
+import matterhorn_pytorch.data.functional as DF
 import matterhorn_pytorch.snn.functional as SF
-from matterhorn_pytorch.util.transforms import spike_train_to_spike_times, spike_times_to_spike_train
 try:
     from rich import print
 except:
@@ -54,7 +54,7 @@ def t_to_s(t: torch.Tensor, time_steps: int, t_offset: int = 0) -> torch.Tensor:
     Returns:
         s (torch.Tensor): 脉冲序列，形状为[T, ...]
     """
-    return spike_times_to_spike_train(t, time_steps, t_offset)
+    return DF.spike_times_to_spike_train(t, time_steps, t_offset)
 
 
 @torch.jit.script
@@ -383,7 +383,7 @@ def s_to_t(s: torch.Tensor) -> torch.Tensor:
     Returns:
         t (torch.Tensor): 时间序列，形状为[...]
     """
-    t = spike_train_to_spike_times(s, torch.inf)
+    t = DF.spike_train_to_spike_times(s, torch.inf)
     return t
 
 

@@ -22,13 +22,11 @@ CIFAR10DVS(
     target_transform: Optional[Callable] = None,
     download: bool = False,
     cached: bool = True,
-    sampling: int = 1,
     count: bool = False,
     time_steps: int = 128,
     width: int = 128,
     height: int = 128,
-    polarity: bool = True,
-    clipped: Optional[Union[Iterable, int]] = None
+    polarity: bool = True
 )
 ```
 
@@ -48,8 +46,6 @@ CIFAR10DVS(
 
 `cache_dtype (torch.dtype)` ：若占用本地空间建立缓存，缓存的数据类型。默认为 `torch.uint8` 。若您需要将每个点的事件个数作为脉冲输出，您可能需要设置这个参数为 `torch.float` ，以使用更高精度的缓存。
 
-`sampling (int)` ：每隔多少个事件取一个事件，默认为 `1` ，即选取数据集中全部的事件。该参数为了防止事件过密，从而节约计算成本。 **注意：** 请在训练集和测试集中保证该参数一致，否则会出现错误。 **注意：** 请在训练集和测试集中保证该参数一致，否则会出现错误。
-
 `count (bool)` ：是否将每个点的事件个数作为脉冲输出。若为 `False` ，脉冲序列只会有 `0` 和 `1` ，否则输出的是该点的事件个数。
 
 `time_steps (int)` ：输出张量的时间步长 `T` 。
@@ -59,8 +55,6 @@ CIFAR10DVS(
 `height (int)` ：输出张量的画幅高度 `H` 。
 
 `polarity (bool)` ：输出的张量是否含有极性。若为 `True` ，则输出的张量含有极性， `P = 2` ，否则不含有极性， `P = 1` 。
-
-`clipped (Iterable | int | None)` ：是否对原时间的起止时间作裁切。可以传入形如 `(start, end)` 的元组，代表截止时间戳的整数或 `None` （不裁切）。
 
 ### 示例用法
 
@@ -96,13 +90,11 @@ DVS128Gesture(
     target_transform: Optional[Callable] = None,
     download: bool = False,
     cached: bool = True,
-    sampling: int = 1,
     count: bool = False,
     time_steps: int = 128,
     width: int = 128,
     height: int = 128,
-    polarity: bool = True,
-    clipped: Optional[Union[Iterable, int]] = None
+    polarity: bool = True
 )
 ```
 
@@ -122,8 +114,6 @@ DVS128Gesture(
 
 `cache_dtype (torch.dtype)` ：若占用本地空间建立缓存，缓存的数据类型。默认为 `torch.uint8` 。若您需要将每个点的事件个数作为脉冲输出，您可能需要设置这个参数为 `torch.float` ，以使用更高精度的缓存。
 
-`sampling (int)` ：每隔多少个事件取一个事件，默认为 `1` ，即选取数据集中全部的事件。该参数为了防止事件过密，从而节约计算成本。 **注意：** 请在训练集和测试集中保证该参数一致，否则会出现错误。
-
 `count (bool)` ：是否将每个点的事件个数作为脉冲输出。若为 `False` ，脉冲序列只会有 `0` 和 `1` ，否则输出的是该点的事件个数。
 
 `time_steps (int)` ：输出张量的时间步长 `T` 。
@@ -133,8 +123,6 @@ DVS128Gesture(
 `height (int)` ：输出张量的画幅高度 `H` 。
 
 `polarity (bool)` ：输出的张量是否含有极性。若为 `True` ，则输出的张量含有极性， `P = 2` ，否则不含有极性， `P = 1` 。
-
-`clipped (Iterable | int | None)` ：是否对原时间的起止时间作裁切。可以传入形如 `(start, end)` 的元组，代表截止时间戳的整数或 `None` （不裁切）。
 
 ### 示例用法
 
@@ -168,12 +156,10 @@ CIFAR10DVS(
     target_transform: Optional[Callable] = None,
     download: bool = False,
     cached: bool = True,
-    sampling: int = 1,
     count: bool = False,
     precision: float = 1e9,
     time_steps: int = 128,
-    length: int = 700,
-    clipped: Optional[Union[Iterable, float]] = None
+    length: int = 700
 )
 ```
 
@@ -193,8 +179,6 @@ CIFAR10DVS(
 
 `cache_dtype (torch.dtype)` ：若占用本地空间建立缓存，缓存的数据类型。默认为 `torch.uint8` 。若您需要将每个点的事件个数作为脉冲输出，您可能需要设置这个参数为 `torch.float` ，以使用更高精度的缓存。
 
-`sampling (int)` ：每隔多少个事件取一个事件，默认为 `1` ，即选取数据集中全部的事件。该参数为了防止事件过密，从而节约计算成本。 **注意：** 请在训练集和测试集中保证该参数一致，否则会出现错误。
-
 `count (bool)` ：是否将每个点的事件个数作为脉冲输出。若为 `False` ，脉冲序列只会有 `0` 和 `1` ，否则输出的是该点的事件个数。
 
 `precision (float)` ：数据集的精度。保持默认值 `1e9` 即可。
@@ -202,8 +186,6 @@ CIFAR10DVS(
 `time_steps (int)` ：输出张量的时间步长 `T` 。
 
 `length (int)` ：输出张量的空间长度 `L` 。
-
-`clipped (Iterable | int | None)` ：是否对原时间的起止时间作裁切。可以传入形如 `(start, end)` 的元组，代表截止时间戳的整数或 `None` （不裁切）。
 
 ### 示例用法
 
@@ -237,13 +219,11 @@ NMNIST(
     target_transform: Optional[Callable] = None,
     download: bool = False,
     cached: bool = True,
-    sampling: int = 1,
     count: bool = False,
     time_steps: int = 128,
     width: int = 34,
     height: int = 34,
-    polarity: bool = True,
-    clipped: Optional[Union[Iterable, int]] = None
+    polarity: bool = True
 )
 ```
 
@@ -263,8 +243,6 @@ NMNIST(
 
 `cache_dtype (torch.dtype)` ：若占用本地空间建立缓存，缓存的数据类型。默认为 `torch.uint8` 。若您需要将每个点的事件个数作为脉冲输出，您可能需要设置这个参数为 `torch.float` ，以使用更高精度的缓存。
 
-`sampling (int)` ：每隔多少个事件取一个事件，默认为 `1` ，即选取数据集中全部的事件。该参数为了防止事件过密，从而节约计算成本。 **注意：** 请在训练集和测试集中保证该参数一致，否则会出现错误。
-
 `count (bool)` ：是否将每个点的事件个数作为脉冲输出。若为 `False` ，脉冲序列只会有 `0` 和 `1` ，否则输出的是该点的事件个数。
 
 `time_steps (int)` ：输出张量的时间步长 `T` 。
@@ -274,8 +252,6 @@ NMNIST(
 `height (int)` ：输出张量的画幅高度 `H` 。
 
 `polarity (bool)` ：输出的张量是否含有极性。若为 `True` ，则输出的张量含有极性， `P = 2` ，否则不含有极性， `P = 1` 。
-
-`clipped (Iterable | int | None)` ：是否对原时间的起止时间作裁切。可以传入形如 `(start, end)` 的元组，代表截止时间戳的整数或 `None` （不裁切）。
 
 ### 示例用法
 

@@ -8,7 +8,7 @@ from rich import print
 
  
 def main():
-    print_title("Example 5", style = "bold blue")
+    print_title("Example 4", style = "bold blue")
 
     print_title("Hyper Parameters")
 

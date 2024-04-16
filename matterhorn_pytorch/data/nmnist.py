@@ -27,7 +27,7 @@ class NMNIST(EventDataset2d):
     labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, sampling: int = 1, count: bool = False, time_steps: int = 128, width: int = 34, height: int = 34, polarity: bool = True, clipped: Optional[Union[Iterable, int]] = None) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, time_steps: int = 128, width: int = 34, height: int = 34, polarity: bool = True) -> None:
         """
         NMNIST数据集，将MNIST数据集动态变换后，转为事件的形式。
         Args:
@@ -38,13 +38,11 @@ class NMNIST(EventDataset2d):
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
-            sampling (int): 是否进行采样（每隔n个事件采样一次），1为不采样（保存每个事件）
             count (bool): 是否采取脉冲计数，若为True则输出张量中各个点脉冲的个数，否则只输出是否有脉冲
             time_steps (int): 最终的数据集总共含有多少个时间步
             width (int): 最终数据集的宽度
             height (int): 最终数据集的高度
             polarity (bool): 最终数据集是否采集极性信息，如果采集，通道数就是2，否则是1
-            clipped (bool): 要在t为什么范围内截取事件，接受None（不截取）、int（结尾）或Iterable（开头与结尾）
         """
         super().__init__(
             root = root,
@@ -54,14 +52,46 @@ class NMNIST(EventDataset2d):
             download = download,
             cached = cached,
             cache_dtype = cache_dtype,
-            sampling = sampling,
             count = count,
             t_size = time_steps,
             y_size = height,
             x_size = width,
-            polarity = polarity,
-            clipped = clipped
+            polarity = polarity
         )
+
+
+    @staticmethod
+    def filename_to_data(filename: str) -> np.ndarray:
+        """
+        输入文件名，读取文件内容。
+        Args:
+            filename (str): 文件名
+        Returns:
+            data (np.ndarray): 文件内容（数据）
+        """
+        data_str = ""
+        with open(filename, 'rb') as f:
+            data_str = f.read()
+        data = np.fromstring(data_str, dtype = ">u1")
+        return data
+
+
+    @staticmethod
+    def data_to_tpyx(data: np.ndarray) -> np.ndarray:
+        """
+        将数据分割为t,p,y,x数组。
+        Args:
+            data (np.ndarray): 数据，形状为[5n]
+        Returns:
+            data_tpyx (np.ndarray): 分为t,p,y,x的数据，形状为[n, 4]
+        """
+        res = np.zeros((data.shape[0] // 5, 4), dtype = "uint32")
+        res[:, 0] = ((data[2::5] & 0x7f) << 16) + (data[3::5] << 8) + data[4::5]
+        res[:, 1] = data[2::5] >> 7
+        res[:, 2] = 33 - data[1::5]
+        res[:, 3] = data[::5]
+        res = res[np.argsort(res[:, 0])]
+        return res
 
 
     def download(self) -> None:
@@ -90,7 +120,7 @@ class NMNIST(EventDataset2d):
                 print("[green]Successfully downloaded %s.[/green]" % (os.path.join(self.raw_folder, filename),))
 
 
-    def unzip(self) -> None:
+    def extract(self) -> None:
         """
         解压下载下来的压缩包。
         """
@@ -114,41 +144,7 @@ class NMNIST(EventDataset2d):
             raise RuntimeError("There are error(s) in unzipping files.")
 
 
-    def filename_to_data(self, filename: str) -> np.ndarray:
-        """
-        输入文件名，读取文件内容。
-        Args:
-            filename (str): 文件名
-        Returns:
-            data (np.ndarray): 文件内容（数据）
-        """
-        data_str = ""
-        with open(filename, 'rb') as f:
-            data_str = f.read()
-        data = np.fromstring(data_str, dtype = ">u1")
-        return data
-
-
-    def data_to_tpyx(self, data: np.ndarray) -> np.ndarray:
-        """
-        将数据分割为t,p,y,x数组。
-        Args:
-            data (np.ndarray): 数据，形状为[5n]
-        Returns:
-            data_tpyx (np.ndarray): 分为t,p,y,x的数据，形状为[n, 4]
-        """
-        res = np.zeros((data.shape[0] // 5, 4), dtype = "uint32")
-        res[:, 0] = ((data[2::5] & 0x7f) << 16) + (data[3::5] << 8) + data[4::5]
-        res[:, 1] = data[2::5] >> 7
-        res[:, 2] = self.original_size[2] - 1 - data[1::5]
-        res[:, 3] = data[::5]
-        res = res[np.argsort(res[:, 0])]
-        if self.sampling > 1:
-            res = res[::self.sampling]
-        return res
-
-
-    def load_data(self) -> np.ndarray:
+    def process(self) -> np.ndarray:
         """
         加载数据集。
         Returns:
@@ -158,7 +154,7 @@ class NMNIST(EventDataset2d):
         if os.path.isfile(list_filename):
             file_list = np.loadtxt(list_filename, dtype = "uint32", delimiter = ",")
             return file_list
-        self.unzip()
+        self.extract()
         self.clear_processed()
         os.makedirs(self.processed_folder, exist_ok = True)
         file_list = []
@@ -170,9 +166,9 @@ class NMNIST(EventDataset2d):
                 raw_file_dir = os.path.join(self.extracted_folder, is_train_str, label_str)
                 raw_file_list = os.listdir(raw_file_dir)
                 for raw_filename in raw_file_list:
-                    raw_data = self.filename_to_data(os.path.join(raw_file_dir, raw_filename))
-                    event_data = self.data_to_tpyx(raw_data)
-                    self.save_event_data(file_idx, event_data)
+                    raw_data = NMNIST.filename_to_data(os.path.join(raw_file_dir, raw_filename))
+                    event_data = NMNIST.data_to_tpyx(raw_data)
+                    self.create_processed(file_idx, event_data)
                     file_list.append([file_idx, label, is_train])
                     file_idx += 1
         file_list = np.array(file_list, dtype = "uint32")

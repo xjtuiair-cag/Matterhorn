@@ -22,13 +22,11 @@ CIFAR10DVS(
     target_transform: Optional[Callable] = None,
     download: bool = False,
     cached: bool = True,
-    sampling: int = 1,
     count: bool = False,
     time_steps: int = 128,
     width: int = 128,
     height: int = 128,
-    polarity: bool = True,
-    clipped: Optional[Union[Iterable, int]] = None
+    polarity: bool = True
 )
 ```
 
@@ -48,8 +46,6 @@ CIFAR10DVS(
 
 `cache_dtype (torch.dtype)` ：If using cache, this parameter indicates the data type of cache. Default is `torch.uint8`. Set it to `torch.float` to use higher precision to save the count data when the parameter `count = True`.
 
-`sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs. **Note:** Please make sure that this parameter is same in both training set and testing set, otherwise errors will occur.
-
 `count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
 
 `time_steps (int)`: Time steps `T` for the output tensor.
@@ -59,8 +55,6 @@ CIFAR10DVS(
 `height (int)`: Height `H` of the output tensor.
 
 `polarity (bool)`: Whether the output tensor contains polarity. If `True`, the output tensor contains polarity, `P = 2`; otherwise, it does not, `P = 1`.
-
-`clipped (Iterable | int | None)`: How the events be clipped. By inputting a tuple `(start, end)` means clipping the events that have timestamp between `start` and `end`; by inputting an integer `end` means clipping the events that have timestamp no later than `end`. If the input is `None`, clipping will not happen.
 
 ### Example Usage
 
@@ -96,13 +90,11 @@ DVS128Gesture(
     target_transform: Optional[Callable] = None,
     download: bool = False,
     cached: bool = True,
-    sampling: int = 1,
     count: bool = False,
     time_steps: int = 128,
     width: int = 128,
     height: int = 128,
-    polarity: bool = True,
-    clipped: Optional[Union[Iterable, int]] = None
+    polarity: bool = True
 )
 ```
 
@@ -122,8 +114,6 @@ DVS128Gesture(
 
 `cache_dtype (torch.dtype)` ：If using cache, this parameter indicates the data type of cache. Default is `torch.uint8`. Set it to `torch.float` to use higher precision to save the count data when the parameter `count = True`.
 
-`sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs. **Note:** Please make sure that this parameter is same in both training set and testing set, otherwise errors will occur.
-
 `count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
 
 `time_steps (int)`: Time steps `T` for the output tensor.
@@ -133,8 +123,6 @@ DVS128Gesture(
 `height (int)`: Height `H` of the output tensor.
 
 `polarity (bool)`: Whether the output tensor contains polarity. If `True`, the output tensor contains polarity, `P = 2`; otherwise, it does not, `P = 1`.
-
-`clipped (Iterable | int | None)`: How the events be clipped. By inputting a tuple `(start, end)` means clipping the events that have timestamp between `start` and `end`; by inputting an integer `end` means clipping the events that have timestamp no later than `end`. If the input is `None`, clipping will not happen.
 
 ### Example Usage
 
@@ -168,12 +156,10 @@ CIFAR10DVS(
     target_transform: Optional[Callable] = None,
     download: bool = False,
     cached: bool = True,
-    sampling: int = 1,
     count: bool = False,
     precision: float = 1e9,
     time_steps: int = 128,
-    length: int = 700,
-    clipped: Optional[Union[Iterable, float]] = None
+    length: int = 700
 )
 ```
 
@@ -193,8 +179,6 @@ CIFAR10DVS(
 
 `cache_dtype (torch.dtype)` ：If using cache, this parameter indicates the data type of cache. Default is `torch.uint8`. Set it to `torch.float` to use higher precision to save the count data when the parameter `count = True`.
 
-`sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs. **Note:** Please make sure that this parameter is same in both training set and testing set, otherwise errors will occur.
-
 `count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
 
 `precision (float)`: Precision of the dataset. Keep the default value `1e9`.
@@ -202,8 +186,6 @@ CIFAR10DVS(
 `time_steps (int)`: Time steps `T` for the output tensor.
 
 `length (int)`: Spatial length `L` of the output tensor.
-
-`clipped (Iterable | int | None)`: How the events be clipped. By inputting a tuple `(start, end)` means clipping the events that have timestamp between `start` and `end`; by inputting an integer `end` means clipping the events that have timestamp no later than `end`. If the input is `None`, clipping will not happen.
 
 ### Example Usage
 
@@ -237,13 +219,11 @@ NMNIST(
     target_transform: Optional[Callable] = None,
     download: bool = False,
     cached: bool = True,
-    sampling: int = 1,
     count: bool = False,
     time_steps: int = 128,
     width: int = 34,
     height: int = 34,
-    polarity: bool = True,
-    clipped: Optional[Union[Iterable, int]] = None
+    polarity: bool = True
 )
 ```
 
@@ -263,8 +243,6 @@ NMNIST(
 
 `cache_dtype (torch.dtype)` ：If using cache, this parameter indicates the data type of cache. Default is `torch.uint8`. Set it to `torch.float` to use higher precision to save the count data when the parameter `count = True`.
 
-`sampling (int)`: Interval for sampling events. Default is `1`, meaning all events in the dataset are selected. This parameter is for preventing event density, thus saving computational costs. **Note:** Please make sure that this parameter is same in both training set and testing set, otherwise errors will occur.
-
 `count (bool)`: Whether to output the event count for each point as spike output. If `False`, the spike sequence will only have `0` and `1`; otherwise, the output is the event count of that point.
 
 `time_steps (int)`: Time steps `T` for the output tensor.
@@ -274,8 +252,6 @@ NMNIST(
 `height (int)`: Height `H` of the output tensor.
 
 `polarity (bool)`: Whether the output tensor contains polarity. If `True`, the output tensor contains polarity, `P = 2`; otherwise, it does not, `P = 1`.
-
-`clipped (Iterable | int | None)`: How the events be clipped. By inputting a tuple `(start, end)` means clipping the events that have timestamp between `start` and `end`; by inputting an integer `end` means clipping the events that have timestamp no later than `end`. If the input is `None`, clipping will not happen.
 
 ### Example Usage
 
