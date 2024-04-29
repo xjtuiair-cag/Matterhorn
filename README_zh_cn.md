@@ -42,6 +42,14 @@ pip install -r requirements.txt
 
 ### 安装 Matterhorn
 
+可以从PyPI上安装：
+
+```sh
+pip install matterhorn_pytorch
+```
+
+也可以通过仓库安装：
+
 ```sh
 git clone https://github.com/xjtuiair-cag/Matterhorn.git
 cd Matterhorn
@@ -331,7 +339,7 @@ python3 examples/3_convolution_and_event_datasets.py
 
 MNIST 我们耳熟能详。 MNIST 数据集用于训练图像分类，由一组 28x28 像素的手写数字（0-9）的灰度图像组成。 NMNIST 与 MNIST 类似，不同之处在于它将图像进行微小变形并将这一过程记录为事件。 NMNIST 数据集中事件的形状为 `[T, 2, 34, 34]` 。
 
-![NMNIST 数据集](./assets/readme_8.png)
+![NMNIST 数据集](./assets/docs/data/readme_4.png)
 
 您可以通过如下代码在 Matterhorn 中使用 NMNIST 数据集：
 
@@ -358,7 +366,7 @@ test_dataset = NMNIST(
 
 CIFAR10-DVS 数据集是通过对 CIFAR-10 数据集中的图像经过微小变形并将这一过程由事件相机记录为事件所得到的。 CIFAR10-DVS 数据集中事件的形状为 `[T, 2, 128, 128]` 。
 
-![CIFAR10-DVS 数据集](./assets/readme_9.png)
+![CIFAR10-DVS 数据集](./assets/docs/data/readme_1.png)
 
 您可以通过如下代码在 Matterhorn 中使用 CIFAR10-DVS 数据集：
 
@@ -385,7 +393,7 @@ test_dataset = CIFAR10DVS(
 
 DVS128 Gesture 数据集通过事件相机记录了来自 29 个不同人在 3 种不同照明条件下的手势。 DVS128 Gesture 数据集中事件的形状为 `[T, 2, 128, 128]` 。
 
-![DVS128 Gesture 数据集](./assets/readme_10.png)
+![DVS128 Gesture 数据集](./assets/docs/data/readme_2.png)
 
 您可以通过如下代码在 Matterhorn 中使用 DVS128 Gesture 数据集：
 
@@ -412,7 +420,7 @@ test_dataset = DVS128Gesture(
 
 SHD 数据集记录了从 1 到 10 的英语和德语口语数字，并将它们转换为事件。 SHD 数据集中事件的形状为 `[T, 700]` 。
 
-![SHD 数据集](./assets/readme_11.png)
+![SHD 数据集](./assets/docs/data/readme_3.png)
 
 您可以通过如下代码在 Matterhorn 中使用 SHD 数据集：
 

@@ -42,6 +42,14 @@ Don't forget to add `sudo` prefix if you are not the root user.
 
 ### Install Matterhorn
 
+By executing commands below to install from PyPI:
+
+```sh
+pip install matterhorn_pytorch
+```
+
+or by executing commands below to install from repository:
+
 ```sh
 git clone https://github.com/xjtuiair-cag/Matterhorn.git
 cd Matterhorn
@@ -331,7 +339,7 @@ python3 examples/3_convolution_and_event_datasets.py
 
 We know MNIST. MNIST dataset is for training image classification, consisting of a set of 28x28 pixel grayscale images of handwritten digits (0-9). NMNIST is like MNIST, which is different is that it distorts images and record them into events. The shape of events in NMNIST Dataset is `[T, 2, 34, 34]`.
 
-![NMNIST Dataset](./assets/readme_8.png)
+![NMNIST Dataset](./assets/docs/data/readme_4.png)
 
 You can use NMNIST dataset in Matterhorn by the code below:
 
@@ -358,7 +366,7 @@ test_dataset = NMNIST(
 
 CIFAR10-DVS dataset records distorted CIFAR-10 image by a DVS camera. The shape of events in CIFAR10-DVS Dataset is `[T, 2, 128, 128]` .
 
-![CIFAR10-DVS Dataset](./assets/readme_9.png)
+![CIFAR10-DVS Dataset](./assets/docs/data/readme_1.png)
 
 You can use CIFAR10-DVS Dataset in Matterhorn by the code below:
 
@@ -385,7 +393,7 @@ test_dataset = CIFAR10DVS(
 
 DVS128 Gesture dataset records gestures from 29 different people under 3 different illuminating conditions by DVS camera. The shape of events in DVS128 Gesture dataset is `[T, 2, 128, 128]` .
 
-![DVS128 Gesture Dataset](./assets/readme_10.png)
+![DVS128 Gesture Dataset](./assets/docs/data/readme_2.png)
 
 You can use DVS128 Gesture dataset in Matterhorn by the code below:
 
@@ -412,7 +420,7 @@ test_dataset = DVS128Gesture(
 
 SHD dataset records vocal number from 1 to 10 in both English and German and turns them into events. The shape of events in SHD dataset is `[T, 700]`.
 
-![SHD Dataset](./assets/readme_11.png)
+![SHD Dataset](./assets/docs/data/readme_3.png)
 
 You can use SHD dataset in Matterhorn by the code below:
 
