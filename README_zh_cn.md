@@ -20,11 +20,9 @@ Matterhorn 是基于 PyTorch 的，全新的通用类脑学习框架。
 
 Python （版本 >=3.7，<=3.9）
 
-CUDA （版本 >=11.3.0， CUDNN 也需要装，如果电脑没有 NVIDIA 显卡不用安装）
+PyTorch （版本 >=1.13.0）
 
-PyTorch （版本 >=1.10.0 ， <=1.13.1）
-
-TorchVision （版本 >=0.11.0 ， <= 0.13.1）
+TorchVision （版本 >=0.14.0）
 
 ### 依赖安装
 

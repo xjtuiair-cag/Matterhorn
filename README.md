@@ -20,11 +20,9 @@ This is the brief one, for complete version you can refer to [the tutorial of Ma
 
 Python (>= 3.7 and <= 3.9)
 
-CUDA (>= 11.3.0, with CUDNN, optional)
+PyTorch (>= 1.13.0)
 
-PyTorch (>= 1.10.0 and <= 1.13.1)
-
-TorchVision (>= 0.11.0 and <= 0.13.1)
+TorchVision (>= 0.14.0)
 
 ### Requirement Installation
 
