@@ -11,10 +11,8 @@ import torch.nn as nn
 
 
 import matterhorn_pytorch.snn.functional as SF
-from matterhorn_pytorch.snn.skeleton import Module
 from matterhorn_pytorch.snn.soma import LIF as _LIF
-from matterhorn_pytorch.snn import surrogate
-from matterhorn_pytorch.snn.surrogate import Gaussian
+from typing import Any
 try:
     from matterhorn_cpp_extensions import fp_lif, bp_lif
 except:
@@ -29,11 +27,11 @@ except:
 
 class multi_time_step_lif(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: torch.Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: float, u_rest: float, spiking_mode: int, a: float, reset_mode: float) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: float, u_rest: float, spiking_mode: int, a: float, reset_mode: float) -> torch.Tensor:
         """
         多时间步LIF神经元前向传播的C++实现。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
             u_init (torch.Tensor): 初始电位
             tau_m (torch.Tensor): 膜时间常数$τ_{m}$
@@ -69,11 +67,11 @@ class multi_time_step_lif(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: torch.Any, grad_o: torch.Tensor, grad_u_last: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: Any, grad_o: torch.Tensor, grad_u_last: torch.Tensor) -> torch.Tensor:
         """
         多时间步LIF神经元反向传播的C++实现。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             grad_o (torch.Tensor): 输出梯度
         Returns:
             grad_x (torch.Tensor): 输入梯度

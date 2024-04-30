@@ -8,7 +8,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Tuple, Callable
+from typing import Any, Tuple, Callable
 from matterhorn_pytorch import snn
 import matterhorn_pytorch.snn.functional as SF
 from matterhorn_pytorch.snn.container import Temporal
@@ -134,11 +134,11 @@ class LSM(snn.Module):
 
 class f_stdp_lsm(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: torch.Any, input: torch.Tensor, output_0: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, recurrent_weight: torch.Tensor, recurrent_input_trace: torch.Tensor, recurrent_output_trace: torch.Tensor, forward_func: Callable, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(ctx: Any, input: torch.Tensor, output_0: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, recurrent_weight: torch.Tensor, recurrent_input_trace: torch.Tensor, recurrent_output_trace: torch.Tensor, forward_func: Callable, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         利用STDP进行学习的液体状态机的前向传播函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             input (torch.Tensor): 输入脉冲序列
             output_0 (torch.Tensor): 初始状态下的循环脉冲
             weight (torch.Tensor): 权重矩阵
@@ -209,11 +209,11 @@ class f_stdp_lsm(torch.autograd.Function):
 
 
     @staticmethod
-    def backward(ctx: torch.Any, grad_output: torch.Tensor, grad_output_last: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor, grad_recurrent_input_trace: torch.Tensor, grad_recurrent_output_trace: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None]:
+    def backward(ctx: Any, grad_output: torch.Tensor, grad_output_last: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor, grad_recurrent_input_trace: torch.Tensor, grad_recurrent_output_trace: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None]:
         """
         利用STDP进行学习的液体状态机的反向传播函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             grad_output (torch.Tensor): 输出脉冲序列梯度
             grad_output_last (torch.Tensor): 最终的循环脉冲梯度
             grad_input_trace (torch.Tensor): 输入的迹梯度

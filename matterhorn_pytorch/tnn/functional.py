@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 import matterhorn_pytorch.data.functional as DF
 import matterhorn_pytorch.snn.functional as SF
+from typing import Any
 try:
     from rich import print
 except:
@@ -117,11 +118,11 @@ def t_rl_forward_inh(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
 
 class t_rl_add(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: torch.Any, x: torch.Tensor, t: int) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, t: int) -> torch.Tensor:
         """
         时间序列竞争逻辑延迟单元的前向传播函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             x (torch.Tensor): 输入信号
             t (int): 延迟时间
         Returns:
@@ -132,11 +133,11 @@ class t_rl_add(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: torch.Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         延迟单元的反向传播（伪）函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             grad_output (torch.Tensor): 输出信号梯度
         Returns:
             grad_input (torch.Tensor): 输入信号梯度
@@ -146,11 +147,11 @@ class t_rl_add(torch.autograd.Function):
 
 class t_rl_min(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: torch.Any, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
         时间序列竞争逻辑最小比较单元的前向传播函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             x (torch.Tensor): 输入信号x
             y (torch.Tensor): 输入信号y
         Returns:
@@ -162,11 +163,11 @@ class t_rl_min(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: torch.Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         比较单元的反向传播（伪）函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             grad_output (torch.Tensor): 输出信号梯度
         Returns:
             grad_x (torch.Tensor): 输入信号x的梯度
@@ -181,11 +182,11 @@ class t_rl_min(torch.autograd.Function):
 
 class t_rl_max(t_rl_min):
     @staticmethod
-    def forward(ctx: torch.Any, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
         时间序列竞争逻辑最大比较单元的前向传播函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             x (torch.Tensor): 输入信号x
             y (torch.Tensor): 输入信号y
         Returns:
@@ -198,11 +199,11 @@ class t_rl_max(t_rl_min):
 
 class t_rl_inh(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: torch.Any, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
         时间序列竞争逻辑抑制单元的前向传播函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             x (torch.Tensor): 输入信号x
             y (torch.Tensor): 抑制信号y
         Returns:
@@ -214,11 +215,11 @@ class t_rl_inh(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: torch.Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         抑制单元的反向传播（伪）函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             grad_output (torch.Tensor): 输出信号梯度
         Returns:
             grad_x (torch.Tensor): 输入信号x的梯度
@@ -455,11 +456,11 @@ def s_rl_forward_inh(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
 
 class s_rl_add(t_rl_add):
     @staticmethod
-    def forward(ctx: torch.Any, x: torch.Tensor, t: int) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, t: int) -> torch.Tensor:
         """
         脉冲序列竞争逻辑延迟单元的前向传播函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             x (torch.Tensor): 输入信号
             t (int): 延迟时间
         Returns:
@@ -472,11 +473,11 @@ class s_rl_add(t_rl_add):
 
 class s_rl_min(t_rl_min):
     @staticmethod
-    def forward(ctx: torch.Any, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
         脉冲序列竞争逻辑最小比较单元的前向传播函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             x (torch.Tensor): 输入信号x
             y (torch.Tensor): 输入信号y
         Returns:
@@ -494,11 +495,11 @@ class s_rl_min(t_rl_min):
 
 class s_rl_max(t_rl_max):
     @staticmethod
-    def forward(ctx: torch.Any, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
         脉冲序列竞争逻辑最大比较单元的前向传播函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             x (torch.Tensor): 输入信号x
             y (torch.Tensor): 输入信号y
         Returns:
@@ -516,11 +517,11 @@ class s_rl_max(t_rl_max):
 
 class s_rl_inh(t_rl_inh):
     @staticmethod
-    def forward(ctx: torch.Any, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def forward(ctx: Any, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
         脉冲序列竞争逻辑抑制单元的前向传播函数。
         Args:
-            ctx (torch.Any): 上下文
+            ctx (Any): 上下文
             x (torch.Tensor): 输入信号x
             y (torch.Tensor): 抑制信号y
         Returns:
