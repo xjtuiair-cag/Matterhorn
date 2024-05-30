@@ -55,9 +55,9 @@ Where $t_{i}$ is the time step when the input spike of neuron with index $i$ is 
 
 ```python
 STDPLinear(
+    soma: torch.nn.Module,
     in_features: int,
     out_features: int,
-    soma: torch.nn.Module,
     a_pos: float = 0.015,
     tau_pos: float = 2.0,
     a_neg: float = 0.015,
@@ -70,11 +70,11 @@ STDPLinear(
 
 ### Constructor Arguments
 
+`soma (torch.nn.Module)`: Type of soma used. Refer to the available soma types in the module [`matterhorn_pytorch.snn.soma`](./4_soma.md).
+
 `in_features (int)`: Length of the input `I`. The shape of the input is `[B, I]` (single-time-step mode) or `[T, B, I]` (multi-time-step mode).
 
 `out_features (int)`: Length of the output `O`. The shape of the output is `[B, O]` (single-time-step mode) or `[T, B, O]` (multi-time-step mode).
-
-`soma (torch.nn.Module)`: Type of soma used. Refer to the available soma types in the module [`matterhorn_pytorch.snn.soma`](./4_soma.md).
 
 `a_pos (float)`: STDP parameter $A_{+}$.
 
@@ -97,7 +97,7 @@ import torch
 import matterhorn_pytorch as mth
 
 
-l1 = mth.snn.STDPLinear(784, 10, soma = mth.snn.LIF()) # [T, B, 784] -> [T, B, 10]
+l1 = mth.snn.STDPLinear(mth.snn.LIF(), 784, 10) # [T, B, 784] -> [T, B, 10]
 ```
 
 ## `matterhorn_pytorch.snn.MaxPool1d` / `matterhorn_pytorch.snn.layer.MaxPool1d`

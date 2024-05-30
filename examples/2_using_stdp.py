@@ -35,11 +35,11 @@ def main():
         snn.DirectEncoder(),
         snn.Flatten(),
         snn.STDPLinear(
-            in_features = 2 * 34 * 34,
-            out_features = 256,
             soma = snn.LIF(
                 tau_m = tau
-            )
+            ),
+            in_features = 2 * 34 * 34,
+            out_features = 256
         ),
         snn.Linear(256, 10, bias = False),
         snn.LIF(),

@@ -55,9 +55,9 @@ $$
 
 ```python
 STDPLinear(
+    soma: torch.nn.Module,
     in_features: int,
     out_features: int,
-    soma: torch.nn.Module,
     a_pos: float = 0.015,
     tau_pos: float = 2.0,
     a_neg: float = 0.015,
@@ -97,7 +97,7 @@ import torch
 import matterhorn_pytorch as mth
 
 
-l1 = mth.snn.STDPLinear(784, 10, soma = mth.snn.LIF()) # [T, B, 784] -> [T, B, 10]
+l1 = mth.snn.STDPLinear(mth.snn.LIF(), 784, 10) # [T, B, 784] -> [T, B, 10]
 ```
 
 ## `matterhorn_pytorch.snn.MaxPool1d` / `matterhorn_pytorch.snn.layer.MaxPool1d`
