@@ -116,15 +116,15 @@ class f_stdp_linear(torch.autograd.Function):
             time_steps = input.shape[0]
             batch_size = input.shape[1]
             flattened_input = input.flatten(0, 1)
-            psp = F.linear(flattened_input, weight, bias = None)
+            psp: torch.Tensor = F.linear(flattened_input, weight, bias = None)
             output_shape = [time_steps, batch_size] + list(psp.shape[1:])
             psp = psp.reshape(output_shape)
         else:
             input_spike_train = input[None]
             time_steps = 1
             batch_size = input.shape[0]
-            psp = F.linear(input, weight, bias = None)
-        output = soma(psp)
+            psp: torch.Tensor = F.linear(input, weight, bias = None)
+        output: torch.Tensor = soma(psp)
         if multi_time_step:
             output_spike_train = output.clone()
         else:
@@ -279,25 +279,25 @@ class f_stdp_conv2d(torch.autograd.Function):
             time_steps = input.shape[0]
             batch_size = input.shape[1]
             flattened_input = input.flatten(0, 1)
-            psp = F.conv2d(flattened_input, weight, bias = None)
+            psp: torch.Tensor = F.conv2d(flattened_input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
             output_shape = [time_steps, batch_size] + list(psp.shape[1:])
             psp = psp.reshape(output_shape)
         else:
             input_spike_train = input[None]
             time_steps = 1
             batch_size = input.shape[0]
-            psp = F.conv2d(input, weight, bias = None)
-        output = soma(psp)
+            psp: torch.Tensor = F.conv2d(input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
+        output: torch.Tensor = soma(psp)
         if multi_time_step:
             output_spike_train = output.clone()
         else:
             output_spike_train = output[None]
         delta_weight = torch.zeros_like(weight)
         if training:
-            h_in = input_spike_train.shape[4]
-            w_in = input_spike_train.shape[5]
-            h_out = output_spike_train.shape[4]
-            w_out = output_spike_train.shape[5]
+            h_in = input_spike_train.shape[3]
+            w_in = input_spike_train.shape[4]
+            h_out = output_spike_train.shape[3]
+            w_out = output_spike_train.shape[4]
             h_wt = weight.shape[2]
             w_wt = weight.shape[3]
             h_stride = stride[0]
@@ -361,7 +361,7 @@ class f_stdp_conv2d(torch.autograd.Function):
 
 
 class STDPConv2d(Module):
-    def __init__(self, soma: Module, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, dilation: _size_2_t = 1, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, soma: Module, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, dilation: _size_2_t = 1, a_pos: float = 0.0002, tau_pos: float = 2.0, a_neg: float = 0.0002, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         使用STDP学习机制时的2维卷积层。
         Args:

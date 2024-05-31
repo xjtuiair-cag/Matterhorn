@@ -3,7 +3,7 @@ import torch.nn as nn
 import torchvision
 from torch.utils.data import DataLoader
 import matterhorn_pytorch.snn as snn
-from matterhorn_pytorch.data.nmnist import NMNIST
+from torchvision.datasets.mnist import MNIST
 from functions import *
 from rich import print
 
@@ -32,16 +32,21 @@ def main():
     print_title("Model")
     
     model = snn.Sequential(
-        snn.DirectEncoder(),
-        snn.Flatten(),
-        snn.STDPLinear(
+        snn.PoissonEncoder(
+            time_steps = 32
+        ),
+        snn.STDPConv2d(
             soma = snn.LIF(
                 tau_m = tau
             ),
-            in_features = 2 * 34 * 34,
-            out_features = 256
+            in_channels = 1,
+            out_channels = 4,
+            kernel_size = 3,
+            stride = 2,
+            padding = 1
         ),
-        snn.Linear(256, 10, bias = False),
+        snn.Flatten(),
+        snn.Linear(784, 10, bias = False),
         snn.LIF(),
         snn.AvgSpikeDecoder()
     )
@@ -50,16 +55,16 @@ def main():
 
     print_title("Dataset")
 
-    train_dataset = NMNIST(
+    train_dataset = MNIST(
         root = "./examples/data",
         train = True,
-        time_steps = time_steps,
-        download=True
+        transform = torchvision.transforms.ToTensor(),
+        download = True
     )
-    test_dataset = NMNIST(
+    test_dataset = MNIST(
         root = "./examples/data",
         train = False,
-        time_steps = time_steps,
+        transform = torchvision.transforms.ToTensor(),
         download = True
     )
     train_data_loader = DataLoader(
