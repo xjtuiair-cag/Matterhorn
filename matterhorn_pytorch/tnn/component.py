@@ -111,7 +111,6 @@ class Firing(Module):
         upper_threshold = q - self.u_threshold + 1
         u = u[..., -upper_threshold:]
         d = d[..., :upper_threshold]
-        print(u.shape, d.shape)
         res = TF.s_lt(u, d)
         out = res[..., 0:1]
         for i in range(1, res.shape[-1]):

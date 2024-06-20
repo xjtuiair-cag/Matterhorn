@@ -74,7 +74,7 @@ def spike_train_to_spike_times(spike_train: torch.Tensor, zero_fill: int = -1) -
     Returns:
         spike_times (torch.Tensor): 时间序列，形状为[...]
     """
-    spike_times = torch.where(torch.sum(spike_train, dim = 0).nonzero(), torch.argmax(spike_train, dim = 0), torch.full_like(spike_train[0], zero_fill))
+    spike_times = torch.where(torch.sum(spike_train, dim = 0).gt(0.0), torch.argmax(spike_train, dim = 0).to(spike_train), torch.full_like(spike_train[0], zero_fill))
     return spike_times
 
 

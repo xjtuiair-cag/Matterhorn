@@ -689,6 +689,76 @@ class LayerNorm(Synapse, nn.LayerNorm):
         return x
 
 
+class NormPlaceholder(Synapse):
+    def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+        """
+        归一化占位符，用于ANN转SNN的替换。
+        Args:
+            num_features (int): 需要被归一化的长度
+            eps (float): 参数epsilon
+            momentum (float): 动量参数
+            affine (bool): 是否启用参数gamma和beta，进行仿射变换
+            track_running_stats (bool): 是否需要跟踪整个训练过程来进行批归一化的学习
+            multi_time_step (bool): 是否调整为多个时间步模式
+            device (torch.device): 所计算的设备
+            dtype (torch.dtype): 所计算的数据类型
+        """
+        super().__init__()
+        self.num_features = num_features
+        self.eps = eps
+        self.momentum = momentum
+        self.affine = affine
+        self.track_running_stats = track_running_stats
+        if self.affine:
+            self.weight = nn.Parameter(torch.empty(num_features, device = device, dtype = dtype))
+            self.bias = nn.Parameter(torch.empty(num_features, device = device, dtype = dtype))
+        else:
+            self.register_parameter("weight", None)
+            self.register_parameter("bias", None)
+        if self.track_running_stats:
+            self.register_buffer('running_mean', torch.zeros(num_features, device = device, dtype = dtype))
+            self.register_buffer('running_var', torch.ones(num_features, device = device, dtype = dtype))
+            self.register_buffer('num_batches_tracked', torch.tensor(0, device = device, dtype = torch.long))
+        else:
+            self.register_buffer("running_mean", None)
+            self.register_buffer("running_var", None)
+            self.register_buffer("num_batches_tracked", None)
+
+
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        单个时间步的前向传播函数。
+        Args:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        """
+        return x
+
+
+class Identity(Synapse):
+    def __init__(self, multi_time_step = False) -> None:
+        """
+        同一层，输出为输入。
+        Args:
+            multi_time_step (bool): 是否调整为多个时间步模式
+        """
+        super().__init__(
+            multi_time_step = multi_time_step
+        )
+    
+
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        单个时间步的前向传播函数。
+        Args:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        """
+        return x
+
+
 class Neurotransmitter(Synapse):
     def __init__(self, mask: torch.Tensor, multi_time_step = False) -> None:
         """
