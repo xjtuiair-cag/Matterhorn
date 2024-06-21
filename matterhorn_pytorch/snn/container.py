@@ -32,11 +32,11 @@ class Spatial(Container, nn.Sequential):
         """
         Container.__init__(self)
         nn.Sequential.__init__(self, *args)
-        self.a_mts = False
+        self._multi_time_step = False
         for module in self:
             is_snn_module = isinstance(module, Module)
             if is_snn_module:
-                self.a_mts = self.a_mts or module.multi_time_step
+                self._multi_time_step = self._multi_time_step or module.multi_time_step
 
 
 class Temporal(Container):

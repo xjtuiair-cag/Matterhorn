@@ -39,7 +39,10 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
                 device = ann_module.weight.device,
                 dtype = ann_module.weight.dtype
             )
-            snn_module.load_state_dict(ann_module.state_dict())
+            params = ann_module.state_dict()
+            for name in params:
+                params[name] = params[name].clone().detach()
+            snn_module.load_state_dict()
         # 卷积层
         elif isinstance(ann_module, (nn.Conv1d, nn.Conv2d, nn.Conv3d)):
             kwargs = dict(
@@ -62,7 +65,10 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
                 snn_module = snn.Conv2d(**kwargs)
             if isinstance(ann_module, nn.Conv3d):
                 snn_module = snn.Conv3d(**kwargs)
-            snn_module.load_state_dict(ann_module.state_dict())
+            params = ann_module.state_dict()
+            for name in params:
+                params[name] = params[name].clone().detach()
+            snn_module.load_state_dict(params)
         # 转置卷积层
         elif isinstance(ann_module, (nn.ConvTranspose1d, nn.ConvTranspose2d, nn.ConvTranspose3d)):
             kwargs = dict(
@@ -86,7 +92,10 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
                 snn_module = snn.ConvTranspose2d(**kwargs)
             if isinstance(ann_module, nn.ConvTranspose3d):
                 snn_module = snn.ConvTranspose3d(**kwargs)
-            snn_module.load_state_dict(ann_module.state_dict())
+            params = ann_module.state_dict()
+            for name in params:
+                params[name] = params[name].clone().detach()
+            snn_module.load_state_dict(params)
         elif isinstance(ann_module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.LayerNorm)):
             snn_module = snn.synapse.NormPlaceholder(
                 num_features = ann_module.num_features,
@@ -98,7 +107,10 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
                 device = ann_module.running_mean.device,
                 dtype = ann_module.running_mean.dtype
             )
-            snn_module.load_state_dict(ann_module.state_dict())
+            params = ann_module.state_dict()
+            for name in params:
+                params[name] = params[name].clone().detach()
+            snn_module.load_state_dict(params)
         # 激活函数
         elif isinstance(ann_module, (nn.ReLU, nn.LeakyReLU)):
             snn_module = snn.IF(
@@ -116,6 +128,10 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
             snn_module = snn.Spatial(*modules)
         else:
             snn_module = deepcopy(ann_module)
+            params = ann_module.state_dict()
+            for name in params:
+                params[name] = params[name].clone().detach()
+            snn_module.load_state_dict(params)
             for name, module in ann_module.named_children():
                 setattr(snn_module, name, _replace(module))
         return snn_module
@@ -178,11 +194,11 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
                     norm_params = model.state_dict()
                     synapse_params = synapse.state_dict()
                     mu = norm_params["running_mean"]
-                    sigma = norm_params["running_var"]
+                    sigma = (norm_params["running_var"] + getattr(model, "eps")) ** 0.5
                     gamma = norm_params["weight"]
                     beta = norm_params["bias"]
-                    w = synapse_params["weight"]
-                    b = synapse_params["bias"]
+                    w = synapse_params["weight"].clone().detach()
+                    b = synapse_params["bias"].clone().detach()
                     for i in range(len(mu)):
                         w[i] = gamma[i] / sigma[i] * w[i]
                         b[i] = gamma[i] / sigma[i] * (b[i] - mu[i]) + beta[i]
@@ -200,8 +216,8 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
                     # IF -> Conv
                     lambda_l = getattr(model, "lambda_l") if hasattr(model, "lambda_l") else 1.0
                     synapse_params = synapse.state_dict()
-                    w = synapse_params["weight"]
-                    b = synapse_params["bias"]
+                    w = synapse_params["weight"].clone().detach()
+                    b = synapse_params["bias"].clone().detach()
                     w = w / lambda_l
                     b = b / lambda_l
                     synapse_params["weight"] = w
@@ -216,7 +232,7 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
                     # Conv -> IF
                     lambda_l = getattr(soma, "lambda_l") if hasattr(soma, "lambda_l") else 1.0
                     synapse_params = model.state_dict()
-                    w = synapse_params["weight"]
+                    w = synapse_params["weight"].clone().detach()
                     w = w * lambda_l
                     synapse_params["weight"] = w
                     model.load_state_dict(synapse_params)
