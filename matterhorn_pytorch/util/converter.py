@@ -127,13 +127,19 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
                 modules.append(_replace(module))
             snn_module = snn.Spatial(*modules)
         else:
-            snn_module = deepcopy(ann_module)
+            hybrid_module = deepcopy(ann_module)
             params = ann_module.state_dict()
             for name in params:
                 params[name] = params[name].clone().detach()
-            snn_module.load_state_dict(params)
+            hybrid_module.load_state_dict(params)
             for name, module in ann_module.named_children():
-                setattr(snn_module, name, _replace(module))
+                setattr(hybrid_module, name, _replace(module))
+            snn_module = snn.Agent(
+                nn_module = hybrid_module,
+                force_spike_output = False,
+                multi_time_step = False,
+                reset_after_process = False
+            )
         return snn_module
     
     res = snn.Temporal(
