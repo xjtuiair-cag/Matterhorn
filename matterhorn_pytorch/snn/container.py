@@ -7,15 +7,11 @@
 
 import torch
 import torch.nn as nn
-import matterhorn_pytorch.snn.functional as SF
-from matterhorn_pytorch.snn.skeleton import Module
-try:
-    from rich import print
-except:
-    pass
+import matterhorn_pytorch.snn.functional as _SF
+from matterhorn_pytorch.snn.skeleton import Module as _Module
 
 
-class Container(Module):
+class Container(_Module):
     def __init__(self, multi_time_step: bool = False, reset_after_process: bool = False) -> None:
         super().__init__(
             multi_time_step = multi_time_step,
@@ -34,7 +30,7 @@ class Spatial(Container, nn.Sequential):
         nn.Sequential.__init__(self, *args)
         self._multi_time_step = False
         for module in self:
-            is_snn_module = isinstance(module, Module)
+            is_snn_module = isinstance(module, _Module)
             if is_snn_module:
                 self._multi_time_step = self._multi_time_step or module.multi_time_step
 
@@ -47,7 +43,7 @@ class Temporal(Container):
             module (nn.Module): 所用来执行的单步模型
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
-        is_snn_module = isinstance(module, Module)
+        is_snn_module = isinstance(module, _Module)
         if is_snn_module:
             assert module.multi_time_step == False, "You cannot put a multi-time-step module %s into temporal container" % (module.__class__.__name__,)
         super().__init__(
@@ -102,7 +98,7 @@ class Sequential(Container, nn.Sequential):
         multi_time_step = True
         # all_snn_module_single_time_step = True
         # for module in args:
-        #     is_snn_module = isinstance(module, Module)
+        #     is_snn_module = isinstance(module, _Module)
         #     if is_snn_module:
         #         all_snn_module_single_time_step = all_snn_module_single_time_step and not module.multi_time_step
         #     else:
@@ -122,7 +118,7 @@ class Sequential(Container, nn.Sequential):
         # 遍历所有传入的模块，确保它们是ANN模块或是多时间步SNN模块。
         for module_idx in range(len(self)):
             module = self[module_idx]
-            is_snn_module = isinstance(module, Module)
+            is_snn_module = isinstance(module, _Module)
             # 如果是SNN模块。
             if is_snn_module:
                 is_multi_time_step = module.multi_time_step
@@ -195,7 +191,7 @@ class Sequential(Container, nn.Sequential):
         return y
 
 
-class Agent(Module):
+class Agent(_Module):
     def __init__(self, nn_module: nn.Module, force_spike_output: bool = False, multi_time_step: bool = False, reset_after_process: bool = False) -> None:
         """
         ANN套壳，用于使ANN模块带有mth.snn.Module的方法
@@ -205,7 +201,7 @@ class Agent(Module):
             multi_time_step (bool): 是否调整为多个时间步模式
             reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
-        is_snn_module = isinstance(nn_module, Module)
+        is_snn_module = isinstance(nn_module, _Module)
         assert not is_snn_module, "Already an SNN module."
         super().__init__(
             multi_time_step = multi_time_step,
@@ -226,7 +222,7 @@ class Agent(Module):
         elif self.supports_single_time_step() and not if_on:
             self._multi_time_step = False
         for module in self.nn_module.children():
-            is_snn_module = isinstance(module, Module)
+            is_snn_module = isinstance(module, _Module)
             if is_snn_module:
                 module.multi_time_step_(if_on)
                 assert module.multi_time_step == self.multi_time_step, "Unmatched step mode"
@@ -238,7 +234,7 @@ class Agent(Module):
         重置模型。
         """
         for module in self.nn_module.children():
-            is_snn_module = isinstance(module, Module)
+            is_snn_module = isinstance(module, _Module)
             if is_snn_module:
                 module.reset()
         return self
@@ -249,7 +245,7 @@ class Agent(Module):
         将模型中的某些变量从其计算图中分离。
         """
         for module in self.nn_module.children():
-            is_snn_module = isinstance(module, Module)
+            is_snn_module = isinstance(module, _Module)
             if is_snn_module:
                 module.detach()
         return self
@@ -297,5 +293,5 @@ class Agent(Module):
         else:
             y = self.forward_single_time_step(x)
         if self.force_spike_output:
-            y = SF.val_to_spike(y)
+            y = _SF.val_to_spike(y)
         return y

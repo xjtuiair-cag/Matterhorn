@@ -122,13 +122,13 @@ MaxPool1d(
 
 ### 构造函数参数
 
-`kernel_size (_size_any_t)` ：池化核的大小。
+`kernel_size (size_any_t)` ：池化核的大小。
 
-`stride (_size_any_t | None)` ：一次池化操作跨越多少像素。
+`stride (size_any_t | None)` ：一次池化操作跨越多少像素。
 
-`padding (_size_any_t)` ：边界填充的长度。
+`padding (size_any_t)` ：边界填充的长度。
 
-`dilation (_size_any_t)` ：在一次池化操作中，一次选择操作跨越多少像素。
+`dilation (size_any_t)` ：在一次池化操作中，一次选择操作跨越多少像素。
 
 `return_indices (bool)` ：是否返回池化后的值在原图像中的索引。
 
@@ -170,13 +170,13 @@ MaxPool2d(
 
 ### 构造函数参数
 
-`kernel_size (_size_any_t)` ：池化核的大小。
+`kernel_size (size_any_t)` ：池化核的大小。
 
-`stride (_size_any_t | None)` ：一次池化操作跨越多少像素。
+`stride (size_any_t | None)` ：一次池化操作跨越多少像素。
 
-`padding (_size_any_t)` ：边界填充的长度。
+`padding (size_any_t)` ：边界填充的长度。
 
-`dilation (_size_any_t)` ：在一次池化操作中，一次选择操作跨越多少像素。
+`dilation (size_any_t)` ：在一次池化操作中，一次选择操作跨越多少像素。
 
 `return_indices (bool)` ：是否返回池化后的值在原图像中的索引。
 
@@ -216,13 +216,13 @@ MaxPool3d(
 
 ### 构造函数参数
 
-`kernel_size (_size_any_t)` ：池化核的大小。
+`kernel_size (size_any_t)` ：池化核的大小。
 
-`stride (_size_any_t | None)` ：一次池化操作跨越多少像素。
+`stride (size_any_t | None)` ：一次池化操作跨越多少像素。
 
-`padding (_size_any_t)` ：边界填充的长度。
+`padding (size_any_t)` ：边界填充的长度。
 
-`dilation (_size_any_t)` ：在一次池化操作中，一次选择操作跨越多少像素。
+`dilation (size_any_t)` ：在一次池化操作中，一次选择操作跨越多少像素。
 
 `return_indices (bool)` ：是否返回池化后的值在原图像中的索引。
 
@@ -261,11 +261,11 @@ AvgPool1d(
 
 ### 构造函数参数
 
-`kernel_size (_size_1_t)` ：池化核的大小。
+`kernel_size (size_1_t)` ：池化核的大小。
 
-`stride (_size_1_t)` ：一次池化操作跨越多少像素。
+`stride (size_1_t)` ：一次池化操作跨越多少像素。
 
-`padding (_size_1_t)` ：边界填充的长度。
+`padding (size_1_t)` ：边界填充的长度。
 
 `ceil_mode (bool)` ：池化后是否将值向上取整。
 
@@ -307,11 +307,11 @@ AvgPool2d(
 
 ### 构造函数参数
 
-`kernel_size (_size_2_t)` ：池化核的大小。
+`kernel_size (size_2_t)` ：池化核的大小。
 
-`stride (_size_2_t | None)` ：一次池化操作跨越多少像素。
+`stride (size_2_t | None)` ：一次池化操作跨越多少像素。
 
-`padding (_size_2_t)` ：边界填充的长度。
+`padding (size_2_t)` ：边界填充的长度。
 
 `ceil_mode (bool)` ：池化后是否将值向上取整。
 
@@ -353,11 +353,11 @@ AvgPool3d(
 
 ### 构造函数参数
 
-`kernel_size (_size_3_t)` ：池化核的大小。
+`kernel_size (size_3_t)` ：池化核的大小。
 
-`stride (_size_3_t | None)` ：一次池化操作跨越多少像素。
+`stride (size_3_t | None)` ：一次池化操作跨越多少像素。
 
-`padding (_size_3_t)` ：边界填充的长度。
+`padding (size_3_t)` ：边界填充的长度。
 
 `ceil_mode (bool)` ：池化后是否将值向上取整。
 
@@ -423,7 +423,7 @@ Unflatten(
 
 `dim (int)` ：要折叠哪一个维度（不算时间维度）的数据。
 
-`unflattened_size (_size)` ：将这一个维度的数据折叠成什么形状。
+`unflattened_size (size)` ：将这一个维度的数据折叠成什么形状。
 
 `multi_time_step (bool)` ：是否调整为多个时间步模式。
 
@@ -453,7 +453,7 @@ Dropout(
 
 `p (float)` ：遗忘概率。
 
-`unflattened_size (_size)` ：是否在原有张量上改动，若为 `True` 则直接改原张量，否则新建一个张量。
+`unflattened_size (size)` ：是否在原有张量上改动，若为 `True` 则直接改原张量，否则新建一个张量。
 
 `multi_time_step (bool)` ：是否调整为多个时间步模式。
 

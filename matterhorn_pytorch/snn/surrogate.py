@@ -6,15 +6,15 @@
 
 import torch
 import torch.nn as nn
-import matterhorn_pytorch.snn.functional as F
-from matterhorn_pytorch.snn.skeleton import Module
-try:
-    from rich import print
-except:
+import matterhorn_pytorch.snn.functional as _SF
+from matterhorn_pytorch.snn.skeleton import Module as _Module
+
+
+class SurrogateGradient(_Module):
     pass
 
 
-class Rectangular(Module):
+class Rectangular(SurrogateGradient):
     def __init__(self, a: float = 1.0) -> None:
         """
         Heaviside阶跃函数，替代梯度为矩形函数
@@ -42,10 +42,10 @@ class Rectangular(Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return F.heaviside_rectangular(x, self.a)
+        return _SF.heaviside_rectangular(x, self.a)
 
 
-class Polynomial(Module):
+class Polynomial(SurrogateGradient):
     def __init__(self, a: float = 4.0) -> None:
         """
         Heaviside阶跃函数，替代梯度为多项式函数
@@ -73,10 +73,10 @@ class Polynomial(Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return F.heaviside_polynomial(x, self.a)
+        return _SF.heaviside_polynomial(x, self.a)
 
 
-class Sigmoid(Module):
+class Sigmoid(SurrogateGradient):
     def __init__(self, a: float = 0.25) -> None:
         """
         Heaviside阶跃函数，替代梯度为Sigmoid函数
@@ -104,10 +104,10 @@ class Sigmoid(Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return F.heaviside_sigmoid(x, self.a)
+        return _SF.heaviside_sigmoid(x, self.a)
 
 
-class Gaussian(Module):
+class Gaussian(SurrogateGradient):
     def __init__(self, a: float = 0.16) -> None:
         """
         Heaviside阶跃函数，替代梯度为高斯函数
@@ -135,4 +135,4 @@ class Gaussian(Module):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return F.heaviside_gaussian(x, self.a)
+        return _SF.heaviside_gaussian(x, self.a)

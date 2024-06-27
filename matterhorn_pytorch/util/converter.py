@@ -6,15 +6,14 @@ ANN转SNN小工具，完成ANN与SNN的转换。
 
 import torch
 import torch.nn as nn
-import torch.utils
-import torch.utils.data
 import matterhorn_pytorch.snn as snn
 from typing import Iterable, Callable
+from torch.utils.data import Dataset
 from copy import deepcopy
 from rich.progress import track
 
 
-def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str = "max") -> snn.Module:
+def ann_to_snn(model: nn.Module, demo_data: Dataset, mode: str = "max") -> snn.Module:
     """
     ANN转SNN。
     Args:
@@ -148,8 +147,8 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
     )
 
     if mode is not None:
-        global ann2snn_output_module_list
-        ann2snn_output_module_list = []
+        global graph_cache
+        graph_cache = []
         def register_hook(model: snn.Module, hook: Callable) -> Iterable:
             hooks = []
             hooks.append(model.register_forward_hook(hook))
@@ -179,13 +178,16 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
 
         # 3. 根据所记录的lambda值，更新权重与偏置
         def scale_hook(model: snn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
-            global ann2snn_output_module_list
+            is_node = (not len(model.children()) and not isinstance(model, snn.surrogate.SurrogateGradient)) or isinstance(model, snn.soma.Soma)
+            if not is_node:
+                return
+            global graph_cache
             from_module: snn.Module = None
-            for out, module in reversed(ann2snn_output_module_list):
-                if out is input[0]:
-                    from_module = module
+            for _model, _input, _output in reversed(graph_cache):
+                if _output is input[0]:
+                    from_module = _model
                     break
-            ann2snn_output_module_list.append((output, model))
+            graph_cache.append((model, input, output))
             
             is_synapse = lambda x: isinstance(x, (snn.Linear, snn.Conv1d, snn.Conv2d, snn.Conv3d, snn.ConvTranspose1d, snn.ConvTranspose2d, snn.ConvTranspose3d))
             is_norm = lambda x: isinstance(x, (snn.synapse.NormPlaceholder,))
@@ -229,7 +231,6 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
                     synapse_params["weight"] = w
                     synapse_params["bias"] = b
                     synapse.load_state_dict(synapse_params)
-                    pass
             elif is_synapse(model):
                 soma: snn.Module = None
                 if is_soma(from_module):
@@ -242,7 +243,7 @@ def ann_to_snn(model: nn.Module, demo_data: torch.utils.data.Dataset, mode: str 
                     w = w * lambda_l
                     synapse_params["weight"] = w
                     model.load_state_dict(synapse_params)
-            return output
+            return
         
         hooks = register_hook(res, scale_hook)
         res.eval()

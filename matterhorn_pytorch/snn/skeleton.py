@@ -6,11 +6,6 @@ SNN模块的框架，在torch.nn的基础上，定义了几个SNN的基本函数
 
 import torch
 import torch.nn as nn
-from typing import Union
-try:
-    from rich import print
-except:
-    pass
 
 
 def reset_hook(model: nn.Module, input: torch.Tensor, output: torch.Tensor) -> None:

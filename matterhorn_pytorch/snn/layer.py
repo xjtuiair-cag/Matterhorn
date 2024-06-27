@@ -5,24 +5,19 @@
 """
 
 
-from typing import Any, Tuple, Callable, Optional, Union
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.nn.functional as _F
+import matterhorn_pytorch.snn.functional as _SF
+from matterhorn_pytorch.snn.skeleton import Module as _Module
+from matterhorn_pytorch.snn.container import Temporal as _Temporal
+from typing import Any as _Any, Tuple as _Tuple, Optional as _Optional, Union as _Union
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
-from matterhorn_pytorch.snn.container import Temporal
-import matterhorn_pytorch.snn.functional as SF
-from matterhorn_pytorch.snn.skeleton import Module
-from matterhorn_pytorch.snn import surrogate
-from matterhorn_pytorch.training.functional import stdp_online
-try:
-    from rich import print
-except:
-    pass
+from matterhorn_pytorch.training.functional import stdp_online as _stdp_online
 
 
-class Layer(Module):
+class Layer(_Module):
     def __init__(self, multi_time_step = False) -> None:
         """
         突触函数的骨架，定义突触最基本的函数。
@@ -84,13 +79,13 @@ class Layer(Module):
             y = self.forward_multi_time_step(x)
         else:
             y = self.forward_single_time_step(x)
-        y = SF.val_to_spike(y)
+        y = _SF.val_to_spike(y)
         return y
 
 
 class f_stdp_linear(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: Module, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Module, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         利用STDP进行学习的全连接层的前向传播函数。
         Args:
@@ -116,14 +111,14 @@ class f_stdp_linear(torch.autograd.Function):
             time_steps = input.shape[0]
             batch_size = input.shape[1]
             flattened_input = input.flatten(0, 1)
-            psp: torch.Tensor = F.linear(flattened_input, weight, bias = None)
+            psp: torch.Tensor = _F.linear(flattened_input, weight, bias = None)
             output_shape = [time_steps, batch_size] + list(psp.shape[1:])
             psp = psp.reshape(output_shape)
         else:
             input_spike_train = input[None]
             time_steps = 1
             batch_size = input.shape[0]
-            psp: torch.Tensor = F.linear(input, weight, bias = None)
+            psp: torch.Tensor = _F.linear(input, weight, bias = None)
         output: torch.Tensor = soma(psp)
         if multi_time_step:
             output_spike_train = output.clone()
@@ -132,7 +127,7 @@ class f_stdp_linear(torch.autograd.Function):
         delta_weight = torch.zeros_like(weight)
         if training:
             for t in range(time_steps):
-                delta_weight, input_trace, output_trace = stdp_online(
+                delta_weight, input_trace, output_trace = _stdp_online(
                     delta_weight = delta_weight, # [O, I]
                     input_trace = input_trace, # [B, O, I]
                     output_trace = output_trace, # [B, O, I]
@@ -148,7 +143,7 @@ class f_stdp_linear(torch.autograd.Function):
 
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None]:
+    def backward(ctx: _Any, grad_output: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None]:
         """
         利用STDP进行学习的全连接层的反向传播函数。
         Args:
@@ -174,8 +169,8 @@ class f_stdp_linear(torch.autograd.Function):
         return torch.zeros_like(input), delta_weight, torch.zeros_like(grad_input_trace), torch.zeros_like(grad_output_trace), None, None, None, None, None, None, None
 
 
-class STDPLinear(Module):
-    def __init__(self, soma: Module, in_features: int, out_features: int, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+class STDPLinear(_Module):
+    def __init__(self, soma: _Module, in_features: int, out_features: int, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层。
         Args:
@@ -205,7 +200,7 @@ class STDPLinear(Module):
             if soma.supports_multi_time_step():
                 self.soma = soma.multi_time_step_(True)
             elif not soma.multi_time_step:
-                self.soma = Temporal(soma, reset_after_process = False)
+                self.soma = _Temporal(soma, reset_after_process = False)
         else:
             if soma.supports_single_time_step():
                 self.soma = soma.multi_time_step_(False)
@@ -222,8 +217,8 @@ class STDPLinear(Module):
         """
         重置模型。
         """
-        self.input_trace = SF.reset_tensor(self.input_trace, 0.0)
-        self.output_trace = SF.reset_tensor(self.output_trace, 0.0)
+        self.input_trace = _SF.reset_tensor(self.input_trace, 0.0)
+        self.output_trace = _SF.reset_tensor(self.output_trace, 0.0)
         return super().reset()
 
 
@@ -242,15 +237,15 @@ class STDPLinear(Module):
             time_steps = 1
             batch_size = x.shape[0]
         trace_shape = torch.zeros_like(self.weight)[None].repeat_interleave(batch_size, dim = 0)
-        self.input_trace = SF.init_tensor(self.input_trace, trace_shape)
-        self.output_trace = SF.init_tensor(self.output_trace, trace_shape)
+        self.input_trace = _SF.init_tensor(self.input_trace, trace_shape)
+        self.output_trace = _SF.init_tensor(self.output_trace, trace_shape)
         y, self.input_trace, self.output_trace = f_stdp_linear.apply(x, self.weight, self.input_trace, self.output_trace, self.soma, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_time_step)
         return y
 
 
 class f_stdp_conv2d(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: Module, stride: _size_any_t, padding: _size_any_t, dilation: _size_any_t, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Module, stride: _size_any_t, padding: _size_any_t, dilation: _size_any_t, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         利用STDP进行学习的2维卷积层的前向传播函数。
         Args:
@@ -260,9 +255,9 @@ class f_stdp_conv2d(torch.autograd.Function):
             input_trace (torch.Tensor): 输入的迹，累积的输入效应
             output_trace (torch.Tensor): 输出的迹，累积的输出效应
             soma (snn.Module): 胞体
-            stride (_size_t): 卷积的输出步长，决定卷积输出的形状
-            padding (_size_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            dilation (_size_t): 卷积的输入步长
+            stride (size_t): 卷积的输出步长，决定卷积输出的形状
+            padding (size_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            dilation (size_t): 卷积的输入步长
             a_pos (float): STDP参数A+
             tau_pos (float): STDP参数tau+
             a_neg (float): STDP参数A-
@@ -279,14 +274,14 @@ class f_stdp_conv2d(torch.autograd.Function):
             time_steps = input.shape[0]
             batch_size = input.shape[1]
             flattened_input = input.flatten(0, 1)
-            psp: torch.Tensor = F.conv2d(flattened_input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
+            psp: torch.Tensor = _F.conv2d(flattened_input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
             output_shape = [time_steps, batch_size] + list(psp.shape[1:])
             psp = psp.reshape(output_shape)
         else:
             input_spike_train = input[None]
             time_steps = 1
             batch_size = input.shape[0]
-            psp: torch.Tensor = F.conv2d(input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
+            psp: torch.Tensor = _F.conv2d(input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
         output: torch.Tensor = soma(psp)
         if multi_time_step:
             output_spike_train = output.clone()
@@ -315,7 +310,7 @@ class f_stdp_conv2d(torch.autograd.Function):
                             if u < 0 or u >= h_in or v < 0 or v >= w_in:
                                 continue
                             for t in range(time_steps):
-                                delta_weight[:, :, p, q], input_trace[:, :, :, u, v], output_trace[:, :, :, y, x] = stdp_online(
+                                delta_weight[:, :, p, q], input_trace[:, :, :, u, v], output_trace[:, :, :, y, x] = _stdp_online(
                                     delta_weight = delta_weight[:, :, p, q], # [CO, CI]
                                     input_trace = input_trace[:, :, :, u, v], # [B, CO, CI]
                                     output_trace = output_trace[:, :, :, y, x], # [B, CO, CI]
@@ -331,7 +326,7 @@ class f_stdp_conv2d(torch.autograd.Function):
 
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None, None, None, None]:
+    def backward(ctx: _Any, grad_output: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None, None, None, None]:
         """
         利用STDP进行学习的2维卷积层的反向传播函数。
         Args:
@@ -345,9 +340,9 @@ class f_stdp_conv2d(torch.autograd.Function):
             grad_input_trace (torch.Tensor): 输入的迹梯度
             grad_output_trace (torch.Tensor): 输出的迹梯度
             grad_soma (None): 胞体的梯度，为None
-            grad_stride (_size_t): 输出步长的梯度，为None
-            grad_padding (_size_t): 边缘填充的量的梯度，为None
-            grad_dilation (_size_t): 输入步长的梯度，为None
+            grad_stride (size_t): 输出步长的梯度，为None
+            grad_padding (size_t): 边缘填充的量的梯度，为None
+            grad_dilation (size_t): 输入步长的梯度，为None
             grad_a_pos (None): STDP参数A+的梯度，为None
             grad_tau_pos (None): STDP参数tau+的梯度，为None
             grad_a_neg (None): STDP参数A-的梯度，为None
@@ -360,18 +355,18 @@ class f_stdp_conv2d(torch.autograd.Function):
         return torch.zeros_like(input), delta_weight, torch.zeros_like(grad_input_trace), torch.zeros_like(grad_output_trace), None, None, None, None, None, None, None, None, None, None
 
 
-class STDPConv2d(Module):
-    def __init__(self, soma: Module, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, dilation: _size_2_t = 1, a_pos: float = 0.0002, tau_pos: float = 2.0, a_neg: float = 0.0002, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+class STDPConv2d(_Module):
+    def __init__(self, soma: _Module, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, dilation: _size_2_t = 1, a_pos: float = 0.0002, tau_pos: float = 2.0, a_neg: float = 0.0002, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         使用STDP学习机制时的2维卷积层。
         Args:
             soma (nn.Module): 使用的脉冲神经元胞体，在matterhorn_pytorch.snn.soma中选择
             in_channels (int): 输入的频道数C_{in}
             out_channels (int): 输出的频道C_{out}
-            kernel_size (_size_2_t): 卷积核的形状
-            stride (_size_2_t): 卷积的输出步长，决定卷积输出的形状
-            padding (_size_2_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            dilation (_size_2_t): 卷积的输入步长
+            kernel_size (size_2_t): 卷积核的形状
+            stride (size_2_t): 卷积的输出步长，决定卷积输出的形状
+            padding (size_2_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            dilation (size_2_t): 卷积的输入步长
             a_pos (float): STDP参数A+
             tau_pos (float): STDP参数tau+
             a_neg (float): STDP参数A-
@@ -407,7 +402,7 @@ class STDPConv2d(Module):
             if soma.supports_multi_time_step():
                 self.soma = soma.multi_time_step_(True)
             elif not soma.multi_time_step:
-                self.soma = Temporal(soma, reset_after_process = False)
+                self.soma = _Temporal(soma, reset_after_process = False)
         else:
             if soma.supports_single_time_step():
                 self.soma = soma.multi_time_step_(False)
@@ -424,8 +419,8 @@ class STDPConv2d(Module):
         """
         重置模型。
         """
-        self.input_trace = SF.reset_tensor(self.input_trace, 0.0)
-        self.output_trace = SF.reset_tensor(self.output_trace, 0.0)
+        self.input_trace = _SF.reset_tensor(self.input_trace, 0.0)
+        self.output_trace = _SF.reset_tensor(self.output_trace, 0.0)
         return super().reset()
 
 
@@ -453,21 +448,21 @@ class STDPConv2d(Module):
         w_wt = self.weight.shape[3]
         h_out = (h_in + 2 * self.padding[0] - h_wt * self.dilation[0]) // self.stride[0] + 1
         w_out = (w_in + 2 * self.padding[1] - w_wt * self.dilation[1]) // self.stride[1] + 1
-        self.input_trace = SF.init_tensor(self.input_trace, torch.zeros(batch_size, c_out, c_in, h_in, w_in).to(x))
-        self.output_trace = SF.init_tensor(self.output_trace, torch.zeros(batch_size, c_out, c_in, h_out, w_out))
+        self.input_trace = _SF.init_tensor(self.input_trace, torch.zeros(batch_size, c_out, c_in, h_in, w_in).to(x))
+        self.output_trace = _SF.init_tensor(self.output_trace, torch.zeros(batch_size, c_out, c_in, h_out, w_out))
         y, self.input_trace, self.output_trace = f_stdp_conv2d.apply(x, self.weight, self.input_trace, self.output_trace, self.soma, self.stride, self.padding, self.dilation, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_time_step)
         return y
 
 
 class MaxPool1d(Layer, nn.MaxPool1d):
-    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step: bool = False) -> None:
         """
         一维最大池化。
         Args:
-            kernel_size (_size_any_t): 池化核大小
-            stride (_size_any_t | None): 池化步长
-            padding (_size_any_t): 边界填充的长度
-            dilation (_size_any_t): 输入侧的池化步长
+            kernel_size (size_any_t): 池化核大小
+            stride (size_any_t | None): 池化步长
+            padding (size_any_t): 边界填充的长度
+            dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
             multi_time_step (bool): 是否调整为多个时间步模式
@@ -509,14 +504,14 @@ class MaxPool1d(Layer, nn.MaxPool1d):
 
 
 class MaxPool2d(Layer, nn.MaxPool2d):
-    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step: bool = False) -> None:
         """
         二维最大池化。
         Args:
-            kernel_size (_size_any_t): 池化核大小
-            stride (_size_any_t | None): 池化步长
-            padding (_size_any_t): 边界填充的长度
-            dilation (_size_any_t): 输入侧的池化步长
+            kernel_size (size_any_t): 池化核大小
+            stride (size_any_t | None): 池化步长
+            padding (size_any_t): 边界填充的长度
+            dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
             multi_time_step (bool): 是否调整为多个时间步模式
@@ -558,14 +553,14 @@ class MaxPool2d(Layer, nn.MaxPool2d):
 
 
 class MaxPool3d(Layer, nn.MaxPool3d):
-    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step: bool = False) -> None:
         """
         三维最大池化。
         Args:
-            kernel_size (_size_any_t): 池化核大小
-            stride (_size_any_t | None): 池化步长
-            padding (_size_any_t): 边界填充的长度
-            dilation (_size_any_t): 输入侧的池化步长
+            kernel_size (size_any_t): 池化核大小
+            stride (size_any_t | None): 池化步长
+            padding (size_any_t): 边界填充的长度
+            dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
             multi_time_step (bool): 是否调整为多个时间步模式
@@ -607,13 +602,13 @@ class MaxPool3d(Layer, nn.MaxPool3d):
 
 
 class AvgPool1d(Layer, nn.AvgPool1d):
-    def __init__(self, kernel_size: _size_1_t, stride: Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _size_1_t, stride: _Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, multi_time_step: bool = False) -> None:
         """
         一维平均池化。
         Args:
-            kernel_size (_size_1_t): 池化核大小
-            stride (_size_1_t): 池化核步长
-            padding (_size_1_t): 边界填充的长度
+            kernel_size (size_1_t): 池化核大小
+            stride (size_1_t): 池化核步长
+            padding (size_1_t): 边界填充的长度
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
             multi_time_step (bool): 是否调整为多个时间步模式
@@ -654,13 +649,13 @@ class AvgPool1d(Layer, nn.AvgPool1d):
 
 
 class AvgPool2d(Layer, nn.AvgPool2d):
-    def __init__(self, kernel_size: _size_2_t, stride: Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _size_2_t, stride: _Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, multi_time_step: bool = False) -> None:
         """
         二维平均池化。
         Args:
-            kernel_size (_size_2_t): 池化核大小
-            stride (_size_2_t | None): 池化核步长
-            padding (_size_2_t): 边界填充的长度
+            kernel_size (size_2_t): 池化核大小
+            stride (size_2_t | None): 池化核步长
+            padding (size_2_t): 边界填充的长度
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
             divisor_override (int | None): 是否用某个数取代总和作为除数
@@ -703,13 +698,13 @@ class AvgPool2d(Layer, nn.AvgPool2d):
 
 
 class AvgPool3d(Layer, nn.AvgPool3d):
-    def __init__(self, kernel_size: _size_3_t, stride: Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _size_3_t, stride: _Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, multi_time_step: bool = False) -> None:
         """
         三维平均池化。
         Args:
-            kernel_size (_size_3_t): 池化核大小
-            stride (_size_3_t | None): 池化核步长
-            padding (_size_3_t): 边界填充的长度
+            kernel_size (size_3_t): 池化核大小
+            stride (size_3_t | None): 池化核步长
+            padding (size_3_t): 边界填充的长度
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
             divisor_override (int | None): 是否用某个数取代总和作为除数
@@ -793,7 +788,7 @@ class Flatten(Layer, nn.Flatten):
 
 
 class Unflatten(Layer, nn.Unflatten):
-    def __init__(self, dim: Union[int, str], unflattened_size: _size, multi_time_step: bool = False) -> None:
+    def __init__(self, dim: _Union[int, str], unflattened_size: _size, multi_time_step: bool = False) -> None:
         """
         反展开层。
         Args:

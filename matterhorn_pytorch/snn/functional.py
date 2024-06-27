@@ -7,11 +7,7 @@
 
 import torch
 import torch.nn as nn
-from typing import Any
-try:
-    from rich import print
-except:
-    pass
+from typing import Any as _Any
 
 
 def init_tensor(u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -55,7 +51,7 @@ def reset_tensor(u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
 
 class _val_to_spike(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor) -> torch.Tensor:
+    def forward(ctx: _Any, x: torch.Tensor) -> torch.Tensor:
         """
         模拟值转脉冲的前向传播函数，以0.5为界
         Args:
@@ -67,7 +63,7 @@ class _val_to_spike(torch.autograd.Function):
 
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: _Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         模拟值转脉冲的反向传播函数
         Args:
@@ -118,7 +114,7 @@ def bp_rectangular(x: torch.Tensor, a: float) -> torch.Tensor:
 
 class _heaviside_rectangular(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, a: float) -> torch.Tensor:
+    def forward(ctx: _Any, x: torch.Tensor, a: float) -> torch.Tensor:
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
@@ -135,7 +131,7 @@ class _heaviside_rectangular(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: _Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         使用矩形函数作为反向传播函数。
         Args:
@@ -176,7 +172,7 @@ def bp_polynomial(x: torch.Tensor, a: float) -> torch.Tensor:
 
 class _heaviside_polynomial(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, a: float) -> torch.Tensor:
+    def forward(ctx: _Any, x: torch.Tensor, a: float) -> torch.Tensor:
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
@@ -193,7 +189,7 @@ class _heaviside_polynomial(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: _Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         使用多项式函数作为反向传播函数。
         Args:
@@ -235,7 +231,7 @@ def bp_sigmoid(x: torch.Tensor, a: float) -> torch.Tensor:
 
 class _heaviside_sigmoid(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, a: float) -> torch.Tensor:
+    def forward(ctx: _Any, x: torch.Tensor, a: float) -> torch.Tensor:
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
@@ -252,7 +248,7 @@ class _heaviside_sigmoid(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: _Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         使用Sigmoid函数的导数作为反向传播函数。
         Args:
@@ -293,7 +289,7 @@ def bp_gaussian(x: torch.Tensor, a: float) -> torch.Tensor:
 
 class _heaviside_gaussian(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, a: float) -> torch.Tensor:
+    def forward(ctx: _Any, x: torch.Tensor, a: float) -> torch.Tensor:
         """
         使用Heaviside阶跃函数作为前向传播函数。
         Args:
@@ -310,7 +306,7 @@ class _heaviside_gaussian(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: _Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
         使用高斯函数作为反向传播函数。
         Args:

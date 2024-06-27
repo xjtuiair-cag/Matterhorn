@@ -6,16 +6,10 @@ TNN的柱，包含兴奋柱、抑制柱与认知柱等。可以看作是组成TN
 
 import torch
 import torch.nn as nn
-from typing import Any
-from matterhorn_pytorch.snn import Module
-from matterhorn_pytorch.tnn.component import Bitonic, Firing
-try:
-    from rich import print
-except:
-    pass
+from matterhorn_pytorch.snn import Module as _Module
 
 
-class Lateral(Module):
+class Lateral(_Module):
     def __init__(self, tl: int, kl: int, multi_time_step: bool = False, reset_after_process: bool = False) -> None:
         """
         TNN的侧抑制柱

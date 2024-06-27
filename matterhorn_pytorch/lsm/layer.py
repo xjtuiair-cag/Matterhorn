@@ -7,21 +7,16 @@
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from typing import Any, Tuple, Callable
-from matterhorn_pytorch import snn
-import matterhorn_pytorch.snn.functional as SF
-from matterhorn_pytorch.snn.container import Temporal
-from matterhorn_pytorch.snn.skeleton import Module
-from matterhorn_pytorch.training.functional import stdp_online
-try:
-    from rich import print
-except:
-    pass
+import torch.nn.functional as _F
+from typing import Any as _Any, Tuple as _Tuple, Callable as _Callable
+import matterhorn_pytorch.snn.functional as _SF
+from matterhorn_pytorch.snn.skeleton import Module as _Module
+from matterhorn_pytorch.snn.container import Temporal as _Temporal
+from matterhorn_pytorch.training.functional import stdp_online as _stdp_online
 
 
-class LSM(snn.Module):
-    def __init__(self, adjacent: torch.Tensor, soma: snn.Module, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+class LSM(_Module):
+    def __init__(self, adjacent: torch.Tensor, soma: _Module, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         液体状态机。
         Args:
@@ -49,7 +44,7 @@ class LSM(snn.Module):
             if soma.supports_multi_time_step():
                 self.soma = soma.multi_time_step_(True)
             elif not soma.multi_time_step:
-                self.soma = Temporal(soma, reset_after_process = False)
+                self.soma = _Temporal(soma, reset_after_process = False)
         else:
             if soma.supports_single_time_step():
                 self.soma = soma.multi_time_step_(False)
@@ -67,19 +62,19 @@ class LSM(snn.Module):
         return "neuron_num=%d, adjacent=\n%s\n, multi_time_step=%s" % (self.neuron_num, self.adjacent, str(self.multi_time_step))
 
 
-    def reset(self) -> Module:
+    def reset(self) -> _Module:
         """
         重置整个神经元。
         """
-        if isinstance(self.soma, snn.Module):
+        if isinstance(self.soma, _Module):
             self.soma.reset()
-        self.y_0 = SF.reset_tensor(self.y_0, 0.0)
+        self.y_0 = _SF.reset_tensor(self.y_0, 0.0)
         return super().reset()
 
 
     def f_synapse(self, y_0: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
-        y_0 = SF.init_tensor(y_0, x)
-        y = F.linear(y_0, self.recurrent_weight * self.adjacent.T, None) + F.linear(x, self.input_weight * self.input_adjacent.T, None)
+        y_0 = _SF.init_tensor(y_0, x)
+        y = _F.linear(y_0, self.recurrent_weight * self.adjacent.T, None) + _F.linear(x, self.input_weight * self.input_adjacent.T, None)
         return y
 
 
@@ -134,7 +129,7 @@ class LSM(snn.Module):
 
 class f_stdp_lsm(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, input: torch.Tensor, output_0: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, recurrent_weight: torch.Tensor, recurrent_input_trace: torch.Tensor, recurrent_output_trace: torch.Tensor, forward_func: Callable, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(ctx: _Any, input: torch.Tensor, output_0: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, recurrent_weight: torch.Tensor, recurrent_input_trace: torch.Tensor, recurrent_output_trace: torch.Tensor, forward_func: _Callable, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         利用STDP进行学习的液体状态机的前向传播函数。
         Args:
@@ -182,7 +177,7 @@ class f_stdp_lsm(torch.autograd.Function):
         delta_recurrent_weight = torch.zeros_like(recurrent_weight)
         if training:
             for t in range(time_steps):
-                delta_recurrent_weight, recurrent_input_trace, recurrent_output_trace = stdp_online(
+                delta_recurrent_weight, recurrent_input_trace, recurrent_output_trace = _stdp_online(
                     delta_weight = delta_recurrent_weight,
                     input_trace = recurrent_input_trace,
                     output_trace = recurrent_output_trace,
@@ -193,7 +188,7 @@ class f_stdp_lsm(torch.autograd.Function):
                     a_neg = a_neg,
                     tau_neg = tau_neg
                 )
-                delta_input_weight, input_trace, output_trace = stdp_online(
+                delta_input_weight, input_trace, output_trace = _stdp_online(
                     delta_weight = delta_input_weight,
                     input_trace = input_trace,
                     output_trace = output_trace,
@@ -209,7 +204,7 @@ class f_stdp_lsm(torch.autograd.Function):
 
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor, grad_output_last: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor, grad_recurrent_input_trace: torch.Tensor, grad_recurrent_output_trace: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None]:
+    def backward(ctx: _Any, grad_output: torch.Tensor, grad_output_last: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor, grad_recurrent_input_trace: torch.Tensor, grad_recurrent_output_trace: torch.Tensor) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None]:
         """
         利用STDP进行学习的液体状态机的反向传播函数。
         Args:
@@ -244,7 +239,7 @@ class f_stdp_lsm(torch.autograd.Function):
 
 
 class STDPLSM(LSM):
-    def __init__(self, adjacent: torch.Tensor, soma: Module, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, adjacent: torch.Tensor, soma: _Module, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层。
         Args:
@@ -278,14 +273,14 @@ class STDPLSM(LSM):
         self.reset()
 
 
-    def reset(self) -> nn.Module:
+    def reset(self) -> _Module:
         """
         重置模型。
         """
-        self.input_trace = SF.reset_tensor(self.input_trace, 0.0)
-        self.output_trace = SF.reset_tensor(self.output_trace, 0.0)
-        self.recurrent_input_trace = SF.reset_tensor(self.recurrent_input_trace, 0.0)
-        self.recurrent_output_trace = SF.reset_tensor(self.recurrent_output_trace, 0.0)
+        self.input_trace = _SF.reset_tensor(self.input_trace, 0.0)
+        self.output_trace = _SF.reset_tensor(self.output_trace, 0.0)
+        self.recurrent_input_trace = _SF.reset_tensor(self.recurrent_input_trace, 0.0)
+        self.recurrent_output_trace = _SF.reset_tensor(self.recurrent_output_trace, 0.0)
         return super().reset()
 
 
@@ -300,16 +295,16 @@ class STDPLSM(LSM):
         if self.multi_time_step:
             time_steps = x.shape[0]
             batch_size = x.shape[1]
-            self.y_0 = SF.init_tensor(self.y_0, x[0])
+            self.y_0 = _SF.init_tensor(self.y_0, x[0])
         else:
             time_steps = 1
             batch_size = x.shape[0]
-            self.y_0 = SF.init_tensor(self.y_0, x)
+            self.y_0 = _SF.init_tensor(self.y_0, x)
         trace_shape = torch.zeros_like(self.input_weight)[None].repeat_interleave(batch_size, dim = 0)
-        self.input_trace = SF.init_tensor(self.input_trace, trace_shape)
-        self.output_trace = SF.init_tensor(self.output_trace, trace_shape)
+        self.input_trace = _SF.init_tensor(self.input_trace, trace_shape)
+        self.output_trace = _SF.init_tensor(self.output_trace, trace_shape)
         recurrent_trace_shape = torch.zeros_like(self.recurrent_weight)[None].repeat_interleave(batch_size, dim = 0)
-        self.recurrent_input_trace = SF.init_tensor(self.recurrent_input_trace, recurrent_trace_shape)
-        self.recurrent_output_trace = SF.init_tensor(self.recurrent_output_trace, recurrent_trace_shape)
+        self.recurrent_input_trace = _SF.init_tensor(self.recurrent_input_trace, recurrent_trace_shape)
+        self.recurrent_output_trace = _SF.init_tensor(self.recurrent_output_trace, recurrent_trace_shape)
         y, self.y_0, self.input_trace, self.output_trace, self.recurrent_input_trace, self.recurrent_output_trace = f_stdp_lsm.apply(x, self.y_0, self.input_weight, self.input_trace, self.output_trace, self.recurrent_weight, self.recurrent_input_trace, self.recurrent_output_trace, self.forward_multi_time_step if self.multi_time_step else self.forward_single_time_step, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_time_step)
         return y

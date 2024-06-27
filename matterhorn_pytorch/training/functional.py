@@ -6,15 +6,11 @@
 
 import torch
 import torch.nn as nn
-from typing import Tuple, Union
-try:
-    from rich import print
-except:
-    pass
+from typing import Tuple as _Tuple
 
 
 @torch.jit.script
-def stdp_online(delta_weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+def stdp_online(delta_weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, input_spike_train: torch.Tensor, output_spike_train: torch.Tensor, a_pos: float, tau_pos: float, a_neg: float, tau_neg: float) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     在线脉冲时序依赖可塑性（STDP），基于所记录的迹给出更新量。
     Args:

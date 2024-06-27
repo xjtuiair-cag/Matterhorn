@@ -10,7 +10,3 @@ from . import snn
 from . import tnn
 from . import training
 from . import util
-try:
-    from rich import print
-except:
-    pass

@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from typing import Iterable
 from matterhorn_pytorch.__func__ import transpose
-import matterhorn_pytorch.snn.functional as SF
+import matterhorn_pytorch.snn.functional as _SF
 
 
 def event_seq_to_spike_train(event_seq: torch.Tensor, shape: Iterable = None, original_shape: Iterable = None, count: bool = False) -> torch.Tensor:
@@ -91,5 +91,5 @@ def spike_times_to_spike_train(spike_times: torch.Tensor, t_max: int, t_offset: 
     time_steps = t_max + t_offset
     spike_ts = torch.ones([time_steps] + list(spike_times.shape)) * (spike_times + t_offset)
     current_ts = transpose(transpose(torch.ones_like(spike_ts)) * torch.arange(time_steps)).to(spike_ts)
-    spike_train = SF.ge(current_ts, spike_ts)
+    spike_train = _SF.ge(current_ts, spike_ts)
     return spike_train

@@ -7,16 +7,12 @@
 
 import torch
 import torch.nn as nn
-import matterhorn_pytorch.snn.functional as SF
-from matterhorn_pytorch.snn.skeleton import Module
-from typing import Callable
-try:
-    from rich import print
-except:
-    pass
+import matterhorn_pytorch.snn.functional as _SF
+from matterhorn_pytorch.snn.skeleton import Module as _Module
+from typing import Callable as _Callable
 
 
-class Encoder(Module):
+class Encoder(_Module):
     def __init__(self, reset_after_process: bool = False) -> None:
         """
         编码器的基类。编码器是一个多时间步模型。
@@ -90,7 +86,7 @@ class Poisson(Encoder):
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
         r = torch.rand_like(x)
-        y = SF.le(r, x)
+        y = _SF.le(r, x)
         return y
     
 
@@ -130,7 +126,7 @@ class Poisson(Encoder):
 
 
 class Temporal(Encoder):
-    def __init__(self, time_steps: int = 1, prob: float = 1.0, transform: Callable = lambda x: x, reset_after_process: bool = True) -> None:
+    def __init__(self, time_steps: int = 1, prob: float = 1.0, transform: _Callable = lambda x: x, reset_after_process: bool = True) -> None:
         """
         时间编码，在某个时间之前不会产生脉冲，在某个时间之后随机产生脉冲
         Args:
@@ -157,7 +153,7 @@ class Temporal(Encoder):
         return "time_steps=%d, prob=%g, reset_after_process=%s" % (self.time_steps, self.prob, str(self.reset_after_process))
 
 
-    def reset(self) -> Module:
+    def reset(self) -> _Module:
         """
         重置编码器
         """
@@ -173,8 +169,8 @@ class Temporal(Encoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        f = SF.le(x, self.current_time_step)
-        r = SF.le(torch.rand_like(x), self.prob)
+        f = _SF.le(x, self.current_time_step)
+        r = _SF.le(torch.rand_like(x), self.prob)
         y = f * r
         self.current_time_step += 1
         return y

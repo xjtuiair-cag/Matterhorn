@@ -106,13 +106,13 @@ Conv1d(
 
 `out_channels (int)` ：输出通道数 `CO` 。输入的形状为 `[B, CO, LO]` （单时间步模式） 或 `[T, B, CO, LO]` （多时间步模式）。
 
-`kernel_size (_size_1_t)` ：卷积核的形状。
+`kernel_size (size_1_t)` ：卷积核的形状。
 
-`stride (_size_1_t)` ：步长。在原图经过多少个像素后进行卷积。
+`stride (size_1_t)` ：步长。在原图经过多少个像素后进行卷积。
 
-`padding (_size_1_t | str)` ：边界大小。在边缘填充多少空白。
+`padding (size_1_t | str)` ：边界大小。在边缘填充多少空白。
 
-`dilation (_size_1_t)` ：在卷积时，每隔多少像素进行一次乘加操作。
+`dilation (size_1_t)` ：在卷积时，每隔多少像素进行一次乘加操作。
 
 `groups (int)` ：分组进行卷积操作的组数。
 
@@ -169,17 +169,17 @@ Conv2d(
 
 `out_channels (int)` ：输出通道数 `CO` 。输入的形状为 `[B, CO, HO, WO]` （单时间步模式） 或 `[T, B, CO, HO, WO]` （多时间步模式）。
 
-`kernel_size (_size_2_t)` ：卷积核的形状。
+`kernel_size (size_2_t)` ：卷积核的形状。
 
-`stride (_size_2_t)` ：步长。在原图经过多少个像素后进行卷积。
+`stride (size_2_t)` ：步长。在原图经过多少个像素后进行卷积。
 
 ![不同步长下的卷积](../../../assets/docs/snn/synapse_2.png)
 
-`padding (_size_2_t | str)` ：边界大小。在边缘填充多少空白。
+`padding (size_2_t | str)` ：边界大小。在边缘填充多少空白。
 
 ![不同边界大小下的卷积](../../../assets/docs/snn/synapse_3.png)
 
-`dilation (_size_2_t)` ：在卷积时，每隔多少像素进行一次乘加操作。
+`dilation (size_2_t)` ：在卷积时，每隔多少像素进行一次乘加操作。
 
 ![不同扩散大小下的卷积](../../../assets/docs/snn/synapse_4.png)
 
@@ -236,13 +236,13 @@ Conv3d(
 
 `out_channels (int)` ：输出通道数 `CO` 。输入的形状为 `[B, CO, HO, WO, LO]` （单时间步模式） 或 `[T, B, CO, HO, WO, LO]` （多时间步模式）。
 
-`kernel_size (_size_3_t)` ：卷积核的形状。
+`kernel_size (size_3_t)` ：卷积核的形状。
 
-`stride (_size_3_t)` ：步长。在原图经过多少个像素后进行卷积。
+`stride (size_3_t)` ：步长。在原图经过多少个像素后进行卷积。
 
-`padding (_size_3_t | str)` ：边界大小。在边缘填充多少空白。
+`padding (size_3_t | str)` ：边界大小。在边缘填充多少空白。
 
-`dilation (_size_3_t)` ：在卷积时，每隔多少像素进行一次乘加操作。
+`dilation (size_3_t)` ：在卷积时，每隔多少像素进行一次乘加操作。
 
 `groups (int)` ：分组进行卷积操作的组数。
 
@@ -294,19 +294,19 @@ ConvTranspose1d(
 
 `out_channels (int)` ：输出通道数 `CO` 。输入的形状为 `[B, CO, LO]` （单时间步模式） 或 `[T, B, CO, LO]` （多时间步模式）。
 
-`kernel_size (_size_1_t)` ：卷积核的形状。
+`kernel_size (size_1_t)` ：卷积核的形状。
 
-`stride (_size_1_t)` ：步长。在原图经过多少个像素后进行卷积。
+`stride (size_1_t)` ：步长。在原图经过多少个像素后进行卷积。
 
-`padding (_size_1_t)` ：输入边界大小。在输入边缘填充多少空白。
+`padding (size_1_t)` ：输入边界大小。在输入边缘填充多少空白。
 
-`output_padding (_size_1_t)` ：输出边界大小。在输出边缘填充多少空白。
+`output_padding (size_1_t)` ：输出边界大小。在输出边缘填充多少空白。
 
 `groups (int)` ：分组进行卷积操作的组数。
 
 `bias (bool)` ：是否要加入偏置。
 
-`dilation (_size_1_t)` ：在原卷积时，每隔多少像素进行一次乘加操作。
+`dilation (size_1_t)` ：在原卷积时，每隔多少像素进行一次乘加操作。
 
 `padding_mode (str)` ：边缘填充的方式。
 
@@ -354,19 +354,19 @@ ConvTranspose2d(
 
 `out_channels (int)` ：输出通道数 `CO` 。输入的形状为 `[B, CO, HO, WO]` （单时间步模式） 或 `[T, B, CO, HO, WO]` （多时间步模式）。
 
-`kernel_size (_size_2_t)` ：卷积核的形状。
+`kernel_size (size_2_t)` ：卷积核的形状。
 
-`stride (_size_2_t)` ：步长。在原图经过多少个像素后进行卷积。
+`stride (size_2_t)` ：步长。在原图经过多少个像素后进行卷积。
 
-`padding (_size_2_t)` ：输入边界大小。在输入边缘填充多少空白。
+`padding (size_2_t)` ：输入边界大小。在输入边缘填充多少空白。
 
-`output_padding (_size_2_t)` ：输出边界大小。在输出边缘填充多少空白。
+`output_padding (size_2_t)` ：输出边界大小。在输出边缘填充多少空白。
 
 `groups (int)` ：分组进行卷积操作的组数。
 
 `bias (bool)` ：是否要加入偏置。
 
-`dilation (_size_2_t)` ：在原卷积时，每隔多少像素进行一次乘加操作。
+`dilation (size_2_t)` ：在原卷积时，每隔多少像素进行一次乘加操作。
 
 `padding_mode (str)` ：边缘填充的方式。
 
@@ -414,19 +414,19 @@ ConvTranspose3d(
 
 `out_channels (int)` ：输出通道数 `CO` 。输入的形状为 `[B, CO, HO, WO, LO]` （单时间步模式） 或 `[T, B, CO, HO, WO, LO]` （多时间步模式）。
 
-`kernel_size (_size_3_t)` ：卷积核的形状。
+`kernel_size (size_3_t)` ：卷积核的形状。
 
-`stride (_size_3_t)` ：步长。在原图经过多少个像素后进行卷积。
+`stride (size_3_t)` ：步长。在原图经过多少个像素后进行卷积。
 
-`padding (_size_3_t)` ：输入边界大小。在输入边缘填充多少空白。
+`padding (size_3_t)` ：输入边界大小。在输入边缘填充多少空白。
 
-`output_padding (_size_3_t)` ：输出边界大小。在输出边缘填充多少空白。
+`output_padding (size_3_t)` ：输出边界大小。在输出边缘填充多少空白。
 
 `groups (int)` ：分组进行卷积操作的组数。
 
 `bias (bool)` ：是否要加入偏置。
 
-`dilation (_size_3_t)` ：在原卷积时，每隔多少像素进行一次乘加操作。
+`dilation (size_3_t)` ：在原卷积时，每隔多少像素进行一次乘加操作。
 
 `padding_mode (str)` ：边缘填充的方式。
 
@@ -614,7 +614,7 @@ LayerNorm(
 
 ### 构造函数参数
 
-`normalized_shape (_shape_t)` ：需要归一化的部分张量形状。如一个大小为 `[B, C, H, W]` 的张量，需要在最后 2 维进行归一化，只需要传入 `(H, W)` 即可。
+`normalized_shape (shape_t)` ：需要归一化的部分张量形状。如一个大小为 `[B, C, H, W]` 的张量，需要在最后 2 维进行归一化，只需要传入 `(H, W)` 即可。
 
 `eps (float)` ：参数 $\varepsilon$ 。
 

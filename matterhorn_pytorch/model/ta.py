@@ -11,10 +11,6 @@ import torch
 import torch.nn as nn
 import matterhorn_pytorch.snn as snn
 import math
-try:
-    from rich import print
-except:
-    pass
 
 
 class TemporalWiseAttention(snn.Module):

@@ -6,18 +6,14 @@
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import matterhorn_pytorch.snn as snn
-import matterhorn_pytorch.lsm.functional as LF
-from typing import Iterable
-try:
-    from rich import print
-except:
-    pass
+import torch.nn.functional as _F
+import matterhorn_pytorch.lsm.functional as _LF
+from matterhorn_pytorch.snn.skeleton import Module as _Module
+from typing import Iterable as _Iterable
 
 
-class Cast(snn.Module):
-    def __init__(self, in_features: int, out_features: int, in_indices: Iterable[int], out_indices: Iterable[int], multi_time_step: bool = True) -> None:
+class Cast(_Module):
+    def __init__(self, in_features: int, out_features: int, in_indices: _Iterable[int], out_indices: _Iterable[int], multi_time_step: bool = True) -> None:
         """
         LSM的输入/输出形状转化，将数据投射至正确的神经元输入上。
         Args:
@@ -35,7 +31,7 @@ class Cast(snn.Module):
         self.in_indices = list(in_indices)
         self.out_indices = list(out_indices)
         feature_num = max(in_features, out_features)
-        adjacent = LF.init_adjacent_direct(feature_num, in_indices, out_indices)
+        adjacent = _LF.init_adjacent_direct(feature_num, in_indices, out_indices)
         adjacent = adjacent[:in_features,:out_features]
         self.adjacent = nn.Parameter(adjacent, requires_grad = False)
     
@@ -48,4 +44,4 @@ class Cast(snn.Module):
         Returns:
             y (torch.Tensor): 当前输出
         """
-        return F.linear(x, self.adjacent.T, None)
+        return _F.linear(x, self.adjacent.T, None)

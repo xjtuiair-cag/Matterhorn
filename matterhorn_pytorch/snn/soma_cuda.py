@@ -10,9 +10,9 @@ import torch
 import torch.nn as nn
 
 
-import matterhorn_pytorch.snn.functional as SF
+import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.soma import LIF as _LIF
-from typing import Any
+from typing import Any as _Any
 try:
     from matterhorn_cuda_extensions import cu_fp_lif, cu_bp_lif
 except:
@@ -20,15 +20,11 @@ except:
 
 
 import numpy as np
-try:
-    from rich import print
-except:
-    pass
 
 
 class multi_time_step_lif_cuda(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: float, u_rest: float, spiking_mode: int, a: float, reset_mode: float) -> torch.Tensor:
+    def forward(ctx: _Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: float, u_rest: float, spiking_mode: int, a: float, reset_mode: float) -> torch.Tensor:
         """
         多时间步LIF神经元前向传播的C++实现。
         Args:
@@ -66,7 +62,7 @@ class multi_time_step_lif_cuda(torch.autograd.Function):
     
 
     @staticmethod
-    def backward(ctx: Any, grad_o: torch.Tensor, grad_u_last: torch.Tensor) -> torch.Tensor:
+    def backward(ctx: _Any, grad_o: torch.Tensor, grad_u_last: torch.Tensor) -> torch.Tensor:
         """
         多时间步LIF神经元反向传播的C++实现。
         Args:
@@ -111,6 +107,6 @@ class LIF(_LIF):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self.u = SF.init_tensor(self.u, x[0])
+        self.u = _SF.init_tensor(self.u, x[0])
         o, u = multi_time_step_lif_cuda.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, self.spiking_function_prototype, self.spiking_function.a, self.reset_function_prototype)
         return o

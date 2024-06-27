@@ -106,13 +106,13 @@ Conv1d(
 
 `out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, LO]` (single-time-step mode) or `[T, B, CO, LO]` (multi-time-step mode).
 
-`kernel_size (_size_1_t)`: Shape of the convolution kernel.
+`kernel_size (size_1_t)`: Shape of the convolution kernel.
 
-`stride (_size_1_t)`: Stride. How many pixels to perform convolution after passing through the original image.
+`stride (size_1_t)`: Stride. How many pixels to perform convolution after passing through the original image.
 
-`padding (_size_1_t | str)`: Boundary size. How much blank space to fill at the edge.
+`padding (size_1_t | str)`: Boundary size. How much blank space to fill at the edge.
 
-`dilation (_size_1_t)`: During convolution, how many pixels to perform a multiplication and addition operation.
+`dilation (size_1_t)`: During convolution, how many pixels to perform a multiplication and addition operation.
 
 `groups (int)`: Number of groups for convolution operation.
 
@@ -169,17 +169,17 @@ Conv2d(
 
 `out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO]` (single-time-step mode) or `[T, B, CO, HO, WO]` (multi-time-step mode).
 
-`kernel_size (_size_2_t)`: Shape of the convolution kernel.
+`kernel_size (size_2_t)`: Shape of the convolution kernel.
 
-`stride (_size_2_t)`: Stride. How many pixels to perform convolution after passing through the original image.
+`stride (size_2_t)`: Stride. How many pixels to perform convolution after passing through the original image.
 
 ![2-dimensional Convolution under Different Strides](../../../assets/docs/snn/synapse_2.png)
 
-`padding (_size_2_t)`: Boundary size. How much blank space to fill at the edge.
+`padding (size_2_t)`: Boundary size. How much blank space to fill at the edge.
 
 ![2-dimensional Convolution under Different Padding Sizes](../../../assets/docs/snn/synapse_3.png)
 
-`dilation (_size_2_t)`: During convolution, how many pixels to perform a multiplication and addition operation.
+`dilation (size_2_t)`: During convolution, how many pixels to perform a multiplication and addition operation.
 
 ![2-dimensional Convolution under Different Dilation Sizes](../../../assets/docs/snn/synapse_4.png)
 
@@ -236,13 +236,13 @@ Conv3d(
 
 `out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO, LO]` (single-time-step mode) or `[T, B, CO, HO, WO, LO]` (multi-time-step mode).
 
-`kernel_size (_size_3_t)`: Shape of the convolution kernel.
+`kernel_size (size_3_t)`: Shape of the convolution kernel.
 
-`stride (_size_3_t)`: Stride. How many pixels to perform convolution after passing through the original image.
+`stride (size_3_t)`: Stride. How many pixels to perform convolution after passing through the original image.
 
-`padding (_size_3_t)`: Boundary size. How much blank space to fill at the edge.
+`padding (size_3_t)`: Boundary size. How much blank space to fill at the edge.
 
-`dilation (_size_3_t)`: During convolution, how many pixels to perform a multiplication and addition operation.
+`dilation (size_3_t)`: During convolution, how many pixels to perform a multiplication and addition operation.
 
 `groups (int)`: Number of groups for convolution operation.
 
@@ -294,19 +294,19 @@ ConvTranspose1d(
 
 `out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, LO]` (single-time-step mode) or `[T, B, CO, LO]` (multi-time-step mode).
 
-`kernel_size (_size_1_t)`: Shape of the convolution kernel.
+`kernel_size (size_1_t)`: Shape of the convolution kernel.
 
-`stride (_size_1_t)`: Stride. How many pixels to perform convolution after passing through the original image.
+`stride (size_1_t)`: Stride. How many pixels to perform convolution after passing through the original image.
 
-`padding (_size_1_t)`: Input boundary size. How much blank space to fill at the input edge.
+`padding (size_1_t)`: Input boundary size. How much blank space to fill at the input edge.
 
-`output_padding (_size_1_t)`: Output boundary size. How much blank space to fill at the output edge.
+`output_padding (size_1_t)`: Output boundary size. How much blank space to fill at the output edge.
 
 `groups (int)`: Number of groups for convolution operation.
 
 `bias (bool)`: Whether to include bias.
 
-`dilation (_size_1_t)`: During the original convolution, how many pixels to perform a multiplication and addition operation.
+`dilation (size_1_t)`: During the original convolution, how many pixels to perform a multiplication and addition operation.
 
 `padding_mode (str)`: Padding mode.
 
@@ -354,19 +354,19 @@ ConvTranspose2d(
 
 `out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO]` (single-time-step mode) or `[T, B, CO, HO, WO]` (multi-time-step mode).
 
-`kernel_size (_size_2_t)`: Shape of the convolution kernel.
+`kernel_size (size_2_t)`: Shape of the convolution kernel.
 
-`stride (_size_2_t)`: Stride. How many pixels to perform convolution after passing through the original image.
+`stride (size_2_t)`: Stride. How many pixels to perform convolution after passing through the original image.
 
-`padding (_size_2_t)`: Input boundary size. How much blank space to fill at the input edge.
+`padding (size_2_t)`: Input boundary size. How much blank space to fill at the input edge.
 
-`output_padding (_size_2_t)`: Output boundary size. How much blank space to fill at the output edge.
+`output_padding (size_2_t)`: Output boundary size. How much blank space to fill at the output edge.
 
 `groups (int)`: Number of groups for convolution operation.
 
 `bias (bool)`: Whether to include bias.
 
-`dilation (_size_2_t)`: During the original convolution, how many pixels to perform a multiplication and addition operation.
+`dilation (size_2_t)`: During the original convolution, how many pixels to perform a multiplication and addition operation.
 
 `padding_mode (str)`: Padding mode.
 
@@ -414,19 +414,19 @@ Three-dimensional transposed convolution (deconvolution) operation of synapses.
 
 `out_channels (int)`: Output channel size `CO`. The input shape is `[B, CO, HO, WO, LO]` (single-time-step mode) or `[T, B, CO, HO, WO, LO]` (multi-time-step mode).
 
-`kernel_size (_size_3_t)`: Shape of the convolution kernel.
+`kernel_size (size_3_t)`: Shape of the convolution kernel.
 
-`stride (_size_3_t)`: Stride. How many pixels to perform convolution after passing through the original image.
+`stride (size_3_t)`: Stride. How many pixels to perform convolution after passing through the original image.
 
-`padding (_size_3_t)`: Input boundary size. How much blank space to fill at the input edge.
+`padding (size_3_t)`: Input boundary size. How much blank space to fill at the input edge.
 
-`output_padding (_size_3_t)`: Output boundary size. How much blank space to fill at the output edge.
+`output_padding (size_3_t)`: Output boundary size. How much blank space to fill at the output edge.
 
 `groups (int)`: Number of groups for convolution operation.
 
 `bias (bool)`: Whether to include bias.
 
-`dilation (_size_3_t)`: During the original convolution, how many pixels to perform a multiplication and addition operation.
+`dilation (size_3_t)`: During the original convolution, how many pixels to perform a multiplication and addition operation.
 
 `padding_mode (str)`: Padding mode.
 
@@ -614,7 +614,7 @@ LayerNorm(
 
 ### Constructor Parameters
 
-`normalized_shape (_shape_t)`: Shape of the tensor part to be normalized. For example, for a tensor of size `[B, C, H, W]`, if normalization is needed on the last 2 dimensions, only `(H, W)` needs to be passed.
+`normalized_shape (shape_t)`: Shape of the tensor part to be normalized. For example, for a tensor of size `[B, C, H, W]`, if normalization is needed on the last 2 dimensions, only `(H, W)` needs to be passed.
 
 `eps (float)`: Parameter $\varepsilon$.
 

@@ -13,7 +13,3 @@ from .skeleton import Module
 from .soma import IF, LIF, QIF, ExpIF, Izhikevich, KLIF, LIAF
 from .surrogate import Rectangular, Polynomial, Sigmoid, Gaussian
 from .synapse import Linear, Conv1d, Conv2d, Conv3d, ConvTranspose1d, ConvTranspose2d, ConvTranspose3d, BatchNorm1d, BatchNorm2d, BatchNorm3d, LayerNorm, Identity, Neurotransmitter
-try:
-    from rich import print
-except:
-    pass

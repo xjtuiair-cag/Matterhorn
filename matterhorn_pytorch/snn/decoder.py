@@ -7,16 +7,12 @@
 
 import torch
 import torch.nn as nn
-from matterhorn_pytorch.__func__ import transpose
-from matterhorn_pytorch.snn.skeleton import Module
-from typing import Callable
-try:
-    from rich import print
-except:
-    pass
+from matterhorn_pytorch.__func__ import transpose as _transpose
+from matterhorn_pytorch.snn.skeleton import Module as _Module
+from typing import Callable as _Callable
 
 
-class Decoder(Module):
+class Decoder(_Module):
     def __init__(self, reset_after_process: bool = False) -> None:
         """
         解码器的基类。解码器是一个多时间步模型。
@@ -81,7 +77,7 @@ class AverageSpike(Decoder):
 
 
 class TimeBased(Decoder):
-    def __init__(self, empty_fill: float = -1, transform: Callable = lambda x: x, reset_after_process: bool = True) -> None:
+    def __init__(self, empty_fill: float = -1, transform: _Callable = lambda x: x, reset_after_process: bool = True) -> None:
         """
         基于时间的解码器。
         Args:
@@ -106,7 +102,7 @@ class TimeBased(Decoder):
         return "empty_fill=%g, reset_after_process=%s" % (self.empty_fill, str(self.reset_after_process))
 
 
-    def reset(self) -> Module:
+    def reset(self) -> _Module:
         """
         重置编码器。
         """
@@ -132,7 +128,7 @@ class TimeBased(Decoder):
 
 
 class MinTime(TimeBased):
-    def __init__(self, empty_fill: float = -1, transform: Callable = lambda x: x, reset_after_process: bool = True) -> None:
+    def __init__(self, empty_fill: float = -1, transform: _Callable = lambda x: x, reset_after_process: bool = True) -> None:
         """
         取张量在时间维度上的最小值。
         $$o_{i}=min(tO_{i}^{K}(t))$$
@@ -161,7 +157,7 @@ class MinTime(TimeBased):
 
 
 class AverageTime(TimeBased):
-    def __init__(self, empty_fill: float = -1, transform: Callable = lambda x: x, reset_after_process: bool = True) -> None:
+    def __init__(self, empty_fill: float = -1, transform: _Callable = lambda x: x, reset_after_process: bool = True) -> None:
         """
         取张量在时间维度上的时间加权平均值
         $$o_{i}=\frac{1}{T}\sum_{t=1}^{T}{tO_{i}^{K}(t)}$$
@@ -185,7 +181,7 @@ class AverageTime(TimeBased):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        xt = transpose(transpose(x) * torch.arange(x.shape[0]).to(x))
+        xt = _transpose(_transpose(x) * torch.arange(x.shape[0]).to(x))
         tsum = torch.sum(xt, dim = 0)
         xsum = torch.sum(x, dim = 0)
         mask = xsum > 0

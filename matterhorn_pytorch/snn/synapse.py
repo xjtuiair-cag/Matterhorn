@@ -5,19 +5,15 @@
 """
 
 
-from typing import Union
 import torch
 import torch.nn as nn
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 from torch.nn.modules.normalization import _shape_t
-from matterhorn_pytorch.snn.skeleton import Module
-try:
-    from rich import print
-except:
-    pass
+from matterhorn_pytorch.snn.skeleton import Module as _Module
+from typing import Union as _Union
 
 
-class Synapse(Module):
+class Synapse(_Module):
     def __init__(self, multi_time_step = False) -> None:
         """
         突触函数的骨架，定义突触最基本的函数。
@@ -130,16 +126,16 @@ class Linear(Synapse, nn.Linear):
 
 
 class Conv1d(Synapse, nn.Conv1d):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: Union[_size_1_t, str] = 0, dilation: _size_1_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: _Union[_size_1_t, str] = 0, dilation: _size_1_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         一维卷积操作，输入一个大小为[B, C_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, L_{out}]的张量。
         Args:
             in_channels (int): 输入的频道数C_{in}
             out_channels (int): 输出的频道C_{out}
-            kernel_size (_size_1_t): 卷积核的形状
-            stride (_size_1_t): 卷积的输出步长，决定卷积输出的形状
-            padding (_size_1_t | str): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            dilation (_size_1_t): 卷积的输入步长
+            kernel_size (size_1_t): 卷积核的形状
+            stride (size_1_t): 卷积的输出步长，决定卷积输出的形状
+            padding (size_1_t | str): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            dilation (size_1_t): 卷积的输入步长
             groups (int): 分组进行卷积操作的组数
             bias (bool): 是否要加入偏置
             padding_mode (str): 边缘填充的方式
@@ -189,16 +185,16 @@ class Conv1d(Synapse, nn.Conv1d):
 
 
 class Conv2d(Synapse, nn.Conv2d):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: Union[_size_2_t, str] = 0, dilation: _size_2_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _Union[_size_2_t, str] = 0, dilation: _size_2_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         二维卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}]的张量。
         Args:
             in_channels (int): 输入的频道数C_{in}
             out_channels (int): 输出的频道C_{out}
-            kernel_size (_size_2_t): 卷积核的形状
-            stride (_size_2_t): 卷积的输出步长，决定卷积输出的形状
-            padding (_size_2_t | str): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            dilation (_size_2_t): 卷积的输入步长
+            kernel_size (size_2_t): 卷积核的形状
+            stride (size_2_t): 卷积的输出步长，决定卷积输出的形状
+            padding (size_2_t | str): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            dilation (size_2_t): 卷积的输入步长
             groups (int): 分组进行卷积操作的组数
             bias (bool): 是否要加入偏置
             padding_mode (str): 边缘填充的方式
@@ -248,16 +244,16 @@ class Conv2d(Synapse, nn.Conv2d):
 
 
 class Conv3d(Synapse, nn.Conv3d):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: Union[_size_3_t, str] = 0, dilation: _size_3_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _Union[_size_3_t, str] = 0, dilation: _size_3_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         三维卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}, L_{out}]的张量。
         Args:
             in_channels (int): 输入的频道数C_{in}
             out_channels (int): 输出的频道C_{out}
-            kernel_size (_size_3_t): 卷积核的形状
-            stride (_size_3_t): 卷积的输出步长，决定卷积输出的形状
-            padding (_size_3_t | str): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            dilation (_size_3_t): 卷积的输入步长
+            kernel_size (size_3_t): 卷积核的形状
+            stride (size_3_t): 卷积的输出步长，决定卷积输出的形状
+            padding (size_3_t | str): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            dilation (size_3_t): 卷积的输入步长
             groups (int): 分组进行卷积操作的组数
             bias (bool): 是否要加入偏置
             padding_mode (str): 边缘填充的方式
@@ -313,13 +309,13 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
         Args:
             in_channels (int): 输入的频道数C_{in}
             out_channels (int): 输出的频道C_{out}
-            kernel_size (_size_1_t): 卷积核的形状
-            stride (_size_1_t): 卷积的输出步长，决定卷积输出的形状
-            padding (_size_1_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            output_padding (_size_1_t): 在输出边缘填充的量
+            kernel_size (size_1_t): 卷积核的形状
+            stride (size_1_t): 卷积的输出步长，决定卷积输出的形状
+            padding (size_1_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            output_padding (size_1_t): 在输出边缘填充的量
             groups (int): 分组进行卷积操作的组数
             bias (bool): 是否要加入偏置
-            dilation (_size_1_t): 卷积的输出步长
+            dilation (size_1_t): 卷积的输出步长
             padding_mode (str): 边缘填充的方式
             multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
@@ -374,13 +370,13 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
         Args:
             in_channels (int): 输入的频道数C_{in}
             out_channels (int): 输出的频道C_{out}
-            kernel_size (_size_2_t): 卷积核的形状
-            stride (_size_2_t): 卷积的输出步长，决定卷积输出的形状
-            padding (_size_2_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            output_padding (_size_2_t): 在输出边缘填充的量
+            kernel_size (size_2_t): 卷积核的形状
+            stride (size_2_t): 卷积的输出步长，决定卷积输出的形状
+            padding (size_2_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            output_padding (size_2_t): 在输出边缘填充的量
             groups (int): 分组进行卷积操作的组数
             bias (bool): 是否要加入偏置
-            dilation (_size_2_t): 卷积的输出步长
+            dilation (size_2_t): 卷积的输出步长
             padding_mode (str): 边缘填充的方式
             multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
@@ -435,13 +431,13 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
         Args:
             in_channels (int): 输入的频道数C_{in}
             out_channels (int): 输出的频道C_{out}
-            kernel_size (_size_3_t): 卷积核的形状
-            stride (_size_3_t): 卷积的输出步长，决定卷积输出的形状
-            padding (_size_3_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            output_padding (_size_3_t): 在输出边缘填充的量
+            kernel_size (size_3_t): 卷积核的形状
+            stride (size_3_t): 卷积的输出步长，决定卷积输出的形状
+            padding (size_3_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            output_padding (size_3_t): 在输出边缘填充的量
             groups (int): 分组进行卷积操作的组数
             bias (bool): 是否要加入偏置
-            dilation (_size_3_t): 卷积的输出步长
+            dilation (size_3_t): 卷积的输出步长
             padding_mode (str): 边缘填充的方式
             multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
@@ -647,7 +643,7 @@ class LayerNorm(Synapse, nn.LayerNorm):
         """
         数据归一化。
         Args:
-            normalized_shape (_shape_t): 在什么数据尺度上进行归一化
+            normalized_shape (shape_t): 在什么数据尺度上进行归一化
             eps (float): 参数epsilon
             elementwise_affine (bool): 是否启用参数gamma和beta，进行仿射变换
             multi_time_step (bool): 是否调整为多个时间步模式

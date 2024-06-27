@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: U_TF-8 -*-
 """
 TNN的组件，构建TNN兴奋柱和抑制柱的基本组件。
 """
@@ -6,16 +6,11 @@ TNN的组件，构建TNN兴奋柱和抑制柱的基本组件。
 
 import torch
 import torch.nn as nn
-from typing import Any
-from matterhorn_pytorch.snn import Module
-import matterhorn_pytorch.tnn.functional as TF
-try:
-    from rich import print
-except:
-    pass
+from matterhorn_pytorch.snn import Module as _Module
+import matterhorn_pytorch.tnn.functional as _TF
 
 
-class Bitonic(Module):
+class Bitonic(_Module):
     def __init__(self, level: int, asc: bool = True) -> None:
         """
         双调排序网络。通过时空代数的min和max算子对时空信号进行排序操作。
@@ -51,8 +46,8 @@ class Bitonic(Module):
         if self.level <= 0 or x.shape[-1] <= 1:
             y = x
         elif self.level == 1:
-            y0 = TF.s_min(x[..., 0], x[..., 1])
-            y1 = TF.s_max(x[..., 0], x[..., 1])
+            y0 = _TF.s_min(x[..., 0], x[..., 1])
+            y1 = _TF.s_max(x[..., 0], x[..., 1])
             if self.asc:
                 y = torch.stack([y0, y1])
             else:
@@ -73,20 +68,20 @@ class Bitonic(Module):
                     y0 = self.asc_unit(y0)
                     y1 = self.desc_unit(y1)
                 if self.asc:
-                    y2 = TF.s_min(y0, y1)
-                    y3 = TF.s_max(y0, y1)
+                    y2 = _TF.s_min(y0, y1)
+                    y3 = _TF.s_max(y0, y1)
                     y0 = self.asc_unit(y2, post = True)
                     y1 = self.asc_unit(y3, post = True)
                 else:
-                    y2 = TF.s_max(y0, y1)
-                    y3 = TF.s_min(y0, y1)
+                    y2 = _TF.s_max(y0, y1)
+                    y3 = _TF.s_min(y0, y1)
                     y0 = self.desc_unit(y2, post = True)
                     y1 = self.desc_unit(y3, post = True)
                 y = torch.cat([y0, y1], dim = len(y0.shape) - 1)
         return y
 
 
-class Firing(Module):
+class Firing(_Module):
     def __init__(self, u_threshold: int) -> None:
         """
         统计上升/下降的时间，并发射脉冲。
@@ -111,10 +106,10 @@ class Firing(Module):
         upper_threshold = q - self.u_threshold + 1
         u = u[..., -upper_threshold:]
         d = d[..., :upper_threshold]
-        res = TF.s_lt(u, d)
+        res = _TF.s_lt(u, d)
         out = res[..., 0:1]
         for i in range(1, res.shape[-1]):
-            out = TF.s_min(out, res[..., i:i + 1])
+            out = _TF.s_min(out, res[..., i:i + 1])
         return out
 
 
@@ -122,14 +117,14 @@ if __name__ == "__main__":
     up_times = Bitonic(4)
     down_times = Bitonic(4)
     firing = Firing(6)
-    x = TF.t_to_s(torch.cat([torch.randint(1, 10, (1, 16)).float()], dim = 1), 16)
-    y = TF.t_to_s(torch.cat([torch.randint(3, 12, (1, 16)).float()], dim = 1), 16)
-    print(TF.s_to_t(x))
-    print(TF.s_to_t(y))
+    x = _TF.t_to_s(torch.cat([torch.randint(1, 10, (1, 16)).float()], dim = 1), 16)
+    y = _TF.t_to_s(torch.cat([torch.randint(3, 12, (1, 16)).float()], dim = 1), 16)
+    print(_TF.s_to_t(x))
+    print(_TF.s_to_t(y))
     x = up_times(x)
     y = down_times(y)
     z = firing(x, y)
-    print(TF.s_to_t(z))
+    print(_TF.s_to_t(z))
     
 
 

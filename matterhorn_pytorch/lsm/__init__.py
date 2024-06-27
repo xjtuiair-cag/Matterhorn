@@ -7,7 +7,3 @@
 from . import functional
 from .io import Cast
 from .layer import LSM, STDPLSM
-try:
-    from rich import print
-except:
-    pass

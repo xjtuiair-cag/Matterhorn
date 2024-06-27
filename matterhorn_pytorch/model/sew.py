@@ -11,10 +11,6 @@ import torch
 import torch.nn as nn
 import matterhorn_pytorch.snn as snn
 from typing import Tuple, Callable
-try:
-    from rich import print
-except:
-    pass
 
 
 from matterhorn_pytorch.snn.soma import LIF

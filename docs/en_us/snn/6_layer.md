@@ -122,13 +122,13 @@ MaxPool1d(
 
 ### Constructor Arguments
 
-`kernel_size (_size_any_t)`: Size of the pooling kernel.
+`kernel_size (size_any_t)`: Size of the pooling kernel.
 
-`stride (_size_any_t | None)`: Number of pixels the pooling operation jumps over at once.
+`stride (size_any_t | None)`: Number of pixels the pooling operation jumps over at once.
 
-`padding (_size_any_t)`: Length of padding at the boundaries.
+`padding (size_any_t)`: Length of padding at the boundaries.
 
-`dilation (_size_any_t)`: Number of pixels the pooling operation selects at once in one pooling operation.
+`dilation (size_any_t)`: Number of pixels the pooling operation selects at once in one pooling operation.
 
 `return_indices (bool)`: Whether to return the indices of the pooled values in the original image.
 
@@ -170,13 +170,13 @@ MaxPool2d(
 
 ### Constructor Arguments
 
-`kernel_size (_size_any_t)`: Size of the pooling kernel.
+`kernel_size (size_any_t)`: Size of the pooling kernel.
 
-`stride (_size_any_t | None)`: Number of pixels the pooling operation jumps over at once.
+`stride (size_any_t | None)`: Number of pixels the pooling operation jumps over at once.
 
-`padding (_size_any_t)`: Length of padding at the boundaries.
+`padding (size_any_t)`: Length of padding at the boundaries.
 
-`dilation (_size_any_t)`: Number of pixels the pooling operation selects at once in one pooling operation.
+`dilation (size_any_t)`: Number of pixels the pooling operation selects at once in one pooling operation.
 
 `return_indices (bool)`: Whether to return the indices of the pooled values in the original image.
 
@@ -216,13 +216,13 @@ MaxPool3d(
 
 ### Constructor Arguments
 
-`kernel_size (_size_any_t)`: Size of the pooling kernel.
+`kernel_size (size_any_t)`: Size of the pooling kernel.
 
-`stride (_size_any_t | None)`: Number of pixels the pooling operation jumps over at once.
+`stride (size_any_t | None)`: Number of pixels the pooling operation jumps over at once.
 
-`padding (_size_any_t)`: Length of padding at the boundaries.
+`padding (size_any_t)`: Length of padding at the boundaries.
 
-`dilation (_size_any_t)`: Number of pixels the pooling operation selects at once in one pooling operation.
+`dilation (size_any_t)`: Number of pixels the pooling operation selects at once in one pooling operation.
 
 `return_indices (bool)`: Whether to return the indices of the pooled values in the original image.
 
@@ -261,11 +261,11 @@ AvgPool1d(
 
 ### Constructor Arguments
 
-`kernel_size (_size_1_t)`: Size of the pooling kernel.
+`kernel_size (size_1_t)`: Size of the pooling kernel.
 
-`stride (_size_1_t)`: Number of pixels the pooling operation jumps over at once.
+`stride (size_1_t)`: Number of pixels the pooling operation jumps over at once.
 
-`padding (_size_1_t)`: Length of padding at the boundaries.
+`padding (size_1_t)`: Length of padding at the boundaries.
 
 `ceil_mode (bool)`: Whether to ceil the value after pooling.
 
@@ -307,11 +307,11 @@ AvgPool2d(
 
 ### Constructor Arguments
 
-`kernel_size (_size_2_t)`: Size of the pooling kernel.
+`kernel_size (size_2_t)`: Size of the pooling kernel.
 
-`stride (_size_2_t | None)`: Number of pixels the pooling operation jumps over at once.
+`stride (size_2_t | None)`: Number of pixels the pooling operation jumps over at once.
 
-`padding (_size_2_t)`: Length of padding at the boundaries.
+`padding (size_2_t)`: Length of padding at the boundaries.
 
 `ceil_mode (bool)`: Whether to ceil the value after pooling.
 
@@ -353,11 +353,11 @@ AvgPool3d(
 
 ### Constructor Arguments
 
-`kernel_size (_size_3_t)`: Size of the pooling kernel.
+`kernel_size (size_3_t)`: Size of the pooling kernel.
 
-`stride (_size_3_t | None)`: Number of pixels the pooling operation jumps over at once.
+`stride (size_3_t | None)`: Number of pixels the pooling operation jumps over at once.
 
-`padding (_size_3_t)`: Length of padding at the boundaries.
+`padding (size_3_t)`: Length of padding at the boundaries.
 
 `ceil_mode (bool)`: Whether to ceil the value after pooling.
 
@@ -423,7 +423,7 @@ Unflatten(
 
 `dim (int)`: Which dimension (excluding the time dimension) of data to fold.
 
-`unflattened_size (_size)`: Shape to fold this dimension into.
+`unflattened_size (size)`: Shape to fold this dimension into.
 
 `multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
@@ -453,7 +453,7 @@ Dropout(
 
 `p (float)`: The dropout probability.
 
-`unflattened_size (_size)`: Whether to modify the original tensor. If `True`, modifies the original tensor; otherwise, creates a new tensor.
+`unflattened_size (size)`: Whether to modify the original tensor. If `True`, modifies the original tensor; otherwise, creates a new tensor.
 
 `multi_time_step (bool)`: Whether to adjust for multiple time steps mode.
 

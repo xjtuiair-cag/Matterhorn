@@ -7,12 +7,8 @@
 
 import torch
 import torch.nn as nn
-from matterhorn_pytorch.lsm.layer import LSM
+from matterhorn_pytorch.lsm.layer import LSM as _LSM
 from typing import Iterable
-try:
-    from rich import print
-except:
-    pass
 
 
 def init_adjacent_direct(neuron_num: int, axon_numbers: Iterable[int], dendrite_numbers: Iterable[int]) -> torch.Tensor:
@@ -121,7 +117,7 @@ def init_adjacent_dist_3d(channels: int, height: int, width: int, threshold: flo
     return (res <= threshold).to(torch.float)
 
 
-def merge(*models: LSM, connection: str = "uniform", threshold: float = 0.75) -> LSM:
+def merge(*models: _LSM, connection: str = "uniform", threshold: float = 0.75) -> _LSM:
     new_neuron_num = sum([m.neuron_num for m in models])
     adjacent = torch.zeros(new_neuron_num, new_neuron_num)
     if connection == "norm":
@@ -140,5 +136,5 @@ def merge(*models: LSM, connection: str = "uniform", threshold: float = 0.75) ->
         multi_time_step = m.multi_time_step
         assert reset_after_process is None or reset_after_process == m.reset_after_process, "Not all models have same reset mode."
         reset_after_process = m.reset_after_process
-    res = LSM(adjacent, soma, multi_time_step, reset_after_process, m.adjacent.device)
+    res = _LSM(adjacent, soma, multi_time_step, reset_after_process, m.adjacent.device)
     return res
