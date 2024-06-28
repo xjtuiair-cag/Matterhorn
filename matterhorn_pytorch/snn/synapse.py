@@ -729,7 +729,7 @@ class NormPlaceholder(Synapse):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        return x
+        return x.clone()
 
 
 class Identity(Synapse):
