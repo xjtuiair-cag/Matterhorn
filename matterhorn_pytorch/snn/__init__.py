@@ -5,7 +5,7 @@
 
 
 from . import functional
-from .container import Spatial, Temporal, Sequential, Agent
+from .container import Spatial, Temporal, Sequential, ModuleList, ModuleDict, Agent
 from .decoder import SumSpike as SumSpikeDecoder, AverageSpike as AvgSpikeDecoder, MinTime as MinTimeDecoder, AverageTime as AvgTimeDecoder
 from .encoder import Direct as DirectEncoder, Poisson as PoissonEncoder, Temporal as TemporalEncoder
 from .layer import STDPLinear, STDPConv2d, MaxPool1d, MaxPool2d, MaxPool3d, AvgPool1d, AvgPool2d, AvgPool3d, Flatten, Unflatten, Dropout, Dropout1d, Dropout2d, Dropout3d

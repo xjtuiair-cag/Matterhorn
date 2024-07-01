@@ -14,7 +14,7 @@ from rich import print
 from rich.progress import track
 
 
-def ann_to_snn(model: nn.Module, demo_data: Dataset, mode: str = "max") -> snn.Module:
+def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lambda x: x[0], mode: str = "max") -> snn.Module:
     """
     ANN转SNN。
     Args:
@@ -121,11 +121,30 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, mode: str = "max") -> snn.M
                 reset_after_process = False
             )
             setattr(ann_module, "snn_module", snn_module)
+        # 顺序执行
         elif isinstance(ann_module, nn.Sequential):
             modules = []
             for module in ann_module:
                 modules.append(_replace(module))
             snn_module = snn.Spatial(*modules)
+        # 模块集合
+        elif isinstance(ann_module, (nn.ModuleList, nn.ModuleDict)):
+            if isinstance(ann_module, nn.ModuleList):
+                modules = list()
+                for module in ann_module:
+                    modules.append(_replace(module))
+                snn_module = snn.ModuleList(
+                    modules = modules
+                )
+            elif isinstance(ann_module, nn.ModuleDict):
+                modules = dict()
+                for name in ann_module:
+                    module = ann_module[name]
+                    modules[name] = _replace(module)
+                snn_module = snn.ModuleDict(
+                    modules = modules
+                )
+        # 其它自定义ANN模块
         else:
             hybrid_module = deepcopy(ann_module)
             params = ann_module.state_dict()
@@ -173,7 +192,10 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, mode: str = "max") -> snn.M
         hooks = register_hook(model, lambda_hook)
         model.eval()
         with torch.no_grad():
-            for x, y in track(demo_data, description = "Updating lambdas"):
+            for item in track(demo_data, description = "Updating lambdas"):
+                x = pre_process(item)
+                if x is None:
+                    break
                 o = model(x[None])
         remove_hook(hooks)
 
@@ -219,7 +241,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, mode: str = "max") -> snn.M
                 synapses, _ = _search_node(output, lambda x: is_synapse(x), lambda x: not is_synapse(x) and x is not model)
                 for synapse in synapses:
                     # BN -> Conv
-                    print("BatchNorm\n", model, "\n", synapse, "\n")
+                    # print("BatchNorm\n", model, "\n", synapse, "\n")
                     norm_params = model.state_dict()
                     synapse_params = synapse.state_dict()
                     mu = norm_params["running_mean"]
@@ -227,32 +249,36 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, mode: str = "max") -> snn.M
                     gamma = norm_params["weight"]
                     beta = norm_params["bias"]
                     w = synapse_params["weight"].clone().detach()
-                    b = synapse_params["bias"].clone().detach()
                     for i in range(len(mu)):
                         w[i] = gamma[i] / sigma[i] * w[i]
-                        b[i] = gamma[i] / sigma[i] * (b[i] - mu[i]) + beta[i]
                     synapse_params["weight"] = w
-                    synapse_params["bias"] = b
+                    has_bias = "bias" in synapse_params
+                    if has_bias:
+                        b = synapse_params["bias"].clone().detach()
+                        b = gamma / sigma * (b - mu) + beta
+                        synapse_params["bias"] = b
                     synapse.load_state_dict(synapse_params)
             elif is_soma(model):
                 synapses, _ = _search_node(output, lambda x: is_synapse(x), lambda x: is_soma(x) and x is not model)
                 for synapse in synapses:
                     # IF -> Conv
-                    print("IF -> Conv\n", model, "\n", synapse, "\n")
+                    # print("IF -> Conv\n", model, "\n", synapse, "\n")
                     lambda_l = getattr(model, "lambda_l") if hasattr(model, "lambda_l") else 1.0
                     synapse_params = synapse.state_dict()
                     w = synapse_params["weight"].clone().detach()
-                    b = synapse_params["bias"].clone().detach()
                     w = w / lambda_l
-                    b = b / lambda_l
                     synapse_params["weight"] = w
-                    synapse_params["bias"] = b
+                    has_bias = "bias" in synapse_params
+                    if has_bias:
+                        b = synapse_params["bias"].clone().detach()
+                        b = b / lambda_l
+                        synapse_params["bias"] = b
                     synapse.load_state_dict(synapse_params)
             elif is_synapse(model):
                 somas, _ = _search_node(output, lambda x: is_soma(x), lambda x: is_synapse(x) and x is not model)
                 for soma in somas:
                     # Conv -> IF
-                    print("Conv -> IF\n", model, "\n", soma, "\n")
+                    # print("Conv -> IF\n", model, "\n", soma, "\n")
                     lambda_l = getattr(soma, "lambda_l") if hasattr(soma, "lambda_l") else 1.0
                     synapse_params = model.state_dict()
                     w = synapse_params["weight"].clone().detach()
@@ -264,8 +290,9 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, mode: str = "max") -> snn.M
         hooks = register_hook(res, scale_hook)
         res.eval()
         with torch.no_grad():
-            x, y = demo_data[0]
-            o = res(x[None][None])
+            x = pre_process(demo_data[0])
+            if x is not None:
+                o = res(x[None][None])
         remove_hook(hooks)
     
     def _remove_norm(before: snn.Module) -> snn.Module:
