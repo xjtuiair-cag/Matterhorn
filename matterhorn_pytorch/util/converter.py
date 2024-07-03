@@ -61,9 +61,9 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, mode: str = "max") -> snn.M
             )
             if isinstance(ann_module, nn.Conv1d):
                 snn_module = snn.Conv1d(**kwargs)
-            if isinstance(ann_module, nn.Conv2d):
+            elif isinstance(ann_module, nn.Conv2d):
                 snn_module = snn.Conv2d(**kwargs)
-            if isinstance(ann_module, nn.Conv3d):
+            elif isinstance(ann_module, nn.Conv3d):
                 snn_module = snn.Conv3d(**kwargs)
             params = ann_module.state_dict()
             for name in params:
@@ -88,9 +88,9 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, mode: str = "max") -> snn.M
             )
             if isinstance(ann_module, nn.ConvTranspose1d):
                 snn_module = snn.ConvTranspose1d(**kwargs)
-            if isinstance(ann_module, nn.ConvTranspose2d):
+            elif isinstance(ann_module, nn.ConvTranspose2d):
                 snn_module = snn.ConvTranspose2d(**kwargs)
-            if isinstance(ann_module, nn.ConvTranspose3d):
+            elif isinstance(ann_module, nn.ConvTranspose3d):
                 snn_module = snn.ConvTranspose3d(**kwargs)
             params = ann_module.state_dict()
             for name in params:
@@ -112,7 +112,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, mode: str = "max") -> snn.M
                 params[name] = params[name].clone().detach()
             snn_module.load_state_dict(params)
         # 激活函数
-        elif isinstance(ann_module, (nn.ReLU, nn.LeakyReLU)):
+        elif isinstance(ann_module, (nn.ReLU, nn.LeakyReLU, nn.ELU, nn.SELU, nn.GELU)):
             snn_module = snn.IF(
                 u_threshold = 1.0,
                 u_rest = 0.0,
@@ -121,6 +121,68 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, mode: str = "max") -> snn.M
                 reset_after_process = False
             )
             setattr(ann_module, "snn_module", snn_module)
+        # 最大池化
+        elif isinstance(ann_module, (nn.MaxPool1d, nn.MaxPool2d, nn.MaxPool3d)):
+            kwargs = dict(
+                kernel_size = ann_module.kernel_size,
+                stride = ann_module.stride,
+                padding = ann_module.padding,
+                dilation = ann_module.dilation,
+                return_indices = ann_module.return_indices,
+                ceil_mode = ann_module.ceil_mode,
+                multi_time_step = False
+            )
+            if isinstance(ann_module, nn.MaxPool1d):
+                snn_module = snn.MaxPool1d(**kwargs)
+            elif isinstance(ann_module, nn.MaxPool2d):
+                snn_module = snn.MaxPool2d(**kwargs)
+            elif isinstance(ann_module, nn.MaxPool3d):
+                snn_module = snn.MaxPool3d(**kwargs)
+        # 平均池化
+        elif isinstance(ann_module, (nn.AvgPool1d, nn.AvgPool2d, nn.AvgPool3d)):
+            kwargs = dict(
+                kernel_size = ann_module.kernel_size,
+                stride = ann_module.stride,
+                padding = ann_module.padding,
+                ceil_mode = ann_module.ceil_mode,
+                count_include_pad = ann_module.count_include_pad,
+                multi_time_step = False
+            )
+            if isinstance(ann_module, nn.MaxPool1d):
+                snn_module = snn.AvgPool1d(**kwargs)
+            elif isinstance(ann_module, nn.MaxPool2d):
+                kwargs["divisor_override"] = ann_module.divisor_override
+                snn_module = snn.AvgPool2d(**kwargs)
+            elif isinstance(ann_module, nn.MaxPool3d):
+                kwargs["divisor_override"] = ann_module.divisor_override
+                snn_module = snn.AvgPool3d(**kwargs)
+        elif isinstance(ann_module, (nn.Flatten, nn.Unflatten)):
+            if isinstance(ann_module, nn.Flatten):
+                snn_module = snn.Flatten(
+                    start_dim = ann_module.start_dim,
+                    end_dim = ann_module.end_dim,
+                    multi_time_step = False
+                )
+            elif isinstance(ann_module, nn.Unflatten):
+                snn_module = snn.Unflatten(
+                    dim = ann_module.dim,
+                    unflattened_size = ann_module.unflattened_size,
+                    multi_time_step = False
+                )
+        elif isinstance(ann_module, (nn.Dropout, nn.Dropout1d, nn.Dropout2d, nn.Dropout3d)):
+            kwargs = dict(
+                p = ann_module.p,
+                inplace = ann_module.inplace,
+                multi_time_step = False
+            )
+            if isinstance(ann_module, nn.Dropout1d):
+                snn_module = snn.Dropout1d(**kwargs)
+            elif isinstance(ann_module, nn.Dropout2d):
+                snn_module = snn.Dropout2d(**kwargs)
+            elif isinstance(ann_module, nn.Dropout3d):
+                snn_module = snn.Dropout3d(**kwargs)
+            else:
+                snn_module = snn.Dropout(**kwargs)
         elif isinstance(ann_module, nn.Sequential):
             modules = []
             for module in ann_module:
@@ -163,7 +225,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, mode: str = "max") -> snn.M
 
         # 2. 赋予前向钩子，记录放缩值，记录在每个IF神经元的lambda_l参数中
         def lambda_hook(model: snn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
-            if isinstance(model, (nn.ReLU, nn.LeakyReLU)):
+            if isinstance(model, (nn.ReLU, nn.LeakyReLU, nn.ELU, nn.SELU, nn.GELU)):
                 max_out = torch.max(output)
                 snn_model: snn.Module = getattr(model, "snn_module")
                 lambda_l = getattr(snn_model, "lambda_l") if hasattr(snn_model, "lambda_l") else torch.full_like(max_out, 1e-9)
