@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
-from typing import Tuple as _Tuple
+from typing import Iterable as _Iterable, Mapping as _Mapping, Tuple as _Tuple
 
 
 class Container(_Module):
@@ -72,7 +72,7 @@ class Temporal(Container):
         return False
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, *args, **kwargs) -> torch.Tensor:
         """
         前向传播函数，默认接受的张量形状为[T,B,...]（需要将时间维度通过permute等函数转到最外）
         Args:
@@ -80,11 +80,18 @@ class Temporal(Container):
         Returns:
             y (torch.Tensor): 输出张量
         """
-        time_steps = x.shape[0]
+        if not isinstance(args, _Tuple):
+            args = (args,)
+        time_steps = args[0].shape[0]
         result = []
         for t in range(time_steps):
-            result.append(self.module(x[t]))
-        y = torch.stack(result)
+            args_t = (x[t] if isinstance(x, torch.Tensor) else x for x in args)
+            kwargs_t = {k: x[t] if isinstance(x, torch.Tensor) else x for k, x in kwargs}
+            result.append(self.module(*args_t, **kwargs_t))
+        if isinstance(result[0], _Tuple):
+            y = (torch.stack([result[t][col] for t in range(len(result))]) if isinstance(result[0][col], torch.Tensor) else result[0][col] for col in range(len(result[0])))
+        else:
+            y = torch.stack(result)
         return y
 
 
@@ -180,7 +187,7 @@ class Sequential(Container, nn.Sequential):
         return False
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, *args, **kwargs) -> torch.Tensor:
         """
         前向传播函数，默认接受的张量形状为[T,B,...]（需要将时间维度通过permute等函数转到最外）
         Args:
@@ -188,8 +195,26 @@ class Sequential(Container, nn.Sequential):
         Returns:
             y (torch.Tensor): 输出张量
         """
-        y = nn.Sequential.forward(self, x)
+        y = nn.Sequential.forward(self, *args, **kwargs)
         return y
+
+
+class ModuleList(Container, nn.ModuleList):
+    def __init__(self, modules: _Iterable[nn.Module] = None) -> None:
+        Container.__init__(self)
+        nn.ModuleList.__init__(
+            self,
+            modules = modules
+        )
+
+
+class ModuleDict(Container, nn.ModuleDict):
+    def __init__(self, modules: _Mapping[str, nn.Module] = None) -> None:
+        Container.__init__(self)
+        nn.ModuleDict.__init__(
+            self,
+            modules = modules
+        )
 
 
 class Agent(_Module):
@@ -252,7 +277,7 @@ class Agent(_Module):
         return self
 
 
-    def forward_single_time_step(self, *args) -> torch.Tensor:
+    def forward_single_time_step(self, *args, **kwargs) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -260,11 +285,13 @@ class Agent(_Module):
         Returns:
             res (torch.Tensor): 输出张量，形状为[B, ...]
         """
-        res = self.nn_module(*args)
+        if not isinstance(args, _Tuple):
+            args = (args,)
+        res = self.nn_module(*args, **kwargs)
         return res
 
 
-    def forward_multi_time_step(self, *args) -> torch.Tensor:
+    def forward_multi_time_step(self, *args, **kwargs) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
@@ -276,8 +303,9 @@ class Agent(_Module):
             args = (args,)
         time_steps = args[0].shape[0]
         batch_size = args[0].shape[1]
-        args = (x.flatten(0, 1) for x in args)
-        res = self.forward_single_time_step(*args)
+        args = (x.flatten(0, 1) if isinstance(x, torch.Tensor) else x for x in args)
+        kwargs = {k: x.flatten(0, 1) if isinstance(x, torch.Tensor) else x for k, x in kwargs}
+        res = self.forward_single_time_step(*args, **kwargs)
         if isinstance(res, _Tuple):
             res = (y.reshape([time_steps, batch_size] + list(y.shape[1:])) for y in res)
         else:
@@ -285,7 +313,8 @@ class Agent(_Module):
             res = res.reshape(output_shape)
         return res
 
-    def forward(self, *args) -> torch.Tensor:
+
+    def forward(self, *args, **kwargs) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -294,9 +323,9 @@ class Agent(_Module):
             res (torch.Tensor): 输出张量
         """
         if self.multi_time_step:
-            res = self.forward_multi_time_step(*args)
+            res = self.forward_multi_time_step(*args, **kwargs)
         else:
-            res = self.forward_single_time_step(*args)
+            res = self.forward_single_time_step(*args, **kwargs)
         if self.force_spike_output:
             if isinstance(res, _Tuple):
                 res = (_SF.val_to_spike(y) for y in res)
