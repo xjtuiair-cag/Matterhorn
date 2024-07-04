@@ -7,7 +7,7 @@
 
 import torch
 import torch.nn as nn
-from typing import Any as _Any
+from typing import Tuple as _Tuple, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union, Any as _Any
 
 
 def init_tensor(u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -47,6 +47,25 @@ def reset_tensor(u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
             x = x.to(u)
     u = torch.zeros_like(x) + x
     return u
+
+
+def merge_time_steps_batch_size(tensors: _Union[torch.Tensor, _Tuple[torch.Tensor]], tensor_map: _Optional[_Mapping[str, torch.Tensor]] = None) -> _Tuple[_Iterable, _Mapping, _Iterable]:
+    if not isinstance(tensors, _Tuple):
+        tensors = (tensors,)
+    time_steps = tensors[0].shape[0]
+    batch_size = tensors[0].shape[1]
+    tensors = (x.flatten(0, 1) if isinstance(x, torch.Tensor) else x for x in tensors)
+    if tensor_map is not None:
+        tensor_map = {name: tensor.flatten(0, 1) if isinstance(tensor, torch.Tensor) else tensor for name, tensor in tensor_map}
+    return tensors, tensor_map, [time_steps, batch_size]
+
+
+def split_time_steps_batch_size(tensors: _Union[torch.Tensor, _Tuple[torch.Tensor]], time_steps_batch_size: _Iterable) -> _Union[torch.Tensor, _Tuple[torch.Tensor]]:
+    if isinstance(tensors, _Tuple):
+        tensors = (tensor.reshape(list(time_steps_batch_size) + list(tensor.shape[1:])) for tensor in tensors)
+    else:
+        tensors = tensors.reshape(list(time_steps_batch_size) + list(tensors.shape[1:]))
+    return tensors
 
 
 class _val_to_spike(torch.autograd.Function):

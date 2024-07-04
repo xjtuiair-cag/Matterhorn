@@ -7,6 +7,7 @@
 
 import torch
 import torch.nn as nn
+import matterhorn_pytorch.snn.functional as _SF
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 from torch.nn.modules.normalization import _shape_t
 from matterhorn_pytorch.snn.skeleton import Module as _Module
@@ -34,48 +35,47 @@ class Synapse(_Module):
         return "multi_time_step=%s" % (str(self.multi_time_step),)
 
 
-    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
+    def forward_single_time_step(self, *args, **kwargs) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
-            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[B, ...]
+            *args: 输入
+            **kwargs: 输入
         Returns:
-            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$，形状为[B, ...]
+            res (torch.Tensor): 输出
         """
-        x = o
-        return x
+        pass
 
 
-    def forward_multi_time_step(self, o: torch.Tensor) -> torch.Tensor:
+    def forward_multi_time_step(self, *args, **kwargs) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
-            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$，形状为[T, B, ...]
+            *args: 输入
+            **kwargs: 输入
         Returns:
-            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$，形状为[T, B, ...]
+            res (torch.Tensor): 输出
         """
-        time_steps = o.shape[0]
-        batch_size = o.shape[1]
-        o = o.flatten(0, 1)
-        x = self.forward_single_time_step(o)
-        output_shape = [time_steps, batch_size] + list(x.shape[1:])
-        x = x.reshape(output_shape)
-        return x
+        args, kwargs, tb = _SF.merge_time_steps_batch_size(args, kwargs)
+        res = self.forward_single_time_step(*args, **kwargs)
+        res = _SF.split_time_steps_batch_size(res, tb)
+        return res
 
 
-    def forward(self, o: torch.Tensor) -> torch.Tensor:
+    def forward(self, *args, **kwargs) -> torch.Tensor:
         """
         前向传播函数。
         Args:
-            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+            *args: 输入
+            **kwargs: 输入
         Returns:
-            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+            res (torch.Tensor): 输出
         """
         if self.multi_time_step:
-            x = self.forward_multi_time_step(o)
+            res = self.forward_multi_time_step(*args, **kwargs)
         else:
-            x = self.forward_single_time_step(o)
-        return x
+            res = self.forward_single_time_step(*args, **kwargs)
+        return res
 
 
 class Linear(Synapse, nn.Linear):

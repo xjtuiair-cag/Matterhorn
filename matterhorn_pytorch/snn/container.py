@@ -281,9 +281,10 @@ class Agent(_Module):
         """
         单个时间步的前向传播函数。
         Args:
-            args (*torch.Tensor): 输入张量，形状为[B, ...]
+            *args: 输入
+            **kwargs: 输入
         Returns:
-            res (torch.Tensor): 输出张量，形状为[B, ...]
+            res (torch.Tensor): 输出
         """
         if not isinstance(args, _Tuple):
             args = (args,)
@@ -295,22 +296,14 @@ class Agent(_Module):
         """
         多个时间步的前向传播函数。
         Args:
-            args (torch.Tensor): 输入张量，形状为[T, B, ...]
+            *args: 输入
+            **kwargs: 输入
         Returns:
-            res (torch.Tensor): 输出张量，形状为[T, B, ...]
+            res (torch.Tensor): 输出
         """
-        if not isinstance(args, _Tuple):
-            args = (args,)
-        time_steps = args[0].shape[0]
-        batch_size = args[0].shape[1]
-        args = (x.flatten(0, 1) if isinstance(x, torch.Tensor) else x for x in args)
-        kwargs = {k: x.flatten(0, 1) if isinstance(x, torch.Tensor) else x for k, x in kwargs}
+        args, kwargs, tb = _SF.merge_time_steps_batch_size(args, kwargs)
         res = self.forward_single_time_step(*args, **kwargs)
-        if isinstance(res, _Tuple):
-            res = (y.reshape([time_steps, batch_size] + list(y.shape[1:])) for y in res)
-        else:
-            output_shape = [time_steps, batch_size] + list(res.shape[1:])
-            res = res.reshape(output_shape)
+        res = _SF.split_time_steps_batch_size(res, tb)
         return res
 
 
@@ -318,9 +311,10 @@ class Agent(_Module):
         """
         前向传播函数。
         Args:
-            args (torch.Tensor): 输入张量
+            *args: 输入
+            **kwargs: 输入
         Returns:
-            res (torch.Tensor): 输出张量
+            res (torch.Tensor): 输出
         """
         if self.multi_time_step:
             res = self.forward_multi_time_step(*args, **kwargs)
@@ -328,7 +322,7 @@ class Agent(_Module):
             res = self.forward_single_time_step(*args, **kwargs)
         if self.force_spike_output:
             if isinstance(res, _Tuple):
-                res = (_SF.val_to_spike(y) for y in res)
+                res = (_SF.val_to_spike(y) if isinstance(y, torch.Tensor) else y for y in res)
             else:
                 res = _SF.val_to_spike(res)
         return res

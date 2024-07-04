@@ -11,7 +11,7 @@ import torch.nn.functional as _F
 import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
 from matterhorn_pytorch.snn.container import Temporal as _Temporal
-from typing import Any as _Any, Tuple as _Tuple, Optional as _Optional, Union as _Union
+from typing import Any as _Any, Tuple as _Tuple, Iterable as _Iterable, Optional as _Optional, Union as _Union
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
 from matterhorn_pytorch.training.functional import stdp_online as _stdp_online
@@ -38,49 +38,51 @@ class Layer(_Module):
         return "multi_time_step=%s" % (str(self.multi_time_step),)
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_single_time_step(self, *args, **kwargs) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
-            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$，形状为[B, ...]
+            *args: 输入
+            **kwargs: 输入
         Returns:
-            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$，形状为[B, ...]
+            res (torch.Tensor): 输出
         """
-        y = x
-        return y
+        pass
 
 
-    def forward_multi_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_multi_time_step(self, *args, **kwargs) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
-            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$，形状为[T, B, ...]
+            *args: 输入
+            **kwargs: 输入
         Returns:
-            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$，形状为[T, B, ...]
+            res (torch.Tensor): 输出
         """
-        time_steps = x.shape[0]
-        batch_size = x.shape[1]
-        x = x.flatten(0, 1)
-        y = self.forward_single_time_step(x)
-        output_shape = [time_steps, batch_size] + list(y.shape[1:])
-        y = y.reshape(output_shape)
-        return y
+        args, kwargs, tb = _SF.merge_time_steps_batch_size(args, kwargs)
+        res = self.forward_single_time_step(*args, **kwargs)
+        res = _SF.split_time_steps_batch_size(res, tb)
+        return res
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, *args, **kwargs) -> torch.Tensor:
         """
         前向传播函数。
         Args:
-            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+            *args: 输入
+            **kwargs: 输入
         Returns:
-            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+            res (torch.Tensor): 输出
         """
         if self.multi_time_step:
-            y = self.forward_multi_time_step(x)
+            res = self.forward_multi_time_step(*args, **kwargs)
         else:
-            y = self.forward_single_time_step(x)
-        y = _SF.val_to_spike(y)
-        return y
+            res = self.forward_single_time_step(*args, **kwargs)
+        if isinstance(res, _Tuple):
+            res = (_SF.val_to_spike(y) if isinstance(y, torch.Tensor) else y for y in res)
+        else:
+            res = _SF.val_to_spike(res)
+        return res
 
 
 class f_stdp_linear(torch.autograd.Function):
@@ -108,16 +110,13 @@ class f_stdp_linear(torch.autograd.Function):
         """
         if multi_time_step:
             input_spike_train = input.clone()
-            time_steps = input.shape[0]
-            batch_size = input.shape[1]
-            flattened_input = input.flatten(0, 1)
+            flattened_input, _, tb = _SF.merge_time_steps_batch_size(input)
+            time_steps = tb[0]
             psp: torch.Tensor = _F.linear(flattened_input, weight, bias = None)
-            output_shape = [time_steps, batch_size] + list(psp.shape[1:])
-            psp = psp.reshape(output_shape)
+            psp = _SF.split_time_steps_batch_size(psp, tb)
         else:
             input_spike_train = input[None]
             time_steps = 1
-            batch_size = input.shape[0]
             psp: torch.Tensor = _F.linear(input, weight, bias = None)
         output: torch.Tensor = soma(psp)
         if multi_time_step:
@@ -271,16 +270,13 @@ class f_stdp_conv2d(torch.autograd.Function):
         """
         if multi_time_step:
             input_spike_train = input.clone()
-            time_steps = input.shape[0]
-            batch_size = input.shape[1]
-            flattened_input = input.flatten(0, 1)
+            flattened_input, _, tb = _SF.merge_time_steps_batch_size(input)
+            time_steps = tb[0]
             psp: torch.Tensor = _F.conv2d(flattened_input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
-            output_shape = [time_steps, batch_size] + list(psp.shape[1:])
-            psp = psp.reshape(output_shape)
+            psp = _SF.split_time_steps_batch_size(psp, tb)
         else:
             input_spike_train = input[None]
             time_steps = 1
-            batch_size = input.shape[0]
             psp: torch.Tensor = _F.conv2d(input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
         output: torch.Tensor = soma(psp)
         if multi_time_step:
@@ -743,6 +739,147 @@ class AvgPool3d(Layer, nn.AvgPool3d):
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
         y = nn.AvgPool3d.forward(self, x)
+        return y
+
+
+class MaxUnpool1d(Layer, nn.MaxUnpool1d):
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, multi_time_step: bool = False) -> None:
+        """
+        一维最大反池化。
+        Args:
+            kernel_size (size_3_t): 池化核大小
+            stride (size_3_t | None): 池化核步长
+            padding (size_3_t): 边界填充的长度
+            multi_time_step (bool): 是否调整为多个时间步模式
+        """
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
+        nn.MaxUnpool1d.__init__(
+            self,
+            kernel_size = kernel_size,
+            stride = stride,
+            padding = padding
+        )
+    
+
+    def forward_single_time_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+            indices (torch.Tensor): 池化前脉冲的索引
+            output_size (torch.Tensor): 输出大小
+        Returns:
+            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        y = nn.MaxUnpool1d.forward(self, x, indices, output_size)
+        return y
+
+
+class MaxUnpool2d(Layer, nn.MaxUnpool2d):
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, multi_time_step: bool = False) -> None:
+        """
+        二维最大反池化。
+        Args:
+            kernel_size (size_3_t): 池化核大小
+            stride (size_3_t | None): 池化核步长
+            padding (size_3_t): 边界填充的长度
+            multi_time_step (bool): 是否调整为多个时间步模式
+        """
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
+        nn.MaxUnpool2d.__init__(
+            self,
+            kernel_size = kernel_size,
+            stride = stride,
+            padding = padding
+        )
+    
+
+    def forward_single_time_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+            indices (torch.Tensor): 池化前脉冲的索引
+            output_size (torch.Tensor): 输出大小
+        Returns:
+            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        y = nn.MaxUnpool2d.forward(self, x, indices, output_size)
+        return y
+
+
+class MaxUnpool3d(Layer, nn.MaxUnpool3d):
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, multi_time_step: bool = False) -> None:
+        """
+        一维最大反池化。
+        Args:
+            kernel_size (size_3_t): 池化核大小
+            stride (size_3_t | None): 池化核步长
+            padding (size_3_t): 边界填充的长度
+            multi_time_step (bool): 是否调整为多个时间步模式
+        """
+        Layer.__init__(
+            self,
+            multi_time_step = multi_time_step
+        )
+        nn.MaxUnpool3d.__init__(
+            self,
+            kernel_size = kernel_size,
+            stride = stride,
+            padding = padding
+        )
+
+
+    def forward_single_time_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+            indices (torch.Tensor): 池化前脉冲的索引
+            output_size (torch.Tensor): 输出大小
+        Returns:
+            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        y = nn.MaxUnpool3d.forward(self, x, indices, output_size)
+        return y
+
+
+class Upsample(nn.Upsample):
+    def __init__(self, size: _Optional[_Union[int, _Tuple[int]]] = None, scale_factor: _Optional[_Union[float, _Tuple[float]]] = None, mode: str = 'nearest', align_corners: _Optional[bool] = None, recompute_scale_factor: _Optional[bool] = None) -> None:
+        """
+        上采样（反池化）。
+        Args:
+            size (int | int*): 输出大小
+            scale_factor (float | float*): 比例因子，如2为上采样两倍
+            mode (str): 以何种形式上采样
+            align_corners (bool): 若为True，使输入和输出张量的角像素对齐，从而保留这些像素的值
+            recompute_scale_factor (bool): 若为True，则必须传入scale_factor并且scale_factor用于计算输出大小。计算出的输出大小将用于推断插值的新比例；若为False，那么size或scale_factor将直接用于插值
+        """
+        nn.Upsample.__init__(
+            self,
+            size = size,
+            scale_factor = scale_factor,
+            mode = mode,
+            align_corners = align_corners,
+            recompute_scale_factor = recompute_scale_factor
+        )
+
+
+    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        y = nn.Upsample.forward(self, x)
         return y
 
 
