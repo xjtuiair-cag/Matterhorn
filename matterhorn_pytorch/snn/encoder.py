@@ -25,6 +25,7 @@ class Encoder(_Module):
         )
 
 
+    @property
     def supports_single_time_step(self) -> bool:
         """
         是否支持单个时间步。

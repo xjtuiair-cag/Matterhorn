@@ -27,13 +27,26 @@ class Spatial(Container, nn.Sequential):
         Args:
             *args ([nn.Module]): 按空间顺序传入的各个模块
         """
-        Container.__init__(self)
+        Container.__init__(
+            self,
+            multi_time_step = False
+        )
         nn.Sequential.__init__(self, *args)
-        self._multi_time_step = False
         for module in self:
             is_snn_module = isinstance(module, _Module)
             if is_snn_module:
-                self._multi_time_step = self._multi_time_step or module.multi_time_step
+                assert self.supports_single_time_step, "Cannot put a multi time step model into spatial container."
+                self.multi_time_step_(False)
+
+
+    @property
+    def supports_multi_time_step(self) -> bool:
+        """
+        是否支持多个时间步。
+        Returns:
+            if_support (bool): 是否支持多个时间步
+        """
+        return False
 
 
 class Temporal(Container):
@@ -63,6 +76,7 @@ class Temporal(Container):
         return "reset_after_process=%s" % (str(self.reset_after_process),)
 
 
+    @property
     def supports_single_time_step(self) -> bool:
         """
         是否支持单个时间步。
@@ -133,7 +147,7 @@ class Sequential(Container, nn.Sequential):
                 # 如果是单时间步SNN模块。
                 if not is_multi_time_step:
                     # 如果可以将它转成多时间步SNN模块，那就直接转成多时间步SNN模块。
-                    if module.supports_multi_time_step():
+                    if module.supports_multi_time_step:
                         module.multi_time_step_(True)
                         self[module_idx] = module
                     # 否则，记住当前SNN模块的索引，在之后将其合并。
@@ -178,6 +192,7 @@ class Sequential(Container, nn.Sequential):
             del self[idx]
 
 
+    @property
     def supports_single_time_step(self) -> bool:
         """
         是否支持单个时间步。
@@ -243,10 +258,7 @@ class Agent(_Module):
         Args
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
         """
-        if self.supports_multi_time_step() and if_on:
-            self._multi_time_step = True
-        elif self.supports_single_time_step() and not if_on:
-            self._multi_time_step = False
+        super().multi_time_step_(if_on)
         for module in self.nn_module.children():
             is_snn_module = isinstance(module, _Module)
             if is_snn_module:
@@ -259,6 +271,7 @@ class Agent(_Module):
         """
         重置模型。
         """
+        super().reset()
         for module in self.nn_module.children():
             is_snn_module = isinstance(module, _Module)
             if is_snn_module:
@@ -270,6 +283,7 @@ class Agent(_Module):
         """
         将模型中的某些变量从其计算图中分离。
         """
+        super().detach()
         for module in self.nn_module.children():
             is_snn_module = isinstance(module, _Module)
             if is_snn_module:
@@ -316,10 +330,7 @@ class Agent(_Module):
         Returns:
             res (torch.Tensor): 输出
         """
-        if self.multi_time_step:
-            res = self.forward_multi_time_step(*args, **kwargs)
-        else:
-            res = self.forward_single_time_step(*args, **kwargs)
+        res = super().forward(*args, **kwargs)
         if self.force_spike_output:
             if isinstance(res, _Tuple):
                 res = (_SF.val_to_spike(y) if isinstance(y, torch.Tensor) else y for y in res)

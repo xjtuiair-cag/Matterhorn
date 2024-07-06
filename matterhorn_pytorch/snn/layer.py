@@ -38,18 +38,6 @@ class Layer(_Module):
         return "multi_time_step=%s" % (str(self.multi_time_step),)
 
 
-    def forward_single_time_step(self, *args, **kwargs) -> torch.Tensor:
-        """
-        单个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        pass
-
-
     def forward_multi_time_step(self, *args, **kwargs) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
@@ -74,10 +62,7 @@ class Layer(_Module):
         Returns:
             res (torch.Tensor): 输出
         """
-        if self.multi_time_step:
-            res = self.forward_multi_time_step(*args, **kwargs)
-        else:
-            res = self.forward_single_time_step(*args, **kwargs)
+        res = super().forward(*args, **kwargs)
         if isinstance(res, _Tuple):
             res = (_SF.val_to_spike(y) if isinstance(y, torch.Tensor) else y for y in res)
         else:
@@ -196,12 +181,12 @@ class STDPLinear(_Module):
         self.weight = nn.Parameter(torch.empty((out_features, in_features), device = device, dtype = dtype))
         nn.init.kaiming_uniform_(self.weight, a = 5.0 ** 0.5)
         if self.multi_time_step:
-            if soma.supports_multi_time_step():
+            if soma.supports_multi_time_step:
                 self.soma = soma.multi_time_step_(True)
             elif not soma.multi_time_step:
                 self.soma = _Temporal(soma, reset_after_process = False)
         else:
-            if soma.supports_single_time_step():
+            if soma.supports_single_time_step:
                 self.soma = soma.multi_time_step_(False)
             else:
                 self.soma = soma
@@ -395,12 +380,12 @@ class STDPConv2d(_Module):
         self.padding = _fill(padding, 2)
         self.dilation = _fill(dilation, 2)
         if self.multi_time_step:
-            if soma.supports_multi_time_step():
+            if soma.supports_multi_time_step:
                 self.soma = soma.multi_time_step_(True)
             elif not soma.multi_time_step:
                 self.soma = _Temporal(soma, reset_after_process = False)
         else:
-            if soma.supports_single_time_step():
+            if soma.supports_single_time_step:
                 self.soma = soma.multi_time_step_(False)
             else:
                 self.soma = soma

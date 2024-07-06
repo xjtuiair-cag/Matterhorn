@@ -108,5 +108,10 @@ class LIF(_LIF):
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
         self.u = _SF.init_tensor(self.u, x[0])
-        o, u = multi_time_step_lif_cuda.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, self.spiking_function_prototype, self.spiking_function.a, self.reset_function_prototype)
+        supported_spiking_functions = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
+        current_spiking_function = self.spiking_function.__class__.__name__
+        assert current_spiking_function in supported_spiking_functions, "Unsupported gspiking function"
+        spiking_function_prototype = supported_spiking_functions.index(current_spiking_function)
+        reset_function_prototype = 0 if self.hard_reset else 1
+        o, u = multi_time_step_lif_cuda.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, spiking_function_prototype, self.spiking_function.a, reset_function_prototype)
         return o

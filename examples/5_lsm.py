@@ -12,8 +12,8 @@ def main():
 
     print_title("Hyper Parameters")
 
-    time_steps = 32
-    batch_size = 256
+    time_steps = 128
+    batch_size = 64
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = 100
     learning_rate = 1e-3
@@ -35,27 +35,10 @@ def main():
             time_steps = time_steps
         ),
         snn.Flatten(),
-        lsm.Cast(
-            28 * 28,
-            28 * 28 + 10,
-            range(28 * 28),
-            range(28 * 28)
-        ),
-        lsm.functional.merge(
-            lsm.LSM(
-                adjacent = lsm.functional.init_adjacent_dist_2d(28, 28, 0.4),
-                soma = snn.LIF()
-            ),
-            lsm.LSM(
-                adjacent = lsm.functional.init_adjacent_norm(10, 0.4),
-                soma = snn.LIF()
-            )
-        ),
-        lsm.Cast(
-            28 * 28 + 10,
-            10,
-            range(28 * 28, 28 * 28 + 10),
-            range(10)
+        snn.Linear(28 * 28, 10),
+        lsm.LSM(
+            adjacent = lsm.functional.init_adjacent_uniform(10, 0.6),
+            soma = snn.LIF()
         ),
         snn.AvgSpikeDecoder(),
     )

@@ -33,7 +33,7 @@ def main():
     
     model = snn.Sequential(
         snn.PoissonEncoder(
-            time_steps = 32
+            time_steps = time_steps
         ),
         snn.STDPConv2d(
             soma = snn.LIF(

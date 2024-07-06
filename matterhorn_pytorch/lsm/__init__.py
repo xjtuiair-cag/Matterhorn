@@ -5,5 +5,4 @@
 
 
 from . import functional
-from .io import Cast
-from .layer import LSM, STDPLSM
+from .layer import LSM

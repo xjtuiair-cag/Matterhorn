@@ -115,26 +115,3 @@ def init_adjacent_dist_3d(channels: int, height: int, width: int, threshold: flo
     res = torch.sqrt(res_p ** 2 + res_y ** 2 + res_x ** 2)
     res = (res + 1) * torch.rand_like(res)
     return (res <= threshold).to(torch.float)
-
-
-def merge(*models: _LSM, connection: str = "uniform", threshold: float = 0.75) -> _LSM:
-    new_neuron_num = sum([m.neuron_num for m in models])
-    adjacent = torch.zeros(new_neuron_num, new_neuron_num)
-    if connection == "norm":
-        adjacent = init_adjacent_norm(new_neuron_num, threshold)
-    elif connection == "uniform":
-        adjacent = init_adjacent_uniform(new_neuron_num, threshold)
-    offset = 0
-    soma = None
-    multi_time_step = None
-    reset_after_process = None
-    for m in models:
-        adjacent[offset:offset + m.neuron_num, offset:offset + m.neuron_num] = m.adjacent
-        offset += m.neuron_num
-        soma = m.soma # TODO: different neurons in the same LSM
-        assert multi_time_step is None or multi_time_step == m.multi_time_step, "Not all models have same step mode."
-        multi_time_step = m.multi_time_step
-        assert reset_after_process is None or reset_after_process == m.reset_after_process, "Not all models have same reset mode."
-        reset_after_process = m.reset_after_process
-    res = _LSM(adjacent, soma, multi_time_step, reset_after_process, m.adjacent.device)
-    return res

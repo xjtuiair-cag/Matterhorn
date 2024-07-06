@@ -15,9 +15,6 @@ from typing import Callable as _Callable, Iterable as _Iterable
 
 
 class Soma(_Module):
-    supported_surrogate_gradients = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
-
-
     def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _surrogate.SurrogateGradient = _surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
@@ -34,20 +31,15 @@ class Soma(_Module):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        self.u = None
         super().__init__(
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
         )
+        self.u = None
         self.u_threshold = nn.Parameter(torch.tensor(u_threshold, device = device, dtype = dtype), requires_grad = False)
         self.u_rest = nn.Parameter(torch.tensor(u_rest, device = device, dtype = dtype), requires_grad = False)
         self.spiking_function = spiking_function
-        self.surrogate_str = spiking_function.__class__.__name__
-        assert self.surrogate_str in self.supported_surrogate_gradients, "Unknown surrogate gradient."
-        self.spiking_function_prototype = self.supported_surrogate_gradients.index(self.surrogate_str)
         self.hard_reset = hard_reset
-        self.reset_function_prototype = 0 if self.hard_reset else 1
-        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -86,9 +78,7 @@ class Soma(_Module):
         Returns:
             u (torch.Tensor): 当前电位$U_{i}^{l}(t)$
         """
-        du = x
-        u = h + du
-        return u
+        pass
 
 
     def f_firing(self, u: torch.Tensor) -> torch.Tensor:
@@ -146,21 +136,6 @@ class Soma(_Module):
         for t in range(time_steps):
             o_seq.append(self.forward_single_time_step(x[t]))
         o = torch.stack(o_seq)
-        return o
-
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        前向传播函数。
-        Args:
-            x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
-        Returns:
-            o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
-        """
-        if self.multi_time_step:
-            o = self.forward_multi_time_step(x)
-        else:
-            o = self.forward_single_time_step(x)
         return o
 
 
@@ -404,7 +379,6 @@ class Izhikevich(Soma):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        self.w = None
         super().__init__(
             u_threshold = u_threshold,
             u_rest = u_rest,
@@ -415,6 +389,7 @@ class Izhikevich(Soma):
             device = device,
             dtype = dtype
         )
+        self.w = None
         self.a = nn.Parameter(torch.tensor(a, device = device, dtype = dtype), requires_grad = trainable)
         self.b = nn.Parameter(torch.tensor(b, device = device, dtype = dtype), requires_grad = trainable)
     

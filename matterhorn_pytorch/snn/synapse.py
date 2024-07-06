@@ -35,18 +35,6 @@ class Synapse(_Module):
         return "multi_time_step=%s" % (str(self.multi_time_step),)
 
 
-    def forward_single_time_step(self, *args, **kwargs) -> torch.Tensor:
-        """
-        单个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        pass
-
-
     def forward_multi_time_step(self, *args, **kwargs) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
@@ -59,22 +47,6 @@ class Synapse(_Module):
         args, kwargs, tb = _SF.merge_time_steps_batch_size(args, kwargs)
         res = self.forward_single_time_step(*args, **kwargs)
         res = _SF.split_time_steps_batch_size(res, tb)
-        return res
-
-
-    def forward(self, *args, **kwargs) -> torch.Tensor:
-        """
-        前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        if self.multi_time_step:
-            res = self.forward_multi_time_step(*args, **kwargs)
-        else:
-            res = self.forward_single_time_step(*args, **kwargs)
         return res
 
 

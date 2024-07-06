@@ -38,6 +38,7 @@ class Module(nn.Module):
         return super().extra_repr()
 
 
+    @property
     def supports_single_time_step(self) -> bool:
         """
         是否支持单个时间步。
@@ -47,6 +48,7 @@ class Module(nn.Module):
         return True
 
 
+    @property
     def supports_multi_time_step(self) -> bool:
         """
         是否支持多个时间步。
@@ -72,9 +74,9 @@ class Module(nn.Module):
         Args
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
         """
-        if self.supports_multi_time_step() and if_on:
+        if self.supports_multi_time_step and if_on:
             self._multi_time_step = True
-        elif self.supports_single_time_step() and not if_on:
+        elif self.supports_single_time_step and not if_on:
             self._multi_time_step = False
         for module in self.children():
             is_snn_module = isinstance(module, Module)
@@ -124,3 +126,45 @@ class Module(nn.Module):
             if is_snn_module:
                 module.detach()
         return self
+
+
+    def forward_single_time_step(self, *args, **kwargs) -> torch.Tensor:
+        """
+        单个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        pass
+
+
+    def forward_multi_time_step(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        pass
+
+
+    def forward(self, *args, **kwargs) -> torch.Tensor:
+        """
+        前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        if self.multi_time_step:
+            res = self.forward_multi_time_step(*args, **kwargs)
+            if self.reset_after_process:
+                self.reset()
+        else:
+            res = self.forward_single_time_step(*args, **kwargs)
+        return res

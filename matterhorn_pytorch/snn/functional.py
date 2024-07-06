@@ -25,7 +25,7 @@ def init_tensor(u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         u = torch.full_like(x, u)
         u = u.detach().requires_grad_(True)
     if u is None:
-        u = torch.zeros_like(u)
+        u = torch.zeros_like(x)
         u = u.detach().requires_grad_(True)
     return u
 
