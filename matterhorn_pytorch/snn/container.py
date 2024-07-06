@@ -49,6 +49,18 @@ class Spatial(Container, nn.Sequential):
         return False
 
 
+    def forward(self, *args, **kwargs) -> torch.Tensor:
+        """
+        前向传播函数，默认接受的张量形状为[T,B,...]（需要将时间维度通过permute等函数转到最外）
+        Args:
+            x (torch.Tensor): 输入张量
+        Returns:
+            y (torch.Tensor): 输出张量
+        """
+        y = nn.Sequential.forward(self, *args, **kwargs)
+        return y
+
+
 class Temporal(Container):
     def __init__(self, module: nn.Module, reset_after_process: bool = False) -> None:
         """
