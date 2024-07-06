@@ -35,9 +35,14 @@ def main():
             time_steps = time_steps
         ),
         snn.Flatten(),
-        snn.Linear(28 * 28, 10),
+        snn.Linear(28 * 28, 80),
         lsm.LSM(
-            adjacent = lsm.functional.init_adjacent_uniform(10, 0.6),
+            adjacent = lsm.functional.init_adjacent_uniform(80, 0.4),
+            soma = snn.LIF()
+        ),
+        snn.Linear(80, 10),
+        lsm.LSM(
+            adjacent = lsm.functional.init_adjacent_uniform(10, 0.4),
             soma = snn.LIF()
         ),
         snn.AvgSpikeDecoder(),
