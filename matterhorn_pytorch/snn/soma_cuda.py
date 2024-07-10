@@ -22,7 +22,7 @@ except:
 import numpy as np
 
 
-class multi_time_step_lif_cuda(torch.autograd.Function):
+class multi_step_mode_lif_cuda(torch.autograd.Function):
     @staticmethod
     def forward(ctx: _Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: float, u_rest: float, spiking_mode: int, a: float, reset_mode: float) -> torch.Tensor:
         """
@@ -96,7 +96,7 @@ class LIF(_LIF):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g" % (self.tau_m, self.u_threshold, self.u_rest), super().extra_repr(), "ext=%s" % ('"cuda"',)])
+        return ", ".join([super().extra_repr(), "ext=%s" % '"CUDA"'])
 
 
     def forward_multi_time_steps(self, x: torch.Tensor) -> torch.Tensor:
@@ -113,5 +113,5 @@ class LIF(_LIF):
         assert current_spiking_function in supported_spiking_functions, "Unsupported gspiking function"
         spiking_function_prototype = supported_spiking_functions.index(current_spiking_function)
         reset_function_prototype = 0 if self.hard_reset else 1
-        o, u = multi_time_step_lif_cuda.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, spiking_function_prototype, self.spiking_function.a, reset_function_prototype)
+        o, u = multi_step_mode_lif_cuda.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, spiking_function_prototype, self.spiking_function.a, reset_function_prototype)
         return o

@@ -22,7 +22,7 @@ class Clip(nn.Module):
 
 
     def extra_repr(self) -> str:
-        return "start=%d, end=%d" % (self.clip_start, self.clip_end)
+        return ", ".join(["start=%d" % self.clip_start, "end=%d" % self.clip_end])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -39,7 +39,7 @@ class Sampling(nn.Module):
 
 
     def extra_repr(self) -> str:
-        return "span=%d" % (self.sampling_span)
+        return ", ".join(["span=%d" % self.sampling_span])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

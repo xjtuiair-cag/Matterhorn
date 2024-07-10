@@ -22,9 +22,7 @@ class TemporalWiseAttention(snn.Module):
             r (float): 用于控制权重矩阵的大小(T*(T/r)和(T/r)*T)
             d_threshold (float): 注意阈值，用于阶跃函数
         """
-        super().__init__(
-            multi_time_step = True
-        )
+        super().__init__()
         self.time_steps = time_steps
         self.r = r
         self.d_threshold = d_threshold

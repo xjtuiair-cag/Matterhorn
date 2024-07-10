@@ -27,8 +27,7 @@ Soma(
     u_threshold: float = -0.055,
     u_rest: float = -0.07,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
-    hard_reset: bool = True,
-    multi_time_step: bool = False
+    hard_reset: bool = True
 )
 ```
 
@@ -41,8 +40,6 @@ Soma(
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`multi_time_step (bool)` ：是否调整为多时间步模式。
 
 ### 可重载的方法
 
@@ -83,8 +80,7 @@ IF(
     u_threshold: float = -0.055,
     u_rest: float = -0.07,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
-    hard_reset: bool = True,
-    multi_time_step: bool = False
+    hard_reset: bool = True
 )
 ```
 
@@ -97,8 +93,6 @@ IF(
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`multi_time_step (bool)` ：是否调整为多时间步模式。
 
 ### 示例用法
 
@@ -154,7 +148,6 @@ LIF(
     u_rest: float = -0.07,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -172,8 +165,6 @@ LIF(
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`multi_time_step (bool)` ：是否调整为多时间步模式。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 是否可以被训练。
 
@@ -238,7 +229,6 @@ QIF(
     a_0: float = 1.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -260,8 +250,6 @@ QIF(
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`multi_time_step (bool)` ：是否调整为多时间步模式。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 、 $u_{c}$ 和 $a_{0}$ 是否可以被训练。
 
@@ -328,7 +316,6 @@ ExpIF(
     delta_t: float = 0.001,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -350,8 +337,6 @@ ExpIF(
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`multi_time_step (bool)` ：是否调整为多时间步模式。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 、 $u_{T}$ 和 $\Delta_{T}$ 是否可以被训练。
 
@@ -423,7 +408,6 @@ Izhikevich(
     b: float = 1.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -443,8 +427,6 @@ Izhikevich(
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`multi_time_step (bool)` ：是否调整为多时间步模式。
 
 `trainable (bool)` ：参数 $a$ 和 $b$ 是否可以被训练。
 
@@ -507,7 +489,6 @@ KLIF(
     k: float = 0.2,
     spiking_function: Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -527,8 +508,6 @@ KLIF(
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`multi_time_step (bool)` ：是否调整为多时间步模式。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 和 $k$ 是否可以被训练。
 
@@ -576,7 +555,6 @@ LIAF(
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     activation_function: torch.nn.Module = nn.ReLU(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -596,8 +574,6 @@ LIAF(
 `activation_function (torch.nn.Module)` ：输出所使用的激活函数 $f(U^{l}(t)-u_{th})$ 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`multi_time_step (bool)` ：是否调整为多时间步模式。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 是否可以被训练。
 

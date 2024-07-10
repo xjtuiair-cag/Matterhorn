@@ -13,14 +13,10 @@ This module defines some complete neural network layers or inter-layer operation
 ## `matterhorn_pytorch.snn.layer.Layer`
 
 ```python
-Layer(
-    multi_time_step = False
-)
+Layer()
 ```
 
 ### Constructor Arguments
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 ### Overridable Methods
 
@@ -62,7 +58,6 @@ STDPLinear(
     tau_pos: float = 2.0,
     a_neg: float = 0.015,
     tau_neg: float = 2.0,
-    multi_time_step: bool = True,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -83,8 +78,6 @@ STDPLinear(
 `a_neg (float)`: STDP parameter $A_{-}$.
 
 `tau_neg (float)`: STDP parameter $\tau_{-}$.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 `device (torch.device)`: Computational device used.
 
@@ -115,8 +108,7 @@ MaxPool1d(
     padding: _size_any_t = 0,
     dilation: _size_any_t = 1,
     return_indices: bool = False,
-    ceil_mode: bool = False,
-    multi_time_step: bool = False
+    ceil_mode: bool = False
 )
 ```
 
@@ -133,8 +125,6 @@ MaxPool1d(
 `return_indices (bool)`: Whether to return the indices of the pooled values in the original image.
 
 `ceil_mode (bool)`: Whether to ceil the value after pooling.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 ### Example Usage
 
@@ -163,8 +153,7 @@ MaxPool2d(
     padding: _size_any_t = 0,
     dilation: _size_any_t = 1,
     return_indices: bool = False,
-    ceil_mode: bool = False,
-    multi_time_step: bool = False
+    ceil_mode: bool = False
 )
 ```
 
@@ -181,8 +170,6 @@ MaxPool2d(
 `return_indices (bool)`: Whether to return the indices of the pooled values in the original image.
 
 `ceil_mode (bool)`: Whether to ceil the value after pooling.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 ### Example Usage
 
@@ -209,8 +196,7 @@ MaxPool3d(
     padding: _size_any_t = 0,
     dilation: _size_any_t = 1,
     return_indices: bool = False,
-    ceil_mode: bool = False,
-    multi_time_step: bool = False
+    ceil_mode: bool = False
 )
 ```
 
@@ -227,8 +213,6 @@ MaxPool3d(
 `return_indices (bool)`: Whether to return the indices of the pooled values in the original image.
 
 `ceil_mode (bool)`: Whether to ceil the value after pooling.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 ### Example Usage
 
@@ -254,8 +238,7 @@ AvgPool1d(
     stride: Optional[_size_1_t] = None,
     padding: _size_1_t = 0,
     ceil_mode: bool = False,
-    count_include_pad: bool = True,
-    multi_time_step: bool = False
+    count_include_pad: bool = True
 )
 ```
 
@@ -270,8 +253,6 @@ AvgPool1d(
 `ceil_mode (bool)`: Whether to ceil the value after pooling.
 
 `count_include_pad (bool)`: Whether to include the boundary when pooling.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 ### Example Usage
 
@@ -300,8 +281,7 @@ AvgPool2d(
     padding: _size_2_t = 0,
     ceil_mode: bool = False,
     count_include_pad: bool = True,
-    divisor_override: Optional[int] = None,
-    multi_time_step: bool = False
+    divisor_override: Optional[int] = None
 )
 ```
 
@@ -318,8 +298,6 @@ AvgPool2d(
 `count_include_pad (bool)`: Whether to include the boundary when pooling.
 
 `divisor_override (int | None)`: Whether to use a specific number to replace the sum as the divisor.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 ### Example Usage
 
@@ -346,8 +324,7 @@ AvgPool3d(
     padding: _size_3_t = 0,
     ceil_mode: bool = False,
     count_include_pad: bool = True,
-    divisor_override: Optional[int] = None,
-    multi_time_step: bool = False
+    divisor_override: Optional[int] = None
 )
 ```
 
@@ -364,8 +341,6 @@ AvgPool3d(
 `count_include_pad (bool)`: Whether to include the boundary when pooling.
 
 `divisor_override (int | None)`: Whether to use a specific number to replace the sum as the divisor.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 ### Example Usage
 
@@ -384,8 +359,7 @@ Flattening layer, reshapes and flattens the tensor. Generally used to connect co
 ```python
 Flatten(
     start_dim: int = 2,
-    end_dim: int = -1,
-    multi_time_step: bool = False
+    end_dim: int = -1
 )
 ```
 
@@ -394,8 +368,6 @@ Flatten(
 `start_dim (int)`: Dimension to start flattening (excluding the time dimension). Default is `1`, starting from spatial dimensions.
 
 `end_dim (int)`: Dimension to end flattening (excluding the time dimension). Default is `-1`, flattening to the last dimension.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 ### Example Usage
 
@@ -414,8 +386,7 @@ Unflattening layer, re-folds the flattened tensor.
 ```python
 Unflatten(
     dim: Union[int, str],
-    unflattened_size: _size,
-    multi_time_step: bool = False
+    unflattened_size: _size
 )
 ```
 
@@ -424,8 +395,6 @@ Unflatten(
 `dim (int)`: Which dimension (excluding the time dimension) of data to fold.
 
 `unflattened_size (size)`: Shape to fold this dimension into.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 ### Example Usage
 
@@ -444,8 +413,7 @@ Dropout layer, which sets elements to `0` with a certain probability.
 ```python
 Dropout(
     p: float = 0.5,
-    inplace: bool = False,
-    multi_time_step: bool = False
+    inplace: bool = False
 )
 ```
 
@@ -454,8 +422,6 @@ Dropout(
 `p (float)`: The dropout probability.
 
 `unflattened_size (size)`: Whether to modify the original tensor. If `True`, modifies the original tensor; otherwise, creates a new tensor.
-
-`multi_time_step (bool)`: Whether to adjust for multiple time steps mode.
 
 ### Example Usage
 

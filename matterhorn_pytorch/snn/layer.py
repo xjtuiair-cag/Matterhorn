@@ -10,32 +10,20 @@ import torch.nn as nn
 import torch.nn.functional as _F
 import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
+from matterhorn_pytorch.snn.soma import Soma as _Soma
 from matterhorn_pytorch.snn.container import Temporal as _Temporal
-from typing import Any as _Any, Tuple as _Tuple, Iterable as _Iterable, Optional as _Optional, Union as _Union
+from typing import Any as _Any, Tuple as _Tuple, Iterable as _Iterable, Callable as _Callable, Optional as _Optional, Union as _Union
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
 from matterhorn_pytorch.training.functional import stdp_online as _stdp_online
 
 
 class Layer(_Module):
-    def __init__(self, multi_time_step = False) -> None:
+    def __init__(self) -> None:
         """
         突触函数的骨架，定义突触最基本的函数。
-        Args:
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        super().__init__(
-            multi_time_step = multi_time_step
-        )
-
-
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来。
-        Returns:
-            repr_str (str): 参数表
-        """
-        return "multi_time_step=%s" % (str(self.multi_time_step),)
+        super().__init__()
 
 
     def forward_multi_time_steps(self, *args, **kwargs) -> torch.Tensor:
@@ -72,7 +60,7 @@ class Layer(_Module):
 
 class f_stdp_linear(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Module, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Callable, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_step_mode: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         利用STDP进行学习的全连接层的前向传播函数。
         Args:
@@ -87,13 +75,13 @@ class f_stdp_linear(torch.autograd.Function):
             a_neg (float): STDP参数A-
             tau_neg (float): STDP参数tau-
             training (bool): 是否正在训练
-            multi_time_step (bool): 是否为多时间步模式
+            multi_step_mode (bool): 是否为多时间步模式
         Returns:
             output (torch.Tensor): 输出脉冲序列
             input_trace (torch.Tensor): 输入的迹，累积的输入效应
             output_trace (torch.Tensor): 输出的迹，累积的输出效应
         """
-        if multi_time_step:
+        if multi_step_mode:
             input_spike_train = input.clone()
             flattened_input, _, tb = _SF.merge_time_steps_batch_size(input)
             time_steps = tb[0]
@@ -104,7 +92,7 @@ class f_stdp_linear(torch.autograd.Function):
             time_steps = 1
             psp: torch.Tensor = _F.linear(input, weight, bias = None)
         output: torch.Tensor = soma(psp)
-        if multi_time_step:
+        if multi_step_mode:
             output_spike_train = output.clone()
         else:
             output_spike_train = output[None]
@@ -146,7 +134,7 @@ class f_stdp_linear(torch.autograd.Function):
             grad_a_neg (None): STDP参数A-的梯度，为None
             grad_tau_neg (None): STDP参数tau-的梯度，为None
             grad_training (None): 是否正在训练的梯度，为None
-            grad_multi_time_step (None): 是否为多时间步模式的梯度，为None
+            grad_multi_step_mode (None): 是否为多时间步模式的梯度，为None
         """
         delta_weight, input = ctx.saved_tensors
         delta_weight = -delta_weight
@@ -154,7 +142,7 @@ class f_stdp_linear(torch.autograd.Function):
 
 
 class STDPLinear(_Module):
-    def __init__(self, soma: _Module, in_features: int, out_features: int, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, multi_time_step: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, soma: _Soma, in_features: int, out_features: int, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层。
         Args:
@@ -165,34 +153,31 @@ class STDPLinear(_Module):
             tau_pos (float): STDP参数tau+
             a_neg (float): STDP参数A-
             tau_neg (float): STDP参数tau-
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
         self.input_trace = None
         self.output_trace = None
-        super().__init__(
-            multi_time_step = multi_time_step
-        )
+        super().__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.weight = nn.Parameter(torch.empty((out_features, in_features), device = device, dtype = dtype))
         nn.init.kaiming_uniform_(self.weight, a = 5.0 ** 0.5)
-        if self.multi_time_step:
-            if soma.supports_multi_time_step:
-                self.soma = soma.multi_time_step_(True)
-            elif not soma.multi_time_step:
-                self.soma = _Temporal(soma)
-        else:
-            if soma.supports_single_time_step:
-                self.soma = soma.multi_time_step_(False)
-            else:
-                self.soma = soma
+        self.soma = soma
         self.a_pos = a_pos
         self.tau_pos = tau_pos
         self.a_neg = a_neg
         self.tau_neg = tau_neg
         self.reset()
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return ", ".join(["in_features=%d" % self.in_features, "out_features=%d" % self.out_features]) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def reset(self) -> nn.Module:
@@ -212,7 +197,7 @@ class STDPLinear(_Module):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.multi_time_step:
+        if self.multi_step_mode:
             time_steps = x.shape[0]
             batch_size = x.shape[1]
         else:
@@ -221,13 +206,14 @@ class STDPLinear(_Module):
         trace_shape = torch.zeros_like(self.weight)[None].repeat_interleave(batch_size, dim = 0)
         self.input_trace = _SF.init_tensor(self.input_trace, trace_shape)
         self.output_trace = _SF.init_tensor(self.output_trace, trace_shape)
-        y, self.input_trace, self.output_trace = f_stdp_linear.apply(x, self.weight, self.input_trace, self.output_trace, self.soma, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_time_step)
+        soma = self.soma.forward_multi_time_steps if self.multi_step_mode else self.soma.forward_single_time_step
+        y, self.input_trace, self.output_trace = f_stdp_linear.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)
         return y
 
 
 class f_stdp_conv2d(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Module, stride: _size_any_t, padding: _size_any_t, dilation: _size_any_t, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_time_step: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Callable, stride: _size_any_t, padding: _size_any_t, dilation: _size_any_t, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_step_mode: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         利用STDP进行学习的2维卷积层的前向传播函数。
         Args:
@@ -245,13 +231,13 @@ class f_stdp_conv2d(torch.autograd.Function):
             a_neg (float): STDP参数A-
             tau_neg (float): STDP参数tau-
             training (bool): 是否正在训练
-            multi_time_step (bool): 是否为多时间步模式
+            multi_step_mode (bool): 是否为多时间步模式
         Returns:
             output (torch.Tensor): 输出脉冲序列
             input_trace (torch.Tensor): 输入的迹，累积的输入效应
             output_trace (torch.Tensor): 输出的迹，累积的输出效应
         """
-        if multi_time_step:
+        if multi_step_mode:
             input_spike_train = input.clone()
             flattened_input, _, tb = _SF.merge_time_steps_batch_size(input)
             time_steps = tb[0]
@@ -262,7 +248,7 @@ class f_stdp_conv2d(torch.autograd.Function):
             time_steps = 1
             psp: torch.Tensor = _F.conv2d(input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
         output: torch.Tensor = soma(psp)
-        if multi_time_step:
+        if multi_step_mode:
             output_spike_train = output.clone()
         else:
             output_spike_train = output[None]
@@ -327,7 +313,7 @@ class f_stdp_conv2d(torch.autograd.Function):
             grad_a_neg (None): STDP参数A-的梯度，为None
             grad_tau_neg (None): STDP参数tau-的梯度，为None
             grad_training (None): 是否正在训练的梯度，为None
-            grad_multi_time_step (None): 是否为多时间步模式的梯度，为None
+            grad_multi_step_mode (None): 是否为多时间步模式的梯度，为None
         """
         delta_weight, input = ctx.saved_tensors
         delta_weight = -delta_weight
@@ -335,7 +321,7 @@ class f_stdp_conv2d(torch.autograd.Function):
 
 
 class STDPConv2d(_Module):
-    def __init__(self, soma: _Module, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, dilation: _size_2_t = 1, a_pos: float = 0.0002, tau_pos: float = 2.0, a_neg: float = 0.0002, tau_neg: float = 2.0, multi_time_step: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, soma: _Soma, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, dilation: _size_2_t = 1, a_pos: float = 0.0002, tau_pos: float = 2.0, a_neg: float = 0.0002, tau_neg: float = 2.0, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         使用STDP学习机制时的2维卷积层。
         Args:
@@ -350,15 +336,12 @@ class STDPConv2d(_Module):
             tau_pos (float): STDP参数tau+
             a_neg (float): STDP参数A-
             tau_neg (float): STDP参数tau-
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
         self.input_trace = None
         self.output_trace = None
-        super().__init__(
-            multi_time_step = multi_time_step
-        )
+        super().__init__()
         def _fill(data: _size_any_t, l: int) -> torch.Tensor:
             res = torch.tensor(data)
             if res.ndim == 0:
@@ -375,21 +358,21 @@ class STDPConv2d(_Module):
         self.stride = _fill(stride, 2)
         self.padding = _fill(padding, 2)
         self.dilation = _fill(dilation, 2)
-        if self.multi_time_step:
-            if soma.supports_multi_time_step:
-                self.soma = soma.multi_time_step_(True)
-            elif not soma.multi_time_step:
-                self.soma = _Temporal(soma)
-        else:
-            if soma.supports_single_time_step:
-                self.soma = soma.multi_time_step_(False)
-            else:
-                self.soma = soma
+        self.soma = soma
         self.a_pos = a_pos
         self.tau_pos = tau_pos
         self.a_neg = a_neg
         self.tau_neg = tau_neg
         self.reset()
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return ", ".join(["in_channels=%d" % self.in_channels, "out_channels=%d" % self.out_channels, "kernel_size=(%d, %d)" % tuple(self.kernel_size), "stride=(%d, %d)" % tuple(self.stride), "padding=(%d, %d)" % tuple(self.padding), "dilation=(%d, %d)" % tuple(self.dilation)]) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def reset(self) -> nn.Module:
@@ -409,7 +392,7 @@ class STDPConv2d(_Module):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.multi_time_step:
+        if self.multi_step_mode:
             time_steps = x.shape[0]
             batch_size = x.shape[1]
             h_in = x.shape[3]
@@ -427,12 +410,13 @@ class STDPConv2d(_Module):
         w_out = (w_in + 2 * self.padding[1] - w_wt * self.dilation[1]) // self.stride[1] + 1
         self.input_trace = _SF.init_tensor(self.input_trace, torch.zeros(batch_size, c_out, c_in, h_in, w_in).to(x))
         self.output_trace = _SF.init_tensor(self.output_trace, torch.zeros(batch_size, c_out, c_in, h_out, w_out))
-        y, self.input_trace, self.output_trace = f_stdp_conv2d.apply(x, self.weight, self.input_trace, self.output_trace, self.soma, self.stride, self.padding, self.dilation, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_time_step)
+        soma = self.soma.forward_multi_time_steps if self.multi_step_mode else self.soma.forward_single_time_step
+        y, self.input_trace, self.output_trace = f_stdp_conv2d.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.stride, self.padding, self.dilation, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)
         return y
 
 
 class MaxPool1d(Layer, nn.MaxPool1d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
         """
         一维最大池化。
         Args:
@@ -442,12 +426,8 @@ class MaxPool1d(Layer, nn.MaxPool1d):
             dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.MaxPool1d.__init__(
             self,
             kernel_size = kernel_size,
@@ -465,7 +445,7 @@ class MaxPool1d(Layer, nn.MaxPool1d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.MaxPool1d.extra_repr(self), Layer.extra_repr(self)])
+        return nn.MaxPool1d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -481,7 +461,7 @@ class MaxPool1d(Layer, nn.MaxPool1d):
 
 
 class MaxPool2d(Layer, nn.MaxPool2d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
         """
         二维最大池化。
         Args:
@@ -491,12 +471,8 @@ class MaxPool2d(Layer, nn.MaxPool2d):
             dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.MaxPool2d.__init__(
             self,
             kernel_size = kernel_size,
@@ -514,7 +490,7 @@ class MaxPool2d(Layer, nn.MaxPool2d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.MaxPool2d.extra_repr(self), Layer.extra_repr(self)])
+        return nn.MaxPool2d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -530,7 +506,7 @@ class MaxPool2d(Layer, nn.MaxPool2d):
 
 
 class MaxPool3d(Layer, nn.MaxPool3d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
         """
         三维最大池化。
         Args:
@@ -540,12 +516,8 @@ class MaxPool3d(Layer, nn.MaxPool3d):
             dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.MaxPool3d.__init__(
             self,
             kernel_size = kernel_size,
@@ -563,7 +535,7 @@ class MaxPool3d(Layer, nn.MaxPool3d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.MaxPool3d.extra_repr(self), Layer.extra_repr(self)])
+        return nn.MaxPool3d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -579,7 +551,7 @@ class MaxPool3d(Layer, nn.MaxPool3d):
 
 
 class AvgPool1d(Layer, nn.AvgPool1d):
-    def __init__(self, kernel_size: _size_1_t, stride: _Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _size_1_t, stride: _Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True) -> None:
         """
         一维平均池化。
         Args:
@@ -588,12 +560,8 @@ class AvgPool1d(Layer, nn.AvgPool1d):
             padding (size_1_t): 边界填充的长度
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.AvgPool1d.__init__(
             self,
             kernel_size = kernel_size,
@@ -610,7 +578,7 @@ class AvgPool1d(Layer, nn.AvgPool1d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.AvgPool1d.extra_repr(self), Layer.extra_repr(self)])
+        return nn.AvgPool1d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -626,7 +594,7 @@ class AvgPool1d(Layer, nn.AvgPool1d):
 
 
 class AvgPool2d(Layer, nn.AvgPool2d):
-    def __init__(self, kernel_size: _size_2_t, stride: _Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _size_2_t, stride: _Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None) -> None:
         """
         二维平均池化。
         Args:
@@ -636,12 +604,8 @@ class AvgPool2d(Layer, nn.AvgPool2d):
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
             divisor_override (int | None): 是否用某个数取代总和作为除数
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.AvgPool2d.__init__(
             self,
             kernel_size = kernel_size,
@@ -659,7 +623,7 @@ class AvgPool2d(Layer, nn.AvgPool2d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.AvgPool2d.extra_repr(self), Layer.extra_repr(self)])
+        return nn.AvgPool2d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -675,7 +639,7 @@ class AvgPool2d(Layer, nn.AvgPool2d):
 
 
 class AvgPool3d(Layer, nn.AvgPool3d):
-    def __init__(self, kernel_size: _size_3_t, stride: _Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _size_3_t, stride: _Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None) -> None:
         """
         三维平均池化。
         Args:
@@ -685,12 +649,8 @@ class AvgPool3d(Layer, nn.AvgPool3d):
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
             divisor_override (int | None): 是否用某个数取代总和作为除数
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.AvgPool3d.__init__(
             self,
             kernel_size = kernel_size,
@@ -708,7 +668,7 @@ class AvgPool3d(Layer, nn.AvgPool3d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.AvgPool3d.extra_repr(self), Layer.extra_repr(self)])
+        return nn.AvgPool3d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -724,25 +684,30 @@ class AvgPool3d(Layer, nn.AvgPool3d):
 
 
 class MaxUnpool1d(Layer, nn.MaxUnpool1d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0) -> None:
         """
         一维最大反池化。
         Args:
             kernel_size (size_3_t): 池化核大小
             stride (size_3_t | None): 池化核步长
             padding (size_3_t): 边界填充的长度
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.MaxUnpool1d.__init__(
             self,
             kernel_size = kernel_size,
             stride = stride,
             padding = padding
         )
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return nn.MaxUnpool1d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
     
 
     def forward_single_time_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
@@ -760,25 +725,30 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
 
 
 class MaxUnpool2d(Layer, nn.MaxUnpool2d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0) -> None:
         """
         二维最大反池化。
         Args:
             kernel_size (size_3_t): 池化核大小
             stride (size_3_t | None): 池化核步长
             padding (size_3_t): 边界填充的长度
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.MaxUnpool2d.__init__(
             self,
             kernel_size = kernel_size,
             stride = stride,
             padding = padding
         )
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return nn.MaxUnpool2d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
     
 
     def forward_single_time_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
@@ -796,25 +766,30 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
 
 
 class MaxUnpool3d(Layer, nn.MaxUnpool3d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, multi_time_step: bool = False) -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0) -> None:
         """
         一维最大反池化。
         Args:
             kernel_size (size_3_t): 池化核大小
             stride (size_3_t | None): 池化核步长
             padding (size_3_t): 边界填充的长度
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.MaxUnpool3d.__init__(
             self,
             kernel_size = kernel_size,
             stride = stride,
             padding = padding
         )
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return nn.MaxUnpool3d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
@@ -852,6 +827,15 @@ class Upsample(nn.Upsample):
         )
 
 
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return nn.Upsample.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+
+
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
@@ -865,18 +849,14 @@ class Upsample(nn.Upsample):
 
 
 class Flatten(Layer, nn.Flatten):
-    def __init__(self, start_dim: int = 2, end_dim: int = -1, multi_time_step: bool = False) -> None:
+    def __init__(self, start_dim: int = 2, end_dim: int = -1) -> None:
         """
         展平层。
         Args:
             start_dim (int): 起始维度，默认为2（除去[T, B]之后的维度）
             end_dim (int): 终止维度
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.Flatten.__init__(
             self,
             start_dim = max(start_dim - 1, 0) if start_dim >= 0 else start_dim,
@@ -890,7 +870,7 @@ class Flatten(Layer, nn.Flatten):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Flatten.extra_repr(self), Layer.extra_repr(self)])
+        return nn.Flatten.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -906,18 +886,14 @@ class Flatten(Layer, nn.Flatten):
 
 
 class Unflatten(Layer, nn.Unflatten):
-    def __init__(self, dim: _Union[int, str], unflattened_size: _size, multi_time_step: bool = False) -> None:
+    def __init__(self, dim: _Union[int, str], unflattened_size: _size) -> None:
         """
         反展开层。
         Args:
             dim (int | str): 在哪个维度反展开
             unflattened_size: 这个维度上的张量要反展开成什么形状
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.Unflatten.__init__(
             self,
             dim = max(dim - 1, 0) if dim >= 0 else dim,
@@ -931,7 +907,7 @@ class Unflatten(Layer, nn.Unflatten):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Unflatten.extra_repr(self), Layer.extra_repr(self)])
+        return nn.Unflatten.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -947,23 +923,28 @@ class Unflatten(Layer, nn.Unflatten):
 
 
 class Dropout(Layer, nn.Dropout):
-    def __init__(self, p: float = 0.5, inplace: bool = False, multi_time_step: bool = False) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False) -> None:
         """
         遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.Dropout.__init__(
             self,
             p = p,
             inplace = inplace
         )
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return nn.Dropout.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -979,23 +960,28 @@ class Dropout(Layer, nn.Dropout):
 
 
 class Dropout1d(Layer, nn.Dropout1d):
-    def __init__(self, p: float = 0.5, inplace: bool = False, multi_time_step: bool = False) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False) -> None:
         """
         一维遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.Dropout1d.__init__(
             self,
             p = p,
             inplace = inplace
         )
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return nn.Dropout1d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -1011,23 +997,28 @@ class Dropout1d(Layer, nn.Dropout1d):
 
 
 class Dropout2d(Layer, nn.Dropout2d):
-    def __init__(self, p: float = 0.5, inplace: bool = False, multi_time_step: bool = False) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False) -> None:
         """
         二维遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.Dropout2d.__init__(
             self,
             p = p,
             inplace = inplace
         )
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return nn.Dropout2d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -1043,23 +1034,28 @@ class Dropout2d(Layer, nn.Dropout2d):
 
 
 class Dropout3d(Layer, nn.Dropout3d):
-    def __init__(self, p: float = 0.5, inplace: bool = False, multi_time_step: bool = False) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False) -> None:
         """
         三维遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        Layer.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Layer.__init__(self)
         nn.Dropout3d.__init__(
             self,
             p = p,
             inplace = inplace
         )
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return nn.Dropout3d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:

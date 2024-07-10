@@ -13,14 +13,8 @@ SNNs 与 ANNs 在突触的计算上基本一致。 SNNs 的突触将脉冲序列
 ## `matterhorn.snn.synapse.Synapse`
 
 ```python
-Synapse(
-    multi_time_step = False
-)
+Synapse()
 ```
-
-### 构造函数参数
-
-`multi_time_step (bool)` ：是否调整为多时间步模式。
 
 ### 可重载的方法
 
@@ -45,7 +39,6 @@ Linear(
     in_features: int,
     out_features: int,
     bias: bool = True,
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -58,8 +51,6 @@ Linear(
 `out_features (int)` ：输出的长度 `O` 。输出的形状为 `[B, O]` （单时间步模式） 或 `[T, B, O]` （多时间步模式）。
 
 `bias (bool)` ：是否要加入偏置，为 `True` 则执行 $W\vec{x}+\vec{b}$ ，为 `False` 则执行 $W\vec{x}$ 。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -94,7 +85,6 @@ Conv1d(
     groups: int = 1,
     bias: bool = True,
     padding_mode: str = "zeros",
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -119,8 +109,6 @@ Conv1d(
 `bias (bool)` ：是否要加入偏置。
 
 `padding_mode (str)` ：边缘填充的方式。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -157,7 +145,6 @@ Conv2d(
     groups: int = 1,
     bias: bool = True,
     padding_mode: str = "zeros",
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -188,8 +175,6 @@ Conv2d(
 `bias (bool)` ：是否要加入偏置。
 
 `padding_mode (str)` ：边缘填充的方式。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -224,7 +209,6 @@ Conv3d(
     groups: int = 1,
     bias: bool = True,
     padding_mode: str = "zeros",
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -249,8 +233,6 @@ Conv3d(
 `bias (bool)` ：是否要加入偏置。
 
 `padding_mode (str)` ：边缘填充的方式。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -282,7 +264,6 @@ ConvTranspose1d(
     bias: bool = True,
     dilation: _size_1_t = 1,
     padding_mode: str = "zeros",
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -309,8 +290,6 @@ ConvTranspose1d(
 `dilation (size_1_t)` ：在原卷积时，每隔多少像素进行一次乘加操作。
 
 `padding_mode (str)` ：边缘填充的方式。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -370,8 +349,6 @@ ConvTranspose2d(
 
 `padding_mode (str)` ：边缘填充的方式。
 
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
-
 `device (torch.device)` ：计算所使用的计算设备。
 
 `dtype (torch.dtype)` ：计算所使用的数据类型。
@@ -402,7 +379,6 @@ ConvTranspose3d(
     bias: bool = True,
     dilation: _size_3_t = 1,
     padding_mode: str = "zeros",
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -429,8 +405,6 @@ ConvTranspose3d(
 `dilation (size_3_t)` ：在原卷积时，每隔多少像素进行一次乘加操作。
 
 `padding_mode (str)` ：边缘填充的方式。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -461,7 +435,6 @@ BatchNorm1d(
     momentum: float = 0.1,
     affine: bool = True,
     track_running_stats: bool = True,
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -478,8 +451,6 @@ BatchNorm1d(
 `affine (bool)` ：是否启用参数 $\gamma$ 和 $\beta$ ，进行仿射变换。
 
 `track_running_stats (bool)` ：是否需要跟踪整个训练过程来进行批归一化的学习。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -510,7 +481,6 @@ BatchNorm2d(
     momentum: float = 0.1,
     affine: bool = True,
     track_running_stats: bool = True,
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -527,8 +497,6 @@ BatchNorm2d(
 `affine (bool)` ：是否启用参数 $\gamma$ 和 $\beta$ ，进行仿射变换。
 
 `track_running_stats (bool)` ：是否需要跟踪整个训练过程来进行批归一化的学习。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -559,7 +527,6 @@ BatchNorm3d(
     momentum: float = 0.1,
     affine: bool = True,
     track_running_stats: bool = True,
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -576,8 +543,6 @@ BatchNorm3d(
 `affine (bool)` ：是否启用参数 $\gamma$ 和 $\beta$ ，进行仿射变换。
 
 `track_running_stats (bool)` ：是否需要跟踪整个训练过程来进行批归一化的学习。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -606,7 +571,6 @@ LayerNorm(
     normalized_shape: _shape_t,
     eps: float = 0.00001,
     elementwise_affine: bool = True,
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -619,8 +583,6 @@ LayerNorm(
 `eps (float)` ：参数 $\varepsilon$ 。
 
 `elementwise_affine (bool)` ：是否启用参数 $\gamma$ 和 $\beta$ ，进行逐元素仿射变换。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 `device (torch.device)` ：计算所使用的计算设备。
 

@@ -16,15 +16,22 @@ class Encoder(_Module):
     def __init__(self) -> None:
         """
         编码器的基类。编码器是一个多时间步模型。
-        Args:
         """
-        super().__init__(
-            multi_time_step = True
-        )
+        super().__init__()
+        self.multi_step_mode_()
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return ""
 
 
     @property
-    def supports_single_time_step(self) -> bool:
+    def supports_single_step_mode(self) -> bool:
         """
         是否支持单个时间步。
         Returns:
@@ -73,7 +80,7 @@ class Poisson(Encoder):
         Returns:
             repr_str (str): 参数表
         """
-        return "time_steps=%d" % (self.time_steps)
+        return ", ".join(["time_steps=%d" % self.time_steps])
 
 
     def forward_single_time_step(self, x:torch.Tensor) -> torch.Tensor:
@@ -146,7 +153,7 @@ class Temporal(Encoder):
         Returns:
             repr_str (str): 参数表
         """
-        return "time_steps=%d, prob=%g" % (self.time_steps, self.prob)
+        return ", ".join(["time_steps=%d" % self.time_steps, "prob=%g" % self.prob])
 
 
     def reset(self) -> _Module:

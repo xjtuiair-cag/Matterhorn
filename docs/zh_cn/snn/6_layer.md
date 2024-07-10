@@ -13,14 +13,8 @@
 ## `matterhorn_pytorch.snn.layer.Layer`
 
 ```python
-Layer(
-    multi_time_step = False
-)
+Layer()
 ```
-
-### 构造函数参数
-
-`multi_time_step (bool)` ：是否调整为多时间步模式。
 
 ### 可重载的方法
 
@@ -62,7 +56,6 @@ STDPLinear(
     tau_pos: float = 2.0,
     a_neg: float = 0.015,
     tau_neg: float = 2.0,
-    multi_time_step: bool = True,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -83,8 +76,6 @@ STDPLinear(
 `a_neg (float)` ： STDP 参数 $A_{-}$ 。
 
 `tau_neg (float)` ： STDP 参数 $\tau_{-}$ 。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -115,8 +106,7 @@ MaxPool1d(
     padding: _size_any_t = 0,
     dilation: _size_any_t = 1,
     return_indices: bool = False,
-    ceil_mode: bool = False,
-    multi_time_step: bool = False
+    ceil_mode: bool = False
 )
 ```
 
@@ -133,8 +123,6 @@ MaxPool1d(
 `return_indices (bool)` ：是否返回池化后的值在原图像中的索引。
 
 `ceil_mode (bool)` ：池化后是否将值向上取整。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 ### 示例用法
 
@@ -163,8 +151,7 @@ MaxPool2d(
     padding: _size_any_t = 0,
     dilation: _size_any_t = 1,
     return_indices: bool = False,
-    ceil_mode: bool = False,
-    multi_time_step: bool = False
+    ceil_mode: bool = False
 )
 ```
 
@@ -181,8 +168,6 @@ MaxPool2d(
 `return_indices (bool)` ：是否返回池化后的值在原图像中的索引。
 
 `ceil_mode (bool)` ：池化后是否将值向上取整。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 ### 示例用法
 
@@ -209,8 +194,7 @@ MaxPool3d(
     padding: _size_any_t = 0,
     dilation: _size_any_t = 1,
     return_indices: bool = False,
-    ceil_mode: bool = False,
-    multi_time_step: bool = False
+    ceil_mode: bool = False
 )
 ```
 
@@ -227,8 +211,6 @@ MaxPool3d(
 `return_indices (bool)` ：是否返回池化后的值在原图像中的索引。
 
 `ceil_mode (bool)` ：池化后是否将值向上取整。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 ### 示例用法
 
@@ -254,8 +236,7 @@ AvgPool1d(
     stride: Optional[_size_1_t] = None,
     padding: _size_1_t = 0,
     ceil_mode: bool = False,
-    count_include_pad: bool = True,
-    multi_time_step: bool = False
+    count_include_pad: bool = True
 )
 ```
 
@@ -270,8 +251,6 @@ AvgPool1d(
 `ceil_mode (bool)` ：池化后是否将值向上取整。
 
 `count_include_pad (bool)` ：池化的时候是否连边界一起计入。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 ### 示例用法
 
@@ -300,8 +279,7 @@ AvgPool2d(
     padding: _size_2_t = 0,
     ceil_mode: bool = False,
     count_include_pad: bool = True,
-    divisor_override: Optional[int] = None,
-    multi_time_step: bool = False
+    divisor_override: Optional[int] = None
 )
 ```
 
@@ -318,8 +296,6 @@ AvgPool2d(
 `count_include_pad (bool)` ：池化的时候是否连边界一起计入。
 
 `divisor_override (int | None)` ：是否用某个数取代总和作为除数。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 ### 示例用法
 
@@ -346,8 +322,7 @@ AvgPool3d(
     padding: _size_3_t = 0,
     ceil_mode: bool = False,
     count_include_pad: bool = True,
-    divisor_override: Optional[int] = None,
-    multi_time_step: bool = False
+    divisor_override: Optional[int] = None
 )
 ```
 
@@ -364,8 +339,6 @@ AvgPool3d(
 `count_include_pad (bool)` ：池化的时候是否连边界一起计入。
 
 `divisor_override (int | None)` ：是否用某个数取代总和作为除数。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 ### 示例用法
 
@@ -384,8 +357,7 @@ pooling = mth.snn.AvgPool3d(2) # [T, B, H, W, L] -> [T, B, H // 2, W // 2, L // 
 ```python
 Flatten(
     start_dim: int = 2,
-    end_dim: int = -1,
-    multi_time_step: bool = False
+    end_dim: int = -1
 )
 ```
 
@@ -394,8 +366,6 @@ Flatten(
 `start_dim (int)` ：展平开始的维度（不算时间维度）。默认为 `1` ，即跳过批维度，从空间维度开始展平。
 
 `end_dim (int)` ：展平结束的维度（不算时间维度）。默认为 `-1` ，即展平到最后一个维度。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 ### 示例用法
 
@@ -414,8 +384,7 @@ lf = mth.snn.Flatten() # [T, B, H, W] -> [T, B, H * W]
 ```python
 Unflatten(
     dim: Union[int, str],
-    unflattened_size: _size,
-    multi_time_step: bool = False
+    unflattened_size: _size
 )
 ```
 
@@ -424,8 +393,6 @@ Unflatten(
 `dim (int)` ：要折叠哪一个维度（不算时间维度）的数据。
 
 `unflattened_size (size)` ：将这一个维度的数据折叠成什么形状。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 ### 示例用法
 
@@ -444,8 +411,7 @@ lf = mth.snn.Unflatten(1, (1, 28, 28)) # [T, B, 784] -> [T, B, 1, 28, 28]
 ```python
 Dropout(
     p: float = 0.5,
-    inplace: bool = False,
-    multi_time_step: bool = False
+    inplace: bool = False
 )
 ```
 
@@ -454,8 +420,6 @@ Dropout(
 `p (float)` ：遗忘概率。
 
 `unflattened_size (size)` ：是否在原有张量上改动，若为 `True` 则直接改原张量，否则新建一个张量。
-
-`multi_time_step (bool)` ：是否调整为多个时间步模式。
 
 ### 示例用法
 

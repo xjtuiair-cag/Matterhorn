@@ -13,14 +13,8 @@ In this module, the base class `matterhorn_pytorch.snn.Module` for all SNN modul
 ## `matterhorn_pytorch.snn.Module` / `matterhorn_pytorch.snn.skeleton.Module`
 
 ```python
-Module(
-    multi_time_step: bool = False
-)
+Module()
 ```
-
-### Constructor Parameters
-
-`multi_time_step (bool)`: Whether to switch to multi-time-step mode. Multi-time-step mode allows passing a tensor with multiple time steps, enabling computation step by step. Since Matterhorn defines many algorithms to accelerate multi-time-step operations, its efficiency is higher than that of single-time-step mode.
 
 ### Example Usage
 
@@ -31,9 +25,7 @@ import matterhorn_pytorch as mth
 
 class Demo(mth.snn.Module):
     def __init__(self) -> None:
-        super().__init__(
-            multi_time_step = True
-        )
+        super().__init__()
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         print(x.shape)

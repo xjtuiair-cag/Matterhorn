@@ -23,7 +23,7 @@ class Rectangular(SurrogateGradient):
         """
         super().__init__()
         self.a = a
-    
+
 
     def extra_repr(self) -> str:
         """
@@ -31,7 +31,7 @@ class Rectangular(SurrogateGradient):
         Returns:
             repr_str (str): 参数表
         """
-        return "a=%g" % (self.a)
+        return "a=%g" % self.a
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -62,7 +62,7 @@ class Polynomial(SurrogateGradient):
         Returns:
             repr_str (str): 参数表
         """
-        return "a=%g" % (self.a)
+        return "a=%g" % self.a
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -93,7 +93,7 @@ class Sigmoid(SurrogateGradient):
         Returns:
             repr_str (str): 参数表
         """
-        return "a=%g" % (self.a)
+        return "a=%g" % self.a
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -124,7 +124,7 @@ class Gaussian(SurrogateGradient):
         Returns:
             repr_str (str): 参数表
         """
-        return "a=%g" % (self.a)
+        return "a=%g" % self.a
     
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

@@ -16,15 +16,22 @@ class Decoder(_Module):
     def __init__(self) -> None:
         """
         解码器的基类。解码器是一个多时间步模型。
-        Args:
         """
-        super().__init__(
-            multi_time_step = True
-        )
+        super().__init__()
+        self.multi_step_mode_()
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return ""
 
 
     @property
-    def supports_single_time_step(self) -> bool:
+    def supports_single_step_mode(self) -> bool:
         """
         是否支持单个时间步。
         Returns:
@@ -95,7 +102,7 @@ class TimeBased(Decoder):
         Returns:
             repr_str (str): 参数表
         """
-        return "empty_fill=%g" % (self.empty_fill)
+        return ", ".join(["empty_fill=%g" % self.empty_fill])
 
 
     def reset(self) -> _Module:

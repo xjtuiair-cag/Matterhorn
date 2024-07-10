@@ -10,13 +10,11 @@ from matterhorn_pytorch.snn import Module as _Module
 
 
 class Lateral(_Module):
-    def __init__(self, tl: int, kl: int, multi_time_step: bool = False) -> None:
+    def __init__(self, tl: int, kl: int) -> None:
         """
         TNN的侧抑制柱
         """
-        super().__init__(
-            multi_time_step = multi_time_step,
-        )
+        super().__init__()
         self.tl = tl
         self.kl = kl
     

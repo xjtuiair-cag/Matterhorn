@@ -13,14 +13,8 @@
 ## `matterhorn_pytorch.snn.Module` / `matterhorn_pytorch.snn.skeleton.Module`
 
 ```python
-Module(
-    multi_time_step: bool = False
-)
+Module()
 ```
-
-### 构造函数参数
-
-`multi_time_step (bool)` ：是否调整为多时间步模式。多时间步模式允许传入一个具备多时间步的张量，从而逐时间步进行运算。由于 Matterhorn 中定义了许多用于加速多时间步的算法，因此其较单时间步模式运算效率更高。
 
 ### 示例用法
 
@@ -31,9 +25,7 @@ import matterhorn_pytorch as mth
 
 class Demo(mth.snn.Module):
     def __init__(self) -> None:
-        super().__init__(
-            multi_time_step = True
-        )
+        super().__init__()
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         print(x.shape)

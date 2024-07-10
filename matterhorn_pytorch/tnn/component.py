@@ -18,9 +18,7 @@ class Bitonic(_Module):
             level (int): 排序的级别l，输入为形状为[T, B, C, 2^l]的脉冲序列
             asc (bool): 是否为升序排序，为True则为升序，否则为降序
         """
-        super().__init__(
-            multi_time_step = True
-        )
+        super().__init__()
         self.level = level
         self.asc = asc
         self.length = 2 ** self.level
@@ -85,9 +83,7 @@ class Firing(_Module):
         """
         统计上升/下降的时间，并发射脉冲。
         """
-        super().__init__(
-            multi_time_step = True
-        )
+        super().__init__()
         self.u_threshold = nn.Parameter(torch.tensor(u_threshold), requires_grad = False)
     
 

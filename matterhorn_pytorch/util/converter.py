@@ -35,7 +35,6 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 in_features = ann_module.in_features,
                 out_features = ann_module.out_features,
                 bias = ann_module.bias is not None,
-                multi_time_step = False,
                 device = ann_module.weight.device,
                 dtype = ann_module.weight.dtype
             )
@@ -55,7 +54,6 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 groups = ann_module.groups,
                 bias = ann_module.bias is not None,
                 padding_mode = ann_module.padding_mode,
-                multi_time_step = False,
                 device = ann_module.weight.device,
                 dtype = ann_module.weight.dtype
             )
@@ -82,7 +80,6 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 bias = ann_module.bias is not None,
                 dilation = ann_module.dilation,
                 padding_mode = ann_module.padding_mode,
-                multi_time_step = False,
                 device = ann_module.weight.device,
                 dtype = ann_module.weight.dtype
             )
@@ -103,7 +100,6 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 momentum = ann_module.momentum,
                 affine = ann_module.affine,
                 track_running_stats = ann_module.track_running_stats,
-                multi_time_step = False,
                 device = ann_module.running_mean.device,
                 dtype = ann_module.running_mean.dtype
             )
@@ -116,8 +112,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             snn_module = snn.IF(
                 u_threshold = 1.0,
                 u_rest = 0.0,
-                hard_reset = False,
-                multi_time_step = False
+                hard_reset = False
             )
             setattr(ann_module, "snn_module", snn_module)
         # 最大池化
@@ -128,8 +123,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 padding = ann_module.padding,
                 dilation = ann_module.dilation,
                 return_indices = ann_module.return_indices,
-                ceil_mode = ann_module.ceil_mode,
-                multi_time_step = False
+                ceil_mode = ann_module.ceil_mode
             )
             if isinstance(ann_module, nn.MaxPool1d):
                 snn_module = snn.MaxPool1d(**kwargs)
@@ -144,8 +138,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 stride = ann_module.stride,
                 padding = ann_module.padding,
                 ceil_mode = ann_module.ceil_mode,
-                count_include_pad = ann_module.count_include_pad,
-                multi_time_step = False
+                count_include_pad = ann_module.count_include_pad
             )
             if isinstance(ann_module, nn.MaxPool1d):
                 snn_module = snn.AvgPool1d(**kwargs)
@@ -159,20 +152,17 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             if isinstance(ann_module, nn.Flatten):
                 snn_module = snn.Flatten(
                     start_dim = ann_module.start_dim,
-                    end_dim = ann_module.end_dim,
-                    multi_time_step = False
+                    end_dim = ann_module.end_dim
                 )
             elif isinstance(ann_module, nn.Unflatten):
                 snn_module = snn.Unflatten(
                     dim = ann_module.dim,
-                    unflattened_size = ann_module.unflattened_size,
-                    multi_time_step = False
+                    unflattened_size = ann_module.unflattened_size
                 )
         elif isinstance(ann_module, (nn.Dropout, nn.Dropout1d, nn.Dropout2d, nn.Dropout3d)):
             kwargs = dict(
                 p = ann_module.p,
-                inplace = ann_module.inplace,
-                multi_time_step = False
+                inplace = ann_module.inplace
             )
             if isinstance(ann_module, nn.Dropout1d):
                 snn_module = snn.Dropout1d(**kwargs)
@@ -216,8 +206,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 setattr(hybrid_module, name, _replace(module))
             snn_module = snn.Agent(
                 nn_module = hybrid_module,
-                force_spike_output = False,
-                multi_time_step = False
+                force_spike_output = False
             )
         return snn_module
     
@@ -231,7 +220,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
         def register_hook(model: snn.Module, hook: Callable) -> Iterable:
             hooks = []
             hooks.append(model.register_forward_hook(hook))
-            for module in model.children():
+            for name, module in model.named_children():
                 hooks = hooks + register_hook(module, hook)
             return hooks
         
@@ -359,7 +348,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
         after = deepcopy(before)
         for name, module in before.named_children():
             if isinstance(module, snn.synapse.NormPlaceholder):
-                setattr(after, name, snn.Identity(multi_time_step = False))
+                setattr(after, name, snn.Identity())
             elif isinstance(module, snn.IF):
                 if hasattr(module, "lambda_l"):
                     delattr(module, "lambda_l")

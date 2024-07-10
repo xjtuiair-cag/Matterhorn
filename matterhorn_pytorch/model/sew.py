@@ -31,9 +31,7 @@ else:
 
 class ResADD(snn.Module):
     def __init__(self) -> None:
-        super().__init__(
-            multi_time_step = True
-        )
+        super().__init__()
 
 
     def forward(self, a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
@@ -50,9 +48,7 @@ class ResADD(snn.Module):
 
 class ResAND(snn.Module):
     def __init__(self) -> None:
-        super().__init__(
-            multi_time_step = True
-        )
+        super().__init__()
 
 
     def forward(self, a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
@@ -69,9 +65,7 @@ class ResAND(snn.Module):
 
 class ResIAND(snn.Module):
     def __init__(self) -> None:
-        super().__init__(
-            multi_time_step = True
-        )
+        super().__init__()
 
 
     def forward(self, a: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
@@ -130,9 +124,7 @@ class SEWBlock(snn.Module):
             down_sampling (bool): 是否进行下采样（出来的图像大小是原大小的一半）
             trainable (bool): 参数是否可以训练
         """
-        super().__init__(
-            multi_time_step = True
-        )
+        super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.conv1 = ConvLIF(
@@ -207,9 +199,7 @@ class SEWRes18(snn.Module):
             residual_connection (snn.Module): 脉冲连接方式
             trainable (bool): 参数是否可以训练
         """
-        super().__init__(
-            multi_time_step = True
-        )
+        super().__init__()
         self.model = snn.Sequential(
             snn.DirectEncoder(),
             ConvLIF(

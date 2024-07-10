@@ -15,24 +15,11 @@ from typing import Union as _Union
 
 
 class Synapse(_Module):
-    def __init__(self, multi_time_step = False) -> None:
+    def __init__(self) -> None:
         """
         突触函数的骨架，定义突触最基本的函数。
-        Args:
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        super().__init__(
-            multi_time_step = multi_time_step
-        )
-
-
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来。
-        Returns:
-            repr_str (str): 参数表
-        """
-        return "multi_time_step=%s" % (str(self.multi_time_step),)
+        super().__init__()
 
 
     def forward_multi_time_steps(self, *args, **kwargs) -> torch.Tensor:
@@ -51,21 +38,17 @@ class Synapse(_Module):
 
 
 class Linear(Synapse, nn.Linear):
-    def __init__(self, in_features: int, out_features: int, bias: bool = True, multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, in_features: int, out_features: int, bias: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         全连接操作，输入一个大小为[B, L_{in}]的张量，输出一个大小为[B, L_{out}]的张量。
         Args:
             in_features: 输入的长度L_{in}
             out_features: 输出的长度L_{out}
             bias (bool): 是否要加入偏置
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Synapse.__init__(self)
         nn.Linear.__init__(
             self,
             in_features = in_features,
@@ -82,7 +65,7 @@ class Linear(Synapse, nn.Linear):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Linear.extra_repr(self), Synapse.extra_repr(self)])
+        return nn.Linear.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
     
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -98,7 +81,7 @@ class Linear(Synapse, nn.Linear):
 
 
 class Conv1d(Synapse, nn.Conv1d):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: _Union[_size_1_t, str] = 0, dilation: _size_1_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: _Union[_size_1_t, str] = 0, dilation: _size_1_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         一维卷积操作，输入一个大小为[B, C_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, L_{out}]的张量。
         Args:
@@ -111,14 +94,10 @@ class Conv1d(Synapse, nn.Conv1d):
             groups (int): 分组进行卷积操作的组数
             bias (bool): 是否要加入偏置
             padding_mode (str): 边缘填充的方式
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Synapse.__init__(self)
         nn.Conv1d.__init__(
             self,
             in_channels = in_channels,
@@ -141,7 +120,7 @@ class Conv1d(Synapse, nn.Conv1d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Conv1d.extra_repr(self), Synapse.extra_repr(self)])
+        return nn.Conv1d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -157,7 +136,7 @@ class Conv1d(Synapse, nn.Conv1d):
 
 
 class Conv2d(Synapse, nn.Conv2d):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _Union[_size_2_t, str] = 0, dilation: _size_2_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _Union[_size_2_t, str] = 0, dilation: _size_2_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         二维卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}]的张量。
         Args:
@@ -170,14 +149,10 @@ class Conv2d(Synapse, nn.Conv2d):
             groups (int): 分组进行卷积操作的组数
             bias (bool): 是否要加入偏置
             padding_mode (str): 边缘填充的方式
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Synapse.__init__(self)
         nn.Conv2d.__init__(
             self,
             in_channels = in_channels,
@@ -200,7 +175,7 @@ class Conv2d(Synapse, nn.Conv2d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Conv2d.extra_repr(self), Synapse.extra_repr(self)])
+        return nn.Conv2d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -216,7 +191,7 @@ class Conv2d(Synapse, nn.Conv2d):
 
 
 class Conv3d(Synapse, nn.Conv3d):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _Union[_size_3_t, str] = 0, dilation: _size_3_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _Union[_size_3_t, str] = 0, dilation: _size_3_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         三维卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}, L_{out}]的张量。
         Args:
@@ -229,14 +204,10 @@ class Conv3d(Synapse, nn.Conv3d):
             groups (int): 分组进行卷积操作的组数
             bias (bool): 是否要加入偏置
             padding_mode (str): 边缘填充的方式
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Synapse.__init__(self)
         nn.Conv3d.__init__(
             self,
             in_channels = in_channels,
@@ -259,7 +230,7 @@ class Conv3d(Synapse, nn.Conv3d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Conv3d.extra_repr(self), Synapse.extra_repr(self)])
+        return nn.Conv3d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -275,7 +246,7 @@ class Conv3d(Synapse, nn.Conv3d):
 
 
 class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: _size_1_t = 0, output_padding: _size_1_t = 0, groups: int = 1, bias: bool = True, dilation: _size_1_t = 1, padding_mode: str = "zeros", multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: _size_1_t = 0, output_padding: _size_1_t = 0, groups: int = 1, bias: bool = True, dilation: _size_1_t = 1, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         一维逆卷积操作，输入一个大小为[B, C_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, L_{out}]的张量。
         Args:
@@ -289,14 +260,10 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
             bias (bool): 是否要加入偏置
             dilation (size_1_t): 卷积的输出步长
             padding_mode (str): 边缘填充的方式
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Synapse.__init__(self)
         nn.ConvTranspose1d.__init__(
             self,
             in_channels = in_channels,
@@ -320,7 +287,7 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.ConvTranspose1d.extra_repr(self), Synapse.extra_repr(self)])
+        return nn.ConvTranspose1d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -336,7 +303,7 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
 
 
 class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, output_padding: _size_2_t = 0, groups: int = 1, bias: bool = True, dilation: _size_2_t = 1, padding_mode: str = "zeros", multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, output_padding: _size_2_t = 0, groups: int = 1, bias: bool = True, dilation: _size_2_t = 1, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         二维逆卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}]的张量。
         Args:
@@ -350,14 +317,10 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
             bias (bool): 是否要加入偏置
             dilation (size_2_t): 卷积的输出步长
             padding_mode (str): 边缘填充的方式
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Synapse.__init__(self)
         nn.ConvTranspose2d.__init__(
             self,
             in_channels = in_channels,
@@ -381,7 +344,7 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.ConvTranspose2d.extra_repr(self), Synapse.extra_repr(self)])
+        return nn.ConvTranspose2d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -397,7 +360,7 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
 
 
 class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _size_3_t = 0, output_padding: _size_3_t = 0, groups: int = 1, bias: bool = True, dilation: _size_3_t = 1, padding_mode: str = "zeros", multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _size_3_t = 0, output_padding: _size_3_t = 0, groups: int = 1, bias: bool = True, dilation: _size_3_t = 1, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         三维逆卷积操作，输入一个大小为[B, C_{in}, H_{in}, W_{in}, L_{in}]的张量，输出一个大小为[B, C_{out}, H_{out}, W_{out}, L_{out}]的张量。
         Args:
@@ -411,14 +374,10 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
             bias (bool): 是否要加入偏置
             dilation (size_3_t): 卷积的输出步长
             padding_mode (str): 边缘填充的方式
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Synapse.__init__(self)
         nn.ConvTranspose3d.__init__(
             self,
             in_channels = in_channels,
@@ -442,7 +401,7 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.ConvTranspose3d.extra_repr(self), Synapse.extra_repr(self)])
+        return nn.ConvTranspose3d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
@@ -458,7 +417,7 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
 
 
 class BatchNorm1d(Synapse, nn.BatchNorm1d):
-    def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         一维批归一化。
         Args:
@@ -467,14 +426,10 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
             momentum (float): 动量参数
             affine (bool): 是否启用参数gamma和beta，进行仿射变换
             track_running_stats (bool): 是否需要跟踪整个训练过程来进行批归一化的学习
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Synapse.__init__(self)
         nn.BatchNorm1d.__init__(
             self,
             num_features = num_features,
@@ -493,7 +448,7 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.BatchNorm1d.extra_repr(self), Synapse.extra_repr(self)])
+        return nn.BatchNorm1d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -509,7 +464,7 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
 
 
 class BatchNorm2d(Synapse, nn.BatchNorm2d):
-    def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         二维批归一化。
         Args:
@@ -518,14 +473,10 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
             momentum (float): 动量参数
             affine (bool): 是否启用参数gamma和beta，进行仿射变换
             track_running_stats (bool): 是否需要跟踪整个训练过程来进行批归一化的学习
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Synapse.__init__(self)
         nn.BatchNorm2d.__init__(
             self,
             num_features = num_features,
@@ -544,7 +495,7 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.BatchNorm2d.extra_repr(self), Synapse.extra_repr(self)])
+        return nn.BatchNorm2d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -560,7 +511,7 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
 
 
 class BatchNorm3d(Synapse, nn.BatchNorm3d):
-    def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         三维批归一化。
         Args:
@@ -569,14 +520,10 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
             momentum (float): 动量参数
             affine (bool): 是否启用参数gamma和beta，进行仿射变换
             track_running_stats (bool): 是否需要跟踪整个训练过程来进行批归一化的学习
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Synapse.__init__(self)
         nn.BatchNorm3d.__init__(
             self,
             num_features = num_features,
@@ -595,7 +542,7 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.BatchNorm3d.extra_repr(self), Synapse.extra_repr(self)])
+        return nn.BatchNorm3d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -611,21 +558,17 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
 
 
 class LayerNorm(Synapse, nn.LayerNorm):
-    def __init__(self, normalized_shape: _shape_t, eps: float = 0.00001, elementwise_affine: bool = True, multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, normalized_shape: _shape_t, eps: float = 0.00001, elementwise_affine: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         数据归一化。
         Args:
             normalized_shape (shape_t): 在什么数据尺度上进行归一化
             eps (float): 参数epsilon
             elementwise_affine (bool): 是否启用参数gamma和beta，进行仿射变换
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
-            self,
-            multi_time_step = multi_time_step
-        )
+        Synapse.__init__(self)
         nn.LayerNorm.__init__(
             self,
             normalized_shape = normalized_shape,
@@ -642,7 +585,7 @@ class LayerNorm(Synapse, nn.LayerNorm):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.LayerNorm.extra_repr(self), Synapse.extra_repr(self)])
+        return nn.LayerNorm.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -658,7 +601,7 @@ class LayerNorm(Synapse, nn.LayerNorm):
 
 
 class NormPlaceholder(Synapse):
-    def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         归一化占位符，用于ANN转SNN的替换。
         Args:
@@ -667,7 +610,6 @@ class NormPlaceholder(Synapse):
             momentum (float): 动量参数
             affine (bool): 是否启用参数gamma和beta，进行仿射变换
             track_running_stats (bool): 是否需要跟踪整个训练过程来进行批归一化的学习
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
@@ -704,16 +646,22 @@ class NormPlaceholder(Synapse):
         return x.clone()
 
 
-class Identity(Synapse):
-    def __init__(self, multi_time_step = False) -> None:
+class Identity(Synapse, nn.Identity):
+    def __init__(self) -> None:
         """
         同一层，输出为输入。
-        Args:
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        super().__init__(
-            multi_time_step = multi_time_step
-        )
+        Synapse.__init__(self)
+        nn.Identity.__init__(self)
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return nn.Identity.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
     
 
     def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -724,20 +672,18 @@ class Identity(Synapse):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
+        x = nn.Identity.forward(self, x)
         return x
 
 
 class Neurotransmitter(Synapse):
-    def __init__(self, mask: torch.Tensor, multi_time_step = False) -> None:
+    def __init__(self, mask: torch.Tensor) -> None:
         """
         神经递质，分为兴奋性神经递质和抑制性神经递质，加在胞体后面。
         Args:
             mask (torch.Tensor): 一个布尔类型的张量，形状与单个时间步内的数据张量一致，元素为True代表兴奋性神经元，为False代表抑制性神经元
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
-        super().__init__(
-            multi_time_step = multi_time_step
-        )
+        super().__init__()
         self.mask = mask
     
 

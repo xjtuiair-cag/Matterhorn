@@ -27,8 +27,7 @@ Soma(
     u_threshold: float = -0.055,
     u_rest: float = -0.07,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
-    hard_reset: bool = True,
-    multi_time_step: bool = False
+    hard_reset: bool = True
 )
 ```
 
@@ -41,8 +40,6 @@ Soma(
 `spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`multi_time_step (bool)`: Whether to switch to multi-time-step mode.
 
 ### Overridable Methods
 
@@ -83,8 +80,7 @@ IF(
     u_threshold: float = -0.055,
     u_rest: float = -0.07,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
-    hard_reset: bool = True,
-    multi_time_step: bool = False
+    hard_reset: bool = True
 )
 ```
 
@@ -97,8 +93,6 @@ IF(
 `spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`multi_time_step (bool)`: Whether to switch to multi-time-step mode.
 
 ### Example Usage
 
@@ -154,7 +148,6 @@ LIF(
     u_rest: float = -0.07,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -172,8 +165,6 @@ LIF(
 `spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`multi_time_step (bool)`: Whether to switch to multi-time-step mode.
 
 `trainable (bool)`: Whether the parameter $\tau_{m}$ can be trained.
 
@@ -238,7 +229,6 @@ QIF(
     a_0: float = 1.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -260,8 +250,6 @@ QIF(
 `spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`multi_time_step (bool)`: Whether to switch to multi-time-step mode.
 
 `trainable (bool)`: Whether the parameters $\tau_{m}$, $u_{c}$, and $a_{0}$ can be trained.
 
@@ -328,7 +316,6 @@ ExpIF(
     delta_t: float = 0.001,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -350,8 +337,6 @@ ExpIF(
 `spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`multi_time_step (bool)`: Whether to switch to multi-time-step mode.
 
 `trainable (bool)`: Whether the parameters $\tau_{m}$, $u_{T}$, and $\Delta_{T}$ can be trained.
 
@@ -423,7 +408,6 @@ Izhikevich(
     b: float = 1.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -443,8 +427,6 @@ Izhikevich(
 `spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`multi_time_step (bool)`: Whether to switch to multi-time-step mode.
 
 `trainable (bool)`: Whether the parameters $a$ and $b$ can be trained.
 
@@ -507,7 +489,6 @@ KLIF(
     k: float = 0.2,
     spiking_function: Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -527,8 +508,6 @@ KLIF(
 `spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`multi_time_step (bool)`: Whether to switch to multi-time-step mode.
 
 `trainable (bool)`: Whether the parameter $\tau_{m}$ and $k$ can be trained.
 
@@ -576,7 +555,6 @@ LIAF(
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     activation_function: torch.nn.Module = nn.ReLU(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -596,8 +574,6 @@ LIAF(
 `activation_function (torch.nn.Module)`: The activation function $f(U^{l}(t)-u_{th})$ used for output.
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`multi_time_step (bool)`: Whether to switch to multi-time-step mode.
 
 `trainable (bool)`: Whether the parameter $\tau_{m}$ can be trained.
 

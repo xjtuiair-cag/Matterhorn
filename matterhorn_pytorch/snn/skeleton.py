@@ -10,16 +10,12 @@ from typing import Tuple as _Tuple
 
 
 class Module(nn.Module):
-    def __init__(self, multi_time_step: bool = False) -> None:
+    def __init__(self) -> None:
         """
         脉冲神经网络模块的骨架。
-        Args:
-            multi_time_step (bool): 是否调整为多个时间步模式
         """
         nn.Module.__init__(self)
-        self._multi_time_step = False
-        if multi_time_step:
-            self.multi_time_step_(multi_time_step)
+        self._multi_step_mode = False
 
 
     def extra_repr(self) -> str:
@@ -28,11 +24,11 @@ class Module(nn.Module):
         Returns:
             repr_str (str): 参数表
         """
-        return super().extra_repr()
+        return ("step_mode=%s" % ('"m"' if self.multi_step_mode else '"s"')) if self.multi_step_mode else ""
 
 
     @property
-    def supports_single_time_step(self) -> bool:
+    def supports_single_step_mode(self) -> bool:
         """
         是否支持单个时间步。
         Returns:
@@ -42,61 +38,65 @@ class Module(nn.Module):
 
 
     @property
-    def supports_multi_time_step(self) -> bool:
+    def supports_multi_step_mode(self) -> bool:
         """
         是否支持多个时间步。
         Returns:
             if_support (bool): 是否支持多个时间步
         """
         return True
-    
+
 
     @property
-    def multi_time_step(self) -> bool:
+    def multi_step_mode(self) -> bool:
         """
         当前是否为多时间步模式。
         Returns:
             if_on (bool): 当前是否为多个时间步模式
         """
-        return self._multi_time_step
+        return self._multi_step_mode
+    
 
-
-    def multi_time_step_(self, if_on: bool) -> nn.Module:
+    @property
+    def single_step_mode(self) -> bool:
         """
-        调整模型的多时间步模式。
+        当前是否为单时间步模式。
+        Returns:
+            if_on (bool): 当前是否为单个时间步模式
+        """
+        return not self._multi_step_mode
+
+
+    def multi_step_mode_(self, if_on: bool = True) -> nn.Module:
+        """
+        调整模型至多时间步模式。
         Args
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
         """
-        if self.supports_multi_time_step and if_on:
-            self._multi_time_step = True
-        elif self.supports_single_time_step and not if_on:
-            self._multi_time_step = False
-        for name, module in self.named_children():
-            from matterhorn_pytorch.snn.container import Temporal as _Temporal
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
-                if if_on:
-                    if module.supports_multi_time_step:
-                        module.multi_time_step_(if_on)
-                    else:
-                        setattr(self, name, _Temporal(module))
-                else:
-                    if module.supports_single_time_step:
-                        module.multi_time_step_(if_on)
-                    elif isinstance(module, _Temporal):
-                        setattr(self, name, module.module)
-                    else:
-                        raise ValueError("Unsupported time step conversion on module %s(%s)" % (name, module.__class__.__name__))
+        if self.supports_multi_step_mode and if_on:
+            self._multi_step_mode = True
+        elif self.supports_single_step_mode and not if_on:
+            self._multi_step_mode = False
+        else:
+            raise ValueError("Unsupported time step conversion on module %s" % (self.__class__.__name__,))
         return self
+    
+
+    def single_step_mode_(self, if_on: bool = True) -> nn.Module:
+        """
+        调整模型至单时间步模式。
+        Args
+            if_on (bool): 当前需要调整为什么模式（True为单时间步模式，False为多时间步模式）
+        """
+        return self.multi_step_mode_(not if_on)
 
 
     def reset(self) -> nn.Module:
         """
         重置模型。
         """
-        for module in self.children():
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
+        for name, module in self.named_children():
+            if isinstance(module, Module):
                 module.reset()
         return self
 
@@ -105,9 +105,8 @@ class Module(nn.Module):
         """
         将模型中的某些变量从其计算图中分离。
         """
-        for module in self.children():
-            is_snn_module = isinstance(module, Module)
-            if is_snn_module:
+        for name, module in self.named_children():
+            if isinstance(module, Module):
                 module.detach()
         return self
 
@@ -157,7 +156,7 @@ class Module(nn.Module):
         Returns:
             res (torch.Tensor): 输出
         """
-        if self.multi_time_step:
+        if self.multi_step_mode:
             res = self.forward_multi_time_steps(*args, **kwargs)
         else:
             res = self.forward_single_time_step(*args, **kwargs)

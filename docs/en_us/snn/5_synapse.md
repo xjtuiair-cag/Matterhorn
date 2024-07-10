@@ -13,14 +13,8 @@ SNNs and ANNs are fundamentally similar in synaptic computation. The synapses of
 ## `matterhorn.snn.synapse.Synapse`
 
 ```python
-Synapse(
-    multi_time_step = False
-)
+Synapse()
 ```
-
-### Constructor Parameters
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 ### Overridable Methods
 
@@ -45,7 +39,6 @@ Linear(
     in_features: int,
     out_features: int,
     bias: bool = True,
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -58,8 +51,6 @@ Linear(
 `out_features (int)`: Output length `O`. The output shape is `[B, O]` (single-time-step mode) or `[T, B, O]` (multi-time-step mode).
 
 `bias (bool)`: Whether to include bias. If `True`, it performs $W\vec{x}+\vec{b}$, otherwise $W\vec{x}$.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 `device (torch.device)`: Computational device to use.
 
@@ -94,7 +85,6 @@ Conv1d(
     groups: int = 1,
     bias: bool = True,
     padding_mode: str = "zeros",
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -119,8 +109,6 @@ Conv1d(
 `bias (bool)`: Whether to include bias.
 
 `padding_mode (str)`: Padding mode.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 `device (torch.device)`: Computational device to use.
 
@@ -157,7 +145,6 @@ Conv2d(
     groups: int = 1,
     bias: bool = True,
     padding_mode: str = "zeros",
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -188,8 +175,6 @@ Conv2d(
 `bias (bool)`: Whether to include bias.
 
 `padding_mode (str)`: Padding mode.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 `device (torch.device)`: Computational device to use.
 
@@ -224,7 +209,6 @@ Conv3d(
     groups: int = 1,
     bias: bool = True,
     padding_mode: str = "zeros",
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -249,8 +233,6 @@ Conv3d(
 `bias (bool)`: Whether to include bias.
 
 `padding_mode (str)`: Padding mode.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 `device (torch.device)`: Computational device to use.
 
@@ -282,7 +264,6 @@ ConvTranspose1d(
     bias: bool = True,
     dilation: _size_1_t = 1,
     padding_mode: str = "zeros",
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -309,8 +290,6 @@ ConvTranspose1d(
 `dilation (size_1_t)`: During the original convolution, how many pixels to perform a multiplication and addition operation.
 
 `padding_mode (str)`: Padding mode.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 `device (torch.device)`: Computational device to use.
 
@@ -370,8 +349,6 @@ ConvTranspose2d(
 
 `padding_mode (str)`: Padding mode.
 
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
-
 `device (torch.device)`: Computational device to use.
 
 `dtype (torch.dtype)`: Data type to use for computation.
@@ -400,7 +377,6 @@ ConvTranspose3d(
     bias: bool = True,
     dilation: _size_3_t = 1,
     padding_mode: str = "zeros",
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -429,8 +405,6 @@ Three-dimensional transposed convolution (deconvolution) operation of synapses.
 `dilation (size_3_t)`: During the original convolution, how many pixels to perform a multiplication and addition operation.
 
 `padding_mode (str)`: Padding mode.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 `device (torch.device)`: Computational device to use.
 
@@ -461,7 +435,6 @@ BatchNorm1d(
     momentum: float = 0.1,
     affine: bool = True,
     track_running_stats: bool = True,
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -478,8 +451,6 @@ BatchNorm1d(
 `affine (bool)`: Whether to enable parameters $\gamma$ and $\beta$ for affine transformation.
 
 `track_running_stats (bool)`: Whether to track the entire training process for batch normalization learning.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 `device (torch.device)`: Computational device to use.
 
@@ -510,7 +481,6 @@ BatchNorm2d(
     momentum: float = 0.1,
     affine: bool = True,
     track_running_stats: bool = True,
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -527,8 +497,6 @@ BatchNorm2d(
 `affine (bool)`: Whether to enable parameters $\gamma$ and $\beta$ for affine transformation.
 
 `track_running_stats (bool)`: Whether to track the entire training process for batch normalization learning.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 `device (torch.device)`: Computational device to use.
 
@@ -559,7 +527,6 @@ BatchNorm3d(
     momentum: float = 0.1,
     affine: bool = True,
     track_running_stats: bool = True,
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -576,8 +543,6 @@ BatchNorm3d(
 `affine (bool)`: Whether to enable parameters $\gamma$ and $\beta$ for affine transformation.
 
 `track_running_stats (bool)`: Whether to track the entire training process for batch normalization learning.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 `device (torch.device)`: Computational device to use.
 
@@ -606,7 +571,6 @@ LayerNorm(
     normalized_shape: _shape_t,
     eps: float = 0.00001,
     elementwise_affine: bool = True,
-    multi_time_step: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -619,8 +583,6 @@ LayerNorm(
 `eps (float)`: Parameter $\varepsilon$.
 
 `elementwise_affine (bool)`: Whether to enable parameters $\gamma$ and $\beta$ for element-wise affine transformation.
-
-`multi_time_step (bool)`: Whether to adjust to multi-time-step mode.
 
 `device (torch.device)`: Computational device to use.
 

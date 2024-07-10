@@ -10,12 +10,12 @@ import torch.nn as nn
 import torch.nn.functional as _F
 import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
-from matterhorn_pytorch.snn import surrogate as _surrogate
+from matterhorn_pytorch.snn.surrogate import SurrogateGradient as _SurrogateGradient, Gaussian as _Gaussian
 from typing import Callable as _Callable, Iterable as _Iterable
 
 
 class Soma(_Module):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _surrogate.SurrogateGradient = _surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _SurrogateGradient = _Gaussian(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -26,13 +26,10 @@ class Soma(_Module):
             u_rest (float): 静息电位$u_{rest}$
             spiking_function (SurrogateGradient): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        super().__init__(
-            multi_time_step = multi_time_step
-        )
+        super().__init__()
         self.u = None
         self.u_threshold = nn.Parameter(torch.tensor(u_threshold, device = device, dtype = dtype), requires_grad = False)
         self.u_rest = nn.Parameter(torch.tensor(u_rest, device = device, dtype = dtype), requires_grad = False)
@@ -46,7 +43,7 @@ class Soma(_Module):
         Returns:
             repr_str (str): 参数表
         """
-        return "multi_time_step=%s, reset=%s" % (str(self.multi_time_step), "'hard'" if self.hard_reset else "'soft'")
+        return ", ".join(["u_threshold=%g" % self.u_threshold, "u_rest=%g" % self.u_rest, "reset=%s" % ('"By Zero"' if self.hard_reset else '"By Division"',)]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
     def reset(self) -> None:
@@ -122,7 +119,7 @@ class Soma(_Module):
 
 
 class IF(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _surrogate.SurrogateGradient = _surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _SurrogateGradient = _Gaussian(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Integrate-and-Fire(IF)神经元。
         无泄漏过程，一阶电位变换公式为：
@@ -132,7 +129,6 @@ class IF(Soma):
             u_rest (float): 静息电位$u_{rest}$
             spiking_function (SurrogateGradient): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
@@ -141,19 +137,9 @@ class IF(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
-            multi_time_step = multi_time_step,
             device = device,
             dtype = dtype
         )
-    
-
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来。
-        Returns:
-            repr_str (str): 参数表
-        """
-        return ", ".join(["u_threshold=%g, u_rest=%g" % (self.u_threshold, self.u_rest), super().extra_repr()])
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -170,7 +156,7 @@ class IF(Soma):
 
 
 class LIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _surrogate.SurrogateGradient = _surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _SurrogateGradient = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
@@ -181,7 +167,6 @@ class LIF(Soma):
             u_rest (float): 静息电位$u_{rest}$
             spiking_function (SurrogateGradient): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
-            multi_time_step (bool): 是否调整为多个时间步模式
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
@@ -191,7 +176,6 @@ class LIF(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
-            multi_time_step = multi_time_step,
             device = device,
             dtype = dtype
         )
@@ -204,7 +188,7 @@ class LIF(Soma):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g" % (self.tau_m, self.u_threshold, self.u_rest), super().extra_repr()])
+        return ", ".join(["tau_m=%g" % self.tau_m]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -222,7 +206,7 @@ class LIF(Soma):
 
 
 class QIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_c: float = 1.0, a_0: float = 1.0, spiking_function: _surrogate.SurrogateGradient = _surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_c: float = 1.0, a_0: float = 1.0, spiking_function: _SurrogateGradient = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Quadratic Integrate-and-Fire(QIF)神经元。
         一阶电位变换公式为：
@@ -235,7 +219,6 @@ class QIF(Soma):
             a_0 (float): 参数$a_{0}$
             spiking_function (SurrogateGradient): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
-            multi_time_step (bool): 是否调整为多个时间步模式
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
@@ -245,7 +228,6 @@ class QIF(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
-            multi_time_step = multi_time_step,
             device = device,
             dtype = dtype
         )
@@ -260,7 +242,7 @@ class QIF(Soma):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g, a_0=%g, u_C=%g" % (self.tau_m, self.u_threshold, self.u_rest, self.a_0, self.u_c), super().extra_repr()])
+        return ", ".join(["tau_m=%g" % self.tau_m, "a_0=%g" % self.a_0, "u_C=%g" % self.u_c]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -278,7 +260,7 @@ class QIF(Soma):
 
 
 class ExpIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: _surrogate.SurrogateGradient = _surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: _SurrogateGradient = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Exponential Integrate-and-Fire(ExpIF)神经元。
         一阶电位变换公式为：
@@ -291,7 +273,6 @@ class ExpIF(Soma):
             delta_t (float): 参数$Δ_{T}$
             spiking_function (SurrogateGradient): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
-            multi_time_step (bool): 是否调整为多个时间步模式
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
@@ -301,7 +282,6 @@ class ExpIF(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
-            multi_time_step = multi_time_step,
             device = device,
             dtype = dtype
         )
@@ -316,7 +296,7 @@ class ExpIF(Soma):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g, u_T=%g, delta_T=%g" % (self.tau_m, self.u_threshold, self.u_rest, self.u_t, self.delta_t), super().extra_repr()])
+        return ", ".join(["tau_m=%g" % self.tau_m, "u_t=%g" % self.u_t, "delta_t=%g" % self.delta_t]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -334,7 +314,7 @@ class ExpIF(Soma):
 
 
 class Izhikevich(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, a: float = 1.0, b: float = 1.0, spiking_function: _surrogate.SurrogateGradient = _surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, a: float = 1.0, b: float = 1.0, spiking_function: _SurrogateGradient = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """, 
         Izhikevich神经元。
         一阶电位变换公式为：
@@ -347,7 +327,6 @@ class Izhikevich(Soma):
             delta_t (float): 参数$Δ_{T}$
             spiking_function (SurrogateGradient): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
-            multi_time_step (bool): 是否调整为多个时间步模式
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
@@ -357,7 +336,6 @@ class Izhikevich(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
-            multi_time_step = multi_time_step,
             device = device,
             dtype = dtype
         )
@@ -372,7 +350,7 @@ class Izhikevich(Soma):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["a=%g, b=%g, u_threshold=%g" % (self.a, self.b, self.u_threshold), super().extra_repr()])
+        return ", ".join(["a=%g" % self.a, "b=%g" % self.b]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
     def reset(self) -> None:
@@ -414,7 +392,7 @@ class Izhikevich(Soma):
 
 
 class KLIF(Soma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, k: float = 0.2, spiking_function: _surrogate.SurrogateGradient = _surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = 1.0, u_rest: float = 0.0, k: float = 0.2, spiking_function: _SurrogateGradient = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         KLIF神经元
         Args:
@@ -424,7 +402,6 @@ class KLIF(Soma):
             k (float): 参数k
             spiking_function (SurrogateGradient): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
-            multi_time_step (bool): 是否调整为多个时间步模式
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
@@ -434,13 +411,12 @@ class KLIF(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
-            multi_time_step = multi_time_step,
             device = device,
             dtype = dtype
         )
         self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
         self.k = nn.Parameter(torch.tensor(k, device = device, dtype = dtype), requires_grad = trainable)
-        
+
 
     def extra_repr(self) -> str:
         """
@@ -448,7 +424,7 @@ class KLIF(Soma):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g" % (self.tau_m, self.u_threshold, self.u_rest), super().extra_repr()])
+        return ", ".join(["tau_m=%g" % self.tau_m, "k=%g" % self.k]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -467,7 +443,7 @@ class KLIF(Soma):
 
 
 class Response(Soma):
-    def __init__(self, response_function: _Callable, param_list: _Iterable = [], u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _surrogate.SurrogateGradient = _surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, response_function: _Callable, param_list: _Iterable = [], u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _SurrogateGradient = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         可以自定义反应函数的胞体。
         Args:
@@ -477,7 +453,6 @@ class Response(Soma):
             u_rest (float): 静息电位$u_{rest}$
             spiking_function (SurrogateGradient): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
-            multi_time_step (bool): 是否调整为多个时间步模式
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
@@ -487,7 +462,6 @@ class Response(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
-            multi_time_step = multi_time_step,
             device = device,
             dtype = dtype
         )
@@ -508,7 +482,7 @@ class Response(Soma):
 
 
 class AnalogSoma(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _surrogate.SurrogateGradient = _surrogate.Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _SurrogateGradient = _Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         带有模拟输出的Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -521,7 +495,6 @@ class AnalogSoma(Soma):
             spiking_function (SurrogateGradient): 计算脉冲时所使用的阶跃函数
             activation_function (nn.Module): 激活函数
             hard_reset (bool): 是否为硬重置
-            multi_time_step (bool): 是否调整为多个时间步模式
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
@@ -530,7 +503,6 @@ class AnalogSoma(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
-            multi_time_step = multi_time_step,
             device = device,
             dtype = dtype
         )
@@ -565,7 +537,7 @@ class AnalogSoma(Soma):
 
 
 class LIAF(AnalogSoma):
-    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _surrogate.SurrogateGradient = _surrogate.Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, multi_time_step: bool = False, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _SurrogateGradient = _Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Leaky Integrate-and-Analog-Fire(LIAF)神经元
         Args:
@@ -575,7 +547,6 @@ class LIAF(AnalogSoma):
             spiking_function (SurrogateGradient): 计算脉冲时所使用的阶跃函数
             activation_function (nn.Module): 激活函数
             hard_reset (bool): 是否为硬重置
-            multi_time_step (bool): 是否调整为多个时间步模式
             trainable (bool): 参数是否可以训练
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
@@ -586,12 +557,11 @@ class LIAF(AnalogSoma):
             spiking_function = spiking_function,
             activation_function = activation_function,
             hard_reset = hard_reset,
-            multi_time_step = multi_time_step,
             device = device,
             dtype = dtype
         )
         self.tau_m = nn.Parameter(torch.tensor(tau_m, device = device, dtype = dtype), requires_grad = trainable)
-    
+
 
     def extra_repr(self) -> str:
         """
@@ -599,7 +569,7 @@ class LIAF(AnalogSoma):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g" % (self.tau_m, self.u_threshold, self.u_rest), super().extra_repr()])
+        return ", ".join(["tau_m=%g" % self.tau_m]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
