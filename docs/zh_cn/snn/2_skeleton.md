@@ -14,16 +14,13 @@
 
 ```python
 Module(
-    multi_time_step: bool = False,
-    reset_after_process: bool = False
+    multi_time_step: bool = False
 )
 ```
 
 ### 构造函数参数
 
 `multi_time_step (bool)` ：是否调整为多时间步模式。多时间步模式允许传入一个具备多时间步的张量，从而逐时间步进行运算。由于 Matterhorn 中定义了许多用于加速多时间步的算法，因此其较单时间步模式运算效率更高。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，如果您将其设为 False ，您需要在 SNN 模型执行完毕后手动调用 `reset()` 方法重置整个模型。
 
 ### 示例用法
 
@@ -35,8 +32,7 @@ import matterhorn_pytorch as mth
 class Demo(mth.snn.Module):
     def __init__(self) -> None:
         super().__init__(
-            multi_time_step = True,
-            reset_after_process = True
+            multi_time_step = True
         )
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:

@@ -73,8 +73,7 @@ $$Y_{i}=min(\{t_{i}|O_{i}^{L}(t_{i})=1\})$$
 ```python
 MinTime(
     empty_fill: float = -1,
-    transform: Callable = lambda x: x,
-    reset_after_process: bool = True
+    transform: Callable = lambda x: x
 )
 ```
 
@@ -83,8 +82,6 @@ MinTime(
 `empty_fill (float)`: Value to represent when there is no spike at a particular spatial position in the spike sequence. Typically `-1`. In TNN models, you might want to set this to `torch.inf`.
 
 `transform (Callable)`: How to transform the result $y$.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If `False`, manual reset is required.
 
 ### Example Usage
 
@@ -112,8 +109,7 @@ Where $S=\sum_{t=1}^{T}{O_{i}^{L}(t)}$ is count of spikes in neuron $i$.
 ```python
 AverageTime(
     empty_fill: float = -1,
-    transform: Callable = lambda x: x,
-    reset_after_process: bool = True
+    transform: Callable = lambda x: x
 )
 ```
 
@@ -122,8 +118,6 @@ AverageTime(
 `empty_fill (float)`: Value to represent when there is no spike at a particular spatial position in the spike sequence. Typically `-1`. In TNN models, you might want to set this to `torch.inf`.
 
 `transform (Callable)`: How to transform the result $y$.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If `False`, manual reset is required.
 
 ### Example Usage
 

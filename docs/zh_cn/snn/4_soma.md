@@ -28,8 +28,7 @@ Soma(
     u_rest: float = -0.07,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
-    reset_after_process: bool = True
+    multi_time_step: bool = False
 )
 ```
 
@@ -44,8 +43,6 @@ Soma(
 `hard_reset (bool)` ：是否为硬重置。
 
 `multi_time_step (bool)` ：是否调整为多时间步模式。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 ### 可重载的方法
 
@@ -87,8 +84,7 @@ IF(
     u_rest: float = -0.07,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
-    reset_after_process: bool = True
+    multi_time_step: bool = False
 )
 ```
 
@@ -103,8 +99,6 @@ IF(
 `hard_reset (bool)` ：是否为硬重置。
 
 `multi_time_step (bool)` ：是否调整为多时间步模式。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 ### 示例用法
 
@@ -161,7 +155,6 @@ LIF(
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
-    reset_after_process: bool = True,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -181,8 +174,6 @@ LIF(
 `hard_reset (bool)` ：是否为硬重置。
 
 `multi_time_step (bool)` ：是否调整为多时间步模式。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 是否可以被训练。
 
@@ -248,7 +239,6 @@ QIF(
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
-    reset_after_process: bool = True,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -272,8 +262,6 @@ QIF(
 `hard_reset (bool)` ：是否为硬重置。
 
 `multi_time_step (bool)` ：是否调整为多时间步模式。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 、 $u_{c}$ 和 $a_{0}$ 是否可以被训练。
 
@@ -341,7 +329,6 @@ ExpIF(
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
-    reset_after_process: bool = True,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -365,8 +352,6 @@ ExpIF(
 `hard_reset (bool)` ：是否为硬重置。
 
 `multi_time_step (bool)` ：是否调整为多时间步模式。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 、 $u_{T}$ 和 $\Delta_{T}$ 是否可以被训练。
 
@@ -439,7 +424,6 @@ Izhikevich(
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
-    reset_after_process: bool = True,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -461,8 +445,6 @@ Izhikevich(
 `hard_reset (bool)` ：是否为硬重置。
 
 `multi_time_step (bool)` ：是否调整为多时间步模式。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 `trainable (bool)` ：参数 $a$ 和 $b$ 是否可以被训练。
 
@@ -526,7 +508,6 @@ KLIF(
     spiking_function: Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
-    reset_after_process: bool = True,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -548,8 +529,6 @@ KLIF(
 `hard_reset (bool)` ：是否为硬重置。
 
 `multi_time_step (bool)` ：是否调整为多时间步模式。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 和 $k$ 是否可以被训练。
 
@@ -598,7 +577,6 @@ LIAF(
     activation_function: torch.nn.Module = nn.ReLU(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
-    reset_after_process: bool = True,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -620,8 +598,6 @@ LIAF(
 `hard_reset (bool)` ：是否为硬重置。
 
 `multi_time_step (bool)` ：是否调整为多时间步模式。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 `trainable (bool)` ：参数 $\tau_{m}$ 是否可以被训练。
 

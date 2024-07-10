@@ -9,25 +9,17 @@ import torch.nn as nn
 from typing import Tuple as _Tuple
 
 
-def reset_hook(model: nn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
-    if isinstance(model, Module) and model.multi_time_step and model.reset_after_process:
-        model.reset()
-
-
 class Module(nn.Module):
-    def __init__(self, multi_time_step: bool = False, reset_after_process: bool = False) -> None:
+    def __init__(self, multi_time_step: bool = False) -> None:
         """
         脉冲神经网络模块的骨架。
         Args:
             multi_time_step (bool): 是否调整为多个时间步模式
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         nn.Module.__init__(self)
         self._multi_time_step = False
-        self._reset_after_process = reset_after_process
         if multi_time_step:
             self.multi_time_step_(multi_time_step)
-        self.register_forward_hook(reset_hook)
 
 
     def extra_repr(self) -> str:
@@ -79,31 +71,22 @@ class Module(nn.Module):
             self._multi_time_step = True
         elif self.supports_single_time_step and not if_on:
             self._multi_time_step = False
-        for module in self.children():
+        for name, module in self.named_children():
+            from matterhorn_pytorch.snn.container import Temporal as _Temporal
             is_snn_module = isinstance(module, Module)
             if is_snn_module:
-                module.multi_time_step_(if_on)
-                assert module.multi_time_step == self.multi_time_step, "Unmatched step mode"
-        return self
-
-
-    @property
-    def reset_after_process(self) -> bool:
-        """
-        是否在执行完后自动重置。
-        Returns:
-            if_on (bool): 是否为自动重置（True为自动重置，False为手动重置）
-        """
-        return self._reset_after_process
-
-
-    def reset_after_process_(self, if_on: bool) -> nn.Module:
-        """
-        调整是否在执行完后自动重置。
-        Args:
-            if_on (bool): 是否为自动重置（True为自动重置，False为手动重置）
-        """
-        self._reset_after_process = if_on
+                if if_on:
+                    if module.supports_multi_time_step:
+                        module.multi_time_step_(if_on)
+                    else:
+                        setattr(self, name, _Temporal(module))
+                else:
+                    if module.supports_single_time_step:
+                        module.multi_time_step_(if_on)
+                    elif isinstance(module, _Temporal):
+                        setattr(self, name, module.module)
+                    else:
+                        raise ValueError("Unsupported time step conversion on module %s(%s)" % (name, module.__class__.__name__))
         return self
 
 
@@ -176,8 +159,6 @@ class Module(nn.Module):
         """
         if self.multi_time_step:
             res = self.forward_multi_time_steps(*args, **kwargs)
-            if self.reset_after_process:
-                self.reset()
         else:
             res = self.forward_single_time_step(*args, **kwargs)
         return res

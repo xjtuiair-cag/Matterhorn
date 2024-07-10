@@ -84,8 +84,7 @@ where $rand(\cdot)$ is a random number function that generates random numbers in
 Temporal(
     time_steps: int = 1,
     prob: float = 1.0,
-    transform: Callable = lambda x: x,
-    reset_after_process: bool = True
+    transform: Callable = lambda x: x
 )
 ```
 
@@ -96,8 +95,6 @@ Temporal(
 `prob (float)`: Probability of spike generation $p$ after a given time step.
 
 `transform (Callable)`: How data $X$ should be transformed.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If `False`, manual reset is required.
 
 ### Example Usage
 

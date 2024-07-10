@@ -66,16 +66,13 @@ Temporal container:
 
 ```python
 Temporal(
-    module: nn.Module,
-    reset_after_process: bool = True
+    module: nn.Module
 )
 ```
 
 ### Constructor Arguments
 
 `module (nn.Module)`: Single-time-step SNN module.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If `False`, manual reset is required.
 
 ### Example Usage
 
@@ -104,16 +101,13 @@ It is recommended to use `Sequential` as a container for connecting `matterhorn_
 
 ```python
 Sequential(
-    *args,
-    reset_after_process: bool = True
+    *args
 )
 ```
 
 ### Constructor Arguments
 
 `*args (*nn.Module)`: Various modules passed in spatial order.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If `False`, manual reset is required.
 
 ### Example Usage
 

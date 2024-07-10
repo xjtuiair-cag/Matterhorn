@@ -84,8 +84,7 @@ $$O_{i}^{0}(t) = (t \ge X_{i}) \times (rand(t) \le p) ? 1 : 0$$
 Temporal(
     time_steps: int = 1,
     prob: float = 1.0,
-    transform: Callable = lambda x: x,
-    reset_after_process: bool = True
+    transform: Callable = lambda x: x
 )
 ```
 
@@ -96,8 +95,6 @@ Temporal(
 `prob (float)` ：时间步超过给定值时，生成脉冲的概率 $p$ 。
 
 `transform (Callable)` ：将数据 $X$ 如何变换。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 ### 示例用法
 

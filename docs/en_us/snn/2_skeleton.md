@@ -14,16 +14,13 @@ In this module, the base class `matterhorn_pytorch.snn.Module` for all SNN modul
 
 ```python
 Module(
-    multi_time_step: bool = False,
-    reset_after_process: bool = False
+    multi_time_step: bool = False
 )
 ```
 
 ### Constructor Parameters
 
 `multi_time_step (bool)`: Whether to switch to multi-time-step mode. Multi-time-step mode allows passing a tensor with multiple time steps, enabling computation step by step. Since Matterhorn defines many algorithms to accelerate multi-time-step operations, its efficiency is higher than that of single-time-step mode.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If you set it to False, you need to manually call the `reset()` method to reset the entire model after the SNN model finishes execution.
 
 ### Example Usage
 
@@ -35,8 +32,7 @@ import matterhorn_pytorch as mth
 class Demo(mth.snn.Module):
     def __init__(self) -> None:
         super().__init__(
-            multi_time_step = True,
-            reset_after_process = True
+            multi_time_step = True
         )
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:

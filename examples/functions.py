@@ -35,6 +35,8 @@ def train_one_epoch(model: torch.nn.Module, data_loader: DataLoader, num_classes
         y = y.to(device)
         y0 = torch.nn.functional.one_hot(y, num_classes = num_classes).float()
         o = model(x)
+        if isinstance(model, mth.snn.Module):
+            model.reset()
         loss = torch.nn.functional.mse_loss(o, y0)
         loss.backward()
         if optimizer is not None:
@@ -72,6 +74,8 @@ def test_one_epoch(model: torch.nn.Module, data_loader: DataLoader, num_classes:
             y0 = torch.nn.functional.one_hot(y, num_classes = num_classes).float()
             
             o = model(x)
+            if isinstance(model, mth.snn.Module):
+                model.reset()
             loss = torch.nn.functional.mse_loss(o, y0)
 
             test_samples += y.numel()

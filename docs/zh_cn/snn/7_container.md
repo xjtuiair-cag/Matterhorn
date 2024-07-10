@@ -66,16 +66,13 @@ print(model)
 
 ```python
 Temporal(
-    module: nn.Module,
-    reset_after_process: bool = True
+    module: nn.Module
 )
 ```
 
 ### 构造函数参数
 
 `module (nn.Module)` ：单时间步 SNN 模块。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 ### 示例用法
 
@@ -104,16 +101,13 @@ SNN 序列容器，结合了 `Spatial` 容器与 `Temporal` 容器的产物。�
 
 ```python
 Sequential(
-    *args,
-    reset_after_process: bool = True
+    *args
 )
 ```
 
 ### 构造函数参数
 
 `*args (*nn.Module)` ：按空间顺序传入的各个模块。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 ### 示例用法
 

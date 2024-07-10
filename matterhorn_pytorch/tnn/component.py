@@ -19,8 +19,7 @@ class Bitonic(_Module):
             asc (bool): 是否为升序排序，为True则为升序，否则为降序
         """
         super().__init__(
-            multi_time_step = True,
-            reset_after_process = True
+            multi_time_step = True
         )
         self.level = level
         self.asc = asc
@@ -87,8 +86,7 @@ class Firing(_Module):
         统计上升/下降的时间，并发射脉冲。
         """
         super().__init__(
-            multi_time_step = True,
-            reset_after_process = True
+            multi_time_step = True
         )
         self.u_threshold = nn.Parameter(torch.tensor(u_threshold), requires_grad = False)
     

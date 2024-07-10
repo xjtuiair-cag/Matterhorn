@@ -73,8 +73,7 @@ $$Y_{i}=min(\{t_{i}|O_{i}^{L}(t_{i})=1\})$$
 ```python
 MinTime(
     empty_fill: float = -1,
-    transform: Callable = lambda x: x,
-    reset_after_process: bool = True
+    transform: Callable = lambda x: x
 )
 ```
 
@@ -83,8 +82,6 @@ MinTime(
 `empty_fill (float)` ：当某个空间位置的脉冲序列无脉冲时，其时间应当用何值表示。一般为 `-1` 。在 TNN 模型中，您可能需要将其设置为 `torch.inf` 。
 
 `transform (Callable)` ：将结果 $y$ 如何变换。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 ### 示例用法
 
@@ -112,8 +109,7 @@ $$Y_{i}=\frac{1}{S}\sum_{S}\{t_{i}|O_{i}^{L}(t_{i})=1\}$$
 ```python
 AverageTime(
     empty_fill: float = -1,
-    transform: Callable = lambda x: x,
-    reset_after_process: bool = True
+    transform: Callable = lambda x: x
 )
 ```
 
@@ -122,8 +118,6 @@ AverageTime(
 `empty_fill (float)` ：当某个空间位置的脉冲序列无脉冲时，其时间应当用何值表示。一般为 `-1` 。在 TNN 模型中，您可能需要将其设置为 `torch.inf` 。
 
 `transform (Callable)` ：将结果 $y$ 如何变换。
-
-`reset_after_process (bool)` ：是否在执行完后自动重置，若为 `False` 则需要手动重置。
 
 ### 示例用法
 

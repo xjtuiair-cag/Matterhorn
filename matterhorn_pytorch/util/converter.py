@@ -117,8 +117,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 u_threshold = 1.0,
                 u_rest = 0.0,
                 hard_reset = False,
-                multi_time_step = False,
-                reset_after_process = False
+                multi_time_step = False
             )
             setattr(ann_module, "snn_module", snn_module)
         # 最大池化
@@ -218,14 +217,12 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             snn_module = snn.Agent(
                 nn_module = hybrid_module,
                 force_spike_output = False,
-                multi_time_step = False,
-                reset_after_process = False
+                multi_time_step = False
             )
         return snn_module
     
     res = snn.Temporal(
-        module = _replace(model),
-        reset_after_process = True
+        module = _replace(model)
     )
 
     if mode is not None:

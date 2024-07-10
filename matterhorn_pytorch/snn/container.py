@@ -13,10 +13,9 @@ from typing import Iterable as _Iterable, Mapping as _Mapping, Tuple as _Tuple
 
 
 class Container(_Module):
-    def __init__(self, multi_time_step: bool = False, reset_after_process: bool = False) -> None:
+    def __init__(self, multi_time_step: bool = False) -> None:
         super().__init__(
-            multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            multi_time_step = multi_time_step
         )
 
 
@@ -27,26 +26,16 @@ class Spatial(Container, nn.Sequential):
         Args:
             *args ([nn.Module]): 按空间顺序传入的各个模块
         """
+        multi_time_step = False
+        for module in args:
+            assert isinstance(module, _Module), "Not an SNN module."
+            multi_time_step = multi_time_step or module.multi_time_step
         Container.__init__(
             self,
-            multi_time_step = False
+            multi_time_step = multi_time_step
         )
         nn.Sequential.__init__(self, *args)
-        for module in self:
-            is_snn_module = isinstance(module, _Module)
-            if is_snn_module:
-                assert self.supports_single_time_step, "Cannot put a multi time step model into spatial container."
-                self.multi_time_step_(False)
-
-
-    @property
-    def supports_multi_time_step(self) -> bool:
-        """
-        是否支持多个时间步。
-        Returns:
-            if_support (bool): 是否支持多个时间步
-        """
-        return False
+        self.multi_time_step_(multi_time_step)
 
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
@@ -62,30 +51,19 @@ class Spatial(Container, nn.Sequential):
 
 
 class Temporal(Container):
-    def __init__(self, module: nn.Module, reset_after_process: bool = False) -> None:
+    def __init__(self, module: nn.Module) -> None:
         """
         SNN的时间容器，在多个时间步之内执行脉冲神经网络。
         Args:
             module (nn.Module): 所用来执行的单步模型
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         is_snn_module = isinstance(module, _Module)
         if is_snn_module:
             assert module.multi_time_step == False, "You cannot put a multi-time-step module %s into temporal container" % (module.__class__.__name__,)
         super().__init__(
-            multi_time_step = True,
-            reset_after_process = reset_after_process
+            multi_time_step = True
         )
         self.module = module
-
-
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来。
-        Returns:
-            repr_str (str): 参数表
-        """
-        return "reset_after_process=%s" % (str(self.reset_after_process),)
 
 
     @property
@@ -122,96 +100,18 @@ class Temporal(Container):
 
 
 class Sequential(Container, nn.Sequential):
-    def __init__(self, *args, reset_after_process: bool = False) -> None:
+    def __init__(self, *args, multi_time_step: bool = True) -> None:
         """
         对Sequential进行重写，涵盖ANN与SNN的网络。
         Args:
             args (*nn.Module): 按空间顺序传入的各个模块
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
-        multi_time_step = True
-        # all_snn_module_single_time_step = True
-        # for module in args:
-        #     is_snn_module = isinstance(module, _Module)
-        #     if is_snn_module:
-        #         all_snn_module_single_time_step = all_snn_module_single_time_step and not module.multi_time_step
-        #     else:
-        #         all_snn_module_single_time_step = False
-        # if all_snn_module_single_time_step:
-        #     multi_time_step = False
         Container.__init__(
             self,
-            multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            multi_time_step = multi_time_step
         )
         nn.Sequential.__init__(self, *args)
-        convert_indices = []
-        remove_indices = []
-        last_single_step_idx = -2
-        last_snn_idx = -2
-        # 遍历所有传入的模块，确保它们是ANN模块或是多时间步SNN模块。
-        for module_idx in range(len(self)):
-            module = self[module_idx]
-            is_snn_module = isinstance(module, _Module)
-            # 如果是SNN模块。
-            if is_snn_module:
-                is_multi_time_step = module.multi_time_step
-                # 如果是单时间步SNN模块。
-                if not is_multi_time_step:
-                    # 如果可以将它转成多时间步SNN模块，那就直接转成多时间步SNN模块。
-                    if module.supports_multi_time_step:
-                        module.multi_time_step_(True)
-                        self[module_idx] = module
-                    # 否则，记住当前SNN模块的索引，在之后将其合并。
-                    else:
-                        # 如果它的前一个模块也是不能转成多时间步SNN模块的单时间步SNN模块，将其插入到前一个模块所在的模块列表中，并删除该模块。
-                        if last_single_step_idx == module_idx - 1:
-                            convert_indices[-1].append(module_idx)
-                            remove_indices.append(module_idx)
-                        # 否则，新建一组需要合并的模块列表。
-                        else:
-                            convert_indices.append([module_idx, module_idx])
-                        last_single_step_idx = module_idx
-                # 否则，是多时间步SNN模块，不用处理。
-                else:
-                    pass
-                last_snn_idx = module_idx
-            # 否则，是ANN模块，不用处理。
-            else:
-                pass
-        # 将需要进行合并的模块进行合并。
-        for indices in convert_indices:
-            # 若一组里面只有一个单元需要合并，那就直接在其外面套上时间容器即可。
-            if len(indices) == 2:
-                self[indices[0]] = Temporal(
-                    self[indices[1]],
-                    reset_after_process = reset_after_process
-                )
-            # 否则，一组里面有很多单元需要合并，除了时间容器之外，还需要套上一层空间容器来让各个模块顺序执行。
-            else:
-                module_list = []
-                for module_idx in indices[1:]:
-                    module_list.append(self[module_idx])
-                self[indices[0]] = Temporal(
-                    Spatial(
-                        *module_list
-                    ),
-                    reset_after_process = reset_after_process
-                )
-        # 将需要解除连接的模块解除连接。逆序是为了不会破坏原索引。
-        remove_indices = remove_indices[::-1]
-        for idx in remove_indices:
-            del self[idx]
-
-
-    @property
-    def supports_single_time_step(self) -> bool:
-        """
-        是否支持单个时间步。
-        Returns:
-            if_support (bool): 是否支持单个时间步
-        """
-        return False
+        self.multi_time_step_(multi_time_step)
 
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
@@ -245,21 +145,19 @@ class ModuleDict(Container, nn.ModuleDict):
 
 
 class Agent(_Module):
-    def __init__(self, nn_module: nn.Module, force_spike_output: bool = False, multi_time_step: bool = False, reset_after_process: bool = False) -> None:
+    def __init__(self, nn_module: nn.Module, force_spike_output: bool = False, multi_time_step: bool = False) -> None:
         """
         ANN套壳，用于使ANN模块带有mth.snn.Module的方法
         Args:
             module (nn.Module): torch.nn模型
             force_spike_output (bool): 是否强制脉冲输出
             multi_time_step (bool): 是否调整为多个时间步模式
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         is_snn_module = isinstance(nn_module, _Module)
         assert not is_snn_module, "Already an SNN module."
         self.nn_module: nn.Module = None
         super().__init__(
-            multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            multi_time_step = multi_time_step
         )
         self.nn_module: nn.Module = nn_module
         self.multi_time_step_(multi_time_step)
@@ -274,11 +172,21 @@ class Agent(_Module):
         """
         super().multi_time_step_(if_on)
         if self.nn_module is not None:
-            for module in self.nn_module.children():
+            for name, module in self.nn_module.named_children():
                 is_snn_module = isinstance(module, _Module)
                 if is_snn_module:
-                    module.multi_time_step_(if_on)
-                    assert module.multi_time_step == self.multi_time_step, "Unmatched step mode"
+                    if if_on:
+                        if module.supports_multi_time_step:
+                            module.multi_time_step_(if_on)
+                        else:
+                            setattr(self, name, Temporal(module))
+                    else:
+                        if module.supports_single_time_step:
+                            module.multi_time_step_(if_on)
+                        elif isinstance(module, Temporal):
+                            setattr(self, name, module.module)
+                        else:
+                            raise ValueError("Unsupported time step conversion on module %s(%s)" % (name, module.__class__.__name__))
         return self
 
 

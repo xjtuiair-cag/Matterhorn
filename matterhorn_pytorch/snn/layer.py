@@ -154,7 +154,7 @@ class f_stdp_linear(torch.autograd.Function):
 
 
 class STDPLinear(_Module):
-    def __init__(self, soma: _Module, in_features: int, out_features: int, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, soma: _Module, in_features: int, out_features: int, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, multi_time_step: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层。
         Args:
@@ -166,15 +166,13 @@ class STDPLinear(_Module):
             a_neg (float): STDP参数A-
             tau_neg (float): STDP参数tau-
             multi_time_step (bool): 是否调整为多个时间步模式
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
         self.input_trace = None
         self.output_trace = None
         super().__init__(
-            multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            multi_time_step = multi_time_step
         )
         self.in_features = in_features
         self.out_features = out_features
@@ -184,7 +182,7 @@ class STDPLinear(_Module):
             if soma.supports_multi_time_step:
                 self.soma = soma.multi_time_step_(True)
             elif not soma.multi_time_step:
-                self.soma = _Temporal(soma, reset_after_process = False)
+                self.soma = _Temporal(soma)
         else:
             if soma.supports_single_time_step:
                 self.soma = soma.multi_time_step_(False)
@@ -337,7 +335,7 @@ class f_stdp_conv2d(torch.autograd.Function):
 
 
 class STDPConv2d(_Module):
-    def __init__(self, soma: _Module, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, dilation: _size_2_t = 1, a_pos: float = 0.0002, tau_pos: float = 2.0, a_neg: float = 0.0002, tau_neg: float = 2.0, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, soma: _Module, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, dilation: _size_2_t = 1, a_pos: float = 0.0002, tau_pos: float = 2.0, a_neg: float = 0.0002, tau_neg: float = 2.0, multi_time_step: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         使用STDP学习机制时的2维卷积层。
         Args:
@@ -353,15 +351,13 @@ class STDPConv2d(_Module):
             a_neg (float): STDP参数A-
             tau_neg (float): STDP参数tau-
             multi_time_step (bool): 是否调整为多个时间步模式
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
         self.input_trace = None
         self.output_trace = None
         super().__init__(
-            multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            multi_time_step = multi_time_step
         )
         def _fill(data: _size_any_t, l: int) -> torch.Tensor:
             res = torch.tensor(data)
@@ -383,7 +379,7 @@ class STDPConv2d(_Module):
             if soma.supports_multi_time_step:
                 self.soma = soma.multi_time_step_(True)
             elif not soma.multi_time_step:
-                self.soma = _Temporal(soma, reset_after_process = False)
+                self.soma = _Temporal(soma)
         else:
             if soma.supports_single_time_step:
                 self.soma = soma.multi_time_step_(False)

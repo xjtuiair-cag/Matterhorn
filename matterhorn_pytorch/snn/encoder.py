@@ -13,15 +13,13 @@ from typing import Callable as _Callable
 
 
 class Encoder(_Module):
-    def __init__(self, reset_after_process: bool = False) -> None:
+    def __init__(self) -> None:
         """
         编码器的基类。编码器是一个多时间步模型。
         Args:
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(
-            multi_time_step = True,
-            reset_after_process = reset_after_process
+            multi_time_step = True
         )
 
 
@@ -127,18 +125,15 @@ class Poisson(Encoder):
 
 
 class Temporal(Encoder):
-    def __init__(self, time_steps: int = 1, prob: float = 1.0, transform: _Callable = lambda x: x, reset_after_process: bool = True) -> None:
+    def __init__(self, time_steps: int = 1, prob: float = 1.0, transform: _Callable = lambda x: x) -> None:
         """
         时间编码，在某个时间之前不会产生脉冲，在某个时间之后随机产生脉冲
         Args:
             time_steps (int): 生成的时间步长
             prob (float): 若达到了时间，以多大的概率发放脉冲，范围为[0, 1]
             transform (Callable): 将数据x如何变形
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
-        super().__init__(
-            reset_after_process = reset_after_process
-        )
+        super().__init__()
         self.time_steps = time_steps
         self.prob = prob
         self.transform = transform
@@ -151,7 +146,7 @@ class Temporal(Encoder):
         Returns:
             repr_str (str): 参数表
         """
-        return "time_steps=%d, prob=%g, reset_after_process=%s" % (self.time_steps, self.prob, str(self.reset_after_process))
+        return "time_steps=%d, prob=%g" % (self.time_steps, self.prob)
 
 
     def reset(self) -> _Module:

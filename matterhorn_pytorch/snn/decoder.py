@@ -13,15 +13,13 @@ from typing import Callable as _Callable
 
 
 class Decoder(_Module):
-    def __init__(self, reset_after_process: bool = False) -> None:
+    def __init__(self) -> None:
         """
         解码器的基类。解码器是一个多时间步模型。
         Args:
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(
-            multi_time_step = True,
-            reset_after_process = reset_after_process
+            multi_time_step = True
         )
 
 
@@ -78,17 +76,14 @@ class AverageSpike(Decoder):
 
 
 class TimeBased(Decoder):
-    def __init__(self, empty_fill: float = -1, transform: _Callable = lambda x: x, reset_after_process: bool = True) -> None:
+    def __init__(self, empty_fill: float = -1, transform: _Callable = lambda x: x) -> None:
         """
         基于时间的解码器。
         Args:
             empty_fill (float): 如果脉冲序列为全0序列，值应该用什么替代，在TNN中该参数应设为torch.inf
             transform (Callable): 将结果y如何变形
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
-        super().__init__(
-            reset_after_process = reset_after_process
-        )
+        super().__init__()
         self.empty_fill = empty_fill
         self.transform = transform
         self.reset()
@@ -100,7 +95,7 @@ class TimeBased(Decoder):
         Returns:
             repr_str (str): 参数表
         """
-        return "empty_fill=%g, reset_after_process=%s" % (self.empty_fill, str(self.reset_after_process))
+        return "empty_fill=%g" % (self.empty_fill)
 
 
     def reset(self) -> _Module:
@@ -129,19 +124,17 @@ class TimeBased(Decoder):
 
 
 class MinTime(TimeBased):
-    def __init__(self, empty_fill: float = -1, transform: _Callable = lambda x: x, reset_after_process: bool = True) -> None:
+    def __init__(self, empty_fill: float = -1, transform: _Callable = lambda x: x) -> None:
         """
         取张量在时间维度上的最小值。
         $$o_{i}=min(tO_{i}^{K}(t))$$
         Args:
             empty_fill (float): 如果脉冲序列为全0序列，值应该用什么替代，在TNN中该参数应设为torch.inf
             transform (Callable): 将结果y如何变形
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(
             empty_fill = empty_fill,
-            transform = transform,
-            reset_after_process = reset_after_process
+            transform = transform
         )
 
 
@@ -158,19 +151,17 @@ class MinTime(TimeBased):
 
 
 class AverageTime(TimeBased):
-    def __init__(self, empty_fill: float = -1, transform: _Callable = lambda x: x, reset_after_process: bool = True) -> None:
+    def __init__(self, empty_fill: float = -1, transform: _Callable = lambda x: x) -> None:
         """
         取张量在时间维度上的时间加权平均值
         $$o_{i}=\frac{1}{T}\sum_{t=1}^{T}{tO_{i}^{K}(t)}$$
         Args:
             empty_fill (float): 如果脉冲序列为全0序列，值应该用什么替代，在TNN中该参数应设为torch.inf
             transform (Callable): 将结果y如何变形
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
         """
         super().__init__(
             empty_fill = empty_fill,
-            transform = transform,
-            reset_after_process = reset_after_process
+            transform = transform
         )
 
 

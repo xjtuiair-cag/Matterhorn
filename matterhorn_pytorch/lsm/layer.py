@@ -17,21 +17,19 @@ from matterhorn_pytorch.training.functional import stdp_online as _stdp_online
 
 
 class LSM(_Module):
-    def __init__(self, adjacent: torch.Tensor, soma: _Soma, multi_time_step: bool = True, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, adjacent: torch.Tensor, soma: _Soma, multi_time_step: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         液体状态机。
         Args:
             adjacent (torch.Tensor): 邻接矩阵，行为各个神经元的轴突，列为各个神经元的树突，1为有从轴突指向树突的连接，0为没有
             soma (nn.Module): 使用的脉冲神经元胞体，在matterhorn_pytorch.snn.soma中选择
             multi_time_step (bool): 是否调整为多个时间步模式
-            reset_after_process (bool): 是否在执行完后自动重置，若为False则需要手动重置
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
         assert len(adjacent.shape) == 2 and adjacent.shape[0] == adjacent.shape[1], "Incorrect adjacent matrix."
         super().__init__(
-            multi_time_step = multi_time_step,
-            reset_after_process = reset_after_process
+            multi_time_step = multi_time_step
         )
         self.o = None
         self.adjacent = nn.Parameter(adjacent.to(torch.float), requires_grad = False)

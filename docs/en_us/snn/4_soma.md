@@ -28,8 +28,7 @@ Soma(
     u_rest: float = -0.07,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
-    reset_after_process: bool = True
+    multi_time_step: bool = False
 )
 ```
 
@@ -44,8 +43,6 @@ Soma(
 `hard_reset (bool)`: Whether to perform a hard reset.
 
 `multi_time_step (bool)`: Whether to switch to multi-time-step mode.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 ### Overridable Methods
 
@@ -87,8 +84,7 @@ IF(
     u_rest: float = -0.07,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    multi_time_step: bool = False,
-    reset_after_process: bool = True
+    multi_time_step: bool = False
 )
 ```
 
@@ -103,8 +99,6 @@ IF(
 `hard_reset (bool)`: Whether to perform a hard reset.
 
 `multi_time_step (bool)`: Whether to switch to multi-time-step mode.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 ### Example Usage
 
@@ -161,7 +155,6 @@ LIF(
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
-    reset_after_process: bool = True,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -181,8 +174,6 @@ LIF(
 `hard_reset (bool)`: Whether to perform a hard reset.
 
 `multi_time_step (bool)`: Whether to switch to multi-time-step mode.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 `trainable (bool)`: Whether the parameter $\tau_{m}$ can be trained.
 
@@ -248,7 +239,6 @@ QIF(
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
-    reset_after_process: bool = True,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -272,8 +262,6 @@ QIF(
 `hard_reset (bool)`: Whether to perform a hard reset.
 
 `multi_time_step (bool)`: Whether to switch to multi-time-step mode.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 `trainable (bool)`: Whether the parameters $\tau_{m}$, $u_{c}$, and $a_{0}$ can be trained.
 
@@ -341,7 +329,6 @@ ExpIF(
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
-    reset_after_process: bool = True,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -365,8 +352,6 @@ ExpIF(
 `hard_reset (bool)`: Whether to perform a hard reset.
 
 `multi_time_step (bool)`: Whether to switch to multi-time-step mode.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 `trainable (bool)`: Whether the parameters $\tau_{m}$, $u_{T}$, and $\Delta_{T}$ can be trained.
 
@@ -439,7 +424,6 @@ Izhikevich(
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
-    reset_after_process: bool = True,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -461,8 +445,6 @@ Izhikevich(
 `hard_reset (bool)`: Whether to perform a hard reset.
 
 `multi_time_step (bool)`: Whether to switch to multi-time-step mode.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 `trainable (bool)`: Whether the parameters $a$ and $b$ can be trained.
 
@@ -526,7 +508,6 @@ KLIF(
     spiking_function: Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
-    reset_after_process: bool = True,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -548,8 +529,6 @@ KLIF(
 `hard_reset (bool)`: Whether to perform a hard reset.
 
 `multi_time_step (bool)`: Whether to switch to multi-time-step mode.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 `trainable (bool)`: Whether the parameter $\tau_{m}$ and $k$ can be trained.
 
@@ -598,7 +577,6 @@ LIAF(
     activation_function: torch.nn.Module = nn.ReLU(),
     hard_reset: bool = True,
     multi_time_step: bool = False,
-    reset_after_process: bool = True,
     trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
@@ -620,8 +598,6 @@ LIAF(
 `hard_reset (bool)`: Whether to perform a hard reset.
 
 `multi_time_step (bool)`: Whether to switch to multi-time-step mode.
-
-`reset_after_process (bool)`: Whether to reset automatically after execution. If set to `False`, manual reset is required.
 
 `trainable (bool)`: Whether the parameter $\tau_{m}$ can be trained.
 
