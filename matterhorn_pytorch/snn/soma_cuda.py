@@ -99,7 +99,7 @@ class LIF(_LIF):
         return ", ".join(["tau_m=%g, u_threshold=%g, u_rest=%g" % (self.tau_m, self.u_threshold, self.u_rest), super().extra_repr(), "ext=%s" % ('"cuda"',)])
 
 
-    def forward_multi_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_multi_time_steps(self, x: torch.Tensor) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:

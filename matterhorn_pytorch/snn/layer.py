@@ -38,7 +38,7 @@ class Layer(_Module):
         return "multi_time_step=%s" % (str(self.multi_time_step),)
 
 
-    def forward_multi_time_step(self, *args, **kwargs) -> torch.Tensor:
+    def forward_multi_time_steps(self, *args, **kwargs) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:

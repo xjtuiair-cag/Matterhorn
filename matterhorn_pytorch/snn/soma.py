@@ -123,22 +123,6 @@ class Soma(_Module):
         return o
 
 
-    def forward_multi_time_step(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
-        Returns:
-            o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
-        """
-        time_steps = x.shape[0]
-        o_seq = []
-        for t in range(time_steps):
-            o_seq.append(self.forward_single_time_step(x[t]))
-        o = torch.stack(o_seq)
-        return o
-
-
 class IF(Soma):
     def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _surrogate.SurrogateGradient = _surrogate.Gaussian(), hard_reset: bool = True, multi_time_step: bool = False, reset_after_process: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """

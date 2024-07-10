@@ -73,20 +73,3 @@ class LSM(_Module):
         o = self.soma.forward_single_time_step(y)
         self.o = o
         return o
-
-
-    def forward_multi_time_step(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
-        Returns:
-            o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
-        """
-        time_steps = x.shape[0]
-        o_seq = []
-        for t in range(time_steps):
-            o = self.forward_single_time_step(x[t])
-            o_seq.append(o)
-        o = torch.stack(o_seq)
-        return o

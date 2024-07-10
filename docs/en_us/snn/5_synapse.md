@@ -28,7 +28,7 @@ Synapse(
 
 Synapse function within a single time step. Since synaptic computation is independent of time steps, the synaptic function in multi-time-step mode can be run in parallel by only overriding the synaptic function within a single time step.
 
-#### `forward_multi_time_step(self, o: torch.Tensor) -> torch.Tensor`
+#### `forward_multi_time_steps(self, o: torch.Tensor) -> torch.Tensor`
 
 If synaptic computation depends on time steps, please override this function and use variables to indicate the relationship between different time steps.
 

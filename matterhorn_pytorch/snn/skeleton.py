@@ -6,6 +6,7 @@ SNN模块的框架，在torch.nn的基础上，定义了几个SNN的基本函数
 
 import torch
 import torch.nn as nn
+from typing import Tuple as _Tuple
 
 
 def reset_hook(model: nn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
@@ -140,7 +141,7 @@ class Module(nn.Module):
         pass
 
 
-    def forward_multi_time_step(self, *args, **kwargs) -> torch.Tensor:
+    def forward_multi_time_steps(self, *args, **kwargs) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
@@ -149,7 +150,19 @@ class Module(nn.Module):
         Returns:
             res (torch.Tensor): 输出
         """
-        pass
+        if not isinstance(args, _Tuple):
+            args = (args,)
+        time_steps = args[0].shape[0]
+        result = []
+        for t in range(time_steps):
+            args_t = (x[t] if isinstance(x, torch.Tensor) else x for x in args)
+            kwargs_t = {k: x[t] if isinstance(x, torch.Tensor) else x for k, x in kwargs}
+            result.append(self.forward_single_time_step(*args_t, **kwargs_t))
+        if isinstance(result[0], _Tuple):
+            y = (torch.stack([result[t][col] for t in range(len(result))]) if isinstance(result[0][col], torch.Tensor) else result[0][col] for col in range(len(result[0])))
+        else:
+            y = torch.stack(result)
+        return y
 
 
     def forward(self, *args, **kwargs) -> torch.Tensor:
@@ -162,7 +175,7 @@ class Module(nn.Module):
             res (torch.Tensor): 输出
         """
         if self.multi_time_step:
-            res = self.forward_multi_time_step(*args, **kwargs)
+            res = self.forward_multi_time_steps(*args, **kwargs)
             if self.reset_after_process:
                 self.reset()
         else:
