@@ -256,11 +256,13 @@ class Agent(_Module):
         """
         is_snn_module = isinstance(nn_module, _Module)
         assert not is_snn_module, "Already an SNN module."
+        self.nn_module: nn.Module = None
         super().__init__(
             multi_time_step = multi_time_step,
             reset_after_process = reset_after_process
         )
         self.nn_module: nn.Module = nn_module
+        self.multi_time_step_(multi_time_step)
         self.force_spike_output = force_spike_output
 
 
@@ -271,11 +273,12 @@ class Agent(_Module):
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
         """
         super().multi_time_step_(if_on)
-        for module in self.nn_module.children():
-            is_snn_module = isinstance(module, _Module)
-            if is_snn_module:
-                module.multi_time_step_(if_on)
-                assert module.multi_time_step == self.multi_time_step, "Unmatched step mode"
+        if self.nn_module is not None:
+            for module in self.nn_module.children():
+                is_snn_module = isinstance(module, _Module)
+                if is_snn_module:
+                    module.multi_time_step_(if_on)
+                    assert module.multi_time_step == self.multi_time_step, "Unmatched step mode"
         return self
 
 
@@ -284,10 +287,11 @@ class Agent(_Module):
         重置模型。
         """
         super().reset()
-        for module in self.nn_module.children():
-            is_snn_module = isinstance(module, _Module)
-            if is_snn_module:
-                module.reset()
+        if self.nn_module is not None:
+            for module in self.nn_module.children():
+                is_snn_module = isinstance(module, _Module)
+                if is_snn_module:
+                    module.reset()
         return self
 
 
@@ -296,10 +300,11 @@ class Agent(_Module):
         将模型中的某些变量从其计算图中分离。
         """
         super().detach()
-        for module in self.nn_module.children():
-            is_snn_module = isinstance(module, _Module)
-            if is_snn_module:
-                module.detach()
+        if self.nn_module is not None:
+            for module in self.nn_module.children():
+                is_snn_module = isinstance(module, _Module)
+                if is_snn_module:
+                    module.detach()
         return self
 
 
@@ -315,21 +320,6 @@ class Agent(_Module):
         if not isinstance(args, _Tuple):
             args = (args,)
         res = self.nn_module(*args, **kwargs)
-        return res
-
-
-    def forward_multi_time_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        args, kwargs, tb = _SF.merge_time_steps_batch_size(args, kwargs)
-        res = self.forward_single_time_step(*args, **kwargs)
-        res = _SF.split_time_steps_batch_size(res, tb)
         return res
 
 
