@@ -84,6 +84,7 @@ setup(
     description = "Matterhorn is a novel general neuromorphic computing framework based on PyTorch.",
     long_description = long_description,
     long_description_content_type = "text/markdown",
+    license = "License :: OSI Approved :: MIT License",
     url = "https://github.com/xjtuiair-cag/Matterhorn",
     packages = find_packages(),
     classifiers = [
