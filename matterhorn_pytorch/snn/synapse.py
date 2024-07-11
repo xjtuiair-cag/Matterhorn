@@ -22,7 +22,7 @@ class Synapse(_Module):
         super().__init__()
 
 
-    def forward_multi_time_steps(self, *args, **kwargs) -> torch.Tensor:
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
@@ -32,7 +32,7 @@ class Synapse(_Module):
             res (torch.Tensor): 输出
         """
         args, kwargs, tb = _SF.merge_time_steps_batch_size(args, kwargs)
-        res = self.forward_single_time_step(*args, **kwargs)
+        res = self.forward_step(*args, **kwargs)
         res = _SF.split_time_steps_batch_size(res, tb)
         return res
 
@@ -68,7 +68,7 @@ class Linear(Synapse, nn.Linear):
         return nn.Linear.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
     
-    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -123,7 +123,7 @@ class Conv1d(Synapse, nn.Conv1d):
         return nn.Conv1d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -178,7 +178,7 @@ class Conv2d(Synapse, nn.Conv2d):
         return nn.Conv2d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -233,7 +233,7 @@ class Conv3d(Synapse, nn.Conv3d):
         return nn.Conv3d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -290,7 +290,7 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
         return nn.ConvTranspose1d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -347,7 +347,7 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
         return nn.ConvTranspose2d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -404,7 +404,7 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
         return nn.ConvTranspose3d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -451,7 +451,7 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
         return nn.BatchNorm1d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -498,7 +498,7 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
         return nn.BatchNorm2d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -545,7 +545,7 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
         return nn.BatchNorm3d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -588,7 +588,7 @@ class LayerNorm(Synapse, nn.LayerNorm):
         return nn.LayerNorm.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -635,7 +635,7 @@ class NormPlaceholder(Synapse):
             self.register_buffer("num_batches_tracked", None)
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -664,7 +664,7 @@ class Identity(Synapse, nn.Identity):
         return nn.Identity.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
     
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -687,7 +687,7 @@ class Neurotransmitter(Synapse):
         self.mask = mask
     
 
-    def forward_single_time_step(self, o: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:

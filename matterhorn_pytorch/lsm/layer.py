@@ -55,7 +55,7 @@ class LSM(_Module):
         return super().reset()
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -65,6 +65,6 @@ class LSM(_Module):
         """
         self.o = _SF.init_tensor(self.o, x)
         y = x + _F.linear(self.o, self.weight * self.adjacent.T, None)
-        o = self.soma.forward_single_time_step(y)
+        o = self.soma.forward_step(y)
         self.o = o
         return o

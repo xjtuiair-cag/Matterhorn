@@ -104,7 +104,7 @@ class LIF(_LIF):
         return ", ".join([super().extra_repr(), "ext=%s" % '"CPP"'])
 
 
-    def forward_multi_time_steps(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:

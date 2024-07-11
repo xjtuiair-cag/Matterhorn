@@ -62,8 +62,6 @@ print(model)
 
 （2）其本身为多时间步模块，因此要比单时间步模块多消耗一个维度 `T` ，默认将第一个维度视作时间维度。
 
-（3）其存在自动重置机制。
-
 ```python
 Temporal(
     module: nn.Module
@@ -95,19 +93,20 @@ SNN 序列容器，结合了 `Spatial` 容器与 `Temporal` 容器的产物。�
 
 （2）其中的单时间步 SNN 模块会自动转换成多时间步 SNN 模块。转换模式为：如果其自身支持多时间步，则直接将其转为多时间步；否则，在其外部加上一层 `Temporal` 容器，使其成为多时间步 SNN 模块。其本身为多时间步模块，因此要比单时间步模块多消耗一个维度 `T` ，默认将第一个维度视作时间维度。
 
-（3）其存在自动重置机制。
-
-推荐使用 `Sequential` 作为连接 `matterhorn_pytorch.snn` 的容器。
+推荐使用 `Sequential` 作为连接 `matterhorn_pytorch.snn` 模块的容器。
 
 ```python
 Sequential(
-    *args
+    *args,
+    multi_step_mode: bool = False
 )
 ```
 
 ### 构造函数参数
 
 `*args (*nn.Module)` ：按空间顺序传入的各个模块。
+
+`multi_step_mode (bool)` ：是否将内部的所有模块转成多时间步模式。默认不进行转换。
 
 ### 示例用法
 
@@ -119,6 +118,36 @@ import matterhorn_pytorch as mth
 model = mth.snn.Sequential(
     mth.snn.Linear(784, 10),
     mth.snn.LIF()
+)
+print(model)
+```
+
+## `matterhorn_pytorch.snn.Agent` / `matterhorn_pytorch.snn.container.Agent`
+
+ANN 模型的套壳容器，将 ANN 模型看作单时间步模式的 SNN 模型，赋予 `matterhorn.snn` 模块中所特有的属性与方法。
+
+```python
+Agent(
+    nn_module: nn.Module,
+    force_spike_output: bool = False
+)
+```
+
+### 构造函数参数
+
+`nn_module (nn.Module)` ：ANN 模块。
+
+`force_spike_output (bool)` ：是否强制脉冲输出。默认不强制。
+
+### 示例用法
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+model = mth.snn.Agent(
+    nn.Linear(784, 10)
 )
 print(model)
 ```

@@ -26,7 +26,7 @@ class Layer(_Module):
         super().__init__()
 
 
-    def forward_multi_time_steps(self, *args, **kwargs) -> torch.Tensor:
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
@@ -36,7 +36,7 @@ class Layer(_Module):
             res (torch.Tensor): 输出
         """
         args, kwargs, tb = _SF.merge_time_steps_batch_size(args, kwargs)
-        res = self.forward_single_time_step(*args, **kwargs)
+        res = self.forward_step(*args, **kwargs)
         res = _SF.split_time_steps_batch_size(res, tb)
         return res
 
@@ -206,7 +206,7 @@ class STDPLinear(_Module):
         trace_shape = torch.zeros_like(self.weight)[None].repeat_interleave(batch_size, dim = 0)
         self.input_trace = _SF.init_tensor(self.input_trace, trace_shape)
         self.output_trace = _SF.init_tensor(self.output_trace, trace_shape)
-        soma = self.soma.forward_multi_time_steps if self.multi_step_mode else self.soma.forward_single_time_step
+        soma = self.soma.forward_steps if self.multi_step_mode else self.soma.forward_step
         y, self.input_trace, self.output_trace = f_stdp_linear.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)
         return y
 
@@ -410,7 +410,7 @@ class STDPConv2d(_Module):
         w_out = (w_in + 2 * self.padding[1] - w_wt * self.dilation[1]) // self.stride[1] + 1
         self.input_trace = _SF.init_tensor(self.input_trace, torch.zeros(batch_size, c_out, c_in, h_in, w_in).to(x))
         self.output_trace = _SF.init_tensor(self.output_trace, torch.zeros(batch_size, c_out, c_in, h_out, w_out))
-        soma = self.soma.forward_multi_time_steps if self.multi_step_mode else self.soma.forward_single_time_step
+        soma = self.soma.forward_steps if self.multi_step_mode else self.soma.forward_step
         y, self.input_trace, self.output_trace = f_stdp_conv2d.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.stride, self.padding, self.dilation, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)
         return y
 
@@ -448,7 +448,7 @@ class MaxPool1d(Layer, nn.MaxPool1d):
         return nn.MaxPool1d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -493,7 +493,7 @@ class MaxPool2d(Layer, nn.MaxPool2d):
         return nn.MaxPool2d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -538,7 +538,7 @@ class MaxPool3d(Layer, nn.MaxPool3d):
         return nn.MaxPool3d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -581,7 +581,7 @@ class AvgPool1d(Layer, nn.AvgPool1d):
         return nn.AvgPool1d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -626,7 +626,7 @@ class AvgPool2d(Layer, nn.AvgPool2d):
         return nn.AvgPool2d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -671,7 +671,7 @@ class AvgPool3d(Layer, nn.AvgPool3d):
         return nn.AvgPool3d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -710,7 +710,7 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
         return nn.MaxUnpool1d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
     
 
-    def forward_single_time_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -751,7 +751,7 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
         return nn.MaxUnpool2d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
     
 
-    def forward_single_time_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -792,7 +792,7 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
         return nn.MaxUnpool3d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -836,7 +836,7 @@ class Upsample(nn.Upsample):
         return nn.Upsample.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -873,7 +873,7 @@ class Flatten(Layer, nn.Flatten):
         return nn.Flatten.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -910,7 +910,7 @@ class Unflatten(Layer, nn.Unflatten):
         return nn.Unflatten.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -947,7 +947,7 @@ class Dropout(Layer, nn.Dropout):
         return nn.Dropout.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -984,7 +984,7 @@ class Dropout1d(Layer, nn.Dropout1d):
         return nn.Dropout1d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -1021,7 +1021,7 @@ class Dropout2d(Layer, nn.Dropout2d):
         return nn.Dropout2d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -1058,7 +1058,7 @@ class Dropout3d(Layer, nn.Dropout3d):
         return nn.Dropout3d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
         Args:

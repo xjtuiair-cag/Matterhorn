@@ -83,7 +83,7 @@ class Poisson(Encoder):
         return ", ".join(["time_steps=%d" % self.time_steps])
 
 
-    def forward_single_time_step(self, x:torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x:torch.Tensor) -> torch.Tensor:
         """
         单步前向传播函数。
         Args:
@@ -96,7 +96,7 @@ class Poisson(Encoder):
         return y
     
 
-    def forward_multi_time_steps(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
         """
         多步前向传播函数。
         Args:
@@ -106,7 +106,7 @@ class Poisson(Encoder):
         """
         res_shape = [self.time_steps] + list(x.shape)
         v = torch.ones(*res_shape).to(x) * x
-        y = self.forward_single_time_step(v)
+        y = self.forward_step(v)
         return y
 
 
@@ -125,9 +125,9 @@ class Poisson(Encoder):
         else:
             x = (x - min_value) / (max_value - min_value)
         if self.time_steps <= 1:
-            y = self.forward_single_time_step(x)
+            y = self.forward_step(x)
         else:
-            y = self.forward_multi_time_steps(x)
+            y = self.forward_steps(x)
         return y
 
 
@@ -164,7 +164,7 @@ class Temporal(Encoder):
         return super().reset()
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单步前向传播函数。
         Args:
@@ -179,7 +179,7 @@ class Temporal(Encoder):
         return y
     
 
-    def forward_multi_time_steps(self, x: torch.Tensor, time_steps: int) -> torch.Tensor:
+    def forward_steps(self, x: torch.Tensor, time_steps: int) -> torch.Tensor:
         """
         多步前向传播函数。
         Args:
@@ -189,7 +189,7 @@ class Temporal(Encoder):
         """
         y_seq = []
         for t in range(time_steps):
-            y_seq.append(self.forward_single_time_step(x))
+            y_seq.append(self.forward_step(x))
         y = torch.stack(y_seq)
         return y
 
@@ -204,7 +204,7 @@ class Temporal(Encoder):
         """
         x = self.transform(x)
         if self.time_steps <= 1:
-            y = self.forward_single_time_step(x)
+            y = self.forward_step(x)
         else:
-            y = self.forward_multi_time_steps(x, self.time_steps)
+            y = self.forward_steps(x, self.time_steps)
         return y

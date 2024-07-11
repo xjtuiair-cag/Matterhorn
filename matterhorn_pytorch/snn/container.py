@@ -97,11 +97,12 @@ class Temporal(Container):
 
 
 class Sequential(Container, nn.Sequential):
-    def __init__(self, *args, multi_step_mode: bool = True) -> None:
+    def __init__(self, *args, multi_step_mode: bool = False) -> None:
         """
         对Sequential进行重写，涵盖ANN与SNN的网络。
         Args:
             args (*nn.Module): 按空间顺序传入的各个模块
+            multi_step_mode (nn.Module): 是否支持多时间步模式。
         """
         Container.__init__(self)
         nn.Sequential.__init__(self, *args)
@@ -206,7 +207,7 @@ class Agent(_Module):
         return self
 
 
-    def forward_single_time_step(self, *args, **kwargs) -> torch.Tensor:
+    def forward_step(self, *args, **kwargs) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:

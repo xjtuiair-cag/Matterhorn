@@ -111,7 +111,7 @@ class Module(nn.Module):
         return self
 
 
-    def forward_single_time_step(self, *args, **kwargs) -> torch.Tensor:
+    def forward_step(self, *args, **kwargs) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -123,7 +123,7 @@ class Module(nn.Module):
         pass
 
 
-    def forward_multi_time_steps(self, *args, **kwargs) -> torch.Tensor:
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
@@ -139,7 +139,7 @@ class Module(nn.Module):
         for t in range(time_steps):
             args_t = (x[t] if isinstance(x, torch.Tensor) else x for x in args)
             kwargs_t = {k: x[t] if isinstance(x, torch.Tensor) else x for k, x in kwargs}
-            result.append(self.forward_single_time_step(*args_t, **kwargs_t))
+            result.append(self.forward_step(*args_t, **kwargs_t))
         if isinstance(result[0], _Tuple):
             y = (torch.stack([result[t][col] for t in range(len(result))]) if isinstance(result[0][col], torch.Tensor) else result[0][col] for col in range(len(result[0])))
         else:
@@ -157,7 +157,7 @@ class Module(nn.Module):
             res (torch.Tensor): 输出
         """
         if self.multi_step_mode:
-            res = self.forward_multi_time_steps(*args, **kwargs)
+            res = self.forward_steps(*args, **kwargs)
         else:
-            res = self.forward_single_time_step(*args, **kwargs)
+            res = self.forward_step(*args, **kwargs)
         return res

@@ -103,7 +103,7 @@ class Soma(_Module):
         return h
 
 
-    def forward_single_time_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:

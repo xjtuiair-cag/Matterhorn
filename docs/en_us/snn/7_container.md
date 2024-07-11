@@ -62,8 +62,6 @@ Temporal container:
 
 (2) It is itself a multi-time-step module, so it consumes one more dimension `T` than single-time-step modules, by default treating the first dimension as the time dimension.
 
-(3) It has an automatic reset mechanism.
-
 ```python
 Temporal(
     module: nn.Module
@@ -95,19 +93,20 @@ SNN sequential container, a combination of `Spatial` and `Temporal` containers. 
 
 (2) Single-time-step SNN modules inside it are automatically converted to multi-time-step SNN modules. The conversion mode is: if the module itself supports multi-time-step, it is directly converted to multi-time-step; otherwise, an additional layer of `Temporal` container is added outside it to make it a multi-time-step SNN module. It is itself a multi-time-step module, so it consumes one more dimension `T` than single-time-step modules, by default treating the first dimension as the time dimension.
 
-(3) It has an automatic reset mechanism.
-
-It is recommended to use `Sequential` as a container for connecting `matterhorn_pytorch.snn`.
+It is recommended to use `Sequential` as a container for connecting `matterhorn_pytorch.snn` modules.
 
 ```python
 Sequential(
-    *args
+    *args,
+    multi_step_mode: bool = False
 )
 ```
 
 ### Constructor Arguments
 
 `*args (*nn.Module)`: Various modules passed in spatial order.
+
+`multi_step_mode (bool)` : Whether to convert all the modules inside into multi step mode. Default is `False`.
 
 ### Example Usage
 
@@ -119,6 +118,36 @@ import matterhorn_pytorch as mth
 model = mth.snn.Sequential(
     mth.snn.Linear(784, 10),
     mth.snn.LIF()
+)
+print(model)
+```
+
+## `matterhorn_pytorch.snn.Agent` / `matterhorn_pytorch.snn.container.Agent`
+
+The shell aiming to convert ANN model to SNN model with single step mode in the simplest way. The attributes and methods of `matterhorn.snn` modules will also be attached at the model.
+
+```python
+Agent(
+    nn_module: nn.Module,
+    force_spike_output: bool = False
+)
+```
+
+### Constructor Arguments
+
+`nn_module (nn.Module)` : ANN module.
+
+`force_spike_output (bool)` : Whether to force the output as spike output. Default is `False`.
+
+### Example Usage
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+model = mth.snn.Agent(
+    nn.Linear(784, 10)
 )
 print(model)
 ```
