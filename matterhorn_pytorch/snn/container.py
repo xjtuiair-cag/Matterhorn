@@ -173,11 +173,10 @@ class Agent(_Module):
         Args
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
         """
-        if self.nn_module is not None:
-            for name, module in self.nn_module.named_children():
-                is_snn_module = isinstance(module, _Module)
-                if is_snn_module:
-                    setattr(self, name, _multi_step_mode_(module, if_on))
+        for name, module in self.nn_module.named_children():
+            is_snn_module = isinstance(module, _Module)
+            if is_snn_module:
+                setattr(self, name, _multi_step_mode_(module, if_on))
         return self
 
 
@@ -185,13 +184,11 @@ class Agent(_Module):
         """
         重置模型。
         """
-        super().reset()
-        if self.nn_module is not None:
-            for name, module in self.nn_module.named_children():
-                is_snn_module = isinstance(module, _Module)
-                if is_snn_module:
-                    module.reset()
-        return self
+        for name, module in self.nn_module.named_children():
+            is_snn_module = isinstance(module, _Module)
+            if is_snn_module:
+                module.reset()
+        return super().reset()
 
 
     def detach(self) -> nn.Module:

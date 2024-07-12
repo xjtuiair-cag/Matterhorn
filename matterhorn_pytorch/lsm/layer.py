@@ -49,8 +49,6 @@ class LSM(_Module):
         """
         重置整个神经元。
         """
-        if isinstance(self.soma, _Module):
-            self.soma.reset()
         self.o = None
         return super().reset()
 
