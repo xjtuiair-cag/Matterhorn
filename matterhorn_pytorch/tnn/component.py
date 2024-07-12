@@ -43,13 +43,15 @@ class Bitonic(_Module):
         if self.level <= 0 or x.shape[-1] <= 1:
             y = x
         elif self.level == 1:
+            y0: torch.Tensor
+            y1: torch.Tensor
             y0 = _TF.s_min(x[..., 0], x[..., 1])
             y1 = _TF.s_max(x[..., 0], x[..., 1])
             if self.asc:
                 y = torch.stack([y0, y1])
             else:
                 y = torch.stack([y1, y0])
-            y_dims = list(range(len(y.shape)))
+            y_dims = list(range(y.ndim))
             y_dims = y_dims[1:] + [0]
             y = y.permute(*y_dims)
         else:
@@ -59,6 +61,10 @@ class Bitonic(_Module):
                 else:
                     y = self.desc_unit(x, post = True)
             else:
+                y0: torch.Tensor
+                y1: torch.Tensor
+                y2: torch.Tensor
+                y3: torch.Tensor
                 y0 = x[..., :self.half_length]
                 y1 = x[..., self.half_length:]
                 if not post:
@@ -74,7 +80,7 @@ class Bitonic(_Module):
                     y3 = _TF.s_min(y0, y1)
                     y0 = self.desc_unit(y2, post = True)
                     y1 = self.desc_unit(y3, post = True)
-                y = torch.cat([y0, y1], dim = len(y0.shape) - 1)
+                y = torch.cat([y0, y1], dim = y0.ndim - 1)
         return y
 
 

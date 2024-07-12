@@ -20,10 +20,14 @@ def to(u: _Optional[_Union[torch.Tensor, int, float]], x: torch.Tensor) -> torch
         u (torch.Tensor): 经过校正的张量
     """
     if isinstance(u, torch.Tensor):
-        u = u.to(x)
-    if isinstance(u, int) or isinstance(u, float):
+        if u.shape != x.shape:
+            val = u.flatten()[0] if u.ndim else u
+            u = torch.full_like(x, val)
+        else:
+            u = u.to(x)
+    elif isinstance(u, int) or isinstance(u, float):
         u = torch.full_like(x, u).requires_grad_(True)
-    if u is None:
+    else:
         u = torch.zeros_like(x).requires_grad_(True)
     return u
 

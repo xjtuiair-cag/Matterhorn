@@ -26,7 +26,7 @@ class LSM(_Module):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        assert len(adjacent.shape) == 2 and adjacent.shape[0] == adjacent.shape[1], "Incorrect adjacent matrix."
+        assert adjacent.ndim == 2 and adjacent.shape[0] == adjacent.shape[1], "Incorrect adjacent matrix."
         super().__init__()
         self.o = None
         self.adjacent = nn.Parameter(adjacent.to(torch.float), requires_grad = False)

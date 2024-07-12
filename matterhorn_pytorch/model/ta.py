@@ -42,7 +42,7 @@ class TemporalWiseAttention(snn.Module):
         Returns:
             d (torch.Tensor): 分数向量$d^{n-1}$
         """
-        dim = len(s.shape)
+        dim = s.ndim
         if dim > 1:
             s = s.permute(1, 0) # 将形状[T, B]翻转为[B, T]
         d = self.sigmoid(self.fc2(self.relu(self.fc1(s))))
@@ -59,7 +59,7 @@ class TemporalWiseAttention(snn.Module):
         Returns:
             d (torch.Tensor): 分数向量$d^{n-1}$，形状为[B, T]
         """
-        dim = len(s.shape)
+        dim = s.ndim
         if dim > 1:
             s = s.permute(1, 0) # 将形状[T, B]翻转为[B, T]
         d = self.heaviside(self.sigmoid(self.fc2(self.relu(self.fc1(s)))) - self.d_threshold)
@@ -76,9 +76,8 @@ class TemporalWiseAttention(snn.Module):
         Returns:
             x (torch.Tensor): 过滤后的脉冲张量
         """
-        is_train = x.requires_grad
-        dim = len(x.shape)
-        s = x.clone().detach().requires_grad_(is_train)
+        dim = x.ndim
+        s = x.clone().detach().requires_grad_(self.training)
         pre_permute = []
         post_permute = []
         # 获取统计向量$s^{n-1}$
@@ -92,7 +91,7 @@ class TemporalWiseAttention(snn.Module):
             pre_permute.append(0)
             pre_permute.append(1)
         # 获取分数向量$d^{n-1}$：$d^{n-1}=TA(s^{n-1})$
-        if is_train:
+        if self.training:
             d = self.f_train(s)
         else:
             d = self.f_inf(s)

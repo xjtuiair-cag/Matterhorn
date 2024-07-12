@@ -806,7 +806,7 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
         return y
 
 
-class Upsample(nn.Upsample):
+class Upsample(Layer, nn.Upsample):
     def __init__(self, size: _Optional[_Union[int, _Tuple[int]]] = None, scale_factor: _Optional[_Union[float, _Tuple[float]]] = None, mode: str = 'nearest', align_corners: _Optional[bool] = None, recompute_scale_factor: _Optional[bool] = None) -> None:
         """
         上采样（反池化）。
@@ -817,6 +817,7 @@ class Upsample(nn.Upsample):
             align_corners (bool): 若为True，使输入和输出张量的角像素对齐，从而保留这些像素的值
             recompute_scale_factor (bool): 若为True，则必须传入scale_factor并且scale_factor用于计算输出大小。计算出的输出大小将用于推断插值的新比例；若为False，那么size或scale_factor将直接用于插值
         """
+        Layer.__init__(self)
         nn.Upsample.__init__(
             self,
             size = size,

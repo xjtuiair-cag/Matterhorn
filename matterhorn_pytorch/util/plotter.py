@@ -129,7 +129,7 @@ def spike_train_plot_yx(data: Union[np.ndarray, torch.Tensor], polarity: bool = 
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
     if isinstance(data, torch.Tensor):
         data = data.numpy()
-    dim = len(data.shape)
+    dim = data.ndim
     indices = np.array(data.nonzero())
     fig = plt.figure(figsize = figsize)
     if dim == 2: # [H, W]
@@ -303,7 +303,7 @@ def spike_train_plot_tx(data: Union[np.ndarray, torch.Tensor], polarity: bool = 
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
     if isinstance(data, torch.Tensor):
         data = data.numpy()
-    dim = len(data.shape)
+    dim = data.ndim
     indices = np.array(data.nonzero())
     fig = plt.figure(figsize = figsize)
     if dim == 2: # [T, L]
@@ -512,7 +512,7 @@ def spike_train_plot_tyx(data: Union[np.ndarray, torch.Tensor], polarity: bool =
     get_title = lambda b: titles[b] if titles is not None and b >= 0 and b < len(titles) else ("Event Group %d" % (b,))
     if isinstance(data, torch.Tensor):
         data = data.numpy()
-    dim = len(data.shape)
+    dim = data.ndim
     indices = np.array(data.nonzero())
     fig = plt.figure(figsize = figsize)
     if dim == 3: # [T, H, W]
