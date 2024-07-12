@@ -22,13 +22,14 @@ def to(u: _Optional[_Union[torch.Tensor, int, float]], x: torch.Tensor) -> torch
     if isinstance(u, torch.Tensor):
         if u.shape != x.shape:
             val = u.flatten()[0] if u.ndim else u
-            u = torch.zeros_like(x).requires_grad_(True) + val
+            u = torch.zeros_like(x) + val.to(x)
         else:
             u = u.clone().to(x)
     elif isinstance(u, int) or isinstance(u, float):
-        u = torch.full_like(x, u).requires_grad_(True)
+        u = torch.full_like(x, u)
     else:
-        u = torch.zeros_like(x).requires_grad_(True)
+        u = torch.zeros_like(x)
+    u = u.to(x).requires_grad_(True)
     return u
 
 

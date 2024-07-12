@@ -60,7 +60,7 @@ class Soma(_Module):
         将历史电位从计算图中分离，以停止在时间上进行反向传播。
         """
         if isinstance(self.u, torch.Tensor):
-            self.u = self.u.detach().requires_grad_(self.training)
+            self.u = self.u.float().detach().requires_grad_(self.training)
         return super().detach()
 
 
