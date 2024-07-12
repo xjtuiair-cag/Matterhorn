@@ -19,16 +19,19 @@ from matterhorn_pytorch.training.functional import stdp_online as _stdp_online
 
 
 class Layer(_Module):
-    def __init__(self) -> None:
+    def __init__(self, spike_mode: str = "s") -> None:
         """
         突触函数的骨架，定义突触最基本的函数。
+        Args:
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
         super().__init__()
+        self.spike_mode = spike_mode.lower() if isinstance(spike_mode, str) else None
 
 
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+    def forward_steps_parallel(self, *args, **kwargs) -> torch.Tensor:
         """
-        多个时间步的前向传播函数。
+        多个时间步可并行的前向传播函数。
         Args:
             *args: 输入
             **kwargs: 输入
@@ -51,10 +54,12 @@ class Layer(_Module):
             res (torch.Tensor): 输出
         """
         res = super().forward(*args, **kwargs)
-        if isinstance(res, _Tuple):
-            res = (_SF.val_to_spike(y) if isinstance(y, torch.Tensor) else y for y in res)
-        else:
-            res = _SF.val_to_spike(res)
+        if self.spike_mode in ("s", "m"):
+            f = _SF.floor if self.spike_mode == "m" else _SF.val_to_spike
+            if isinstance(res, _Tuple):
+                res = (f(y) if isinstance(y, torch.Tensor) else y for y in res)
+            else:
+                res = f(res)
         return res
 
 
@@ -416,7 +421,7 @@ class STDPConv2d(_Module):
 
 
 class MaxPool1d(Layer, nn.MaxPool1d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, spike_mode: str = "s") -> None:
         """
         一维最大池化。
         Args:
@@ -426,8 +431,12 @@ class MaxPool1d(Layer, nn.MaxPool1d):
             dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.MaxPool1d.__init__(
             self,
             kernel_size = kernel_size,
@@ -460,8 +469,20 @@ class MaxPool1d(Layer, nn.MaxPool1d):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class MaxPool2d(Layer, nn.MaxPool2d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, spike_mode: str = "s") -> None:
         """
         二维最大池化。
         Args:
@@ -471,8 +492,12 @@ class MaxPool2d(Layer, nn.MaxPool2d):
             dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.MaxPool2d.__init__(
             self,
             kernel_size = kernel_size,
@@ -505,8 +530,20 @@ class MaxPool2d(Layer, nn.MaxPool2d):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class MaxPool3d(Layer, nn.MaxPool3d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, spike_mode: str = "s") -> None:
         """
         三维最大池化。
         Args:
@@ -516,8 +553,12 @@ class MaxPool3d(Layer, nn.MaxPool3d):
             dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.MaxPool3d.__init__(
             self,
             kernel_size = kernel_size,
@@ -550,8 +591,20 @@ class MaxPool3d(Layer, nn.MaxPool3d):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class AvgPool1d(Layer, nn.AvgPool1d):
-    def __init__(self, kernel_size: _size_1_t, stride: _Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True) -> None:
+    def __init__(self, kernel_size: _size_1_t, stride: _Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, spike_mode: str = "s") -> None:
         """
         一维平均池化。
         Args:
@@ -560,8 +613,12 @@ class AvgPool1d(Layer, nn.AvgPool1d):
             padding (size_1_t): 边界填充的长度
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.AvgPool1d.__init__(
             self,
             kernel_size = kernel_size,
@@ -593,8 +650,20 @@ class AvgPool1d(Layer, nn.AvgPool1d):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class AvgPool2d(Layer, nn.AvgPool2d):
-    def __init__(self, kernel_size: _size_2_t, stride: _Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None) -> None:
+    def __init__(self, kernel_size: _size_2_t, stride: _Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, spike_mode: str = "s") -> None:
         """
         二维平均池化。
         Args:
@@ -604,8 +673,12 @@ class AvgPool2d(Layer, nn.AvgPool2d):
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
             divisor_override (int | None): 是否用某个数取代总和作为除数
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.AvgPool2d.__init__(
             self,
             kernel_size = kernel_size,
@@ -638,8 +711,20 @@ class AvgPool2d(Layer, nn.AvgPool2d):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class AvgPool3d(Layer, nn.AvgPool3d):
-    def __init__(self, kernel_size: _size_3_t, stride: _Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None) -> None:
+    def __init__(self, kernel_size: _size_3_t, stride: _Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, spike_mode: str = "s") -> None:
         """
         三维平均池化。
         Args:
@@ -649,8 +734,12 @@ class AvgPool3d(Layer, nn.AvgPool3d):
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
             divisor_override (int | None): 是否用某个数取代总和作为除数
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.AvgPool3d.__init__(
             self,
             kernel_size = kernel_size,
@@ -683,16 +772,32 @@ class AvgPool3d(Layer, nn.AvgPool3d):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class MaxUnpool1d(Layer, nn.MaxUnpool1d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0) -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, spike_mode: str = "s") -> None:
         """
         一维最大反池化。
         Args:
             kernel_size (size_3_t): 池化核大小
             stride (size_3_t | None): 池化核步长
             padding (size_3_t): 边界填充的长度
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.MaxUnpool1d.__init__(
             self,
             kernel_size = kernel_size,
@@ -724,16 +829,32 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class MaxUnpool2d(Layer, nn.MaxUnpool2d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0) -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, spike_mode: str = "s") -> None:
         """
         二维最大反池化。
         Args:
             kernel_size (size_3_t): 池化核大小
             stride (size_3_t | None): 池化核步长
             padding (size_3_t): 边界填充的长度
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.MaxUnpool2d.__init__(
             self,
             kernel_size = kernel_size,
@@ -765,16 +886,32 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class MaxUnpool3d(Layer, nn.MaxUnpool3d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0) -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, spike_mode: str = "s") -> None:
         """
         一维最大反池化。
         Args:
             kernel_size (size_3_t): 池化核大小
             stride (size_3_t | None): 池化核步长
             padding (size_3_t): 边界填充的长度
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.MaxUnpool3d.__init__(
             self,
             kernel_size = kernel_size,
@@ -806,8 +943,20 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class Upsample(Layer, nn.Upsample):
-    def __init__(self, size: _Optional[_Union[int, _Tuple[int]]] = None, scale_factor: _Optional[_Union[float, _Tuple[float]]] = None, mode: str = 'nearest', align_corners: _Optional[bool] = None, recompute_scale_factor: _Optional[bool] = None) -> None:
+    def __init__(self, size: _Optional[_Union[int, _Tuple[int]]] = None, scale_factor: _Optional[_Union[float, _Tuple[float]]] = None, mode: str = 'nearest', align_corners: _Optional[bool] = None, recompute_scale_factor: _Optional[bool] = None, spike_mode: str = "s") -> None:
         """
         上采样（反池化）。
         Args:
@@ -816,8 +965,12 @@ class Upsample(Layer, nn.Upsample):
             mode (str): 以何种形式上采样
             align_corners (bool): 若为True，使输入和输出张量的角像素对齐，从而保留这些像素的值
             recompute_scale_factor (bool): 若为True，则必须传入scale_factor并且scale_factor用于计算输出大小。计算出的输出大小将用于推断插值的新比例；若为False，那么size或scale_factor将直接用于插值
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.Upsample.__init__(
             self,
             size = size,
@@ -849,19 +1002,35 @@ class Upsample(Layer, nn.Upsample):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class Flatten(Layer, nn.Flatten):
-    def __init__(self, start_dim: int = 2, end_dim: int = -1) -> None:
+    def __init__(self, start_dim: int = 1, end_dim: int = -1, spike_mode: str = "s") -> None:
         """
         展平层。
         Args:
-            start_dim (int): 起始维度，默认为2（除去[T, B]之后的维度）
+            start_dim (int): 起始维度，默认为1
             end_dim (int): 终止维度
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.Flatten.__init__(
             self,
-            start_dim = max(start_dim - 1, 0) if start_dim >= 0 else start_dim,
-            end_dim = max(end_dim - 1, 0) if end_dim >= 0 else end_dim
+            start_dim = start_dim,
+            end_dim = end_dim
         )
 
 
@@ -887,17 +1056,21 @@ class Flatten(Layer, nn.Flatten):
 
 
 class Unflatten(Layer, nn.Unflatten):
-    def __init__(self, dim: _Union[int, str], unflattened_size: _size) -> None:
+    def __init__(self, dim: _Union[int, str], unflattened_size: _size, spike_mode: str = "s") -> None:
         """
         反展开层。
         Args:
             dim (int | str): 在哪个维度反展开
             unflattened_size: 这个维度上的张量要反展开成什么形状
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.Unflatten.__init__(
             self,
-            dim = max(dim - 1, 0) if dim >= 0 else dim,
+            dim = dim,
             unflattened_size = unflattened_size
         )
 
@@ -924,14 +1097,18 @@ class Unflatten(Layer, nn.Unflatten):
 
 
 class Dropout(Layer, nn.Dropout):
-    def __init__(self, p: float = 0.5, inplace: bool = False) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = "s") -> None:
         """
         遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.Dropout.__init__(
             self,
             p = p,
@@ -960,15 +1137,31 @@ class Dropout(Layer, nn.Dropout):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class Dropout1d(Layer, nn.Dropout1d):
-    def __init__(self, p: float = 0.5, inplace: bool = False) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = "s") -> None:
         """
         一维遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.Dropout1d.__init__(
             self,
             p = p,
@@ -997,15 +1190,31 @@ class Dropout1d(Layer, nn.Dropout1d):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class Dropout2d(Layer, nn.Dropout2d):
-    def __init__(self, p: float = 0.5, inplace: bool = False) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = "s") -> None:
         """
         二维遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.Dropout2d.__init__(
             self,
             p = p,
@@ -1034,15 +1243,31 @@ class Dropout2d(Layer, nn.Dropout2d):
         return y
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class Dropout3d(Layer, nn.Dropout3d):
-    def __init__(self, p: float = 0.5, inplace: bool = False) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = "s") -> None:
         """
         三维遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
+            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
         """
-        Layer.__init__(self)
+        Layer.__init__(
+            self,
+            spike_mode = spike_mode
+        )
         nn.Dropout3d.__init__(
             self,
             p = p,
@@ -1069,3 +1294,15 @@ class Dropout3d(Layer, nn.Dropout3d):
         """
         y = nn.Dropout3d.forward(self, x)
         return y
+
+
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)

@@ -480,3 +480,39 @@ class _multi_firing_round(torch.autograd.Function):
             grad_input (torch.Tensor): 输入梯度
         """
         return grad_output
+
+
+def floor(x: torch.Tensor) -> torch.Tensor:
+    """
+    可以求导的向下取整函数。
+    Args:
+        x (torch.Tensor): 被比较数 x
+        y (torch.Tensor): 比较数 y
+    Returns:
+        res (torch.Tensor): 比较结果
+    """
+    return _multi_firing_floor.apply(x)
+
+
+def ceil(x: torch.Tensor) -> torch.Tensor:
+    """
+    可以求导的向上取整函数。
+    Args:
+        x (torch.Tensor): 被比较数 x
+        y (torch.Tensor): 比较数 y
+    Returns:
+        res (torch.Tensor): 比较结果
+    """
+    return _multi_firing_ceil.apply(x)
+
+
+def round(x: torch.Tensor) -> torch.Tensor:
+    """
+    可以求导的四舍五入函数。
+    Args:
+        x (torch.Tensor): 被比较数 x
+        y (torch.Tensor): 比较数 y
+    Returns:
+        res (torch.Tensor): 比较结果
+    """
+    return _multi_firing_round.apply(x)

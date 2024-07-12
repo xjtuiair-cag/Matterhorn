@@ -15,10 +15,9 @@ from typing import Callable as _Callable
 class Encoder(_Module):
     def __init__(self) -> None:
         """
-        编码器的基类。编码器是一个多时间步模型。
+        编码器的基类。
         """
         super().__init__()
-        self.multi_step_mode_()
 
 
     def extra_repr(self) -> str:
@@ -27,17 +26,7 @@ class Encoder(_Module):
         Returns:
             repr_str (str): 参数表
         """
-        return ""
-
-
-    @property
-    def supports_single_step_mode(self) -> bool:
-        """
-        是否支持单个时间步。
-        Returns:
-            if_support (bool): 是否支持单个时间步
-        """
-        return False
+        return super().extra_repr()
 
 
 class Direct(Encoder):
@@ -48,9 +37,20 @@ class Direct(Encoder):
         super().__init__()
     
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        直接编码的前向传播函数，直接将第二个维度作为时间维度，转置到首个维度上
+        单步前向传播函数。
+        Args:
+            x (torch.Tensor): 输入张量，形状为[B,...]
+        Returns:
+            y (torch.Tensor): 输出张量，形状为[B,...]
+        """
+        return x
+    
+
+    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        多步前向传播函数，直接将第二个维度作为时间维度，转置到首个维度上。
         Args:
             x (torch.Tensor): 输入张量，形状为[B,T,...]
         Returns:
@@ -80,10 +80,10 @@ class Poisson(Encoder):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["time_steps=%d" % self.time_steps])
+        return ", ".join(["time_steps=%d" % self.time_steps]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
-    def forward_step(self, x:torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单步前向传播函数。
         Args:
@@ -91,6 +91,12 @@ class Poisson(Encoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
+        min_value = torch.min(x)
+        max_value = torch.max(x)
+        if max_value == min_value:
+            x = torch.full_like(x, 0.5)
+        else:
+            x = (x - min_value) / (max_value - min_value)
         r = torch.rand_like(x)
         y = _SF.le(r, x)
         return y
@@ -107,27 +113,6 @@ class Poisson(Encoder):
         res_shape = [self.time_steps] + list(x.shape)
         v = torch.ones(*res_shape).to(x) * x
         y = self.forward_step(v)
-        return y
-
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        泊松编码的前向传播函数，将值$V$转化为该时间步$t$内的脉冲$O^{0}(t)$
-        Args:
-            x (torch.Tensor): 输入张量，形状为[B,...]
-        Returns:
-            y (torch.Tensor): 输出张量，形状为[T,B,...]
-        """
-        min_value = torch.min(x)
-        max_value = torch.max(x)
-        if max_value == min_value:
-            x = torch.full_like(x, 0.5)
-        else:
-            x = (x - min_value) / (max_value - min_value)
-        if self.time_steps <= 1:
-            y = self.forward_step(x)
-        else:
-            y = self.forward_steps(x)
         return y
 
 
@@ -153,7 +138,7 @@ class Temporal(Encoder):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["time_steps=%d" % self.time_steps, "prob=%g" % self.prob])
+        return ", ".join(["time_steps=%d" % self.time_steps, "prob=%g" % self.prob]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
     def reset(self) -> _Module:
@@ -172,6 +157,7 @@ class Temporal(Encoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
+        x = self.transform(x)
         f = _SF.le(x, self.current_time_step)
         r = _SF.le(torch.rand_like(x), self.prob)
         y = f * r
@@ -191,20 +177,4 @@ class Temporal(Encoder):
         for t in range(time_steps):
             y_seq.append(self.forward_step(x))
         y = torch.stack(y_seq)
-        return y
-
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        时间编码的前向传播函数，将值$V$转化为该时间步$t$内的脉冲$O^{0}(t)$
-        Args:
-            x (torch.Tensor): 输入张量，形状为[B,...]
-        Returns:
-            y (torch.Tensor): 输出张量，形状为[T,B,...]
-        """
-        x = self.transform(x)
-        if self.time_steps <= 1:
-            y = self.forward_step(x)
-        else:
-            y = self.forward_steps(x, self.time_steps)
         return y

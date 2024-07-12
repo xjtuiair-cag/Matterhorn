@@ -171,7 +171,7 @@ class Floor(Firing):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return _SF._multi_firing_floor.apply((u - u_rest) / (u_threshold - u_rest))
+        return _SF.floor((u - u_rest) / (u_threshold - u_rest))
 
 
 class Ceil(Firing):
@@ -194,7 +194,7 @@ class Ceil(Firing):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return _SF._multi_firing_ceil.apply((u - u_rest) / (u_threshold - u_rest))
+        return _SF.ceil((u - u_rest) / (u_threshold - u_rest))
 
 
 class Round(Firing):
@@ -217,4 +217,4 @@ class Round(Firing):
         Returns:
             o (torch.Tensor): 输出张量
         """
-        return _SF._multi_firing_round.apply((u - u_rest) / (u_threshold - u_rest))
+        return _SF.round((u - u_rest) / (u_threshold - u_rest))

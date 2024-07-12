@@ -22,9 +22,9 @@ class Synapse(_Module):
         super().__init__()
 
 
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+    def forward_steps_parallel(self, *args, **kwargs) -> torch.Tensor:
         """
-        多个时间步的前向传播函数。
+        多个时间步可并行的前向传播函数。
         Args:
             *args: 输入
             **kwargs: 输入
@@ -78,6 +78,18 @@ class Linear(Synapse, nn.Linear):
         """
         x = nn.Linear.forward(self, o)
         return x
+
+
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class Conv1d(Synapse, nn.Conv1d):
@@ -135,6 +147,18 @@ class Conv1d(Synapse, nn.Conv1d):
         return x
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class Conv2d(Synapse, nn.Conv2d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _Union[_size_2_t, str] = 0, dilation: _size_2_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -190,6 +214,18 @@ class Conv2d(Synapse, nn.Conv2d):
         return x
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class Conv3d(Synapse, nn.Conv3d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _Union[_size_3_t, str] = 0, dilation: _size_3_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -243,6 +279,18 @@ class Conv3d(Synapse, nn.Conv3d):
         """
         x = nn.Conv3d.forward(self, o)
         return x
+
+
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
@@ -302,6 +350,18 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
         return x
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, output_padding: _size_2_t = 0, groups: int = 1, bias: bool = True, dilation: _size_2_t = 1, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -359,6 +419,18 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
         return x
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _size_3_t = 0, output_padding: _size_3_t = 0, groups: int = 1, bias: bool = True, dilation: _size_3_t = 1, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -414,6 +486,18 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
         """
         x = nn.ConvTranspose3d.forward(self, o)
         return x
+
+
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class BatchNorm1d(Synapse, nn.BatchNorm1d):
@@ -600,6 +684,18 @@ class LayerNorm(Synapse, nn.LayerNorm):
         return x
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class NormPlaceholder(Synapse):
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -646,6 +742,18 @@ class NormPlaceholder(Synapse):
         return x.clone()
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class Identity(Synapse, nn.Identity):
     def __init__(self) -> None:
         """
@@ -676,6 +784,18 @@ class Identity(Synapse, nn.Identity):
         return x
 
 
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
+
+
 class Neurotransmitter(Synapse):
     def __init__(self, mask: torch.Tensor) -> None:
         """
@@ -699,3 +819,15 @@ class Neurotransmitter(Synapse):
         mask = self.mask.to(torch.bool).to(o.device)
         o = torch.where(mask, o, -o)
         return o
+
+
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return self.forward_steps_parallel(*args, **kwargs)
