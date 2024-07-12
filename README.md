@@ -276,7 +276,7 @@ One of the most common surrogate gradients is rectangular function. It is a posi
 
 Also, functions suitable for surrogate gradient include the derivative of sigmoidal function, Gaussian function, etc.
 
-You can inspect all provided surrogate gradient functions in `matterhorn_pytorch.snn.surrogate`.
+You can inspect all provided surrogate gradient functions in `matterhorn_pytorch.snn.firing`.
 
 ### Learning: BPTT Vs. STDP
 

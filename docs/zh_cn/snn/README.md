@@ -60,7 +60,7 @@
 
 您可以阅读[文档](./4_soma.md)以了解更多类与变量的使用方法。
 
-## `matterhorn_pytorch.snn.surrogate` ： 脉冲神经元 Heaviside 阶跃函数的替代梯度
+## `matterhorn_pytorch.snn.firing` ： 脉冲神经元 Heaviside 阶跃函数的替代梯度
 
 该模块定义了脉冲神经元 Heaviside 阶跃函数的替代梯度，具体的定义您可以在参考文献 [1] 中找到。
 

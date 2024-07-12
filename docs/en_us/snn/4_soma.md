@@ -37,7 +37,7 @@ Soma(
 
 `u_rest (float)`: The resting potential $u_{rest}$.
 
-`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
+`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
 
@@ -90,7 +90,7 @@ IF(
 
 `u_rest (float)`: The resting potential $u_{rest}$.
 
-`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
+`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
 
@@ -162,7 +162,7 @@ LIF(
 
 `u_rest (float)`: The resting potential $u_{rest}$.
 
-`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
+`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
 
@@ -247,7 +247,7 @@ QIF(
 
 `a_0 (float)`: Parameter $a_{0}$.
 
-`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
+`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
 
@@ -334,7 +334,7 @@ ExpIF(
 
 `delta_t (float)`: Parameter $\Delta_{T}$.
 
-`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
+`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
 
@@ -424,7 +424,7 @@ Izhikevich(
 
 `b (float)`: Parameter $b$.
 
-`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
+`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
 
@@ -505,7 +505,7 @@ KLIF(
 
 `k (float)`: Parameter $k$.
 
-`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
+`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
 
@@ -569,7 +569,7 @@ LIAF(
 
 `u_rest (float)`: The resting potential $u_{rest}$.
 
-`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md).
+`spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `activation_function (torch.nn.Module)`: The activation function $f(U^{l}(t)-u_{th})$ used for output.
 

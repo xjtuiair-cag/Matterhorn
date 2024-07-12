@@ -48,7 +48,8 @@ def main():
         snn.Flatten(),
         snn.Linear(784, 10, bias = False),
         snn.LIF(),
-        snn.AvgSpikeDecoder()
+        snn.AvgSpikeDecoder(),
+        multi_step_mode = True
     )
     model = model.to(device)
     print_model(model)

@@ -1,4 +1,4 @@
-# `matterhorn_pytorch.snn.surrogate`
+# `matterhorn_pytorch.snn.firing`
 
 [Back to `matterhorn_pytorch.snn`](./README.md)
 
@@ -30,7 +30,7 @@ The module defines four surrogate gradients of the Heaviside step function, and 
 
 The classes in this module are generally instantiated as the `spiking_function` parameter in the soma of spiking neurons (`matterhorn_pytorch.snn.soma`).
 
-## `matterhorn_pytorch.snn.Rectangular()` / `matterhorn_pytorch.snn.surrogate.Rectangular()`
+## `matterhorn_pytorch.snn.Rectangular()` / `matterhorn_pytorch.snn.firing.Rectangular()`
 
 The simplest surrogate gradient. It treats the Heaviside step function as a piecewise linear function with a slope $k$. In this case, its gradient is a rectangular window. The formula is
 
@@ -64,7 +64,7 @@ soma = mth.snn.LIF(
 )
 ```
 
-## `matterhorn_pytorch.snn.Polynomial()` / `matterhorn_pytorch.snn.surrogate.Polynomial()`
+## `matterhorn_pytorch.snn.Polynomial()` / `matterhorn_pytorch.snn.firing.Polynomial()`
 
 It uses a piecewise polynomial function to simulate the gradient of the Heaviside step function. The formula is
 
@@ -98,7 +98,7 @@ soma = mth.snn.LIF(
 )
 ```
 
-## `matterhorn_pytorch.snn.Sigmoid()` / `matterhorn_pytorch.snn.surrogate.Sigmoid()`
+## `matterhorn_pytorch.snn.Sigmoid()` / `matterhorn_pytorch.snn.firing.Sigmoid()`
 
 It treats the Heaviside step function as a very steep sigmoid function and uses the derivative of the sigmoid function to simulate the gradient of the Heaviside step function. The formula is
 
@@ -132,7 +132,7 @@ soma = mth.snn.LIF(
 )
 ```
 
-## `matterhorn_pytorch.snn.Gaussian()` / `matterhorn_pytorch.snn.surrogate.Gaussian()`
+## `matterhorn_pytorch.snn.Gaussian()` / `matterhorn_pytorch.snn.firing.Gaussian()`
 
 As a probability density function of the normal distribution, the Gaussian function satisfies the two requirements of being the gradient of the Heaviside step function. Therefore, the Gaussian function can be used as the surrogate gradient of the Heaviside step function. The formula is
 

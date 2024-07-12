@@ -60,7 +60,7 @@ Containing `matterhorn_pytorch.snn` modules: `IF`, `LIF`, `QIF`, `ExpIF`, `Izhik
 
 You can read [the documentation](./4_soma.md) to learn more about the usage of classes and variables.
 
-## `matterhorn_pytorch.snn.surrogate`: Surrogate Gradients for the Heaviside Step Function of Spiking Neurons
+## `matterhorn_pytorch.snn.firing`: Surrogate Gradients for the Heaviside Step Function of Spiking Neurons
 
 This module defines surrogate gradients for the Heaviside step function of spiking neurons. The specific definition can be found in reference [1].
 

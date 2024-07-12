@@ -35,10 +35,19 @@ def main():
         ),
         snn.Flatten(),
         snn.Linear(28 * 28, 80, bias = False),
-        snn.LIF(),
+        snn.LIF(
+            u_threshold = 1.0,
+            u_rest = 0.0,
+            spiking_function = snn.Floor()
+        ),
         snn.Linear(80, 10, bias = False),
-        snn.LIF(),
-        snn.AvgSpikeDecoder()
+        snn.LIF(
+            u_threshold = 1.0,
+            u_rest = 0.0,
+            spiking_function = snn.Floor()
+        ),
+        snn.AvgSpikeDecoder(),
+        multi_step_mode = True
     )
     model = model.to(device)
     print_model(model)

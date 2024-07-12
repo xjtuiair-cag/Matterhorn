@@ -51,7 +51,7 @@ class LSM(_Module):
         """
         if isinstance(self.soma, _Module):
             self.soma.reset()
-        self.o = _SF.reset_tensor(self.o, 0.0)
+        self.o = None
         return super().reset()
 
 
@@ -63,7 +63,7 @@ class LSM(_Module):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self.o = _SF.init_tensor(self.o, x)
+        self.o = _SF.to(self.o, x)
         y = x + _F.linear(self.o, self.weight * self.adjacent.T, None)
         o = self.soma.forward_step(y)
         self.o = o

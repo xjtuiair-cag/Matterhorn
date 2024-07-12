@@ -249,7 +249,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
 
         # 3. 根据所记录的lambda值，更新权重与偏置
         def scale_hook(model: snn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
-            is_node = (not len(list(model.children())) and not isinstance(model, snn.surrogate.SurrogateGradient)) or isinstance(model, snn.soma.Soma)
+            is_node = (not len(list(model.children())) and not isinstance(model, snn.firing.Firing)) or isinstance(model, snn.soma.Soma)
             if not is_node:
                 return
             if isinstance(output, Tuple):

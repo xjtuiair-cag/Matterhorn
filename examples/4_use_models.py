@@ -35,6 +35,7 @@ def main():
         num_classes = 10,
         tau_m = tau
     )
+    model.multi_step_mode_()
     model = model.to(device)
     print_model(model)
 

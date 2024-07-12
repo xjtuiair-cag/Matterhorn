@@ -184,8 +184,8 @@ class STDPLinear(_Module):
         """
         重置模型。
         """
-        self.input_trace = _SF.reset_tensor(self.input_trace, 0.0)
-        self.output_trace = _SF.reset_tensor(self.output_trace, 0.0)
+        self.input_trace = None
+        self.output_trace = None
         return super().reset()
 
 
@@ -204,8 +204,8 @@ class STDPLinear(_Module):
             time_steps = 1
             batch_size = x.shape[0]
         trace_shape = torch.zeros_like(self.weight)[None].repeat_interleave(batch_size, dim = 0)
-        self.input_trace = _SF.init_tensor(self.input_trace, trace_shape)
-        self.output_trace = _SF.init_tensor(self.output_trace, trace_shape)
+        self.input_trace = _SF.to(self.input_trace, trace_shape)
+        self.output_trace = _SF.to(self.output_trace, trace_shape)
         soma = self.soma.forward_steps if self.multi_step_mode else self.soma.forward_step
         y, self.input_trace, self.output_trace = f_stdp_linear.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)
         return y
@@ -379,8 +379,8 @@ class STDPConv2d(_Module):
         """
         重置模型。
         """
-        self.input_trace = _SF.reset_tensor(self.input_trace, 0.0)
-        self.output_trace = _SF.reset_tensor(self.output_trace, 0.0)
+        self.input_trace = None
+        self.output_trace = None
         return super().reset()
 
 
@@ -408,8 +408,8 @@ class STDPConv2d(_Module):
         w_wt = self.weight.shape[3]
         h_out = (h_in + 2 * self.padding[0] - h_wt * self.dilation[0]) // self.stride[0] + 1
         w_out = (w_in + 2 * self.padding[1] - w_wt * self.dilation[1]) // self.stride[1] + 1
-        self.input_trace = _SF.init_tensor(self.input_trace, torch.zeros(batch_size, c_out, c_in, h_in, w_in).to(x))
-        self.output_trace = _SF.init_tensor(self.output_trace, torch.zeros(batch_size, c_out, c_in, h_out, w_out))
+        self.input_trace = _SF.to(self.input_trace, torch.zeros(batch_size, c_out, c_in, h_in, w_in).to(x))
+        self.output_trace = _SF.to(self.output_trace, torch.zeros(batch_size, c_out, c_in, h_out, w_out))
         soma = self.soma.forward_steps if self.multi_step_mode else self.soma.forward_step
         y, self.input_trace, self.output_trace = f_stdp_conv2d.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.stride, self.padding, self.dilation, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)
         return y

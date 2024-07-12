@@ -46,6 +46,7 @@ def main():
             soma = snn.LIF()
         ),
         snn.AvgSpikeDecoder(),
+        multi_step_mode = True
     )
     model = model.to(device)
     print_model(model)

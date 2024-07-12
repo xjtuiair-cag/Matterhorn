@@ -1,4 +1,4 @@
-# `matterhorn_pytorch.snn.surrogate`
+# `matterhorn_pytorch.snn.firing`
 
 [回到 `matterhorn_pytorch.snn`](./README.md)
 
@@ -30,7 +30,7 @@ $$\delta (x) := x = u_{th} ? +\infty : 0$$
 
 该模块中的类一般实例化后作为 `matterhorn_pytorch.snn.soma` 中脉冲神经元胞体的 `spiking_function` 参数传入。
 
-## `matterhorn_pytorch.snn.Rectangular()` / `matterhorn_pytorch.snn.surrogate.Rectangular()`
+## `matterhorn_pytorch.snn.Rectangular()` / `matterhorn_pytorch.snn.firing.Rectangular()`
 
 最简单的替代梯度。其将 Heaviside 阶跃函数视作一个中间具有斜率 $k$ 的三段函数。此时，其梯度为一个矩形窗。公式如下：
 
@@ -64,7 +64,7 @@ soma = mth.snn.LIF(
 )
 ```
 
-## `matterhorn_pytorch.snn.Polynomial()` / `matterhorn_pytorch.snn.surrogate.Polynomial()`
+## `matterhorn_pytorch.snn.Polynomial()` / `matterhorn_pytorch.snn.firing.Polynomial()`
 
 其使用一个折线偶函数模拟 Heaviside 阶跃函数的梯度。公式如下：
 
@@ -98,7 +98,7 @@ soma = mth.snn.LIF(
 )
 ```
 
-## `matterhorn_pytorch.snn.Sigmoid()` / `matterhorn_pytorch.snn.surrogate.Sigmoid()`
+## `matterhorn_pytorch.snn.Sigmoid()` / `matterhorn_pytorch.snn.firing.Sigmoid()`
 
 其将 Heaviside 阶跃函数看作一个十分陡的 Sigmoid 函数，使用 Sigmoid 函数的导数模拟 Heaviside 阶跃函数的梯度。公式如下：
 
@@ -132,7 +132,7 @@ soma = mth.snn.LIF(
 )
 ```
 
-## `matterhorn_pytorch.snn.Gaussian()` / `matterhorn_pytorch.snn.surrogate.Gaussian()`
+## `matterhorn_pytorch.snn.Gaussian()` / `matterhorn_pytorch.snn.firing.Gaussian()`
 
 作为正态分布的概率密度函数，高斯函数满足作为 Heaviside 阶跃函数梯度的两个要求。因此，可以将高斯函数作为 Heaviside 阶跃函数的替代梯度。公式如下：
 

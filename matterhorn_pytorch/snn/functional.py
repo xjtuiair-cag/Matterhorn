@@ -10,7 +10,7 @@ import torch.nn as nn
 from typing import Tuple as _Tuple, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union, Any as _Any
 
 
-def init_tensor(u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+def to(u: _Optional[_Union[torch.Tensor, int, float]], x: torch.Tensor) -> torch.Tensor:
     """
     校正张量形状。
     Args:
@@ -20,32 +20,11 @@ def init_tensor(u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         u (torch.Tensor): 经过校正的张量
     """
     if isinstance(u, torch.Tensor):
-        u = torch.zeros_like(x) + u.to(x)
-    if isinstance(u, float):
-        u = torch.full_like(x, u)
-        u = u.detach().requires_grad_(True)
+        u = u.to(x)
+    if isinstance(u, int) or isinstance(u, float):
+        u = torch.full_like(x, u).requires_grad_(True)
     if u is None:
-        u = torch.zeros_like(x)
-        u = u.detach().requires_grad_(True)
-    return u
-
-
-def reset_tensor(u: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
-    """
-    重置张量至指定值。
-    Args:
-        u (torch.Tensor): 待重置的张量
-        x (torch.Tensor): 重置的值
-    Returns:
-        u (torch.Tensor): 经过重置的值
-    """
-    if isinstance(u, torch.Tensor):
-        u = u.detach()
-    if not isinstance(x, torch.Tensor):
-        x = torch.tensor(x)
-        if isinstance(u, torch.Tensor):
-            x = x.to(u)
-    u = torch.zeros_like(x) + x
+        u = torch.zeros_like(x).requires_grad_(True)
     return u
 
 
@@ -56,7 +35,7 @@ def merge_time_steps_batch_size(tensors: _Union[torch.Tensor, _Tuple[torch.Tenso
     batch_size = tensors[0].shape[1]
     tensors = (tensor.flatten(0, 1) if isinstance(tensor, torch.Tensor) else tensor for tensor in tensors)
     if tensor_map is not None:
-        tensor_map = {name: tensor.flatten(0, 1) if isinstance(tensor, torch.Tensor) else tensor for name, tensor in tensor_map}
+        tensor_map = {name: tensor.flatten(0, 1) if isinstance(tensor, torch.Tensor) else tensor for name, tensor in tensor_map.items()}
     return tensors, tensor_map, [time_steps, batch_size]
 
 
@@ -419,3 +398,84 @@ def ne(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         res (torch.Tensor): 比较结果
     """
     return 1.0 - eq(x, y)
+
+
+class _multi_firing_floor(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx: _Any, x: torch.Tensor) -> torch.Tensor:
+        """
+        多值脉冲函数的前向传播函数。
+        Args:
+            ctx (Any): 上下文
+            x (torch.Tensor): 输入
+        Returns:
+            y (torch.Tensor): 输出
+        """
+        return torch.floor(x)
+    
+
+    @staticmethod
+    def backward(ctx: _Any, grad_output: torch.Tensor) -> torch.Tensor:
+        """
+        多值脉冲函数的反向传播函数。
+        Args:
+            ctx (Any): 上下文
+            grad_output (torch.Tensor): 输出梯度
+        Returns:
+            grad_input (torch.Tensor): 输入梯度
+        """
+        return grad_output
+
+
+class _multi_firing_ceil(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx: _Any, x: torch.Tensor) -> torch.Tensor:
+        """
+        多值脉冲函数的前向传播函数。
+        Args:
+            ctx (Any): 上下文
+            x (torch.Tensor): 输入
+        Returns:
+            y (torch.Tensor): 输出
+        """
+        return torch.ceil(x)
+    
+
+    @staticmethod
+    def backward(ctx: _Any, grad_output: torch.Tensor) -> torch.Tensor:
+        """
+        多值脉冲函数的反向传播函数。
+        Args:
+            ctx (Any): 上下文
+            grad_output (torch.Tensor): 输出梯度
+        Returns:
+            grad_input (torch.Tensor): 输入梯度
+        """
+        return grad_output
+
+
+class _multi_firing_round(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx: _Any, x: torch.Tensor) -> torch.Tensor:
+        """
+        多值脉冲函数的前向传播函数。
+        Args:
+            ctx (Any): 上下文
+            x (torch.Tensor): 输入
+        Returns:
+            y (torch.Tensor): 输出
+        """
+        return torch.round(x)
+    
+
+    @staticmethod
+    def backward(ctx: _Any, grad_output: torch.Tensor) -> torch.Tensor:
+        """
+        多值脉冲函数的反向传播函数。
+        Args:
+            ctx (Any): 上下文
+            grad_output (torch.Tensor): 输出梯度
+        Returns:
+            grad_input (torch.Tensor): 输入梯度
+        """
+        return grad_output

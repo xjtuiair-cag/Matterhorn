@@ -11,5 +11,5 @@ from .encoder import Direct as DirectEncoder, Poisson as PoissonEncoder, Tempora
 from .layer import STDPLinear, STDPConv2d, MaxPool1d, MaxPool2d, MaxPool3d, AvgPool1d, AvgPool2d, AvgPool3d, MaxUnpool1d, MaxUnpool2d, MaxUnpool3d, Upsample, Flatten, Unflatten, Dropout, Dropout1d, Dropout2d, Dropout3d
 from .skeleton import Module
 from .soma import IF, LIF, QIF, ExpIF, Izhikevich, KLIF, LIAF
-from .surrogate import Rectangular, Polynomial, Sigmoid, Gaussian
+from .firing import Rectangular, Polynomial, Sigmoid, Gaussian, Floor, Ceil, Round
 from .synapse import Linear, Conv1d, Conv2d, Conv3d, ConvTranspose1d, ConvTranspose2d, ConvTranspose3d, BatchNorm1d, BatchNorm2d, BatchNorm3d, LayerNorm, Identity, Neurotransmitter

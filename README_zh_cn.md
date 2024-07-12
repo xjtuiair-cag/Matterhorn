@@ -276,7 +276,7 @@ $$O^{l}(t)=u(U^{l}(t)-u_{th})$$
 
 此外，适用于替代梯度的函数还包括 Sigmoid 函数的导数、高斯函数等。
 
-您可以在 `matterhorn_pytorch.snn.surrogate` 中看见所有提供的替代梯度函数。
+您可以在 `matterhorn_pytorch.snn.firing` 中看见所有提供的替代梯度函数。
 
 ### 学习：BPTT 和 STDP
 

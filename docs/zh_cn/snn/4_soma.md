@@ -37,7 +37,7 @@ Soma(
 
 `u_rest (float)` ：静息电位 $u_{rest}$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
 
@@ -90,7 +90,7 @@ IF(
 
 `u_rest (float)` ：静息电位 $u_{rest}$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
 
@@ -162,7 +162,7 @@ LIF(
 
 `u_rest (float)` ：静息电位 $u_{rest}$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
 
@@ -247,7 +247,7 @@ QIF(
 
 `a_0 (float)` ：参数 $a_{0}$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
 
@@ -334,7 +334,7 @@ ExpIF(
 
 `delta_t (float)` ：参数 $\Delta_{T}$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
 
@@ -424,7 +424,7 @@ Izhikevich(
 
 `b (float)` ：参数 $b$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
 
@@ -505,7 +505,7 @@ KLIF(
 
 `k (float)` ：参数 $k$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
 
@@ -569,7 +569,7 @@ LIAF(
 
 `u_rest (float)` ：静息电位 $u_{rest}$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.surrogate`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `activation_function (torch.nn.Module)` ：输出所使用的激活函数 $f(U^{l}(t)-u_{th})$ 。
 
