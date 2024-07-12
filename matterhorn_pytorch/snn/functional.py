@@ -22,9 +22,9 @@ def to(u: _Optional[_Union[torch.Tensor, int, float]], x: torch.Tensor) -> torch
     if isinstance(u, torch.Tensor):
         if u.shape != x.shape:
             val = u.flatten()[0] if u.ndim else u
-            u = torch.full_like(x, val)
+            u = torch.zeros_like(x).requires_grad_(True) + val
         else:
-            u = u.to(x)
+            u = u.clone().to(x)
     elif isinstance(u, int) or isinstance(u, float):
         u = torch.full_like(x, u).requires_grad_(True)
     else:
@@ -127,8 +127,7 @@ class _heaviside_rectangular(torch.autograd.Function):
             y (torch.Tensor): 输出
         """
         if x.requires_grad:
-            ctx.save_for_backward(x)
-            ctx.a = a
+            ctx.save_for_backward(bp_rectangular(x, a))
         return fp_heaviside(x)
     
 
@@ -143,7 +142,7 @@ class _heaviside_rectangular(torch.autograd.Function):
             grad_input (torch.Tensor): 输入梯度
         """
         x, = ctx.saved_tensors
-        return grad_output * bp_rectangular(x, ctx.a), None
+        return grad_output * x, None
 
 
 def heaviside_rectangular(x: torch.Tensor, a: float = 1.0) -> torch.Tensor:
@@ -185,8 +184,7 @@ class _heaviside_polynomial(torch.autograd.Function):
             y (torch.Tensor): 输出
         """
         if x.requires_grad:
-            ctx.save_for_backward(x)
-            ctx.a = a
+            ctx.save_for_backward(bp_polynomial(x, a))
         return fp_heaviside(x)
     
 
@@ -201,7 +199,7 @@ class _heaviside_polynomial(torch.autograd.Function):
             grad_input (torch.Tensor): 输入梯度
         """
         x, = ctx.saved_tensors
-        return grad_output * bp_polynomial(x, ctx.a), None
+        return grad_output * x, None
 
 
 def heaviside_polynomial(x: torch.Tensor, a: float = 4.0) -> torch.Tensor:
@@ -244,8 +242,7 @@ class _heaviside_sigmoid(torch.autograd.Function):
             y (torch.Tensor): 输出
         """
         if x.requires_grad:
-            ctx.save_for_backward(x)
-            ctx.a = a
+            ctx.save_for_backward(bp_sigmoid(x, a))
         return fp_heaviside(x)
     
 
@@ -260,7 +257,7 @@ class _heaviside_sigmoid(torch.autograd.Function):
             grad_input (torch.Tensor): 输入梯度
         """
         x, = ctx.saved_tensors
-        return grad_output * bp_sigmoid(x, ctx.a), None
+        return grad_output * x, None
 
 
 def heaviside_sigmoid(x: torch.Tensor, a: float = 0.25) -> torch.Tensor:
@@ -302,8 +299,7 @@ class _heaviside_gaussian(torch.autograd.Function):
             y (torch.Tensor): 输出
         """
         if x.requires_grad:
-            ctx.save_for_backward(x)
-            ctx.a = a
+            ctx.save_for_backward(bp_gaussian(x, a))
         return fp_heaviside(x)
     
 
@@ -318,7 +314,7 @@ class _heaviside_gaussian(torch.autograd.Function):
             grad_input (torch.Tensor): 输入梯度
         """
         x, = ctx.saved_tensors
-        return grad_output * bp_gaussian(x, ctx.a), None
+        return grad_output * x, None
 
 
 def heaviside_gaussian(x: torch.Tensor, a: float = 0.16) -> torch.Tensor:

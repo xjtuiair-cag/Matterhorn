@@ -51,7 +51,7 @@ class Soma(_Module):
         重置整个神经元。
         """
         self.detach()
-        self.u = None
+        self.u = _SF.to(self.u_rest, self.u_rest)
         return super().reset()
 
     
@@ -360,8 +360,8 @@ class Izhikevich(Soma):
         重置整个神经元
         """
         self.detach()
-        self.u = None
-        self.w = None
+        self.u = _SF.to(self.u_rest, self.u_rest)
+        self.w = _SF.to(0.0, self.u_rest)
         return super().reset()
 
     

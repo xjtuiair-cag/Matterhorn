@@ -34,6 +34,7 @@ class LSM(_Module):
         self.neuron_num = self.adjacent.shape[0]
         self.weight = nn.Parameter(torch.empty((self.neuron_num, self.neuron_num), device = device, dtype = dtype))
         nn.init.kaiming_uniform_(self.weight, a = 5.0 ** 0.5)
+        self.reset()
 
 
     def extra_repr(self) -> str:
