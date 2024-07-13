@@ -63,6 +63,56 @@ class Layer(_Module):
         return res
 
 
+class STDPLayer(_Module):
+    def __init__(self, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0) -> None:
+        """
+        含有STDP学习机制的层。
+        Args:
+            a_pos (float): STDP参数A+
+            tau_pos (float): STDP参数tau+
+            a_neg (float): STDP参数A-
+            tau_neg (float): STDP参数tau-
+        """
+        super().__init__()
+        self.input_trace = None
+        self.output_trace = None
+        self.a_pos = a_pos
+        self.tau_pos = tau_pos
+        self.a_neg = a_neg
+        self.tau_neg = tau_neg
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return ", ".join(["pos=%g*exp(-x/%g)" % (self.a_pos, self.tau_pos), "neg=-%g*exp(x/%g)" % (self.a_neg, self.tau_neg)]) + (", " + super().extra_repr(self) if len(super().extra_repr(self)) else "")
+
+
+    def reset(self) -> nn.Module:
+        """
+        重置模型。
+        """
+        self.input_trace = None
+        self.output_trace = None
+        return super().reset()
+
+
+    def check_if_reset(self, u: torch.Tensor, x: torch.Tensor) -> None:
+        """
+        检查张量是否（在形状上）一致。若不一致，重置胞体。
+        Args:
+            u (torch.Tensor): 待检测张量
+            x (torch.Tensor): 需要保持一致的张量
+        """
+        if isinstance(u, torch.Tensor) and u.shape != x.shape:
+            self.reset()
+
+
+
+
 class f_stdp_linear(torch.autograd.Function):
     @staticmethod
     def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Callable, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_step_mode: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -87,23 +137,24 @@ class f_stdp_linear(torch.autograd.Function):
             output_trace (torch.Tensor): 输出的迹，累积的输出效应
         """
         if multi_step_mode:
-            input_spike_train = input.clone()
             flattened_input, _, tb = _SF.merge_time_steps_batch_size(input)
-            time_steps = tb[0]
-            psp: torch.Tensor = _F.linear(flattened_input, weight, bias = None)
+            psp = _F.linear(flattened_input[0], weight, bias = None)
             psp = _SF.split_time_steps_batch_size(psp, tb)
         else:
-            input_spike_train = input[None]
-            time_steps = 1
-            psp: torch.Tensor = _F.linear(input, weight, bias = None)
+            psp = _F.linear(input, weight, bias = None)
         output: torch.Tensor = soma(psp)
         if multi_step_mode:
+            input_spike_train = input.clone()
             output_spike_train = output.clone()
         else:
+            input_spike_train = input[None]
             output_spike_train = output[None]
         delta_weight = torch.zeros_like(weight)
         if training:
-            for t in range(time_steps):
+            T, B, C = input_spike_train.shape
+            T, B, N = output_spike_train.shape
+            N, C = weight.shape
+            for t in range(T):
                 delta_weight, input_trace, output_trace = _stdp_online(
                     delta_weight = delta_weight, # [O, I]
                     input_trace = input_trace, # [B, O, I]
@@ -146,7 +197,7 @@ class f_stdp_linear(torch.autograd.Function):
         return torch.zeros_like(input), delta_weight, torch.zeros_like(grad_input_trace), torch.zeros_like(grad_output_trace), None, None, None, None, None, None, None
 
 
-class STDPLinear(_Module):
+class STDPLinear(STDPLayer):
     def __init__(self, soma: _Soma, in_features: int, out_features: int, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         使用STDP学习机制时的全连接层。
@@ -161,18 +212,17 @@ class STDPLinear(_Module):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        self.input_trace = None
-        self.output_trace = None
-        super().__init__()
+        super().__init__(
+            a_pos = a_pos,
+            tau_pos = tau_pos,
+            a_neg = a_neg,
+            tau_neg = tau_neg
+        )
         self.in_features = in_features
         self.out_features = out_features
         self.weight = nn.Parameter(torch.empty((out_features, in_features), device = device, dtype = dtype))
         nn.init.kaiming_uniform_(self.weight, a = 5.0 ** 0.5)
         self.soma = soma
-        self.a_pos = a_pos
-        self.tau_pos = tau_pos
-        self.a_neg = a_neg
-        self.tau_neg = tau_neg
         self.reset()
 
 
@@ -182,16 +232,7 @@ class STDPLinear(_Module):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["in_features=%d" % self.in_features, "out_features=%d" % self.out_features]) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
-
-
-    def reset(self) -> nn.Module:
-        """
-        重置模型。
-        """
-        self.input_trace = None
-        self.output_trace = None
-        return super().reset()
+        return ", ".join(["in_features=%d" % self.in_features, "out_features=%d" % self.out_features]) + (", " + super().extra_repr(self) if len(super().extra_repr(self)) else "")
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -203,12 +244,14 @@ class STDPLinear(_Module):
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
         if self.multi_step_mode:
-            time_steps = x.shape[0]
-            batch_size = x.shape[1]
+            T, B, C = x.shape
         else:
-            time_steps = 1
-            batch_size = x.shape[0]
-        trace_shape = torch.zeros_like(self.weight)[None].repeat_interleave(batch_size, dim = 0)
+            T = 1
+            B, C = x.shape
+        N, C = self.weight.shape
+        trace_shape = torch.zeros(B, N, C).to(x)
+        self.check_if_reset(self.input_trace, trace_shape)
+        self.check_if_reset(self.output_trace, trace_shape)
         self.input_trace = _SF.to(self.input_trace, trace_shape)
         self.output_trace = _SF.to(self.output_trace, trace_shape)
         soma = self.soma.forward_steps if self.multi_step_mode else self.soma.forward_step
@@ -243,43 +286,35 @@ class f_stdp_conv2d(torch.autograd.Function):
             output_trace (torch.Tensor): 输出的迹，累积的输出效应
         """
         if multi_step_mode:
-            input_spike_train = input.clone()
             flattened_input, _, tb = _SF.merge_time_steps_batch_size(input)
-            time_steps = tb[0]
-            psp: torch.Tensor = _F.conv2d(flattened_input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
+            psp = _F.conv2d(flattened_input[0], weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
             psp = _SF.split_time_steps_batch_size(psp, tb)
         else:
-            input_spike_train = input[None]
-            time_steps = 1
-            psp: torch.Tensor = _F.conv2d(input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
+            psp = _F.conv2d(input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
         output: torch.Tensor = soma(psp)
         if multi_step_mode:
+            input_spike_train = input.clone()
             output_spike_train = output.clone()
         else:
+            input_spike_train = input[None]
             output_spike_train = output[None]
         delta_weight = torch.zeros_like(weight)
         if training:
-            h_in = input_spike_train.shape[3]
-            w_in = input_spike_train.shape[4]
-            h_out = output_spike_train.shape[3]
-            w_out = output_spike_train.shape[4]
-            h_wt = weight.shape[2]
-            w_wt = weight.shape[3]
-            h_stride = stride[0]
-            w_stride = stride[1]
-            h_padding = padding[0]
-            w_padding = padding[1]
-            h_dilation = dilation[0]
-            w_dilation = dilation[1]
-            for y in range(h_out):
-                for x in range(w_out):
-                    for p in range(h_wt):
-                        for q in range(w_wt):
-                            u = y * h_stride + p * h_dilation - h_padding
-                            v = x * w_stride + q * w_dilation - w_padding
-                            if u < 0 or u >= h_in or v < 0 or v >= w_in:
+            T, B, C, HI, WI = input_spike_train.shape
+            T, B, N, HO, WO = output_spike_train.shape
+            N, C, HK, WK = weight.shape
+            SH, SW = stride
+            PH, PW = padding
+            DH, DW = dilation
+            for y in range(HO):
+                for x in range(WO):
+                    for p in range(HK):
+                        for q in range(WK):
+                            u = y * SH + p * DH - PH
+                            v = x * SW + q * DW - PW
+                            if u < 0 or u >= HI or v < 0 or v >= WI:
                                 continue
-                            for t in range(time_steps):
+                            for t in range(T):
                                 delta_weight[:, :, p, q], input_trace[:, :, :, u, v], output_trace[:, :, :, y, x] = _stdp_online(
                                     delta_weight = delta_weight[:, :, p, q], # [CO, CI]
                                     input_trace = input_trace[:, :, :, u, v], # [B, CO, CI]
@@ -325,7 +360,7 @@ class f_stdp_conv2d(torch.autograd.Function):
         return torch.zeros_like(input), delta_weight, torch.zeros_like(grad_input_trace), torch.zeros_like(grad_output_trace), None, None, None, None, None, None, None, None, None, None
 
 
-class STDPConv2d(_Module):
+class STDPConv2d(STDPLayer):
     def __init__(self, soma: _Soma, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, dilation: _size_2_t = 1, a_pos: float = 0.0002, tau_pos: float = 2.0, a_neg: float = 0.0002, tau_neg: float = 2.0, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         使用STDP学习机制时的2维卷积层。
@@ -344,8 +379,6 @@ class STDPConv2d(_Module):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        self.input_trace = None
-        self.output_trace = None
         super().__init__()
         def _fill(data: _size_any_t, l: int) -> torch.Tensor:
             res = torch.tensor(data)
@@ -354,7 +387,7 @@ class STDPConv2d(_Module):
             if res.shape[0] < l:
                 res = torch.cat([res] * l)
                 res = res[:l]
-            return res
+            return tuple(res)
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.kernel_size = _fill(kernel_size, 2)
@@ -377,16 +410,7 @@ class STDPConv2d(_Module):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["in_channels=%d" % self.in_channels, "out_channels=%d" % self.out_channels, "kernel_size=(%d, %d)" % tuple(self.kernel_size), "stride=(%d, %d)" % tuple(self.stride), "padding=(%d, %d)" % tuple(self.padding), "dilation=(%d, %d)" % tuple(self.dilation)]) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
-
-
-    def reset(self) -> nn.Module:
-        """
-        重置模型。
-        """
-        self.input_trace = None
-        self.output_trace = None
-        return super().reset()
+        return ", ".join(["in_channels=%d" % self.in_channels, "out_channels=%d" % self.out_channels, "kernel_size=(%d, %d)" % tuple(self.kernel_size), "stride=(%d, %d)" % tuple(self.stride), "padding=(%d, %d)" % tuple(self.padding), "dilation=(%d, %d)" % tuple(self.dilation)]) + (", " + super().extra_repr(self) if len(super().extra_repr(self)) else "")
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -398,12 +422,12 @@ class STDPConv2d(_Module):
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
         if self.multi_step_mode:
-            time_steps = x.shape[0]
+            T = x.shape[0]
             batch_size = x.shape[1]
             h_in = x.shape[3]
             w_in = x.shape[4]
         else:
-            time_steps = 1
+            T = 1
             batch_size = x.shape[0]
             h_in = x.shape[2]
             w_in = x.shape[3]
@@ -413,7 +437,10 @@ class STDPConv2d(_Module):
         w_wt = self.weight.shape[3]
         h_out = (h_in + 2 * self.padding[0] - h_wt * self.dilation[0]) // self.stride[0] + 1
         w_out = (w_in + 2 * self.padding[1] - w_wt * self.dilation[1]) // self.stride[1] + 1
-        self.input_trace = _SF.to(self.input_trace, torch.zeros(batch_size, c_out, c_in, h_in, w_in).to(x))
+        trace_shape = torch.zeros(batch_size, c_out, c_in, h_in, w_in).to(x)
+        self.check_if_reset(self.u, x[0])
+        self.check_if_reset(self.u, x[0])
+        self.input_trace = _SF.to(self.input_trace, trace_shape)
         self.output_trace = _SF.to(self.output_trace, torch.zeros(batch_size, c_out, c_in, h_out, w_out))
         soma = self.soma.forward_steps if self.multi_step_mode else self.soma.forward_step
         y, self.input_trace, self.output_trace = f_stdp_conv2d.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.stride, self.padding, self.dilation, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)

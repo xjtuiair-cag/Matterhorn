@@ -58,9 +58,9 @@ def stdp_py(delta_weight: torch.Tensor, input_spike_train: torch.Tensor, output_
     """
     调用在线STDP作为STDP的python版本实现。
     Args:
-        delta_weight (torch.Tensor): 权重矩阵，形状为[O, I]
-        input_spike_train (torch.Tensor): 输入脉冲序列，形状为[T, B, I]
-        output_spike_train (torch.Tensor): 输出脉冲序列，形状为[T, B, O]
+        delta_weight (torch.Tensor): 权重矩阵，形状为[N, C]
+        input_spike_train (torch.Tensor): 输入脉冲序列，形状为[T, B, C]
+        output_spike_train (torch.Tensor): 输出脉冲序列，形状为[T, B, N]
         a_pos (float): STDP参数A+
         tau_pos (float): STDP参数tau+
         a_neg (float): STDP参数A-
@@ -112,9 +112,9 @@ def stdp(delta_weight: torch.Tensor, input_spike_train: torch.Tensor, output_spi
     """
     脉冲时序依赖可塑性（STDP）函数。
     Args:
-        delta_weight (torch.Tensor): 权重矩阵，形状为[O, I]
-        input_spike_train (torch.Tensor): 输入脉冲序列，形状为[T, B, I]
-        output_spike_train (torch.Tensor): 输出脉冲序列，形状为[T, B, O]
+        delta_weight (torch.Tensor): 权重矩阵，形状为[N, C]
+        input_spike_train (torch.Tensor): 输入脉冲序列，形状为[T, B, C]
+        output_spike_train (torch.Tensor): 输出脉冲序列，形状为[T, B, N]
         a_pos (float): STDP参数A+
         tau_pos (float): STDP参数tau+
         a_neg (float): STDP参数A-

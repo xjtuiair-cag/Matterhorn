@@ -20,17 +20,10 @@ def to(u: _Optional[_Union[torch.Tensor, int, float]], x: torch.Tensor) -> torch
         u (torch.Tensor): 经过校正的张量
     """
     if isinstance(u, torch.Tensor):
-        if u.shape != x.shape:
-            val = u.flatten()[0] if u.ndim else u
-            u = torch.zeros_like(x) + val.to(x)
-        else:
-            u = u.clone().to(x)
+        return u.to(x)
     elif isinstance(u, int) or isinstance(u, float):
-        u = torch.full_like(x, u)
-    else:
-        u = torch.zeros_like(x)
-    u = u.to(x).requires_grad_(True)
-    return u
+        return torch.full_like(x, u)
+    return torch.zeros_like(x)
 
 
 def merge_time_steps_batch_size(tensors: _Union[torch.Tensor, _Tuple[torch.Tensor]], tensor_map: _Optional[_Mapping[str, torch.Tensor]] = None) -> _Tuple[_Iterable, _Mapping, _Iterable]:

@@ -112,6 +112,7 @@ class LIF(_LIF):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
+        self.check_if_reset(self.u, x[0])
         self.u = _SF.to(self.u, x[0])
         supported_spiking_functions = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
         current_spiking_function = self.spiking_function.__class__.__name__

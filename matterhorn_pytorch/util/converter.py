@@ -40,7 +40,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             )
             params = ann_module.state_dict()
             for name in params:
-                params[name] = params[name].clone().detach()
+                params[name] = params[name].clone()
             snn_module.load_state_dict()
         # 卷积层
         elif isinstance(ann_module, (nn.Conv1d, nn.Conv2d, nn.Conv3d)):
@@ -65,7 +65,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 snn_module = snn.Conv3d(**kwargs)
             params = ann_module.state_dict()
             for name in params:
-                params[name] = params[name].clone().detach()
+                params[name] = params[name].clone()
             snn_module.load_state_dict(params)
         # 转置卷积层
         elif isinstance(ann_module, (nn.ConvTranspose1d, nn.ConvTranspose2d, nn.ConvTranspose3d)):
@@ -91,7 +91,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 snn_module = snn.ConvTranspose3d(**kwargs)
             params = ann_module.state_dict()
             for name in params:
-                params[name] = params[name].clone().detach()
+                params[name] = params[name].clone()
             snn_module.load_state_dict(params)
         elif isinstance(ann_module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.LayerNorm)):
             snn_module = snn.synapse.NormPlaceholder(
@@ -105,7 +105,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             )
             params = ann_module.state_dict()
             for name in params:
-                params[name] = params[name].clone().detach()
+                params[name] = params[name].clone()
             snn_module.load_state_dict(params)
         # 激活函数
         elif isinstance(ann_module, (nn.ReLU, nn.LeakyReLU, nn.ELU, nn.SELU, nn.GELU)):
@@ -200,7 +200,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             hybrid_module = deepcopy(ann_module)
             params = ann_module.state_dict()
             for name in params:
-                params[name] = params[name].clone().detach()
+                params[name] = params[name].clone()
             hybrid_module.load_state_dict(params)
             for name, module in ann_module.named_children():
                 setattr(hybrid_module, name, _replace(module))
@@ -296,13 +296,13 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                     sigma = (norm_params["running_var"] + getattr(model, "eps")) ** 0.5
                     gamma = norm_params["weight"]
                     beta = norm_params["bias"]
-                    w = synapse_params["weight"].clone().detach()
+                    w = synapse_params["weight"].clone()
                     for i in range(len(mu)):
                         w[i] = gamma[i] / sigma[i] * w[i]
                     synapse_params["weight"] = w
                     has_bias = "bias" in synapse_params
                     if has_bias:
-                        b = synapse_params["bias"].clone().detach()
+                        b = synapse_params["bias"].clone()
                         b = gamma / sigma * (b - mu) + beta
                         synapse_params["bias"] = b
                     synapse.load_state_dict(synapse_params)
@@ -313,12 +313,12 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                     # print("IF -> Conv\n", model, "\n", synapse, "\n")
                     lambda_l = getattr(model, "lambda_l") if hasattr(model, "lambda_l") else 1.0
                     synapse_params = synapse.state_dict()
-                    w = synapse_params["weight"].clone().detach()
+                    w = synapse_params["weight"].clone()
                     w = w / lambda_l
                     synapse_params["weight"] = w
                     has_bias = "bias" in synapse_params
                     if has_bias:
-                        b = synapse_params["bias"].clone().detach()
+                        b = synapse_params["bias"].clone()
                         b = b / lambda_l
                         synapse_params["bias"] = b
                     synapse.load_state_dict(synapse_params)
@@ -329,7 +329,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                     # print("Conv -> IF\n", model, "\n", soma, "\n")
                     lambda_l = getattr(soma, "lambda_l") if hasattr(soma, "lambda_l") else 1.0
                     synapse_params = model.state_dict()
-                    w = synapse_params["weight"].clone().detach()
+                    w = synapse_params["weight"].clone()
                     w = w * lambda_l
                     synapse_params["weight"] = w
                     model.load_state_dict(synapse_params)

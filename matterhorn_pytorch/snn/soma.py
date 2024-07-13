@@ -51,7 +51,7 @@ class Soma(_Module):
         重置整个神经元。
         """
         self.detach()
-        self.u = _SF.to(self.u_rest, self.u_rest)
+        self.u = None
         return super().reset()
 
     
@@ -62,6 +62,17 @@ class Soma(_Module):
         if isinstance(self.u, torch.Tensor):
             self.u = self.u.float().detach().requires_grad_(self.training)
         return super().detach()
+
+
+    def check_if_reset(self, u: torch.Tensor, x: torch.Tensor) -> None:
+        """
+        检查张量是否（在形状上）一致。若不一致，重置胞体。
+        Args:
+            u (torch.Tensor): 待检测张量
+            x (torch.Tensor): 需要保持一致的张量
+        """
+        if isinstance(u, torch.Tensor) and u.shape != x.shape:
+            self.reset()
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -113,6 +124,7 @@ class Soma(_Module):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
+        self.check_if_reset(self.u, x)
         self.u = _SF.to(self.u, x)
         self.u = self.f_response(self.u, x)
         o = self.f_firing(self.u)
@@ -360,8 +372,8 @@ class Izhikevich(Soma):
         重置整个神经元
         """
         self.detach()
-        self.u = _SF.to(self.u_rest, self.u_rest)
-        self.w = _SF.to(0.0, self.u_rest)
+        self.u = None
+        self.w = None
         return super().reset()
 
     
@@ -385,6 +397,7 @@ class Izhikevich(Soma):
         Returns:
             u (torch.Tensor): 当前电位$U_{i}^{l}(t)$
         """
+        self.check_if_reset(self.w, h)
         self.w = _SF.to(self.w, h)
         dw = self.a * (self.b * h - self.w)
         self.w = self.w + dw
@@ -530,6 +543,7 @@ class AnalogSoma(Soma):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
+        self.check_if_reset(self.u, x)
         self.u = _SF.to(self.u, x)
         self.u = self.f_response(self.u, x)
         o = self.f_firing(self.u)
