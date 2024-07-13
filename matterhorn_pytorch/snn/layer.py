@@ -111,8 +111,6 @@ class STDPLayer(_Module):
             self.reset()
 
 
-
-
 class f_stdp_linear(torch.autograd.Function):
     @staticmethod
     def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Callable, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_step_mode: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -249,11 +247,12 @@ class STDPLinear(STDPLayer):
             T = 1
             B, C = x.shape
         N, C = self.weight.shape
-        trace_shape = torch.zeros(B, N, C).to(x)
-        self.check_if_reset(self.input_trace, trace_shape)
-        self.check_if_reset(self.output_trace, trace_shape)
-        self.input_trace = _SF.to(self.input_trace, trace_shape)
-        self.output_trace = _SF.to(self.output_trace, trace_shape)
+        input_trace_shape = torch.zeros(B, N, C).to(x)
+        output_trace_shape = torch.zeros(B, N, C).to(x)
+        self.check_if_reset(self.input_trace, input_trace_shape)
+        self.check_if_reset(self.output_trace, output_trace_shape)
+        self.input_trace = _SF.to(self.input_trace, input_trace_shape)
+        self.output_trace = _SF.to(self.output_trace, output_trace_shape)
         soma = self.soma.forward_steps if self.multi_step_mode else self.soma.forward_step
         y, self.input_trace, self.output_trace = f_stdp_linear.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)
         return y
@@ -379,7 +378,12 @@ class STDPConv2d(STDPLayer):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        super().__init__()
+        super().__init__(
+            a_pos = a_pos,
+            tau_pos = tau_pos,
+            a_neg = a_neg,
+            tau_neg = tau_neg
+        )
         def _fill(data: _size_any_t, l: int) -> torch.Tensor:
             res = torch.tensor(data)
             if res.ndim == 0:
@@ -397,11 +401,6 @@ class STDPConv2d(STDPLayer):
         self.padding = _fill(padding, 2)
         self.dilation = _fill(dilation, 2)
         self.soma = soma
-        self.a_pos = a_pos
-        self.tau_pos = tau_pos
-        self.a_neg = a_neg
-        self.tau_neg = tau_neg
-        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -422,26 +421,22 @@ class STDPConv2d(STDPLayer):
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
         if self.multi_step_mode:
-            T = x.shape[0]
-            batch_size = x.shape[1]
-            h_in = x.shape[3]
-            w_in = x.shape[4]
+            T, B, C, HI, WI = x.shape
         else:
             T = 1
-            batch_size = x.shape[0]
-            h_in = x.shape[2]
-            w_in = x.shape[3]
-        c_out = self.weight.shape[0]
-        c_in = self.weight.shape[1]
-        h_wt = self.weight.shape[2]
-        w_wt = self.weight.shape[3]
-        h_out = (h_in + 2 * self.padding[0] - h_wt * self.dilation[0]) // self.stride[0] + 1
-        w_out = (w_in + 2 * self.padding[1] - w_wt * self.dilation[1]) // self.stride[1] + 1
-        trace_shape = torch.zeros(batch_size, c_out, c_in, h_in, w_in).to(x)
-        self.check_if_reset(self.u, x[0])
-        self.check_if_reset(self.u, x[0])
-        self.input_trace = _SF.to(self.input_trace, trace_shape)
-        self.output_trace = _SF.to(self.output_trace, torch.zeros(batch_size, c_out, c_in, h_out, w_out))
+            B, C, HI, WI = x.shape
+        N, C, HK, WK = self.weight.shape
+        PH, PW = self.padding
+        SH, SW = self.stride
+        DH, DW = self.dilation
+        HO = (HI + 2 * PH - HK * DH) // SH + 1
+        WO = (WI + 2 * PW - WK * DW) // SW + 1
+        input_trace_shape = torch.zeros(B, N, C, HI, WI).to(x)
+        output_trace_shape = torch.zeros(B, N, C, HO, WO).to(x)
+        self.check_if_reset(self.input_trace, input_trace_shape)
+        self.check_if_reset(self.output_trace, output_trace_shape)
+        self.input_trace = _SF.to(self.input_trace, input_trace_shape)
+        self.output_trace = _SF.to(self.output_trace, output_trace_shape)
         soma = self.soma.forward_steps if self.multi_step_mode else self.soma.forward_step
         y, self.input_trace, self.output_trace = f_stdp_conv2d.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.stride, self.padding, self.dilation, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)
         return y

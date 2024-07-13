@@ -54,6 +54,17 @@ class LSM(_Module):
         return super().reset()
 
 
+    def check_if_reset(self, u: torch.Tensor, x: torch.Tensor) -> None:
+        """
+        检查张量是否（在形状上）一致。若不一致，重置胞体。
+        Args:
+            u (torch.Tensor): 待检测张量
+            x (torch.Tensor): 需要保持一致的张量
+        """
+        if isinstance(u, torch.Tensor) and u.shape != x.shape:
+            self.reset()
+
+
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
@@ -62,6 +73,7 @@ class LSM(_Module):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
+        self.o = self.check_if_reset(self.o, x)
         self.o = _SF.to(self.o, x)
         y = x + _F.linear(self.o, self.weight * self.adjacent.T, None)
         o = self.soma.forward_step(y)
