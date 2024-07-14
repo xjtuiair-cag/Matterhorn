@@ -24,7 +24,7 @@ import numpy as np
 
 class multi_step_mode_lif_cuda(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: _Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: float, u_rest: float, spiking_mode: int, a: float, reset_mode: float) -> torch.Tensor:
+    def forward(ctx: _Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, firing_mode: int, a: float, reset_mode: float) -> torch.Tensor:
         """
         多时间步LIF神经元前向传播的C++实现。
         Args:
@@ -32,9 +32,9 @@ class multi_step_mode_lif_cuda(torch.autograd.Function):
             x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
             u_init (torch.Tensor): 初始电位
             tau_m (torch.Tensor): 膜时间常数$τ_{m}$
-            u_threshold (float): 阈电位$u_{th}$
-            u_rest (float): 静息电位$u_{rest}$
-            spiking_mode (int): 发射脉冲的模式
+            u_threshold (at::Tensor): 阈电位$u_{th}$
+            u_rest (torch.Tensor): 静息电位$u_{rest}$
+            firing_mode (int): 发射脉冲的模式
             a (float): 参数$a$
             reset_mode (int): 重置的模式，有硬重置（0）和软重置（1）两种
         Returns:
@@ -50,11 +50,9 @@ class multi_step_mode_lif_cuda(torch.autograd.Function):
         o = torch.zeros_like(x)
         u = torch.zeros_like(x)
         h = torch.zeros_like(x)
-        cu_fp_lif(o, u, h, x, time_steps, shape, u_init, tau_m, u_rest, u_threshold, reset_mode)
-        ctx.save_for_backward(o, u, h, x, u_init, tau_m)
-        ctx.u_threshold = u_threshold
-        ctx.u_rest = u_rest
-        ctx.spiking_mode = spiking_mode
+        cu_fp_lif(o, u, h, x, time_steps, shape, u_init, tau_m, u_rest, u_threshold, firing_mode, reset_mode)
+        ctx.save_for_backward(x, u_init, tau_m, u_threshold, u_rest)
+        ctx.firing_mode = firing_mode
         ctx.a = a
         ctx.reset_mode = reset_mode
         u_last = u[-1]
@@ -75,7 +73,11 @@ class multi_step_mode_lif_cuda(torch.autograd.Function):
         grad_u_last = grad_u_last.clone()
         device = grad_o.device
         assert device.type == "cuda", "You must use CUDA tensors."
-        o, u, h, x, u_init, tau_m = ctx.saved_tensors
+        x, u_init, tau_m, u_threshold, u_rest = ctx.saved_tensors
+        o = torch.zeros_like(x)
+        u = torch.zeros_like(x)
+        h = torch.zeros_like(x)
+        cu_fp_lif(o, u, h, x, time_steps, shape, u_init, tau_m, u_rest, u_threshold, ctx.firing_mode, ctx.reset_mode)
         time_steps = grad_o.shape[0]
         shape = np.prod(grad_o.shape[1:])
         grad_u = torch.zeros_like(u)
@@ -84,7 +86,7 @@ class multi_step_mode_lif_cuda(torch.autograd.Function):
         grad_x = torch.zeros_like(x)
         grad_u_init = torch.zeros_like(u_init)
         grad_tau_m = torch.zeros_like(u_init)
-        cu_bp_lif(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, shape, o, u, h, x, u_init, tau_m, ctx.u_rest, ctx.u_threshold, ctx.spiking_mode, ctx.a, ctx.reset_mode)
+        cu_bp_lif(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, shape, o, u, h, x, u_init, tau_m, u_rest, u_threshold, ctx.firing_mode, ctx.a, ctx.reset_mode)
         grad_tau_m = torch.sum(grad_tau_m)
         return grad_x, grad_u_init, grad_tau_m, None, None, None, None, None
 
@@ -111,8 +113,9 @@ class LIF(_LIF):
         self.u = _SF.to(self.u, x[0])
         supported_spiking_functions = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian")
         current_spiking_function = self.spiking_function.__class__.__name__
-        assert current_spiking_function in supported_spiking_functions, "Unsupported gspiking function"
+        assert current_spiking_function in supported_spiking_functions, "Unsupported spiking function"
         spiking_function_prototype = supported_spiking_functions.index(current_spiking_function)
+        a = getattr(self.spiking_function, "a") if hasattr(self.spiking_function, "a") else 1.0
         reset_function_prototype = 0 if self.hard_reset else 1
-        o, u = multi_step_mode_lif_cuda.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, spiking_function_prototype, self.spiking_function.a, reset_function_prototype)
+        o, self.u = multi_step_mode_lif_cuda.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, spiking_function_prototype, a, reset_function_prototype)
         return o

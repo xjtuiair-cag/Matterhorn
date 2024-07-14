@@ -1,13 +1,12 @@
 #ifndef _MATTERHORN_SOMA_CUDA_KERNEL
 #define _MATTERHORN_SOMA_CUDA_KERNEL
 
-
+#include <stdlib.h>
 #include <cmath>
 #include <iostream>
-#include <stdlib.h>
+#include "base.cu"
 #include "base.h"
 #include "soma.h"
-#include "base.cu"
 
 /*
 LIF神经元反应函数的前向传播函数。
@@ -17,7 +16,7 @@ Args:
     x (at::Tensor): 输入电位$X^{l}(t)$
     h (at::Tensor): 胞体历史电位$H^{l}(t-1)$
     tau_m (at::Tensor): 时间常数$τ_{m}$
-    u_rest (float): 静息电位$u_{rest}$
+    u_rest (at::Tensor): 静息电位$u_{rest}$
 */
 __device__ void fp_response_lif(float& u,
                                 float x,
@@ -42,7 +41,7 @@ Args:
     h (at::Tensor): 胞体历史电位$H^{l}(t)$
     x (at::Tensor): 输入电位$X^{l}(t-1)$
     tau_m (at::Tensor): 时间常数$τ_{m}$
-    u_rest (float): 静息电位$u_{rest}$
+    u_rest (at::Tensor): 静息电位$u_{rest}$
 */
 __device__ void bp_response_lif(float grad_u,
                                 float& grad_x,
@@ -64,10 +63,58 @@ $$O_{i}^{l}(t)=u[U_{i}^{l}(t)]$$
 Args:
     o (at::Tensor): 脉冲输出$O^{l}(t)$
     u (at::Tensor): 胞体电位$U^{l}(t)$
-    u_threshold (float): 阈电位$u_{th}$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
 */
 __device__ void fp_spiking_heaviside(float& o, float u, float u_threshold) {
     o = gef(u, u_threshold);
+}
+
+/*
+多值向下取整前向传播函数。
+$$O_{i}^{l}(t)=\floor{U_{i}^{l}(t)}$$
+Args:
+    o (at::Tensor): 脉冲输出$O^{l}(t)$
+    u (at::Tensor): 胞体电位$U^{l}(t)$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
+    u_rest (at::Tensor): 静息电位$u_{rest}$
+*/
+__device__ void fp_spiking_floor(float& o,
+                                 float u,
+                                 float u_threshold,
+                                 float u_rest) {
+    o = floorf((u - u_rest) / (u_threshold - u_rest));
+}
+
+/*
+多值向上取整前向传播函数。
+$$O_{i}^{l}(t)=\ceil{U_{i}^{l}(t)}$$
+Args:
+    o (at::Tensor): 脉冲输出$O^{l}(t)$
+    u (at::Tensor): 胞体电位$U^{l}(t)$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
+    u_rest (at::Tensor): 静息电位$u_{rest}$
+*/
+__device__ void fp_spiking_ceil(float& o,
+                                float u,
+                                float u_threshold,
+                                float u_rest) {
+    o = ceilf((u - u_rest) / (u_threshold - u_rest));
+}
+
+/*
+多值四舍五入前向传播函数。
+$$O_{i}^{l}(t)=round(U_{i}^{l}(t))$$
+Args:
+    o (at::Tensor): 脉冲输出$O^{l}(t)$
+    u (at::Tensor): 胞体电位$U^{l}(t)$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
+    u_rest (at::Tensor): 静息电位$u_{rest}$
+*/
+__device__ void fp_spiking_round(float& o,
+                                 float u,
+                                 float u_threshold,
+                                 float u_rest) {
+    o = roundf((u - u_rest) / (u_threshold - u_rest));
 }
 
 /*
@@ -78,7 +125,7 @@ Args:
     grad_u (at::Tensor): 胞体电位$U^{l}(t)$的梯度
     o (at::Tensor): 脉冲输出$O^{l}(t)$
     u (at::Tensor): 胞体电位$U^{l}(t)$
-    u_threshold (float): 阈电位$u_{th}$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
     a (float): 参数$a$
 */
 __device__ void bp_spiking_rectangular(float grad_o,
@@ -99,7 +146,7 @@ Args:
     grad_u (at::Tensor): 胞体电位$U^{l}(t)$的梯度
     o (at::Tensor): 脉冲输出$O^{l}(t)$
     u (at::Tensor): 胞体电位$U^{l}(t)$
-    u_threshold (float): 阈电位$u_{th}$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
     a (float): 参数$a$
 */
 __device__ void bp_spiking_polynomial(float grad_o,
@@ -109,7 +156,8 @@ __device__ void bp_spiking_polynomial(float grad_o,
                                       float u_threshold,
                                       float a) {
     float ax = absf(u - u_threshold);
-    grad_u += grad_o * (sqrtf(a) / 2.0f - a / 4.0f * ax) * sgnf(2.0f / sqrtf(a) - ax) * ltf(ax, 2.0f / sqrtf(a));
+    grad_u += grad_o * (sqrtf(a) / 2.0f - a / 4.0f * ax) *
+              sgnf(2.0f / sqrtf(a) - ax) * ltf(ax, 2.0f / sqrtf(a));
 }
 
 /*
@@ -120,7 +168,7 @@ Args:
     grad_u (at::Tensor): 胞体电位$U^{l}(t)$的梯度
     o (at::Tensor): 脉冲输出$O^{l}(t)$
     u (at::Tensor): 胞体电位$U^{l}(t)$
-    u_threshold (float): 阈电位$u_{th}$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
     a (float): 参数$a$
 */
 __device__ void bp_spiking_sigmoid(float grad_o,
@@ -142,7 +190,7 @@ Args:
     grad_u (at::Tensor): 胞体电位$U^{l}(t)$的梯度
     o (at::Tensor): 脉冲输出$O^{l}(t)$
     u (at::Tensor): 胞体电位$U^{l}(t)$
-    u_threshold (float): 阈电位$u_{th}$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
     a (float): 参数$a$
 */
 __device__ void bp_spiking_gaussian(float grad_o,
@@ -157,13 +205,33 @@ __device__ void bp_spiking_gaussian(float grad_o,
 }
 
 /*
+多值反向传播函数。
+$$\frac{\partial O_{i}^{l}(t)}{\partial U_{i}^{l}(t)}=U_{i}^{l}(t)$$
+Args:
+    grad_o (at::Tensor): 脉冲输出$O^{l}(t)$的梯度
+    grad_u (at::Tensor): 胞体电位$U^{l}(t)$的梯度
+    o (at::Tensor): 脉冲输出$O^{l}(t)$
+    u (at::Tensor): 胞体电位$U^{l}(t)$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
+    u_rest (at::Tensor): 静息电位$u_{rest}$
+*/
+__device__ void bp_spiking_multi(float grad_o,
+                                 float& grad_u,
+                                 float o,
+                                 float u,
+                                 float u_threshold,
+                                 float u_rest) {
+    grad_u += (u - u_rest) / (u_threshold - u_rest);
+}
+
+/*
 硬重置前向传播函数。
 $$H_{i}^{l}(t)=U_{i}^{l}(t)[1-O_{i}^{l}(t)]+u_{rest}O_{i}^{l}(t)$$
 Args:
     h (at::Tensor): 胞体历史电位$H^{l}(t)$
     u (at::Tensor): 胞体电位$U^{l}(t)$
     o (at::Tensor): 脉冲输出$O^{l}(t)$
-    u_rest (float): 静息电位$u_{rest}$
+    u_rest (at::Tensor): 静息电位$u_{rest}$
 */
 __device__ void fp_reset_hard(float& h, float u, float o, float u_rest) {
     h = u * (1.0f - o) + u_rest * o;
@@ -180,7 +248,7 @@ Args:
     h (at::Tensor): 胞体历史电位$H^{l}(t)$
     u (at::Tensor): 胞体电位$U^{l}(t)$
     o (at::Tensor): 脉冲输出$O^{l}(t)$
-    u_rest (float): 静息电位$u_{rest}$
+    u_rest (at::Tensor): 静息电位$u_{rest}$
 */
 __device__ void bp_reset_hard(float grad_h,
                               float& grad_u,
@@ -200,8 +268,8 @@ Args:
     h (at::Tensor): 胞体历史电位$H^{l}(t)$
     u (at::Tensor): 胞体电位$U^{l}(t)$
     o (at::Tensor): 脉冲输出$O^{l}(t)$
-    u_threshold (float): 阈电位$u_{th}$
-    u_rest (float): 静息电位$u_{rest}$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
+    u_rest (at::Tensor): 静息电位$u_{rest}$
 */
 __device__ void fp_reset_soft(float& h,
                               float u,
@@ -222,8 +290,8 @@ Args:
     h (at::Tensor): 胞体历史电位$H^{l}(t)$
     u (at::Tensor): 胞体电位$U^{l}(t)$
     o (at::Tensor): 脉冲输出$O^{l}(t)$
-    u_threshold (float): 阈电位$u_{th}$
-    u_rest (float): 静息电位$u_{rest}$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
+    u_rest (at::Tensor): 静息电位$u_{rest}$
 */
 __device__ void bp_reset_soft(float grad_h,
                               float& grad_u,
@@ -247,8 +315,8 @@ Args:
     time_steps (int): 总时间步长
     u_init (at::Tensor): 初始胞体电位$H^{l}(-1)$
     tau_m (at::Tensor): 时间常数$τ_{m}$
-    u_rest (float): 静息电位$u_{rest}$
-    u_threshold (float): 阈电位$u_{th}$
+    u_rest (at::Tensor): 静息电位$u_{rest}$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
     reset_mode (int): 重置模式，分为硬重置（0）和软重置（1）两种
 */
 __global__ void fp_lif_cuda_kernel(float* o,
@@ -259,8 +327,9 @@ __global__ void fp_lif_cuda_kernel(float* o,
                                    int shape,
                                    float* u_init,
                                    float* tau_m,
-                                   float u_rest,
-                                   float u_threshold,
+                                   float* u_rest,
+                                   float* u_threshold,
+                                   int firing_mode,
                                    int reset_mode) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= shape) {
@@ -268,18 +337,39 @@ __global__ void fp_lif_cuda_kernel(float* o,
     }
 
     const float tau_m_val = tau_m[0];
+    const float u_threshold_val = u_threshold[0];
+    const float u_rest_val = u_rest[0];
     for (int t = 0; t < time_steps; t++) {
         const int cur_idx = t * shape + idx;
         float last_h = t ? h[cur_idx - shape] : u_init[idx];
         fp_response_lif(u[cur_idx], x[cur_idx], last_h, tau_m_val, u_rest);
-        fp_spiking_heaviside(o[cur_idx], u[cur_idx], u_threshold);
+        switch (firing_mode) {
+            case FIRING_RECTANGULAR:
+            case FIRING_POLYNOMIAL:
+            case FIRING_SIGMOID:
+            case FIRING_GAUSSIAN:
+                fp_spiking_heaviside(o[cur_idx], u[cur_idx], u_threshold_val);
+                break;
+            case FIRING_FLOOR:
+                fp_spiking_floor(o[cur_idx], u[cur_idx], u_threshold_val,
+                                 u_rest_val);
+                break;
+            case FIRING_CEIL:
+                fp_spiking_ceil(o[cur_idx], u[cur_idx], u_threshold_val,
+                                u_rest_val);
+                break;
+            case FIRING_ROUND:
+                fp_spiking_round(o[cur_idx], u[cur_idx], u_threshold_val,
+                                 u_rest_val);
+                break;
+        }
         switch (reset_mode) {
             case RESET_HARD:
-                fp_reset_hard(h[cur_idx], u[cur_idx], o[cur_idx], u_rest);
+                fp_reset_hard(h[cur_idx], u[cur_idx], o[cur_idx], u_rest_val);
                 break;
             case RESET_SOFT:
-                fp_reset_soft(h[cur_idx], u[cur_idx], o[cur_idx], u_threshold,
-                              u_rest);
+                fp_reset_soft(h[cur_idx], u[cur_idx], o[cur_idx],
+                              u_threshold_val, u_rest_val);
                 break;
         }
     }
@@ -293,8 +383,9 @@ void fp_lif_cuda(float* o,
                  int shape,
                  float* u_init,
                  float* tau_m,
-                 float u_rest,
-                 float u_threshold,
+                 float* u_rest,
+                 float* u_threshold,
+                 int firing_mode,
                  int reset_mode) {
     cudaError_t err;
 
@@ -302,9 +393,9 @@ void fp_lif_cuda(float* o,
     dim3 threads(THREADS_PER_BLOCK);
 
     // 调用CUDA核心开始计算
-    fp_lif_cuda_kernel<<<blocks, threads, 0>>>(o, u, h, x, time_steps, shape,
-                                               u_init, tau_m, u_rest,
-                                               u_threshold, reset_mode);
+    fp_lif_cuda_kernel<<<blocks, threads, 0>>>(
+        o, u, h, x, time_steps, shape, u_init, tau_m, u_rest, u_threshold,
+        firing_mode, reset_mode);
 
     // 返回计算结果
     err = cudaGetLastError();
@@ -330,9 +421,9 @@ Args:
     x (at::Tensor): 输入电位$X^{l}$
     u_init (at::Tensor): 初始胞体电位$H^{l}(-1)$
     tau_m (at::Tensor): 时间常数$τ_{m}$
-    u_rest (float): 静息电位$u_{rest}$
-    u_threshold (float): 阈电位$u_{th}$
-    spiking_mode (int): 替代梯度模式
+    u_rest (at::Tensor): 静息电位$u_{rest}$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
+    firing_mode (int): 替代梯度模式
     a (float): 参数$a$
     reset_mode (int): 重置模式，分为硬重置（0）和软重置（1）两种
 */
@@ -350,9 +441,9 @@ __global__ void bp_lif_cuda_kernel(float* grad_o,
                                    float* x,
                                    float* u_init,
                                    float* tau_m,
-                                   float u_rest,
-                                   float u_threshold,
-                                   int spiking_mode,
+                                   float* u_rest,
+                                   float* u_threshold,
+                                   int firing_mode,
                                    float a,
                                    int reset_mode) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -361,6 +452,8 @@ __global__ void bp_lif_cuda_kernel(float* grad_o,
     }
 
     const float tau_m_val = tau_m[0];
+    const float u_threshold_val = u_threshold[0];
+    const float u_rest_val = u_rest[0];
     float cur_grad_h = 0.0f;
     for (int t = time_steps - 1; t >= 0; t--) {
         const int cur_idx = t * shape + idx;
@@ -368,35 +461,43 @@ __global__ void bp_lif_cuda_kernel(float* grad_o,
         switch (reset_mode) {
             case RESET_HARD:
                 bp_reset_hard(cur_grad_h, grad_u[cur_idx], grad_o[cur_idx],
-                              h[cur_idx], u[cur_idx], o[cur_idx], u_rest);
+                              h[cur_idx], u[cur_idx], o[cur_idx], u_rest_val);
                 break;
             case RESET_SOFT:
                 bp_reset_soft(cur_grad_h, grad_u[cur_idx], grad_o[cur_idx],
-                              h[cur_idx], u[cur_idx], o[cur_idx], u_threshold,
-                              u_rest);
+                              h[cur_idx], u[cur_idx], o[cur_idx],
+                              u_threshold_val, u_rest_val);
                 break;
         }
-        switch (spiking_mode) {
-            case SURROGATE_RECTANGULAR:
+        switch (firing_mode) {
+            case FIRING_RECTANGULAR:
                 bp_spiking_rectangular(grad_o[cur_idx], grad_u[cur_idx],
-                                       o[cur_idx], u[cur_idx], u_threshold, a);
+                                       o[cur_idx], u[cur_idx], u_threshold_val,
+                                       a);
                 break;
-            case SURROGATE_POLYNOMIAL:
+            case FIRING_POLYNOMIAL:
                 bp_spiking_polynomial(grad_o[cur_idx], grad_u[cur_idx],
-                                      o[cur_idx], u[cur_idx], u_threshold, a);
+                                      o[cur_idx], u[cur_idx], u_threshold_val,
+                                      a);
                 break;
-            case SURROGATE_SIGMOID:
+            case FIRING_SIGMOID:
                 bp_spiking_sigmoid(grad_o[cur_idx], grad_u[cur_idx], o[cur_idx],
-                                   u[cur_idx], u_threshold, a);
+                                   u[cur_idx], u_threshold_val, a);
                 break;
-            case SURROGATE_GAUSSIAN:
+            case FIRING_GAUSSIAN:
                 bp_spiking_gaussian(grad_o[cur_idx], grad_u[cur_idx],
-                                    o[cur_idx], u[cur_idx], u_threshold, a);
+                                    o[cur_idx], u[cur_idx], u_threshold_val, a);
+                break;
+            case FIRING_FLOOR:
+            case FIRING_CEIL:
+            case FIRING_ROUND:
+                bp_spiking_multi(grad_o[cur_idx], grad_u[cur_idx], o[cur_idx],
+                                 u[cur_idx], u_threshold_val, u_rest_val);
                 break;
         }
         bp_response_lif(grad_u[cur_idx], grad_x[cur_idx], cur_grad_h,
                         grad_tau_m[idx], u[cur_idx], x[cur_idx], last_h,
-                        tau_m_val, u_rest);
+                        tau_m_val, u_rest_val);
         if (t) {
             grad_h[cur_idx - shape] = cur_grad_h;
         } else {
@@ -419,9 +520,9 @@ void bp_lif_cuda(float* grad_o,
                  float* x,
                  float* u_init,
                  float* tau_m,
-                 float u_rest,
-                 float u_threshold,
-                 int spiking_mode,
+                 float* u_rest,
+                 float* u_threshold,
+                 int firing_mode,
                  float a,
                  int reset_mode) {
     cudaError_t err;
@@ -432,7 +533,7 @@ void bp_lif_cuda(float* grad_o,
     // 调用CUDA核心开始计算
     bp_lif_cuda_kernel<<<blocks, threads, 0>>>(
         grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps,
-        shape, o, u, h, x, u_init, tau_m, u_rest, u_threshold, spiking_mode, a,
+        shape, o, u, h, x, u_init, tau_m, u_rest, u_threshold, firing_mode, a,
         reset_mode);
 
     // 返回计算结果
@@ -442,6 +543,5 @@ void bp_lif_cuda(float* grad_o,
         exit(-1);
     }
 }
-
 
 #endif

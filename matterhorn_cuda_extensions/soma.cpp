@@ -20,8 +20,8 @@ Args:
     time_steps (int): 总时间步长
     u_init (at::Tensor): 初始胞体电位$H^{l}(-1)$
     tau_m (at::Tensor): 时间常数$τ_{m}$
-    u_rest (float): 静息电位$u_{rest}$
-    u_threshold (float): 阈电位$u_{th}$
+    u_rest (at::Tensor): 静息电位$u_{rest}$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
     reset_mode (int): 重置模式，分为硬重置（0）和软重置（1）两种
 */
 void cu_fp_lif(at::Tensor o,
@@ -32,8 +32,9 @@ void cu_fp_lif(at::Tensor o,
                int shape,
                at::Tensor u_init,
                at::Tensor tau_m,
-               float u_rest,
-               float u_threshold,
+               at::Tensor u_rest,
+               at::Tensor u_threshold,
+               int firing_mode = FIRING_GAUSSIAN,
                int reset_mode = RESET_HARD) {
     float* o_head = o.data_ptr<float>();
     float* u_head = u.data_ptr<float>();
@@ -41,9 +42,11 @@ void cu_fp_lif(at::Tensor o,
     float* x_head = x.data_ptr<float>();
     float* u_init_head = u_init.data_ptr<float>();
     float* tau_m_head = tau_m.data_ptr<float>();
+    float* u_threshold_head = u_threshold.data_ptr<float>();
+    float* u_rest_head = u_rest.data_ptr<float>();
 
     fp_lif_cuda(o_head, u_head, h_head, x_head, time_steps, shape, u_init_head,
-                tau_m_head, u_rest, u_threshold, reset_mode);
+                tau_m_head, u_rest_head, u_threshold_head, firing_mode, reset_mode);
 }
 
 /*
@@ -62,9 +65,9 @@ Args:
     x (at::Tensor): 输入电位$X^{l}$
     u_init (at::Tensor): 初始胞体电位$H^{l}(-1)$
     tau_m (at::Tensor): 时间常数$τ_{m}$
-    u_rest (float): 静息电位$u_{rest}$
-    u_threshold (float): 阈电位$u_{th}$
-    spiking_mode (int): 替代梯度模式
+    u_rest (at::Tensor): 静息电位$u_{rest}$
+    u_threshold (at::Tensor): 阈电位$u_{th}$
+    firing_mode (int): 替代梯度模式
     a (float): 参数$a$
     reset_mode (int): 重置模式，分为硬重置（0）和软重置（1）两种
 */
@@ -82,10 +85,10 @@ void cu_bp_lif(at::Tensor grad_o,
                at::Tensor x,
                at::Tensor u_init,
                at::Tensor tau_m,
-               float u_rest,
-               float u_threshold,
-               int spiking_mode = SURROGATE_RECTANGULAR,
-               float a = 2.0,
+               at::Tensor u_rest,
+               at::Tensor u_threshold,
+               int firing_mode = FIRING_GAUSSIAN,
+               float a = 4.0,
                int reset_mode = RESET_HARD) {
     float* grad_o_head = grad_o.data_ptr<float>();
     float* grad_u_head = grad_u.data_ptr<float>();
@@ -99,11 +102,13 @@ void cu_bp_lif(at::Tensor grad_o,
     float* x_head = x.data_ptr<float>();
     float* u_init_head = u_init.data_ptr<float>();
     float* tau_m_head = tau_m.data_ptr<float>();
+    float* u_threshold_head = u_threshold.data_ptr<float>();
+    float* u_rest_head = u_rest.data_ptr<float>();
 
     bp_lif_cuda(grad_o_head, grad_u_head, grad_h_head, grad_x_head,
                 grad_u_init_head, grad_tau_m_head, time_steps, shape, o_head,
-                u_head, h_head, x_head, u_init_head, tau_m_head, u_rest,
-                u_threshold, spiking_mode, a, reset_mode);
+                u_head, h_head, x_head, u_init_head, tau_m_head, u_rest_head,
+                u_threshold_head, firing_mode, a, reset_mode);
 }
 
 
