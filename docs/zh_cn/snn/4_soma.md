@@ -143,9 +143,9 @@ $$U^{l}(t)=H^{l}(t-1)+\frac{1}{\tau_{m}}[-(H^{l}(t-1)-u_{rest})+X^{l}(t)]$$
 
 ```python
 LIF(
-    tau_m: float = 2.0,
     u_threshold: float = -0.055,
     u_rest: float = -0.07,
+    tau_m: float = 2.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
     trainable: bool = False,
@@ -156,11 +156,11 @@ LIF(
 
 ### 构造函数参数
 
-`tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
-
 `u_threshold (float)` ：阈电位 $u_{th}$ 。
 
 `u_rest (float)` ：静息电位 $u_{rest}$ 。
+
+`tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
 
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
@@ -222,9 +222,9 @@ $$U^{l}(t)=H^{l}(t-1)+\frac{1}{\tau_{m}}[a_{0}(H^{l}(t-1)-u_{rest})(H^{l}(t-1)-u
 
 ```python
 QIF(
-    tau_m: float = 2.0,
     u_threshold: float = -0.055,
     u_rest: float = -0.07,
+    tau_m: float = 2.0,
     u_c: float = 1.0,
     a_0: float = 1.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
@@ -237,11 +237,11 @@ QIF(
 
 ### 构造函数参数
 
-`tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
-
 `u_threshold (float)` ：阈电位 $u_{th}$ 。
 
 `u_rest (float)` ：静息电位 $u_{rest}$ 。
+
+`tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
 
 `u_c (float)` ：参数 $u_{c}$ 。
 
@@ -309,9 +309,9 @@ $$U^{l}(t)=H^{l}(t-1)+\frac{1}{\tau_{m}}[-(H^{l}(t-1)-u_{rest})+\Delta_{T}e^{\fr
 
 ```python
 ExpIF(
-    tau_m: float = 2.0,
     u_threshold: float = -0.055,
     u_rest: float = -0.07,
+    tau_m: float = 2.0,
     u_t: float = 0.0,
     delta_t: float = 0.001,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
@@ -324,11 +324,11 @@ ExpIF(
 
 ### 构造函数参数
 
-`tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
-
 `u_threshold (float)` ：阈电位 $u_{th}$ 。
 
 `u_rest (float)` ：静息电位 $u_{rest}$ 。
+
+`tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
 
 `u_t (float)` ：参数 $u_{T}$ 。
 
@@ -483,9 +483,9 @@ $$U^{l}(t)=ReLU[k(U^{l}(t)-u_{rest})]+u_{rest}$$
 
 ```python
 KLIF(
-    tau_m: float = 2.0,
     u_threshold: float = 1.0,
     u_rest: float = 0.0,
+    tau_m: float = 2.0,
     k: float = 0.2,
     spiking_function: Module = surrogate.Gaussian(),
     hard_reset: bool = True,
@@ -497,11 +497,11 @@ KLIF(
 
 ### 构造函数参数
 
-`tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
-
 `u_threshold (float)` ：阈电位 $u_{th}$ 。
 
 `u_rest (float)` ：静息电位 $u_{rest}$ 。
+
+`tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
 
 `k (float)` ：参数 $k$ 。
 
@@ -549,9 +549,9 @@ $$O_{A}^{l}(t)=ActFun(U^{l}(t)-u_{rest})$$
 
 ```python
 LIAF(
-    tau_m: float = 2.0,
     u_threshold: float = -0.055,
     u_rest: float = -0.07,
+    tau_m: float = 2.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     activation_function: torch.nn.Module = nn.ReLU(),
     hard_reset: bool = True,
@@ -563,11 +563,11 @@ LIAF(
 
 ### 构造函数参数
 
-`tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
-
 `u_threshold (float)` ：阈电位 $u_{th}$ 。
 
 `u_rest (float)` ：静息电位 $u_{rest}$ 。
+
+`tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
 
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
