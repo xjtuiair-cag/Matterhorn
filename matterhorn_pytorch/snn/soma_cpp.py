@@ -8,20 +8,17 @@
 
 import torch
 import torch.nn as nn
-
-
+from torch.utils.cpp_extension import load_inline
+from typing import Callable as _Callable, Any as _Any
+from matterhorn_pytorch.snn.firing import Firing as _Firing, Gaussian as _Gaussian
 import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.soma import LIF as _LIF
-from typing import Any as _Any
-try:
-    from matterhorn_cpp_extensions import fp_lif, bp_lif
-except:
-    raise NotImplementedError("Please install Matterhorn C++ Extensions.")
+from matterhorn_pytorch.snn.soma_cpp_source import __fp_lif_source, __bp_lif_source
 
 
 class multi_step_mode_lif(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: _Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, firing_mode: int, a: float, reset_mode: float) -> torch.Tensor:
+    def forward(ctx: _Any, x: torch.Tensor, u_init: torch.Tensor, tau_m: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, fp_lif: _Callable, bp_lif: _Callable) -> torch.Tensor:
         """
         多时间步LIF神经元前向传播的C++实现。
         Args:
@@ -46,11 +43,10 @@ class multi_step_mode_lif(torch.autograd.Function):
         o = torch.zeros_like(x)
         u = torch.zeros_like(x)
         h = torch.zeros_like(x)
-        fp_lif(o, u, h, x, time_steps, u_init, tau_m, u_rest, u_threshold, firing_mode, reset_mode)
         ctx.save_for_backward(x, u_init, tau_m, u_threshold, u_rest)
-        ctx.firing_mode = firing_mode
-        ctx.a = a
-        ctx.reset_mode = reset_mode
+        ctx.fp_lif = fp_lif
+        ctx.bp_lif = bp_lif
+        ctx.fp_lif(time_steps, o, u, h, x, u_init, tau_m, u_rest, u_threshold)
         u_last = u[-1]
         if device.type != "cpu":
             o = o.to(device = device)
@@ -76,7 +72,7 @@ class multi_step_mode_lif(torch.autograd.Function):
         o = torch.zeros_like(x)
         u = torch.zeros_like(x)
         h = torch.zeros_like(x)
-        fp_lif(o, u, h, x, time_steps, u_init, tau_m, u_rest, u_threshold, ctx.firing_mode, ctx.reset_mode)
+        ctx.fp_lif(time_steps, o, u, h, x, u_init, tau_m, u_rest, u_threshold)
         if device.type != "cpu":
             grad_o = grad_o.to(device = torch.device("cpu"))
             grad_u_last = grad_u_last.to(device = torch.device("cpu"))
@@ -87,16 +83,37 @@ class multi_step_mode_lif(torch.autograd.Function):
         grad_x = torch.zeros_like(x)
         grad_u_init = torch.zeros_like(u_init)
         grad_tau_m = torch.zeros_like(u_init)
-        bp_lif(grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, time_steps, o, u, h, x, u_init, tau_m, u_rest, u_threshold, ctx.firing_mode, ctx.a, ctx.reset_mode)
+        ctx.bp_lif(time_steps, grad_o, grad_u, grad_h, grad_x, grad_u_init, grad_tau_m, o, u, h, x, u_init, tau_m, u_rest, u_threshold)
         grad_tau_m = torch.sum(grad_tau_m)
         if device.type != "cpu":
             grad_x = grad_x.to(device = device)
             grad_u_init = grad_u_init.to(device = device)
             grad_tau_m = grad_tau_m.to(device = device)        
-        return grad_x, grad_u_init, grad_tau_m, None, None, None, None, None
+        return grad_x, grad_u_init, grad_tau_m, None, None, None, None
 
 
 class LIF(_LIF):
+    def __init__(self, tau_m: float = 2.0, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _Firing = _Gaussian, hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+        super().__init__(
+            tau_m = tau_m,
+            u_threshold = u_threshold,
+            u_rest = u_rest,
+            spiking_function = spiking_function,
+            hard_reset = hard_reset,
+            trainable = trainable,
+            device = device,
+            dtype = dtype
+        )
+        fp_lif_name, fp_lif_source = __fp_lif_source(self.spiking_function, self.hard_reset)
+        bp_lif_name, bp_lif_source = __bp_lif_source(self.spiking_function, self.hard_reset)
+        self.functions = load_inline(
+            name = "lif",
+            cpp_sources = [fp_lif_source, bp_lif_source],
+            functions = [fp_lif_name, bp_lif_name],
+            verbose = True
+        )
+
+
     def extra_repr(self) -> str:
         """
         额外的表达式，把参数之类的放进来。
@@ -116,11 +133,5 @@ class LIF(_LIF):
         """
         self.check_if_reset(self.u, x[0])
         self.u = _SF.to(self.u, x[0])
-        supported_spiking_functions = ("Rectangular", "Polynomial", "Sigmoid", "Gaussian", "Floor", "Ceil", "Round")
-        current_spiking_function = self.spiking_function.__class__.__name__
-        assert current_spiking_function in supported_spiking_functions, "Unsupported spiking function."
-        spiking_function_prototype = supported_spiking_functions.index(current_spiking_function)
-        a = getattr(self.spiking_function, "a") if hasattr(self.spiking_function, "a") else 1.0
-        reset_function_prototype = 0 if self.hard_reset else 1
-        o, self.u = multi_step_mode_lif.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, spiking_function_prototype, a, reset_function_prototype)
+        o, self.u = multi_step_mode_lif.apply(x, self.u, self.tau_m, self.u_threshold, self.u_rest, self.functions.fp_lif, self.functions.bp_lif)
         return o

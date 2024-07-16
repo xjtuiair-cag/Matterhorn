@@ -198,7 +198,7 @@ def spike_train_plot_yx(data: Union[np.ndarray, torch.Tensor], polarity: bool = 
                 shape = (data.shape[3], data.shape[2]),
             )
     if show:
-        fig.canvas.set_window_title("Event Plotter Result")
+        fig.canvas.manager.set_window_title("Event Plotter Result")
         plt.show()
     if save is not None:
         plt.savefig(save)
@@ -249,7 +249,7 @@ def event_seq_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, sh
             shape = (get_shape(1), get_shape(0))
         )
     if show:
-        fig.canvas.set_window_title("Event Plotter Result")
+        fig.canvas.manager.set_window_title("Event Plotter Result")
         plt.show()
     if save is not None:
         plt.savefig(save)
@@ -365,7 +365,7 @@ def spike_train_plot_tx(data: Union[np.ndarray, torch.Tensor], polarity: bool = 
                 shape = (data.shape[1], data.shape[3])
             )
     if show:
-        fig.canvas.set_window_title("Event Plotter Result")
+        fig.canvas.manager.set_window_title("Event Plotter Result")
         plt.show()
     if save is not None:
         plt.savefig(save)
@@ -412,7 +412,7 @@ def event_seq_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, sh
             shape = (get_shape(0), get_shape(1))
         )
     if show:
-        fig.canvas.set_window_title("Event Plotter Result")
+        fig.canvas.manager.set_window_title("Event Plotter Result")
         plt.show()
     if save is not None:
         plt.savefig(save)
@@ -586,7 +586,7 @@ def spike_train_plot_tyx(data: Union[np.ndarray, torch.Tensor], polarity: bool =
                 shape = (data.shape[1], data.shape[3], data.shape[4])
             )
     if show:
-        fig.canvas.set_window_title("Event Plotter Result")
+        fig.canvas.manager.set_window_title("Event Plotter Result")
         plt.show()
     if save is not None:
         plt.savefig(save)
@@ -636,7 +636,7 @@ def event_seq_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, s
             shape = (get_shape(0), get_shape(1), get_shape(2))
         )
     if show:
-        fig.canvas.set_window_title("Event Plotter Result")
+        fig.canvas.manager.set_window_title("Event Plotter Result")
         plt.show()
     if save is not None:
         plt.savefig(save)
