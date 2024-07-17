@@ -126,7 +126,8 @@ void bp_spiking_multi(at::Tensor grad_o, at::Tensor grad_u, at::Tensor o, at::Te
 
 __fp_reset_hard = """
 void fp_reset_hard(at::Tensor h, at::Tensor u, at::Tensor o, at::Tensor u_threshold, at::Tensor u_rest) {
-    h += u * (1.0 - o) + u_rest * o;
+    at::Tensor oo = at::gt(o, 0.0);
+    h += u * (1.0 - oo) + u_rest * oo;
 }
 
 """
@@ -134,7 +135,8 @@ void fp_reset_hard(at::Tensor h, at::Tensor u, at::Tensor o, at::Tensor u_thresh
 
 __bp_reset_hard = """
 void bp_reset_hard(at::Tensor grad_h, at::Tensor grad_u, at::Tensor grad_o, at::Tensor h, at::Tensor u, at::Tensor o, at::Tensor u_threshold, at::Tensor u_rest) {
-    grad_u += grad_h * (1.0 - o);
+    at::Tensor oo = at::gt(o, 0.0);
+    grad_u += grad_h * (1.0 - oo);
     grad_o += grad_h * (u_rest - u);
 }
 

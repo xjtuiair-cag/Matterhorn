@@ -25,6 +25,17 @@ _EXT_DEBUG_MODE = False
 warnings.simplefilter('once', UserWarning)
 
 
+class _oo(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx: _Any, x: torch.Tensor) -> torch.Tensor:
+        return x.gt(0.0).to(x)
+    
+
+    @staticmethod
+    def backward(ctx: _Any, grad_output: torch.Tensor) -> torch.Tensor:
+        return grad_output
+
+
 class Soma(_Module):
     def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -148,9 +159,8 @@ class Soma(_Module):
             h (torch.Tensor): 经过重置之后的当前电位$U_{i}^{l}(t-1)$
         """
         if self.hard_reset:
-            if self.spiking_function.multi_spikes:
-                o = _SF.gt(o, 0.0)
-            h = u * (1.0 - o) + self.u_rest * o
+            oo = _oo.apply(o)
+            h = u * (1.0 - oo) + self.u_rest * oo
         else:
             h = u - (self.u_threshold - self.u_rest) * o
         return h

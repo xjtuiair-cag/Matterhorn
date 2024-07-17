@@ -96,16 +96,15 @@ __device__ float clampf(float base, float min, float max) {
 
 
 __fp_response_if = """
-void fp_response_if(at::Tensor u, at::Tensor x, at::Tensor h) {
-    at::Tensor du = x;
-    u += h + du;
+__device__ void fp_response_if(float& u, float x, float h, float u_rest) {
+    u = h + x;
 }
 
 """
 
 
 __bp_response_if = """
-void bp_response_if(at::Tensor grad_u, at::Tensor grad_x, at::Tensor grad_h, at::Tensor u, at::Tensor x, at::Tensor h) {
+__device__ void bp_response_if(float grad_u, float& grad_x, float& grad_h, float u, float x, float h, float u_rest) {
     grad_x += grad_u;
     grad_h += grad_u;
 }
@@ -114,7 +113,7 @@ void bp_response_if(at::Tensor grad_u, at::Tensor grad_x, at::Tensor grad_h, at:
 
 
 __fp_response_lif = """
-__device__ void fp_response_lif(float& u, float x, float h, float tau_m, float u_rest) {
+__device__ void fp_response_lif(float& u, float x, float h, float u_rest, float tau_m) {
     u = h + (1.0 / tau_m) * (-(h - u_rest) + x);
 }
 
@@ -122,9 +121,9 @@ __device__ void fp_response_lif(float& u, float x, float h, float tau_m, float u
 
 
 __bp_response_lif = """
-__device__ void bp_response_lif(float grad_u, float& grad_x, float& grad_h, float& grad_tau_m, float u, float x, float h, float tau_m, float u_rest) {
+__device__ void bp_response_lif(float grad_u, float& grad_x, float& grad_h, float& grad_tau_m, float u, float x, float h, float u_rest, float tau_m) {
     grad_x += grad_u * (1.0 / tau_m);
-    grad_h = grad_u * (1.0 - (1.0 / tau_m));
+    grad_h += grad_u * (1.0 - (1.0 / tau_m));
     grad_tau_m += grad_u * (-1.0 / powf(tau_m, 2.0)) * (-(h - u_rest) + x);
 }
 
@@ -210,7 +209,8 @@ __device__ void bp_spiking_multi(float grad_o, float& grad_u, float o, float u, 
 
 __fp_reset_hard = """
 __device__ void fp_reset_hard(float& h, float u, float o, float u_threshold, float u_rest) {
-    h = u * (1.0 - o) + u_rest * o;
+    float oo = gtf(o, 0.0);
+    h = u * (1.0 - oo) + u_rest * oo;
 }
 
 """
@@ -218,7 +218,8 @@ __device__ void fp_reset_hard(float& h, float u, float o, float u_threshold, flo
 
 __bp_reset_hard = """
 __device__ void bp_reset_hard(float grad_h, float& grad_u, float& grad_o, float h, float u, float o, float u_threshold, float u_rest) {
-    grad_u += grad_h * (1.0 - o);
+    float oo = gtf(o, 0.0);
+    grad_u += grad_h * (1.0 - oo);
     grad_o += grad_h * (u_rest - u);
 }
 
@@ -401,7 +402,7 @@ def bp_soma_source(soma_name: str, grad_reset: str, grad_firing: str, grad_respo
 
 
 def fp_lif_source(spiking_function: _firing.Firing, hard_reset: bool) -> _Tuple[str, str]:
-    response_fun = "fp_response_lif(u[cur_idx], x[cur_idx], last_h, tau_m[0], u_rest[0]);"
+    response_fun = "fp_response_lif(u[cur_idx], x[cur_idx], last_h, u_rest[0], tau_m[0]);"
     spiking_fun, spiking_source = __fp_spiking_source(spiking_function)
     reset_fun, reset_source = __fp_reset_source(hard_reset, multi_spiking(spiking_function))
     name, dec, __fp_lif = fp_soma_source("lif", response_fun, spiking_fun, reset_fun, ("tau_m",))
@@ -410,7 +411,7 @@ def fp_lif_source(spiking_function: _firing.Firing, hard_reset: bool) -> _Tuple[
 
 
 def bp_lif_source(spiking_function: _firing.Firing, hard_reset: bool) -> _Tuple[str, str]:
-    response_fun = "bp_response_lif(grad_u[cur_idx], grad_x[cur_idx], cur_grad_h, grad_tau_m[idx], u[cur_idx], x[cur_idx], last_h, tau_m[0], u_rest[0]);"
+    response_fun = "bp_response_lif(grad_u[cur_idx], grad_x[cur_idx], cur_grad_h, grad_tau_m[idx], u[cur_idx], x[cur_idx], last_h, u_rest[0], tau_m[0]);"
     spiking_fun, spiking_source = __bp_spiking_source(spiking_function)
     reset_fun, reset_source = __bp_reset_source(hard_reset, multi_spiking(spiking_function))
     name, dec, __bp_lif = bp_soma_source("lif", reset_fun, spiking_fun, response_fun, ("tau_m",))
