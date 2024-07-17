@@ -1,11 +1,6 @@
-import re
 import matterhorn_pytorch.snn.firing as _firing
 from matterhorn_pytorch._ext.functional import *
 from typing import Tuple as _Tuple, Optional as _Optional
-
-
-def purify_name(name: str) -> str:
-    return re.sub(r"[^a-z0-9_]+", "", name.lower().replace(".", "_").replace("-", "_"))
 
 
 __includes = """

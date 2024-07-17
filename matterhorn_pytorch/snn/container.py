@@ -30,7 +30,19 @@ def _multi_step_mode_(module: _Module, if_on: bool) -> _Module:
 
 class Container(_Module):
     def __init__(self) -> None:
+        """
+        容器的基类。
+        """
         super().__init__()
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return ""
 
 
 class Spatial(Container, nn.Sequential):
@@ -94,6 +106,10 @@ class Temporal(Container):
             if_support (bool): 是否支持单个时间步
         """
         return False
+
+
+    def forward_step(self, *args, **kwargs) -> torch.Tensor:
+        return self.module.forward_step(*args, **kwargs)
 
 
 class Sequential(Container, nn.Sequential):

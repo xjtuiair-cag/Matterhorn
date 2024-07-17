@@ -29,9 +29,9 @@ class Layer(_Module):
         self.spike_mode = spike_mode.lower() if isinstance(spike_mode, str) else None
 
 
-    def forward_steps_parallel(self, *args, **kwargs) -> torch.Tensor:
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
         """
-        多个时间步可并行的前向传播函数。
+        多个时间步的前向传播函数。
         Args:
             *args: 输入
             **kwargs: 输入
@@ -481,7 +481,7 @@ class MaxPool1d(Layer, nn.MaxPool1d):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
@@ -489,18 +489,6 @@ class MaxPool1d(Layer, nn.MaxPool1d):
         """
         y = nn.MaxPool1d.forward(self, x)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class MaxPool2d(Layer, nn.MaxPool2d):
@@ -542,7 +530,7 @@ class MaxPool2d(Layer, nn.MaxPool2d):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
@@ -550,18 +538,6 @@ class MaxPool2d(Layer, nn.MaxPool2d):
         """
         y = nn.MaxPool2d.forward(self, x)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class MaxPool3d(Layer, nn.MaxPool3d):
@@ -603,7 +579,7 @@ class MaxPool3d(Layer, nn.MaxPool3d):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
@@ -611,18 +587,6 @@ class MaxPool3d(Layer, nn.MaxPool3d):
         """
         y = nn.MaxPool3d.forward(self, x)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class AvgPool1d(Layer, nn.AvgPool1d):
@@ -662,7 +626,7 @@ class AvgPool1d(Layer, nn.AvgPool1d):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
@@ -670,18 +634,6 @@ class AvgPool1d(Layer, nn.AvgPool1d):
         """
         y = nn.AvgPool1d.forward(self, x)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class AvgPool2d(Layer, nn.AvgPool2d):
@@ -723,7 +675,7 @@ class AvgPool2d(Layer, nn.AvgPool2d):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
@@ -731,18 +683,6 @@ class AvgPool2d(Layer, nn.AvgPool2d):
         """
         y = nn.AvgPool2d.forward(self, x)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class AvgPool3d(Layer, nn.AvgPool3d):
@@ -784,7 +724,7 @@ class AvgPool3d(Layer, nn.AvgPool3d):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
@@ -792,18 +732,6 @@ class AvgPool3d(Layer, nn.AvgPool3d):
         """
         y = nn.AvgPool3d.forward(self, x)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class MaxUnpool1d(Layer, nn.MaxUnpool1d):
@@ -839,7 +767,7 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
 
     def forward_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
             indices (torch.Tensor): 池化前脉冲的索引
@@ -849,18 +777,6 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
         """
         y = nn.MaxUnpool1d.forward(self, x, indices, output_size)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class MaxUnpool2d(Layer, nn.MaxUnpool2d):
@@ -896,7 +812,7 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
 
     def forward_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
             indices (torch.Tensor): 池化前脉冲的索引
@@ -906,18 +822,6 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
         """
         y = nn.MaxUnpool2d.forward(self, x, indices, output_size)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class MaxUnpool3d(Layer, nn.MaxUnpool3d):
@@ -953,7 +857,7 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
 
     def forward_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
             indices (torch.Tensor): 池化前脉冲的索引
@@ -963,18 +867,6 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
         """
         y = nn.MaxUnpool3d.forward(self, x, indices, output_size)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class Upsample(Layer, nn.Upsample):
@@ -1014,7 +906,7 @@ class Upsample(Layer, nn.Upsample):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
@@ -1022,18 +914,6 @@ class Upsample(Layer, nn.Upsample):
         """
         y = nn.Upsample.forward(self, x)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class Flatten(Layer, nn.Flatten):
@@ -1067,13 +947,26 @@ class Flatten(Layer, nn.Flatten):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
         y = nn.Flatten.forward(self, x)
+        return y
+
+
+    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        dim_frac = lambda x: x + 1 if x >= 0 else x
+        y = torch.flatten(x, dim_frac(self.start_dim), dim_frac(self.end_dim))
         return y
 
 
@@ -1108,13 +1001,26 @@ class Unflatten(Layer, nn.Unflatten):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
         y = nn.Unflatten.forward(self, x)
+        return y
+
+
+    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+        """
+        dim_frac = lambda x: x + 1 if x >= 0 else x
+        y = torch.unflatten(x, dim_frac(self.dim), self.unflattened_size)
         return y
 
 
@@ -1149,7 +1055,7 @@ class Dropout(Layer, nn.Dropout):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
@@ -1157,18 +1063,6 @@ class Dropout(Layer, nn.Dropout):
         """
         y = nn.Dropout.forward(self, x)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class Dropout1d(Layer, nn.Dropout1d):
@@ -1202,7 +1096,7 @@ class Dropout1d(Layer, nn.Dropout1d):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
@@ -1210,18 +1104,6 @@ class Dropout1d(Layer, nn.Dropout1d):
         """
         y = nn.Dropout1d.forward(self, x)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class Dropout2d(Layer, nn.Dropout2d):
@@ -1255,7 +1137,7 @@ class Dropout2d(Layer, nn.Dropout2d):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
@@ -1263,18 +1145,6 @@ class Dropout2d(Layer, nn.Dropout2d):
         """
         y = nn.Dropout2d.forward(self, x)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class Dropout3d(Layer, nn.Dropout3d):
@@ -1308,7 +1178,7 @@ class Dropout3d(Layer, nn.Dropout3d):
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
@@ -1316,15 +1186,3 @@ class Dropout3d(Layer, nn.Dropout3d):
         """
         y = nn.Dropout3d.forward(self, x)
         return y
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)

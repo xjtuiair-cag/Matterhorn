@@ -1,4 +1,3 @@
-import re
 import matterhorn_pytorch.snn.firing as _firing
 from matterhorn_pytorch._ext.functional import *
 from typing import Tuple as _Tuple
@@ -202,7 +201,7 @@ def __bp_reset_source(hard_reset: bool, multi_spiking: bool) -> _Tuple[str, str]
 
 
 __fp_lif = """
-void fp_lif(int time_steps, at::Tensor o, at::Tensor u, at::Tensor h, at::Tensor x, at::Tensor u_init, at::Tensor u_threshold, at::Tensor u_rest, at::Tensor tau_m) {
+void fp_lif(int time_steps, int shape, at::Tensor o, at::Tensor u, at::Tensor h, at::Tensor x, at::Tensor u_init, at::Tensor u_threshold, at::Tensor u_rest, at::Tensor tau_m) {
     for (int t = 0; t < time_steps; t++) {
         fp_response_lif(u[t], x[t], t ? h[t - 1] : u_init, tau_m, u_rest);
         %s
@@ -214,7 +213,7 @@ void fp_lif(int time_steps, at::Tensor o, at::Tensor u, at::Tensor h, at::Tensor
 
 
 __bp_lif = """
-void bp_lif(int time_steps, at::Tensor grad_o, at::Tensor grad_u, at::Tensor grad_h, at::Tensor grad_x, at::Tensor grad_u_init, at::Tensor grad_tau_m, at::Tensor o, at::Tensor u, at::Tensor h, at::Tensor x, at::Tensor u_init, at::Tensor u_threshold, at::Tensor u_rest, at::Tensor tau_m) {
+void bp_lif(int time_steps, int shape, at::Tensor grad_o, at::Tensor grad_u, at::Tensor grad_h, at::Tensor grad_x, at::Tensor grad_u_init, at::Tensor grad_tau_m, at::Tensor o, at::Tensor u, at::Tensor h, at::Tensor x, at::Tensor u_init, at::Tensor u_threshold, at::Tensor u_rest, at::Tensor tau_m) {
     for (int t = time_steps - 1; t >= 0; t--) {
         %s
         %s

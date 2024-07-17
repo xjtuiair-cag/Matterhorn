@@ -7,11 +7,12 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as _F
 import matterhorn_pytorch.snn.functional as _SF
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 from torch.nn.modules.normalization import _shape_t
 from matterhorn_pytorch.snn.skeleton import Module as _Module
-from typing import Union as _Union
+from typing import Tuple as _Tuple, Union as _Union, Optional as _Optional
 
 
 class Synapse(_Module):
@@ -22,9 +23,9 @@ class Synapse(_Module):
         super().__init__()
 
 
-    def forward_steps_parallel(self, *args, **kwargs) -> torch.Tensor:
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
         """
-        多个时间步可并行的前向传播函数。
+        多个时间步的前向传播函数。
         Args:
             *args: 输入
             **kwargs: 输入
@@ -78,18 +79,6 @@ class Linear(Synapse, nn.Linear):
         """
         x = nn.Linear.forward(self, o)
         return x
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class Conv1d(Synapse, nn.Conv1d):
@@ -147,18 +136,6 @@ class Conv1d(Synapse, nn.Conv1d):
         return x
 
 
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
-
-
 class Conv2d(Synapse, nn.Conv2d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _Union[_size_2_t, str] = 0, dilation: _size_2_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -214,18 +191,6 @@ class Conv2d(Synapse, nn.Conv2d):
         return x
 
 
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
-
-
 class Conv3d(Synapse, nn.Conv3d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _Union[_size_3_t, str] = 0, dilation: _size_3_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -279,18 +244,6 @@ class Conv3d(Synapse, nn.Conv3d):
         """
         x = nn.Conv3d.forward(self, o)
         return x
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
@@ -350,18 +303,6 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
         return x
 
 
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
-
-
 class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, output_padding: _size_2_t = 0, groups: int = 1, bias: bool = True, dilation: _size_2_t = 1, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -417,18 +358,6 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
         """
         x = nn.ConvTranspose2d.forward(self, o)
         return x
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
 
 
 class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
@@ -488,19 +417,63 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
         return x
 
 
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+class _BatchNorm(Synapse, nn.modules.batchnorm._NormBase):
+    def _init_params(self, training: bool, track_running_stats: bool, running_mean: torch.Tensor, running_var: torch.Tensor, momentum: float, num_batches_tracked: torch.Tensor) -> _Tuple[torch.Tensor, torch.Tensor, float, bool]:
+        running_mean = running_mean if not training or track_running_stats else None
+        running_var = running_var if not training or track_running_stats else None
+        exponential_average_factor = 0.0 if momentum is None else momentum
+        if training and track_running_stats:
+            if num_batches_tracked is not None:
+                num_batches_tracked.add_(1)
+                exponential_average_factor = 1.0 / float(num_batches_tracked) if momentum is None else momentum
+        bn_training = True if training else ((running_mean is None) and (running_var is None))
+        return running_mean, running_var, exponential_average_factor, bn_training
+
+
+    @staticmethod
+    @torch.jit.script
+    def _forward_steps(x: torch.Tensor, running_mean: _Optional[torch.Tensor], running_var: _Optional[torch.Tensor], weight: _Optional[torch.Tensor], bias: _Optional[torch.Tensor], bn_training: bool, momentum: float, eps: float) -> torch.Tensor:
+        time_steps = x.shape[0]
+        out = []
+        for t in range(time_steps):
+            out.append(_F.batch_norm(
+                input = x[t],
+                running_mean = running_mean,
+                running_var = running_var,
+                weight = weight,
+                bias = bias,
+                training = bn_training,
+                momentum = momentum,
+                eps = eps
+            ))
+        y = torch.stack(out)
+        return y
+
+
+    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
-            *args: 输入
-            **kwargs: 输入
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         Returns:
-            res (torch.Tensor): 输出
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        return self.forward_steps_parallel(*args, **kwargs)
+        self._check_input_dim(x)
+        running_mean, running_var, exponential_average_factor, bn_training = self._init_params(self.training, self.track_running_stats, self.running_mean, self.running_var, self.momentum, self.num_batches_tracked)
+        x = _BatchNorm._forward_steps(
+            x = x,
+            running_mean = running_mean,
+            running_var = running_var,
+            weight = self.weight,
+            bias = self.bias,
+            bn_training = bn_training,
+            momentum = exponential_average_factor,
+            eps = self.eps
+        )
+        return x
 
 
-class BatchNorm1d(Synapse, nn.BatchNorm1d):
+class BatchNorm1d(_BatchNorm, nn.BatchNorm1d):
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         一维批归一化。
@@ -513,7 +486,7 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(self)
+        _BatchNorm.__init__(self)
         nn.BatchNorm1d.__init__(
             self,
             num_features = num_features,
@@ -535,6 +508,20 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
         return nn.BatchNorm1d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
+    def _check_input_dim(self, input: torch.Tensor):
+        """
+        Batchnorm中重要的部分，检查输入维度。
+        Args:
+            input (torch.Tensor): 输入张量
+        """
+        if self.multi_step_mode:
+            supported_ndims = (3, 4)
+        else:
+            supported_ndims = (2, 3)
+        if input.ndim not in supported_ndims:
+            raise ValueError("expected %s input (got %dD input)" % (" or ".join(["%dD" % (d,) for d in supported_ndims]), input.ndim,))
+
+
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
@@ -547,7 +534,7 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
         return x
 
 
-class BatchNorm2d(Synapse, nn.BatchNorm2d):
+class BatchNorm2d(_BatchNorm, nn.BatchNorm2d):
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         二维批归一化。
@@ -560,7 +547,7 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(self)
+        _BatchNorm.__init__(self)
         nn.BatchNorm2d.__init__(
             self,
             num_features = num_features,
@@ -582,6 +569,20 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
         return nn.BatchNorm2d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
+    def _check_input_dim(self, input: torch.Tensor):
+        """
+        Batchnorm中重要的部分，检查输入维度。
+        Args:
+            input (torch.Tensor): 输入张量
+        """
+        if self.multi_step_mode:
+            supported_ndims = (5,)
+        else:
+            supported_ndims = (4,)
+        if input.ndim not in supported_ndims:
+            raise ValueError("expected %s input (got %dD input)" % (" or ".join(["%dD" % (d,) for d in supported_ndims]), input.ndim,))
+
+
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
@@ -594,7 +595,7 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
         return x
 
 
-class BatchNorm3d(Synapse, nn.BatchNorm3d):
+class BatchNorm3d(_BatchNorm, nn.BatchNorm3d):
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         三维批归一化。
@@ -607,7 +608,7 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(self)
+        _BatchNorm.__init__(self)
         nn.BatchNorm3d.__init__(
             self,
             num_features = num_features,
@@ -627,6 +628,20 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
             repr_str (str): 参数表
         """
         return nn.BatchNorm3d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
+
+
+    def _check_input_dim(self, input: torch.Tensor):
+        """
+        Batchnorm中重要的部分，检查输入维度。
+        Args:
+            input (torch.Tensor): 输入张量
+        """
+        if self.multi_step_mode:
+            supported_ndims = (6,)
+        else:
+            supported_ndims = (5,)
+        if input.ndim not in supported_ndims:
+            raise ValueError("expected %s input (got %dD input)" % (" or ".join(["%dD" % (d,) for d in supported_ndims]), input.ndim,))
 
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -684,18 +699,6 @@ class LayerNorm(Synapse, nn.LayerNorm):
         return x
 
 
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
-
-
 class NormPlaceholder(Synapse):
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -742,18 +745,6 @@ class NormPlaceholder(Synapse):
         return x.clone()
 
 
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
-
-
 class Identity(Synapse, nn.Identity):
     def __init__(self) -> None:
         """
@@ -784,18 +775,6 @@ class Identity(Synapse, nn.Identity):
         return x
 
 
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)
-
-
 class Neurotransmitter(Synapse):
     def __init__(self, mask: torch.Tensor) -> None:
         """
@@ -819,15 +798,3 @@ class Neurotransmitter(Synapse):
         mask = self.mask.to(torch.bool).to(o.device)
         o = torch.where(mask, o, -o)
         return o
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        return self.forward_steps_parallel(*args, **kwargs)

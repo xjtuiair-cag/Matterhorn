@@ -8,10 +8,19 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as _F
+from torch.utils.cpp_extension import CUDA_HOME, ROCM_HOME
 import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
 from matterhorn_pytorch.snn.firing import Firing as _Firing, Gaussian as _Gaussian
-from typing import Callable as _Callable, Iterable as _Iterable
+from matterhorn_pytorch.snn.soma_functions import *
+from torch.utils.cpp_extension import load_inline
+import matterhorn_pytorch._ext.cpp as _ext_cpp
+import matterhorn_pytorch._ext.cuda as _ext_cu
+import warnings
+from subprocess import SubprocessError
+
+
+warnings.simplefilter('once', UserWarning)
 
 
 class Soma(_Module):
@@ -35,6 +44,7 @@ class Soma(_Module):
         self.u_rest = nn.Parameter(torch.tensor(u_rest, device = device, dtype = dtype), requires_grad = False)
         self.spiking_function: _Firing = spiking_function
         self.hard_reset = hard_reset
+        self.exts = dict()
 
 
     def extra_repr(self) -> str:
@@ -43,7 +53,7 @@ class Soma(_Module):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["u_threshold=%g" % self.u_threshold, "u_rest=%g" % self.u_rest, "reset=%s" % ('"zero"' if self.hard_reset else '"sub"',)]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+        return ", ".join(["u_threshold=%g" % self.u_threshold, "u_rest=%g" % self.u_rest, "reset=%s" % ('"zero"' if self.hard_reset else '"sub"',)]) + ((", exts=" + repr(list(self.exts.keys()))) if len(self.exts.keys()) else "") + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
     def reset(self) -> None:
@@ -62,6 +72,44 @@ class Soma(_Module):
         if isinstance(self.u, torch.Tensor):
             self.u = self.u.float().detach().requires_grad_(self.training)
         return super().detach()
+
+
+    def build_ext(self, ext_name: str, **kwargs) -> None:
+        """
+        构建单个扩展。
+        Args:
+            ext_name (str): 扩展名
+            **kwargs: 构建参数
+        """
+        permission_warning_template = "Permission denied for compiling %s extensions. Please run the script in sudo mode."
+        ms_command_line_warning_template = "Failed to compile %s extensions. Please follow the instructions on https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line and install command line tools for Windows."
+        try:
+            self.exts[ext_name] = load_inline(**kwargs)
+        except PermissionError:
+            warnings.warn(permission_warning_template % (ext_name,))
+        except SubprocessError:
+            warnings.warn(ms_command_line_warning_template % (ext_name,))
+
+
+    def build_exts(self) -> None:
+        """
+        构建扩展。
+        """
+        pass
+
+
+    def multi_step_mode_(self, if_on: bool = True) -> nn.Module:
+        """
+        调整模型至多时间步模式。
+        Args
+            if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
+        """
+        super().multi_step_mode_(if_on)
+        if self.multi_step_mode:
+            self.build_exts()
+        else:
+            self.exts = dict()
+        return self
 
 
     def check_if_reset(self, u: torch.Tensor, x: torch.Tensor) -> None:
@@ -130,6 +178,35 @@ class Soma(_Module):
         o = self.f_firing(self.u)
         self.u = self.f_reset(self.u, o)
         return o
+
+
+    def forward_steps_on_ext(self, ext: str, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        return super().forward_steps(*args, **kwargs)
+
+
+    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
+        Args:
+            *args: 输入
+            **kwargs: 输入
+        Returns:
+            res (torch.Tensor): 输出
+        """
+        device: torch.device = args[0].device
+        if device.type == "cuda" and "cuda" in self.exts:
+            return self.forward_steps_on_ext("cuda", *args, **kwargs)
+        if device.type == "cpu" and "cpp" in self.exts:
+            return self.forward_steps_on_ext("cpp", *args, **kwargs)
+        return super().forward_steps(*args, **kwargs)
 
 
 class IF(Soma):
@@ -203,6 +280,34 @@ class LIF(Soma):
             repr_str (str): 参数表
         """
         return ", ".join(["tau_m=%g" % self.tau_m]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+
+
+    def build_exts(self) -> None:
+        """
+        构建扩展。
+        """
+        fp_name, fp_source = _ext_cpp.fp_lif_source(self.spiking_function, self.hard_reset)
+        bp_name, bp_source = _ext_cpp.bp_lif_source(self.spiking_function, self.hard_reset)
+        self.build_ext(
+            "cpp",
+            name = _ext_cpp.purify_name("lif_%s_%s_%s" % (self.spiking_function.__class__.__name__, self.spiking_function.extra_repr(), "zero" if self.hard_reset else "sub")),
+            cpp_sources = [fp_source, bp_source],
+            functions = [fp_name, bp_name],
+            extra_cflags = ["-g", "-w"],
+            verbose = True
+        )
+        if torch.cuda.is_available():
+            fp_name, fp_dec, fp_source = _ext_cu.fp_lif_source(self.spiking_function, self.hard_reset)
+            bp_name, bp_dec, bp_source = _ext_cu.bp_lif_source(self.spiking_function, self.hard_reset)
+            self.build_ext(
+                "cuda",
+                name = _ext_cu.purify_name("lif_cu_%s_%s_%s" % (self.spiking_function.__class__.__name__, self.spiking_function.extra_repr(), "zero" if self.hard_reset else "sub")),
+                cpp_sources = [fp_dec, bp_dec],
+                cuda_sources = [fp_source, bp_source],
+                functions = [fp_name, bp_name],
+                extra_cflags = ["-g", "-w"],
+                verbose = True
+            )
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
