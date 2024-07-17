@@ -19,7 +19,7 @@ from matterhorn_pytorch.training.functional import stdp_online as _stdp_online
 
 
 class Layer(_Module):
-    def __init__(self, spike_mode: str = "s") -> None:
+    def __init__(self, spike_mode: str = None) -> None:
         """
         突触函数的骨架，定义突触最基本的函数。
         Args:
@@ -443,7 +443,7 @@ class STDPConv2d(STDPLayer):
 
 
 class MaxPool1d(Layer, nn.MaxPool1d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, spike_mode: str = "s") -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, spike_mode: str = None) -> None:
         """
         一维最大池化。
         Args:
@@ -492,7 +492,7 @@ class MaxPool1d(Layer, nn.MaxPool1d):
 
 
 class MaxPool2d(Layer, nn.MaxPool2d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, spike_mode: str = "s") -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, spike_mode: str = None) -> None:
         """
         二维最大池化。
         Args:
@@ -541,7 +541,7 @@ class MaxPool2d(Layer, nn.MaxPool2d):
 
 
 class MaxPool3d(Layer, nn.MaxPool3d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, spike_mode: str = "s") -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, spike_mode: str = None) -> None:
         """
         三维最大池化。
         Args:
@@ -590,7 +590,7 @@ class MaxPool3d(Layer, nn.MaxPool3d):
 
 
 class AvgPool1d(Layer, nn.AvgPool1d):
-    def __init__(self, kernel_size: _size_1_t, stride: _Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, spike_mode: str = "s") -> None:
+    def __init__(self, kernel_size: _size_1_t, stride: _Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, spike_mode: str = None) -> None:
         """
         一维平均池化。
         Args:
@@ -637,7 +637,7 @@ class AvgPool1d(Layer, nn.AvgPool1d):
 
 
 class AvgPool2d(Layer, nn.AvgPool2d):
-    def __init__(self, kernel_size: _size_2_t, stride: _Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, spike_mode: str = "s") -> None:
+    def __init__(self, kernel_size: _size_2_t, stride: _Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, spike_mode: str = None) -> None:
         """
         二维平均池化。
         Args:
@@ -686,7 +686,7 @@ class AvgPool2d(Layer, nn.AvgPool2d):
 
 
 class AvgPool3d(Layer, nn.AvgPool3d):
-    def __init__(self, kernel_size: _size_3_t, stride: _Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, spike_mode: str = "s") -> None:
+    def __init__(self, kernel_size: _size_3_t, stride: _Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, spike_mode: str = None) -> None:
         """
         三维平均池化。
         Args:
@@ -735,7 +735,7 @@ class AvgPool3d(Layer, nn.AvgPool3d):
 
 
 class MaxUnpool1d(Layer, nn.MaxUnpool1d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, spike_mode: str = "s") -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, spike_mode: str = None) -> None:
         """
         一维最大反池化。
         Args:
@@ -780,7 +780,7 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
 
 
 class MaxUnpool2d(Layer, nn.MaxUnpool2d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, spike_mode: str = "s") -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, spike_mode: str = None) -> None:
         """
         二维最大反池化。
         Args:
@@ -825,7 +825,7 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
 
 
 class MaxUnpool3d(Layer, nn.MaxUnpool3d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, spike_mode: str = "s") -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, spike_mode: str = None) -> None:
         """
         一维最大反池化。
         Args:
@@ -870,7 +870,7 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
 
 
 class Upsample(Layer, nn.Upsample):
-    def __init__(self, size: _Optional[_Union[int, _Tuple[int]]] = None, scale_factor: _Optional[_Union[float, _Tuple[float]]] = None, mode: str = 'nearest', align_corners: _Optional[bool] = None, recompute_scale_factor: _Optional[bool] = None, spike_mode: str = "s") -> None:
+    def __init__(self, size: _Optional[_Union[int, _Tuple[int]]] = None, scale_factor: _Optional[_Union[float, _Tuple[float]]] = None, mode: str = 'nearest', align_corners: _Optional[bool] = None, recompute_scale_factor: _Optional[bool] = None, spike_mode: str = None) -> None:
         """
         上采样（反池化）。
         Args:
@@ -917,7 +917,7 @@ class Upsample(Layer, nn.Upsample):
 
 
 class Flatten(Layer, nn.Flatten):
-    def __init__(self, start_dim: int = 1, end_dim: int = -1, spike_mode: str = "s") -> None:
+    def __init__(self, start_dim: int = 1, end_dim: int = -1, spike_mode: str = None) -> None:
         """
         展平层。
         Args:
@@ -971,7 +971,7 @@ class Flatten(Layer, nn.Flatten):
 
 
 class Unflatten(Layer, nn.Unflatten):
-    def __init__(self, dim: _Union[int, str], unflattened_size: _size, spike_mode: str = "s") -> None:
+    def __init__(self, dim: _Union[int, str], unflattened_size: _size, spike_mode: str = None) -> None:
         """
         反展开层。
         Args:
@@ -1025,7 +1025,7 @@ class Unflatten(Layer, nn.Unflatten):
 
 
 class Dropout(Layer, nn.Dropout):
-    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = "s") -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = None) -> None:
         """
         遗忘层。
         Args:
@@ -1066,7 +1066,7 @@ class Dropout(Layer, nn.Dropout):
 
 
 class Dropout1d(Layer, nn.Dropout1d):
-    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = "s") -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = None) -> None:
         """
         一维遗忘层。
         Args:
@@ -1107,7 +1107,7 @@ class Dropout1d(Layer, nn.Dropout1d):
 
 
 class Dropout2d(Layer, nn.Dropout2d):
-    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = "s") -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = None) -> None:
         """
         二维遗忘层。
         Args:
@@ -1148,7 +1148,7 @@ class Dropout2d(Layer, nn.Dropout2d):
 
 
 class Dropout3d(Layer, nn.Dropout3d):
-    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = "s") -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = None) -> None:
         """
         三维遗忘层。
         Args:
