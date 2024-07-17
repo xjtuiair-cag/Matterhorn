@@ -61,10 +61,11 @@ class LIF(_LIF):
             device = device,
             dtype = dtype
         )
-        fp_name, fp_source =  _ext_cu.fp_lif_source(self.spiking_function, self.hard_reset)
-        bp_name, bp_source =  _ext_cu.bp_lif_source(self.spiking_function, self.hard_reset)
+        fp_name, fp_dec, fp_source =  _ext_cu.fp_lif_source(self.spiking_function, self.hard_reset)
+        bp_name, bp_dec, bp_source =  _ext_cu.bp_lif_source(self.spiking_function, self.hard_reset)
         self.functions = load_inline(
-            name =  _ext_cu.purify_name("lif_%s_%s_%s" % (self.spiking_function.__class__.__name__, self.spiking_function.extra_repr(), "zero" if self.hard_reset else "sub")),
+            name =  _ext_cu.purify_name("lif_cu_%s_%s_%s" % (self.spiking_function.__class__.__name__, self.spiking_function.extra_repr(), "zero" if self.hard_reset else "sub")),
+            cpp_sources = [fp_dec, bp_dec],
             cuda_sources = [fp_source, bp_source],
             functions = [fp_name, bp_name],
             verbose = True

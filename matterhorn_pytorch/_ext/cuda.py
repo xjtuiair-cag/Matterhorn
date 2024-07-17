@@ -11,13 +11,22 @@ def purify_name(name: str) -> str:
 __includes = """
 #include <cmath>
 #include <stdlib.h>
+
+#ifndef _MTH_VARIABLES
+#define _MTH_VARIABLES
+
 #define THREADS_PER_BLOCK 1024
 #define div_ceil(base, comp) (base / comp + (base % comp ? 1 : 0))
+
+#endif
 
 """
 
 
 __functions = """
+#ifndef _MTH_FUNCTIONS
+#define _MTH_FUNCTIONS
+
 __device__ float absf(float base) {
     return base >= 0.0 ? base : -base;
 }
@@ -85,6 +94,8 @@ __device__ float winbf(float base, float min, float max) {
 __device__ float clampf(float base, float min, float max) {
     return base > min ? (base < max ? base : max) : min;
 }
+
+#endif
 
 """
 
@@ -203,7 +214,7 @@ __device__ void bp_spiking_multi(float grad_o, float& grad_u, float o, float u, 
 
 
 __fp_reset_hard = """
-__device__ void fp_reset_hard(float& h, float u, float o, float u_rest) {
+__device__ void fp_reset_hard(float& h, float u, float o, float u_threshold, float u_rest) {
     h = u * (1.0 - o) + u_rest * o;
 }
 
@@ -211,7 +222,7 @@ __device__ void fp_reset_hard(float& h, float u, float o, float u_rest) {
 
 
 __bp_reset_hard = """
-__device__ void bp_reset_hard(float grad_h, float& grad_u, float& grad_o, float h, float u, float o, float u_rest) {
+__device__ void bp_reset_hard(float grad_h, float& grad_u, float& grad_o, float h, float u, float o, float u_threshold, float u_rest) {
     grad_u += grad_h * (1.0 - o);
     grad_o += grad_h * (u_rest - u);
 }
@@ -298,7 +309,7 @@ void fp_%s_cuda(int time_steps, int shape, at::Tensor o, at::Tensor u, at::Tenso
     dim3 blocks(div_ceil(shape, THREADS_PER_BLOCK));
     dim3 threads(THREADS_PER_BLOCK);
 
-    fp_%s_cuda_kernel<<<blocks, threads, 0>>>(time_steps, shape, o.data_ptr<float>(), u.data_ptr<float>(), h.data_ptr<float>(), x.data_ptr<float>(), u_init.data_ptr<float>(), u_threshold.data_ptr<float>(), tau_m, u_rest.data_ptr<float>()%s);
+    fp_%s_cuda_kernel<<<blocks, threads, 0>>>(time_steps, shape, o.data_ptr<float>(), u.data_ptr<float>(), h.data_ptr<float>(), x.data_ptr<float>(), u_init.data_ptr<float>(), u_threshold.data_ptr<float>(), u_rest.data_ptr<float>()%s);
 
     err = cudaGetLastError();
     if (cudaSuccess != err) {
@@ -306,6 +317,12 @@ void fp_%s_cuda(int time_steps, int shape, at::Tensor o, at::Tensor u, at::Tenso
         exit(-1);
     }
 }
+
+"""
+
+
+__fp_soma_declaration = """
+void fp_%s_cuda(int time_steps, int shape, at::Tensor o, at::Tensor u, at::Tensor h, at::Tensor x, at::Tensor u_init, at::Tensor u_threshold, at::Tensor u_rest%s);
 
 """
 
@@ -320,7 +337,8 @@ def fp_soma_source(soma_name: str, f_response: str, f_firing: str, f_reset: str,
             kernel_params += ", float* " + param
             call_params += ", " + param + ".data_ptr<float>()"
     res = __fp_soma % (soma_name, kernel_params, f_response, f_firing, f_reset, soma_name, shell_params, soma_name, call_params)
-    return "fp_%s_cuda" % (soma_name,), res
+    dec = __fp_soma_declaration % (soma_name, shell_params)
+    return "fp_%s_cuda" % (soma_name,), dec, res
 
 
 __bp_soma = """
@@ -361,6 +379,12 @@ void bp_%s_cuda(int time_steps, int shape, at::Tensor grad_o, at::Tensor grad_u,
 """
 
 
+__bp_soma_declaration = """
+void bp_%s_cuda(int time_steps, int shape, at::Tensor grad_o, at::Tensor grad_u, at::Tensor grad_h, at::Tensor grad_x, at::Tensor grad_u_init%s, at::Tensor o, at::Tensor u, at::Tensor h, at::Tensor x, at::Tensor u_init, at::Tensor u_threshold, at::Tensor u_rest%s);
+
+"""
+
+
 def bp_soma_source(soma_name: str, grad_reset: str, grad_firing: str, grad_response: str, param_table: _Optional[_Tuple[str]] = None) -> _Tuple[str, str]:
     shell_grad_params = ""
     shell_params = ""
@@ -377,25 +401,26 @@ def bp_soma_source(soma_name: str, grad_reset: str, grad_firing: str, grad_respo
             call_grad_params += ", grad_" + param + ".data_ptr<float>()"
             call_params += ", " + param + ".data_ptr<float>()"
     res = __bp_soma % (soma_name, kernel_grad_params, kernel_params, grad_reset, grad_firing, grad_response, soma_name, shell_grad_params, shell_params, soma_name, call_grad_params, call_params)
-    return "bp_%s_cuda" % (soma_name,), res
+    dec = __bp_soma_declaration % (soma_name, shell_grad_params, shell_params)
+    return "bp_%s_cuda" % (soma_name,), dec, res
 
 
 def fp_lif_source(spiking_function: _firing.Firing, hard_reset: bool) -> _Tuple[str, str]:
-    response_fun = "fp_response_lif(u[cur_idx], x[cur_idx], last_h, tau_m[0], u_rest);"
+    response_fun = "fp_response_lif(u[cur_idx], x[cur_idx], last_h, tau_m[0], u_rest[0]);"
     spiking_fun, spiking_source = __fp_spiking_source(spiking_function)
     reset_fun, reset_source = __fp_reset_source(hard_reset, multi_spiking(spiking_function))
-    name, __fp_lif = fp_soma_source("lif", response_fun, spiking_fun, reset_fun, ("tau_m",))
+    name, dec, __fp_lif = fp_soma_source("lif", response_fun, spiking_fun, reset_fun, ("tau_m",))
     res = __includes + __functions + __fp_response_lif + spiking_source + reset_source + __fp_lif
-    return name, res
+    return name, dec, res
 
 
 def bp_lif_source(spiking_function: _firing.Firing, hard_reset: bool) -> _Tuple[str, str]:
     response_fun = "bp_response_lif(grad_u[cur_idx], grad_x[cur_idx], cur_grad_h, grad_tau_m[idx], u[cur_idx], x[cur_idx], last_h, tau_m[0], u_rest[0]);"
     spiking_fun, spiking_source = __bp_spiking_source(spiking_function)
     reset_fun, reset_source = __bp_reset_source(hard_reset, multi_spiking(spiking_function))
-    name, __bp_lif = bp_soma_source("lif", reset_fun, spiking_fun, response_fun, ("tau_m",))
+    name, dec, __bp_lif = bp_soma_source("lif", reset_fun, spiking_fun, response_fun, ("tau_m",))
     res = __includes + __functions + __bp_response_lif + spiking_source + reset_source + __bp_lif
-    return name, res
+    return name, dec, res
 
 
 if __name__ == "__main__":
