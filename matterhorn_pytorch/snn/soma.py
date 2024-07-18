@@ -209,7 +209,7 @@ class Soma(_Module):
         device: torch.device = x.device
         exts = self.exts
         if device.type == "cuda" and "cuda" in exts:
-            return self.forward_steps_on_ext()
+            return self.forward_steps_on_ext(x, exts, "cuda")
         if device.type == "cpu" and "cpp" in exts:
             return self.forward_steps_on_ext(x, exts, "cpp")
         return super().forward_steps(x)
