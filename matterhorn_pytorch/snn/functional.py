@@ -405,7 +405,8 @@ class _multi_firing_floor(torch.autograd.Function):
         Returns:
             y (torch.Tensor): 输出
         """
-        return torch.floor(x)
+        ctx.save_for_backward(x.gt(0.0))
+        return torch.max(torch.floor(x), torch.zeros_like(x))
     
 
     @staticmethod
@@ -418,7 +419,8 @@ class _multi_firing_floor(torch.autograd.Function):
         Returns:
             grad_input (torch.Tensor): 输入梯度
         """
-        return grad_output
+        mask, = ctx.saved_tensors
+        return grad_output * mask.to(grad_output)
 
 
 class _multi_firing_ceil(torch.autograd.Function):
@@ -432,7 +434,8 @@ class _multi_firing_ceil(torch.autograd.Function):
         Returns:
             y (torch.Tensor): 输出
         """
-        return torch.ceil(x)
+        ctx.save_for_backward(x.gt(0.0))
+        return torch.max(torch.ceil(x), torch.zeros_like(x))
     
 
     @staticmethod
@@ -445,7 +448,8 @@ class _multi_firing_ceil(torch.autograd.Function):
         Returns:
             grad_input (torch.Tensor): 输入梯度
         """
-        return grad_output
+        mask, = ctx.saved_tensors
+        return grad_output * mask.to(grad_output)
 
 
 class _multi_firing_round(torch.autograd.Function):
@@ -459,7 +463,8 @@ class _multi_firing_round(torch.autograd.Function):
         Returns:
             y (torch.Tensor): 输出
         """
-        return torch.round(x)
+        ctx.save_for_backward(x.gt(0.0))
+        return torch.max(torch.round(x), torch.zeros_like(x))
     
 
     @staticmethod
@@ -472,7 +477,8 @@ class _multi_firing_round(torch.autograd.Function):
         Returns:
             grad_input (torch.Tensor): 输入梯度
         """
-        return grad_output
+        mask, = ctx.saved_tensors
+        return grad_output * mask.to(grad_output)
 
 
 def floor(x: torch.Tensor) -> torch.Tensor:

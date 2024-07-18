@@ -177,7 +177,7 @@ __device__ void bp_spiking_gaussian(float grad_o, float& grad_u, float o, float 
 
 __fp_spiking_floor = """
 __device__ void fp_spiking_floor(float& o, float u, float u_threshold, float u_rest) {
-    o = floorf((u - u_rest) / (u_threshold - u_rest));
+    o = fmaxf(floorf((u - u_rest) / (u_threshold - u_rest)), 0.0);
 }
 
 """
@@ -185,7 +185,7 @@ __device__ void fp_spiking_floor(float& o, float u, float u_threshold, float u_r
 
 __fp_spiking_ceil = """
 __device__ void fp_spiking_ceil(float& o, float u, float u_threshold, float u_rest) {
-    o = ceilf((u - u_rest) / (u_threshold - u_rest));
+    o = fmaxf(ceilf((u - u_rest) / (u_threshold - u_rest)), 0.0);
 }
 
 """
@@ -193,7 +193,7 @@ __device__ void fp_spiking_ceil(float& o, float u, float u_threshold, float u_re
 
 __fp_spiking_round = """
 __device__ void fp_spiking_round(float& o, float u, float u_threshold, float u_rest) {
-    o = roundf((u - u_rest) / (u_threshold - u_rest));
+    o = fmaxf(roundf((u - u_rest) / (u_threshold - u_rest)), 0.0);
 }
 
 """
@@ -201,7 +201,8 @@ __device__ void fp_spiking_round(float& o, float u, float u_threshold, float u_r
 
 __bp_spiking_multi = """
 __device__ void bp_spiking_multi(float grad_o, float& grad_u, float o, float u, float u_threshold, float u_rest) {
-    grad_u += (u - u_rest) / (u_threshold - u_rest);
+    float mask = gtf(u, u_rest);
+    grad_u += grad_o / (u_threshold - u_rest) * mask;
 }
 
 """

@@ -94,7 +94,7 @@ void bp_spiking_gaussian(at::Tensor grad_o, at::Tensor grad_u, at::Tensor o, at:
 
 __fp_spiking_floor = """
 void fp_spiking_floor(at::Tensor o, at::Tensor u, at::Tensor u_threshold, at::Tensor u_rest) {
-    o += at::floor((u - u_rest) / (u_threshold - u_rest));
+    o += at::max(at::floor((u - u_rest) / (u_threshold - u_rest)), at::zeros_like(u));
 }
 
 """
@@ -102,7 +102,7 @@ void fp_spiking_floor(at::Tensor o, at::Tensor u, at::Tensor u_threshold, at::Te
 
 __fp_spiking_ceil = """
 void fp_spiking_ceil(at::Tensor o, at::Tensor u, at::Tensor u_threshold, at::Tensor u_rest) {
-    o += at::ceil((u - u_rest) / (u_threshold - u_rest));
+    o += at::max(at::ceil((u - u_rest) / (u_threshold - u_rest)), at::zeros_like(u));
 }
 
 """
@@ -110,7 +110,7 @@ void fp_spiking_ceil(at::Tensor o, at::Tensor u, at::Tensor u_threshold, at::Ten
 
 __fp_spiking_round = """
 void fp_spiking_round(at::Tensor o, at::Tensor u, at::Tensor u_threshold, at::Tensor u_rest) {
-    o += at::round((u - u_rest) / (u_threshold - u_rest));
+    o += at::max(at::round((u - u_rest) / (u_threshold - u_rest)), at::zeros_like(u));
 }
 
 """
@@ -118,7 +118,8 @@ void fp_spiking_round(at::Tensor o, at::Tensor u, at::Tensor u_threshold, at::Te
 
 __bp_spiking_multi = """
 void bp_spiking_multi(at::Tensor grad_o, at::Tensor grad_u, at::Tensor o, at::Tensor u, at::Tensor u_threshold, at::Tensor u_rest) {
-    grad_u += (u - u_rest) / (u_threshold - u_rest);
+    at::Tensor mask = at::gt(u, u_rest);
+    grad_u += grad_o / (u_threshold - u_rest) * mask;
 }
 
 """

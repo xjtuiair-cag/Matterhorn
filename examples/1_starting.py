@@ -37,7 +37,9 @@ def main():
         snn.Linear(28 * 28, 80, bias = False),
         snn.LIF(),
         snn.Linear(80, 10, bias = False),
-        snn.LIF(),
+        snn.LIF(
+            spiking_function = snn.Floor()
+        ),
         snn.AvgSpikeDecoder(),
         multi_step_mode = True
     )
