@@ -24,8 +24,8 @@ Matterhorn's synapse module integrates spikes from the layer above and sends the
 
 ```python
 Soma(
-    u_threshold: float = -0.055,
-    u_rest: float = -0.07,
+    u_threshold: float = 1.0,
+    u_rest: float = 0.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True
 )
@@ -77,8 +77,8 @@ $$U^{l}(t)=H^{l}(t-1)+X^{l}(t)$$
 
 ```python
 IF(
-    u_threshold: float = -0.055,
-    u_rest: float = -0.07,
+    u_threshold: float = 1.0,
+    u_rest: float = 0.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True
 )
@@ -143,8 +143,8 @@ $$U^{l}(t)=H^{l}(t-1)+\frac{1}{\tau_{m}}[-(H^{l}(t-1)-u_{rest})+X^{l}(t)]$$
 
 ```python
 LIF(
-    u_threshold: float = -0.055,
-    u_rest: float = -0.07,
+    u_threshold: float = 1.0,
+    u_rest: float = 0.0,
     tau_m: float = 2.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
@@ -222,8 +222,8 @@ $$U^{l}(t)=H^{l}(t-1)+\frac{1}{\tau_{m}}[a_{0}(H^{l}(t-1)-u_{rest})(H^{l}(t-1)-u
 
 ```python
 QIF(
-    u_threshold: float = -0.055,
-    u_rest: float = -0.07,
+    u_threshold: float = 1.0,
+    u_rest: float = 0.0,
     tau_m: float = 2.0,
     u_c: float = 1.0,
     a_0: float = 1.0,
@@ -309,8 +309,8 @@ $$U^{l}(t)=H^{l}(t-1)+\frac{1}{\tau_{m}}[-(H^{l}(t-1)-u_{rest})+\Delta_{T}e^{\fr
 
 ```python
 ExpIF(
-    u_threshold: float = -0.055,
-    u_rest: float = -0.07,
+    u_threshold: float = 1.0,
+    u_rest: float = 0.0,
     tau_m: float = 2.0,
     u_t: float = 0.0,
     delta_t: float = 0.001,
@@ -402,8 +402,8 @@ $$U^{l}(t)=H^{l}(t-1)+0.04(H^{l}(t-1))^{2}+5H^{l}(t-1)+140-W^{l}(t)+X^{l}(t)$$
 
 ```python
 Izhikevich(
-    u_threshold: float = -0.055,
-    u_rest: float = -0.07,
+    u_threshold: float = 1.0,
+    u_rest: float = 0.0,
     a: float = 1.0,
     b: float = 1.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
@@ -549,8 +549,8 @@ as the neuron's output. Refer to reference [2] for details.
 
 ```python
 LIAF(
-    u_threshold: float = -0.055,
-    u_rest: float = -0.07,
+    u_threshold: float = 1.0,
+    u_rest: float = 0.0,
     tau_m: float = 2.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     activation_function: torch.nn.Module = nn.ReLU(),

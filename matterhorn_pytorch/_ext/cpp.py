@@ -49,7 +49,7 @@ void bp_response_lif(at::Tensor grad_u, at::Tensor grad_x, at::Tensor grad_h, at
 
 __fp_spiking_heaviside = """
 void fp_spiking_heaviside(at::Tensor o, at::Tensor u, at::Tensor u_threshold, at::Tensor u_rest) {
-    o += at::ge(u, u_threshold);
+    o += at::where(at::ge(u, u_threshold), at::ones_like(u), at::zeros_like(u));
 }
 
 """
@@ -58,7 +58,7 @@ void fp_spiking_heaviside(at::Tensor o, at::Tensor u, at::Tensor u_threshold, at
 __bp_spiking_rectangular = """
 void bp_spiking_rectangular(at::Tensor grad_o, at::Tensor grad_u, at::Tensor o, at::Tensor u, at::Tensor u_threshold, at::Tensor u_rest, float a = 2.0) {
     at::Tensor ax = u - u_threshold;
-    grad_u += grad_o * (1.0 / a) * at::lt(at::abs(ax), a / 2.0);
+    grad_u += grad_o * (1.0 / a) * at::where(at::lt(at::abs(ax), a / 2.0), at::ones_like(grad_o), at::zeros_like(grad_o));
 }
 
 """
@@ -67,7 +67,7 @@ void bp_spiking_rectangular(at::Tensor grad_o, at::Tensor grad_u, at::Tensor o, 
 __bp_spiking_polynomial = """
 void bp_spiking_polynomial(at::Tensor grad_o, at::Tensor grad_u, at::Tensor o, at::Tensor u, at::Tensor u_threshold, at::Tensor u_rest, float a = 1.0) {
     at::Tensor ax = at::abs(u - u_threshold);
-    grad_u += grad_o * (sqrtf(a) / 2.0 - a / 4.0 * ax) * at::sign(2.0 / sqrtf(a) - ax) * at::lt(ax, 2.0 / sqrtf(a));
+    grad_u += grad_o * (sqrtf(a) / 2.0 - a / 4.0 * ax) * at::sign(2.0 / sqrtf(a) - ax) * at::where(at::lt(ax, 2.0 / sqrtf(a)), at::ones_like(grad_o), at::zeros_like(grad_o));
 }
 
 """
@@ -118,7 +118,7 @@ void fp_spiking_round(at::Tensor o, at::Tensor u, at::Tensor u_threshold, at::Te
 
 __bp_spiking_multi = """
 void bp_spiking_multi(at::Tensor grad_o, at::Tensor grad_u, at::Tensor o, at::Tensor u, at::Tensor u_threshold, at::Tensor u_rest) {
-    at::Tensor mask = at::gt(u, u_rest);
+    at::Tensor mask = at::where(at::ge(u, u_rest), at::ones_like(u), at::zeros_like(u));
     grad_u += grad_o / (u_threshold - u_rest) * mask;
 }
 
@@ -127,7 +127,7 @@ void bp_spiking_multi(at::Tensor grad_o, at::Tensor grad_u, at::Tensor o, at::Te
 
 __fp_reset_hard = """
 void fp_reset_hard(at::Tensor h, at::Tensor u, at::Tensor o, at::Tensor u_threshold, at::Tensor u_rest) {
-    at::Tensor oo = at::gt(o, 0.0);
+    at::Tensor oo = at::where(at::gt(o, 0.0), at::ones_like(o), at::zeros_like(o));
     h += u * (1.0 - oo) + u_rest * oo;
 }
 
@@ -136,7 +136,7 @@ void fp_reset_hard(at::Tensor h, at::Tensor u, at::Tensor o, at::Tensor u_thresh
 
 __bp_reset_hard = """
 void bp_reset_hard(at::Tensor grad_h, at::Tensor grad_u, at::Tensor grad_o, at::Tensor h, at::Tensor u, at::Tensor o, at::Tensor u_threshold, at::Tensor u_rest) {
-    at::Tensor oo = at::gt(o, 0.0);
+    at::Tensor oo = at::where(at::gt(o, 0.0), at::ones_like(o), at::zeros_like(o));
     grad_u += grad_h * (1.0 - oo);
     grad_o += grad_h * (u_rest - u);
 }

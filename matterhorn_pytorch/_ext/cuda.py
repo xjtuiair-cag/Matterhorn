@@ -201,7 +201,7 @@ __device__ void fp_spiking_round(float& o, float u, float u_threshold, float u_r
 
 __bp_spiking_multi = """
 __device__ void bp_spiking_multi(float grad_o, float& grad_u, float o, float u, float u_threshold, float u_rest) {
-    float mask = gtf(u, u_rest);
+    float mask = gef(u, u_rest);
     grad_u += grad_o / (u_threshold - u_rest) * mask;
 }
 
@@ -418,10 +418,3 @@ def bp_lif_source(spiking_function: _firing.Firing, hard_reset: bool) -> _Tuple[
     name, dec, __bp_lif = bp_soma_source("lif", reset_fun, spiking_fun, response_fun, ("tau_m",))
     res = __includes + __functions + __bp_response_lif + spiking_source + reset_source + __bp_lif
     return name, dec, res
-
-
-if __name__ == "__main__":
-    from rich import print
-    title, body = bp_lif_source(_firing.Gaussian(), True)
-    print(title)
-    print(body)

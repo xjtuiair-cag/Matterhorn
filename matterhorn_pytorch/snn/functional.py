@@ -405,7 +405,7 @@ class _multi_firing_floor(torch.autograd.Function):
         Returns:
             y (torch.Tensor): 输出
         """
-        ctx.save_for_backward(x.gt(0.0))
+        ctx.save_for_backward(x.ge(0.0))
         return torch.max(torch.floor(x), torch.zeros_like(x))
     
 

@@ -16,7 +16,7 @@ from matterhorn_pytorch.snn.soma_functions import *
 from torch.utils.cpp_extension import load_inline
 import matterhorn_pytorch._ext.cpp as _ext_cpp
 import matterhorn_pytorch._ext.cuda as _ext_cu
-from typing import Any as _Any, Mapping as _Mapping
+from typing import Any as _Any, Mapping as _Mapping, Callable as _Callable
 import warnings
 from subprocess import SubprocessError
 
@@ -37,7 +37,7 @@ class _oo(torch.autograd.Function):
 
 
 class Soma(_Module):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -74,7 +74,7 @@ class Soma(_Module):
         重置整个神经元。
         """
         self.detach()
-        self.u = None
+        self.u = self.u_rest.item()
         return super().reset()
 
     
@@ -95,8 +95,8 @@ class Soma(_Module):
             **kwargs: 构建参数
         """
         res = None
-        ninja_missing_template = "Ninja has not been installed yet. Please install ninja by pip."
-        permission_warning_template = "Permission denied for compiling %s extensions. Please run the script in sudo mode."
+        ninja_missing_template = "Failed to compile %s extensions. Ninja has not been installed yet. Please install ninja by pip."
+        permission_warning_template = "Permission denied for compiling %s extensions. Please reinstall ninja without administrator (sudoer) mode."
         ms_command_line_warning_template = "Failed to compile %s extensions. Please follow the instructions on https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line and install command line tools for Windows."
         try:
             kwargs["verbose"] = _EXT_DEBUG_MODE
@@ -104,7 +104,7 @@ class Soma(_Module):
         except PermissionError:
             warnings.warn(permission_warning_template % (ext_name,))
         except RuntimeError:
-            warnings.warn(ninja_missing_template)
+            warnings.warn(ninja_missing_template % (ext_name,))
         except SubprocessError:
             warnings.warn(ms_command_line_warning_template % (ext_name,))
         except Exception as e:
@@ -187,38 +187,36 @@ class Soma(_Module):
         return o
 
 
-    def forward_steps_on_ext(self, ext: str, *args, **kwargs) -> torch.Tensor:
+    def forward_steps_on_ext(self, x: torch.Tensor, exts: _Mapping[str, object], ext_name: str) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数（基于扩展）。
+        Args:
+            x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
+        Returns:
+            o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
+        """
+        return super().forward_steps(x)
+
+
+    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
-            *args: 输入
-            **kwargs: 输入
+            x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
         Returns:
-            res (torch.Tensor): 输出
+            o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        return super().forward_steps(*args, **kwargs)
-
-
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            *args: 输入
-            **kwargs: 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        device: torch.device = args[0].device
+        device: torch.device = x.device
         exts = self.exts
         if device.type == "cuda" and "cuda" in exts:
-            return self.forward_steps_on_ext("cuda", *args, **kwargs)
+            return self.forward_steps_on_ext()
         if device.type == "cpu" and "cpp" in exts:
-            return self.forward_steps_on_ext("cpp", *args, **kwargs)
-        return super().forward_steps(*args, **kwargs)
+            return self.forward_steps_on_ext(x, exts, "cpp")
+        return super().forward_steps(x)
 
 
 class IF(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Integrate-and-Fire(IF)神经元。
         无泄漏过程，一阶电位变换公式为：
@@ -255,7 +253,7 @@ class IF(Soma):
 
 
 class LIF(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, tau_m: float = 2.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
@@ -337,8 +335,30 @@ class LIF(Soma):
         return u
 
 
+    def forward_steps_on_ext(self, x: torch.Tensor, exts: _Mapping[str, object], ext_name: str) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数（基于扩展）。
+        Args:
+            x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
+        Returns:
+            o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
+        """
+        self.u = _SF.to(self.u, x[0])
+        if ext_name == "cpp":
+            fp = exts["cpp"].fp_lif
+            bp = exts["cpp"].bp_lif
+            o, self.u = multi_step_mode_lif.apply(x, self.u, self.u_threshold, self.u_rest, self.tau_m, fp, bp)
+        elif ext_name == "cuda":
+            fp = exts["cuda"].fp_lif_cuda
+            bp = exts["cuda"].bp_lif_cuda
+            o, self.u = multi_step_mode_lif.apply(x, self.u, self.u_threshold, self.u_rest, self.tau_m, fp, bp)
+        else:
+            o = super().forward_steps(x)
+        return o
+
+
 class QIF(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, tau_m: float = 2.0, u_c: float = 1.0, a_0: float = 1.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, u_c: float = 1.0, a_0: float = 1.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Quadratic Integrate-and-Fire(QIF)神经元。
         一阶电位变换公式为：
@@ -392,7 +412,7 @@ class QIF(Soma):
 
 
 class ExpIF(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, tau_m: float = 2.0, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Exponential Integrate-and-Fire(ExpIF)神经元。
         一阶电位变换公式为：
@@ -446,7 +466,7 @@ class ExpIF(Soma):
 
 
 class Izhikevich(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, a: float = 1.0, b: float = 1.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, a: float = 1.0, b: float = 1.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """, 
         Izhikevich神经元。
         一阶电位变换公式为：
@@ -490,8 +510,8 @@ class Izhikevich(Soma):
         重置整个神经元
         """
         self.detach()
-        self.u = None
-        self.w = None
+        self.u = self.u_rest.item()
+        self.w = 0.0
         return super().reset()
 
     
@@ -576,7 +596,7 @@ class KLIF(Soma):
 
 
 class AnalogSoma(Soma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, spiking_function: _Firing = _Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         带有模拟输出的Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -632,7 +652,7 @@ class AnalogSoma(Soma):
 
 
 class LIAF(AnalogSoma):
-    def __init__(self, u_threshold: float = -0.055, u_rest: float = -0.07, tau_m: float = 2.0, spiking_function: _Firing = _Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, spiking_function: _Firing = _Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Leaky Integrate-and-Analog-Fire(LIAF)神经元
         Args:
