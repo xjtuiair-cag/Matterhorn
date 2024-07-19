@@ -12,7 +12,7 @@ from torch.utils.cpp_extension import CUDA_HOME, ROCM_HOME
 import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
 from matterhorn_pytorch.snn.firing import Firing as _Firing, Gaussian as _Gaussian
-from matterhorn_pytorch.snn.soma_functions import *
+from matterhorn_pytorch.snn.soma_functional import *
 from torch.utils.cpp_extension import load_inline
 import matterhorn_pytorch._ext.cpp as _ext_cpp
 import matterhorn_pytorch._ext.cuda as _ext_cu
@@ -23,17 +23,6 @@ from subprocess import SubprocessError
 
 _EXT_DEBUG_MODE = False
 warnings.simplefilter('once', UserWarning)
-
-
-class _oo(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx: _Any, x: torch.Tensor) -> torch.Tensor:
-        return x.gt(0.0).to(x)
-    
-
-    @staticmethod
-    def backward(ctx: _Any, grad_output: torch.Tensor) -> torch.Tensor:
-        return grad_output
 
 
 class Soma(_Module):
@@ -164,8 +153,8 @@ class Soma(_Module):
             h (torch.Tensor): 经过重置之后的当前电位$U_{i}^{l}(t-1)$
         """
         if self.hard_reset:
-            oo = _oo.apply(o)
-            h = u * (1.0 - oo) + self.u_rest * oo
+            o = oo.apply(o)
+            h = u * (1.0 - o) + self.u_rest * o
         else:
             h = u - (self.u_threshold - self.u_rest) * o
         return h
@@ -634,13 +623,13 @@ class AnalogSoma(Soma):
         return self.activation_function(u - self.u_rest)
     
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
         Returns:
-            o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
+            y (torch.Tensor): 当前模拟输出$Y_{i}^{l}(t)$
         """
         self.check_if_reset(self.u, x)
         self.u = _SF.to(self.u, x)
@@ -687,6 +676,39 @@ class LIAF(AnalogSoma):
         return ", ".join(["tau_m=%g" % self.tau_m]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
+    @property
+    def exts(self) -> None:
+        """
+        构建扩展。
+        """
+        res = dict()
+        fp_name, fp_source = _ext_cpp.fp_lif_source(self.spiking_function, self.hard_reset)
+        bp_name, bp_source = _ext_cpp.bp_lif_source(self.spiking_function, self.hard_reset)
+        cpp_ext = self.build_ext(
+            "cpp",
+            name = _ext_cpp.purify_name("lif_%s_%s_%s" % (self.spiking_function.__class__.__name__, self.spiking_function.extra_repr(), "zero" if self.hard_reset else "sub")),
+            cpp_sources = [fp_source, bp_source],
+            functions = [fp_name, bp_name],
+            extra_cflags = ["-g", "-w"]
+        )
+        if cpp_ext is not None:
+            res["cpp"] = cpp_ext
+        if torch.cuda.is_available():
+            fp_name, fp_dec, fp_source = _ext_cu.fp_lif_source(self.spiking_function, self.hard_reset)
+            bp_name, bp_dec, bp_source = _ext_cu.bp_lif_source(self.spiking_function, self.hard_reset)
+            cuda_ext = self.build_ext(
+                "cuda",
+                name = _ext_cu.purify_name("lif_cu_%s_%s_%s" % (self.spiking_function.__class__.__name__, self.spiking_function.extra_repr(), "zero" if self.hard_reset else "sub")),
+                cpp_sources = [fp_dec, bp_dec],
+                cuda_sources = [fp_source, bp_source],
+                functions = [fp_name, bp_name],
+                extra_cflags = ["-g", "-w"]
+            )
+            if cuda_ext is not None:
+                res["cuda"] = cuda_ext
+        return res
+
+
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$。
@@ -699,3 +721,28 @@ class LIAF(AnalogSoma):
         du = (1.0 / self.tau_m) * (-(h - self.u_rest) + x)
         u = h + du
         return u
+
+
+    def forward_steps_on_ext(self, x: torch.Tensor, exts: _Mapping[str, object], ext_name: str) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数（基于扩展）。
+        Args:
+            x (torch.Tensor): 来自突触的输入电位$X_{i}^{l}(t)$
+        Returns:
+            y (torch.Tensor): 当前模拟输出$Y_{i}^{l}(t)$
+        """
+        self.u = _SF.to(self.u, x[0])
+        if ext_name == "cpp":
+            fp = exts["cpp"].fp_lif
+            bp = exts["cpp"].bp_lif
+            u, self.u = multi_step_mode_liaf.apply(x, self.u, self.u_threshold, self.u_rest, self.tau_m, fp, bp)
+            y = self.activation_function(u - self.u_rest)
+            print(u)
+        elif ext_name == "cuda":
+            fp = exts["cuda"].fp_lif_cuda
+            bp = exts["cuda"].bp_lif_cuda
+            u, self.u = multi_step_mode_liaf.apply(x, self.u, self.u_threshold, self.u_rest, self.tau_m, fp, bp)
+            y = self.activation_function(u - self.u_rest)
+        else:
+            y = super().forward_steps(x)
+        return y
