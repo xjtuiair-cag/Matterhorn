@@ -84,20 +84,12 @@ class Soma(_Module):
             **kwargs: 构建参数
         """
         res = None
-        ninja_missing_template = "Failed to compile %s extensions. Ninja has not been installed yet. Please install ninja by pip."
-        permission_warning_template = "Permission denied for compiling %s extensions. Please reinstall ninja without administrator (sudoer) mode."
-        ms_command_line_warning_template = "Failed to compile %s extensions. Please follow the instructions on https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line and install command line tools for Windows."
         try:
             kwargs["verbose"] = _EXT_DEBUG_MODE
             res = load_inline(**kwargs)
-        except PermissionError:
-            warnings.warn(permission_warning_template % (ext_name,))
-        except RuntimeError:
-            warnings.warn(ninja_missing_template % (ext_name,))
-        except SubprocessError:
-            warnings.warn(ms_command_line_warning_template % (ext_name,))
         except Exception as e:
-            warnings.warn("Failed to compile %s extensions. %s" % (ext_name, e))
+            if _EXT_DEBUG_MODE:
+                warnings.warn("Failed to compile %s extensions. %s" % (ext_name, str(e).split("\n")[0]))
         return res
 
 
