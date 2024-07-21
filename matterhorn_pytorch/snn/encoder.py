@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
-from typing import Callable as _Callable
+from typing import Tuple as _Tuple, Callable as _Callable, Union as _Union, Optional as _Optional
 
 
 class Encoder(_Module):
@@ -64,7 +64,7 @@ class Direct(Encoder):
 
 
 class Poisson(Encoder):
-    def __init__(self, time_steps: int = 1) -> None:
+    def __init__(self, time_steps: int = 1, input_range: _Optional[_Union[_Tuple, float, int]] = None, precision: float = 1e-9, spike_mode: str = "s") -> None:
         """
         泊松编码（速率编码），将值转化为脉冲发放率（多步）
         Args:
@@ -72,6 +72,19 @@ class Poisson(Encoder):
         """
         super().__init__()
         self.time_steps = time_steps
+        if input_range is not None and isinstance(input_range, _Tuple):
+            if len(input_range) >= 2:
+                self.min = input_range[0] if isinstance(input_range[0], (int, float)) else 0.0
+                self.max = input_range[1] if isinstance(input_range[1], (int, float)) else 1.0
+            else:
+                self.min = 0.0
+                self.max = input_range[0] if isinstance(input_range[0], (int, float)) else 0.0
+        else:
+            self.min = 0.0
+            self.max = input_range if input_range is not None and isinstance(input_range, (int, float)) else 1.0
+        assert self.max > self.min, "Invalid range for Poisson encoder."
+        self.precision = precision
+        self.spike_mode = spike_mode
 
 
     def extra_repr(self) -> str:
@@ -91,14 +104,12 @@ class Poisson(Encoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        min_value = torch.min(x)
-        max_value = torch.max(x)
-        if max_value == min_value:
-            x = torch.full_like(x, 0.5)
+        p = torch.clamp((x - self.min) / (self.max - self.min), 0.0, 1.0 - self.precision)
+        r = torch.poisson(-torch.log(1.0 - p))
+        if self.spike_mode == "m":
+            y = r
         else:
-            x = (x - min_value) / (max_value - min_value)
-        r = torch.rand_like(x)
-        y = _SF.le(r, x)
+            y = _SF.gt(r, torch.zeros_like(r))
         return y
     
 
