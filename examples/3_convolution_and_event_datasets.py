@@ -39,9 +39,8 @@ def main():
         snn.LIF(tau_m = tau),
         snn.Flatten(),
         snn.Linear(512, 10, bias = False),
-        snn.AvgSpikeDecoder(),
-        multi_step_mode = True
-    )
+        snn.AvgSpikeDecoder()
+    ).multi_step_mode_()
     model = model.to(device)
     print_model(model)
 

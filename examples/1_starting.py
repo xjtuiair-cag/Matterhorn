@@ -38,9 +38,8 @@ def main():
         snn.LIF(),
         snn.Linear(80, 10, bias = False),
         snn.LIF(),
-        snn.AvgSpikeDecoder(),
-        multi_step_mode = True
-    )
+        snn.AvgSpikeDecoder()
+    ).multi_step_mode_()
     model = model.to(device)
     print_model(model)
 

@@ -45,9 +45,8 @@ def main():
             adjacent = lsm.functional.init_adjacent_uniform(10, 0.4),
             soma = snn.LIF()
         ),
-        snn.AvgSpikeDecoder(),
-        multi_step_mode = True
-    )
+        snn.AvgSpikeDecoder()
+    ).multi_step_mode_()
     model = model.to(device)
     print_model(model)
     

@@ -19,6 +19,7 @@ class Decoder(_Module):
         """
         super().__init__()
         self.multi_step_mode_()
+        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -27,17 +28,15 @@ class Decoder(_Module):
         Returns:
             repr_str (str): 参数表
         """
-        return ""
+        return super().extra_repr()
 
 
-    @property
-    def supports_single_step_mode(self) -> bool:
+    def reset(self) -> _Module:
         """
-        是否支持单个时间步。
-        Returns:
-            if_support (bool): 是否支持单个时间步
+        重置解码器。
         """
-        return False
+        self.current_time_step = 0
+        return super().reset()
 
 
 class SumSpike(Decoder):
@@ -47,11 +46,22 @@ class SumSpike(Decoder):
         $$o_{i}=\sum_{t=1}^{T}{O_{i}^{K}(t)}$$
         """
         super().__init__()
-    
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单步前向传播函数。
+        Args:
+            x (torch.Tensor): 输入张量，形状为[B,...]
+        Returns:
+            y (torch.Tensor): 输出张量，形状为[B,...]
+        """
+        return x
+
+
+    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        多个时间步的前向传播函数。
         Args:
             x (torch.Tensor): 输入张量，形状为[T,B,...]
         Returns:
@@ -68,11 +78,22 @@ class AverageSpike(Decoder):
         $$o_{i}=\frac{1}{T}\sum_{t=1}^{T}{O_{i}^{K}(t)}$$
         """
         super().__init__()
-    
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        单步前向传播函数。
+        Args:
+            x (torch.Tensor): 输入张量，形状为[B,...]
+        Returns:
+            y (torch.Tensor): 输出张量，形状为[B,...]
+        """
+        return x
+
+
+    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        多步前向传播函数。
         Args:
             x (torch.Tensor): 输入张量，形状为[T,B,...]
         Returns:
@@ -93,7 +114,6 @@ class TimeBased(Decoder):
         super().__init__()
         self.empty_fill = empty_fill
         self.transform = transform
-        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -102,20 +122,25 @@ class TimeBased(Decoder):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["empty_fill=%g" % self.empty_fill])
+        return ", ".join(["empty_fill=%g" % self.empty_fill]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
-    def reset(self) -> _Module:
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
-        重置编码器。
+        单步前向传播函数。
+        Args:
+            x (torch.Tensor): 输入张量，形状为[B,...]
+        Returns:
+            y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        self.current_time_step = 0
-        return super().reset()
+        y = torch.where(x > 0, torch.full_like(x, self.current_time_step), torch.full_like(x, self.empty_fill))
+        self.current_time_step += 1
+        return y
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
         """
-        前向传播函数。
+        多步前向传播函数。
         Args:
             x (torch.Tensor): 输入张量，形状为[T,B,...]
         Returns:

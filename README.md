@@ -248,8 +248,10 @@ model = snn.Sequential(
     snn.Linear(28 * 28, 10, bias = False),
     snn.LIF(tau_m = tau, trainable = True),
     snn.AvgSpikeDecoder()
-)
+).multi_step_mode_()
 ```
+
+You should notice that `.multi_step_mode_()` is applied on `snn.Sequential` module. Step mode is switched by `multi_step_mode()` ( and `single_step_mode()`, which equals to `multi_step_mode(False)` ) functions. In single step mode, every time step you should input the spike tensors with the same shape as feature maps (`[B, ...]`), while in multi step mode, the spikes are calculated at once, and you should input the spike tensors with another dimension `T` as the first dimension (`[T, B, ...]`).
 
 By now, you have experienced what SNNs look like and how to build it by Matterhorn. For further experience, you can refer to [examples/1_starting.py](./examples/1_starting.py).
 

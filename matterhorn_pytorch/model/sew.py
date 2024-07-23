@@ -11,22 +11,7 @@ import torch
 import torch.nn as nn
 import matterhorn_pytorch.snn as snn
 from typing import Tuple, Callable
-
-
 from matterhorn_pytorch.snn.soma import LIF
-if torch.cuda.is_available():
-    try:
-        from matterhorn_pytorch.snn.soma_cuda import LIF
-    except:
-        try:
-            from matterhorn_pytorch.snn.soma_cpp import LIF
-        except:
-            pass
-else:
-    try:
-        from matterhorn_pytorch.snn.soma_cpp import LIF
-    except:
-        pass
 
 
 class ResADD(snn.Module):
@@ -108,7 +93,7 @@ def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: i
             spiking_function = spiking_function,
             trainable = trainable
         )
-    )
+    ).multi_step_mode_()
 
 
 class SEWBlock(snn.Module):
@@ -291,7 +276,7 @@ class SEWRes18(snn.Module):
                 out_features = num_classes
             ), # [10]
             nn.Softmax()
-        )
+        ).multi_step_mode_()
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

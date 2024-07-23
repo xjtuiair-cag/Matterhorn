@@ -18,6 +18,8 @@ class Encoder(_Module):
         编码器的基类。
         """
         super().__init__()
+        self.multi_step_mode_()
+        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -29,13 +31,21 @@ class Encoder(_Module):
         return super().extra_repr()
 
 
+    def reset(self) -> _Module:
+        """
+        重置编码器。
+        """
+        self.current_time_step = 0
+        return super().reset()
+
+
 class Direct(Encoder):
     def __init__(self) -> None:
         """
         直接编码，直接对传入的脉冲（事件）数据进行编码
         """
         super().__init__()
-    
+
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -140,7 +150,6 @@ class Temporal(Encoder):
         self.time_steps = time_steps
         self.prob = prob
         self.transform = transform
-        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -150,14 +159,6 @@ class Temporal(Encoder):
             repr_str (str): 参数表
         """
         return ", ".join(["time_steps=%d" % self.time_steps, "prob=%g" % self.prob]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
-
-
-    def reset(self) -> _Module:
-        """
-        重置编码器
-        """
-        self.current_time_step = 0
-        return super().reset()
 
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:

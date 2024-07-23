@@ -248,8 +248,10 @@ model = snn.Sequential(
     snn.Linear(28 * 28, 10, bias = False),
     snn.LIF(tau_m = tau, trainable = True),
     snn.AvgSpikeDecoder()
-)
+).multi_step_mode_()
 ```
+
+值得注意的是，例子中的 `snn.Sequential` 模块后存在 `.multi_step_mode_()` 函数。这个函数（以及等价于 `multi_step_mode(False)` 的 `single_step_mode()` 函数）是用作切换多步/单步模式的。在单步模式下，每个时间步输入的脉冲序列形状和特征图一致（`[B, ...]`）；在多步模式下，所有时间步的脉冲序列被压在同一个张量中计算，这对张量的要求是在最外层加一个用来表示时间步 `T` 的维度（`[T, B, ...]`）。
 
 到目前为止，您已经知道了 SNNs 的样子以及如何使用 Matterhorn 构建它。要进行更深入的体验，您可以参考 [examples/1_starting.py](./examples/1_starting.py) 。
 

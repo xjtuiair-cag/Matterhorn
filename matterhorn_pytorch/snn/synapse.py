@@ -773,28 +773,3 @@ class Identity(Synapse, nn.Identity):
         """
         x = nn.Identity.forward(self, x)
         return x
-
-
-class Neurotransmitter(Synapse):
-    def __init__(self, mask: torch.Tensor) -> None:
-        """
-        神经递质，分为兴奋性神经递质和抑制性神经递质，加在胞体后面。
-        Args:
-            mask (torch.Tensor): 一个布尔类型的张量，形状与单个时间步内的数据张量一致，元素为True代表兴奋性神经元，为False代表抑制性神经元
-        """
-        super().__init__()
-        self.mask = mask
-    
-
-    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
-        """
-        单个时间步的前向传播函数。
-        Args:
-            o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}(t)$
-        Returns:
-            o (torch.Tensor): 当前层的输出脉冲$O_{i}^{l}(t)$
-        """
-        o = torch.abs(o)
-        mask = self.mask.to(torch.bool).to(o.device)
-        o = torch.where(mask, o, -o)
-        return o

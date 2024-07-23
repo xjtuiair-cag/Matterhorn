@@ -24,11 +24,9 @@ SNN 模块的容器，用于组合各个 `matterhorn_pytorch.snn.Module` 。
 
 空间容器，与 `torch.nn.Sequential` 类似，然而：
 
-（1）对于 ANN 模块，其会直接与相邻模块相接。
+（1）其仅接受来自 `matterhorn_pytorch.snn.Module` 的 SNN 模块。
 
-（2）对于单时间步 SNN 模块，其并不会自动转换成多时间步 SNN 模块，因此最好保证同一个 `Spatial` 中的模块均为单时间步模块或均为多时间步模块，否则可能会出现时间步相关问题。
-
-（3）其不存在自动重置机制。因此对于存储电位等临时变量的模块，您可能需要调用 `reset()` 方法手动重置。
+（2）其会保持模块内的模型同为单步模型或多步模型。
 
 ```python
 Spatial(
@@ -89,24 +87,19 @@ print(model)
 
 SNN 序列容器，结合了 `Spatial` 容器与 `Temporal` 容器的产物。其与 `Spatial` 用法类似，然而：
 
-（1）对于 ANN 模块，其会直接与相邻模块相接。
+（1）其可以接受任何 `torch.nn.Module` 模块，并且对这个模块应用 `matterhorn_pytorch.snn.Module` 独有的方法时，其仅会对其中的 `matterhorn_pytorch.snn.Module` 模块生效。
 
-（2）其中的单时间步 SNN 模块会自动转换成多时间步 SNN 模块。转换模式为：如果其自身支持多时间步，则直接将其转为多时间步；否则，在其外部加上一层 `Temporal` 容器，使其成为多时间步 SNN 模块。其本身为多时间步模块，因此要比单时间步模块多消耗一个维度 `T` ，默认将第一个维度视作时间维度。
-
-推荐使用 `Sequential` 作为连接 `matterhorn_pytorch.snn` 模块的容器。
+（2）其会保持模块内的模型同为单步模型或多步模型。
 
 ```python
 Sequential(
-    *args,
-    multi_step_mode: bool = False
+    *args
 )
 ```
 
 ### 构造函数参数
 
 `*args (*nn.Module)` ：按空间顺序传入的各个模块。
-
-`multi_step_mode (bool)` ：是否将内部的所有模块转成多时间步模式。默认不进行转换。
 
 ### 示例用法
 
@@ -118,7 +111,7 @@ import matterhorn_pytorch as mth
 model = mth.snn.Sequential(
     mth.snn.Linear(784, 10),
     mth.snn.LIF()
-)
+).multi_step_mode_()
 print(model)
 ```
 
