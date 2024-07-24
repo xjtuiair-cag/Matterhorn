@@ -156,7 +156,7 @@ class Spatial(Sequential):
         super().__init__(*args)
     
 
-    def _check_if_snn_module(module: nn.Module):
+    def _check_if_snn_module(self, module: nn.Module):
         assert isinstance(module, _Module), "Module %s is not an SNN module." % (module.__class__.__name__)
 
 
