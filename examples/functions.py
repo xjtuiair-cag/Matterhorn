@@ -100,7 +100,7 @@ def init_logs(log_dir: str, args: Namespace, model: torch.nn.Module) -> None:
     with open(os.path.join(log_dir, "hyper_parameters.txt"), "w") as f:
         f.write(repr(args))
     with open(os.path.join(log_dir, "result.csv"), "w") as f:
-        f.write("Epoch,Training Loss,Training Accuracy,Testing Loss,Testing Accuracy,Duration\n")
+        f.write("Epoch, Learning Rate, Training Loss, Training Accuracy, Testing Loss, Testing Accuracy, Duration\n")
     save_model(log_dir, "last", model)
 
 
@@ -213,6 +213,7 @@ def train_and_test(epochs: int, model: torch.nn.Module, train_data_loader: DataL
         print(Text("Epoch %d" % (e + 1,), justify = "center", style = "bold"))
         print()
         start_time = time.time()
+        learning_rate = optimizer.state_dict()['param_groups'][0]['lr']
 
         model, train_loss, train_acc = train_one_epoch(
             model = model,
@@ -247,7 +248,7 @@ def train_and_test(epochs: int, model: torch.nn.Module, train_data_loader: DataL
         )
         last_data = current_data
         with open(os.path.join(log_dir, "result.csv"), "a") as f:
-            f.write("%d, %g, %g, %g, %g, %g\n" % (e, train_loss, train_acc, test_loss, test_acc, duration))
+            f.write("%d, %g, %g, %g, %g, %g\n" % (e, learning_rate, train_loss, train_acc, test_loss, test_acc, duration))
 
         if scheduler is not None:
             scheduler.step()

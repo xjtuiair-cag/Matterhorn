@@ -114,8 +114,11 @@ class Poisson(Encoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        p = torch.clamp((x - self.min) / (self.max - self.min), 0.0, 1.0 - self.precision)
-        r = torch.poisson(-torch.log(1.0 - p))
+        p = torch.clamp((x - self.min) / (self.max - self.min), 0.0 + self.precision, 1.0 - self.precision)
+        if x.device.type == "mps":
+            r = torch.poisson(-torch.log(1.0 - p.cpu())).to(p)
+        else:
+            r = torch.poisson(-torch.log(1.0 - p))
         if self.spike_mode == "m":
             y = r
         else:
