@@ -515,3 +515,35 @@ def round(x: torch.Tensor) -> torch.Tensor:
         res (torch.Tensor): 比较结果
     """
     return _multi_firing_round.apply(x)
+
+
+@torch.jit.script
+def IF(x: torch.Tensor, u_init: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor) -> _Tuple[torch.Tensor, torch.Tensor]:
+    o_seq = []
+    u = u_init
+    for t in range(x.shape[0]):
+        x_t = x[t]
+        du = x_t
+        u = u + du
+        o_t = ge(u, u_threshold)
+        o_seq.append(o_t)
+        u = u * (1.0 - o_t) + u_rest * o_t
+    o = torch.stack(o_seq)
+    u_last = u
+    return o, u_last
+
+
+@torch.jit.script
+def LIF(x: torch.Tensor, u_init: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, tau_m: torch.Tensor) -> _Tuple[torch.Tensor, torch.Tensor]:
+    o_seq = []
+    u = u_init
+    for t in range(x.shape[0]):
+        x_t = x[t]
+        du = (1.0 / tau_m) * (-(u - u_rest) + x_t)
+        u = u + du
+        o_t = ge(u, u_threshold)
+        o_seq.append(o_t)
+        u = u * (1.0 - o_t) + u_rest * o_t
+    o = torch.stack(o_seq)
+    u_last = u
+    return o, u_last

@@ -11,11 +11,11 @@ import re
 import matplotlib
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.font_manager import FontProperties
+from matplotlib.font_manager import FontProperties, findSystemFonts
 from typing import Tuple, Iterable, Union, Optional
 
 
-plt.rcParams['font.family'] = ['SimSun', 'Times New Roman']
+plt.rcParams['font.family'] = ['Helvetica Neue', 'Arial']
 plt.rcParams['mathtext.fontset'] = 'stix'
 
 

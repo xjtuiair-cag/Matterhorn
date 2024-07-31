@@ -3,7 +3,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import matterhorn_pytorch as mth
 import matterhorn_pytorch.snn as snn
-from matterhorn_pytorch.data import NMNIST
+from matterhorn_pytorch.data import CIFAR10DVS
+import argparse
 from functions import *
 from rich import print
 
@@ -13,13 +14,24 @@ def main():
 
     print_title("Hyper Parameters")
 
-    time_steps = 128
-    batch_size = 64
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    epochs = 64
-    learning_rate = 1e-3
-    momentum = 0.9
-    tau = 2.0
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--time-steps", type = int, default = 128, help = "Time steps.")
+    parser.add_argument("--batch-size", type = int, default = 64, help = "Batch size.")
+    parser.add_argument("--device", type = str, default = "cpu", help = "Device for running the models.")
+    parser.add_argument("--epochs", type = int, default = 100, help = "Training epochs.")
+    parser.add_argument("--learning-rate", type = float, default = 1e-2, help = "Learning rate.")
+    parser.add_argument("--momentum", type = float, default = 0.9, help = "Momentum for optimizer.")
+    parser.add_argument("--tau-m", type = float, default = 2.0, help = "Membrane constant.")
+
+    args = parser.parse_args()
+    time_steps = args.time_steps
+    batch_size = args.batch_size
+    device = torch.device(args.device)
+    epochs = args.epochs
+    learning_rate = args.learning_rate
+    momentum = args.momentum
+    tau = args.tau_m
+
     print_params({
         "Time Steps": time_steps,
         "Batch Size": batch_size,
@@ -33,12 +45,86 @@ def main():
 
     model = snn.Sequential(
         snn.DirectEncoder(),
-        snn.Conv2d(in_channels = 2, out_channels = 4, kernel_size = 3, stride = 2, padding = 0, bias = False), # [T, 4, 16, 16]
-        snn.LIF(tau_m = tau),
-        snn.Conv2d(in_channels = 4, out_channels = 8, kernel_size = 3, stride = 2, padding = 1, bias = False), # [T, 8, 8, 8]
-        snn.LIF(tau_m = tau),
+        snn.Conv2d(
+            in_channels = 2,
+            out_channels = 64,
+            kernel_size = 3,
+            stride = 2,
+            padding = 0
+        ), # [T, 64, 16, 16]
+        snn.LIF(
+            tau_m = tau
+        ),
+        snn.Conv2d(
+            in_channels = 64,
+            out_channels = 128,
+            kernel_size = 3,
+            stride = 2,
+            padding = 1
+        ), # [T, 128, 8, 8]
+        snn.LIF(
+            tau_m = tau
+        ),
+        snn.Conv2d(
+            in_channels = 128,
+            out_channels = 256,
+            kernel_size = 3,
+            stride = 2,
+            padding = 1
+        ), # [T, 256, 4, 4]
+        snn.LIF(
+            tau_m = tau
+        ),
+        snn.Conv2d(
+            in_channels = 256,
+            out_channels = 256,
+            kernel_size = 3
+        ), # [T, 256, 4, 4]
+        snn.LIF(
+            tau_m = tau
+        ),
+        snn.Conv2d(
+            in_channels = 256,
+            out_channels = 512,
+            kernel_size = 3,
+            stride = 2,
+            padding = 1
+        ), # [T, 512, 2, 2]
+        snn.LIF(
+            tau_m = tau
+        ),
+        snn.Conv2d(
+            in_channels = 512,
+            out_channels = 512,
+            kernel_size = 3
+        ), # [T, 512, 2, 2]
+        snn.LIF(
+            tau_m = tau
+        ),
+        snn.Conv2d(
+            in_channels = 512,
+            out_channels = 512,
+            kernel_size = 3,
+            stride = 2,
+            padding = 1
+        ), # [T, 512, 1, 1]
+        snn.LIF(
+            tau_m = tau
+        ),
+        snn.Conv2d(
+            in_channels = 512,
+            out_channels = 512,
+            kernel_size = 3
+        ), # [T, 512, 1, 1]
+        snn.LIF(
+            tau_m = tau
+        ),
         snn.Flatten(),
-        snn.Linear(512, 10, bias = False),
+        snn.Linear(
+            in_features = 512,
+            out_features = 10,
+            bias = False
+        ),
         snn.AvgSpikeDecoder()
     ).multi_step_mode_()
     model = model.to(device)
@@ -46,16 +132,18 @@ def main():
 
     print_title("Dataset")
 
-    train_dataset = NMNIST(
+    train_dataset = CIFAR10DVS(
         root = "./examples/data",
         train = True,
         download = True,
+        cached = False,
         time_steps = time_steps
     )
-    test_dataset = NMNIST(
+    test_dataset = CIFAR10DVS(
         root = "./examples/data",
         train = False,
         download = True,
+        cached = False,
         time_steps = time_steps
     )
     train_data_loader = DataLoader(
@@ -83,6 +171,7 @@ def main():
     log_dir = os.path.join(log_dir, sub_dir)
     init_logs(
         log_dir = log_dir,
+        args = args,
         model = model
     )
     

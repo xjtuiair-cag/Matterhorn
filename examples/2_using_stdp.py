@@ -4,6 +4,7 @@ import torchvision
 from torch.utils.data import DataLoader
 import matterhorn_pytorch.snn as snn
 from torchvision.datasets.mnist import MNIST
+import argparse
 from functions import *
 from rich import print
 
@@ -13,13 +14,24 @@ def main():
 
     print_title("Hyper Parameters")
 
-    time_steps = 128
-    batch_size = 64
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    epochs = 100
-    learning_rate = 1e-3
-    momentum = 0.9
-    tau = 2.0
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--time-steps", type = int, default = 128, help = "Time steps.")
+    parser.add_argument("--batch-size", type = int, default = 64, help = "Batch size.")
+    parser.add_argument("--device", type = str, default = "cpu", help = "Device for running the models.")
+    parser.add_argument("--epochs", type = int, default = 100, help = "Training epochs.")
+    parser.add_argument("--learning-rate", type = float, default = 1e-2, help = "Learning rate.")
+    parser.add_argument("--momentum", type = float, default = 0.9, help = "Momentum for optimizer.")
+    parser.add_argument("--tau-m", type = float, default = 2.0, help = "Membrane constant.")
+
+    args = parser.parse_args()
+    time_steps = args.time_steps
+    batch_size = args.batch_size
+    device = torch.device(args.device)
+    epochs = args.epochs
+    learning_rate = args.learning_rate
+    momentum = args.momentum
+    tau = args.tau_m
+
     print_params({
         "Time Steps": time_steps,
         "Batch Size": batch_size,
@@ -92,6 +104,7 @@ def main():
     log_dir = os.path.join(log_dir, sub_dir)
     init_logs(
         log_dir = log_dir,
+        args = args,
         model = model
     )
 

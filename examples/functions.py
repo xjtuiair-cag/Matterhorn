@@ -4,6 +4,7 @@ import matterhorn_pytorch as mth
 import time
 import datetime
 import os
+from argparse import Namespace
 from typing import Tuple, Dict, Union
 from rich import print
 from rich.panel import Panel
@@ -88,7 +89,7 @@ def test_one_epoch(model: torch.nn.Module, data_loader: DataLoader, num_classes:
     return model, test_loss, test_acc
 
 
-def init_logs(log_dir: str, model: torch.nn.Module) -> None:
+def init_logs(log_dir: str, args: Namespace, model: torch.nn.Module) -> None:
     """
     初始化日志文件夹和日志文件。
     Args:
@@ -96,6 +97,8 @@ def init_logs(log_dir: str, model: torch.nn.Module) -> None:
         model (torch.nn.Module | torch.nn.Module*): 所使用的模型
     """
     os.makedirs(log_dir, exist_ok = True)
+    with open(os.path.join(log_dir, "hyper_parameters.txt"), "w") as f:
+        f.write(repr(args))
     with open(os.path.join(log_dir, "result.csv"), "w") as f:
         f.write("Epoch,Training Loss,Training Accuracy,Testing Loss,Testing Accuracy,Duration\n")
     save_model(log_dir, "last", model)
