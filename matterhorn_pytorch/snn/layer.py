@@ -12,7 +12,7 @@ import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
 from matterhorn_pytorch.snn.soma import Soma as _Soma
 from matterhorn_pytorch.snn.container import Temporal as _Temporal
-from typing import Any as _Any, Tuple as _Tuple, Iterable as _Iterable, Callable as _Callable, Optional as _Optional, Union as _Union
+from typing import Any as _Any, Tuple as _Tuple, Iterable as _Iterable, Mapping as _Mapping, Callable as _Callable, Optional as _Optional, Union as _Union
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
 from matterhorn_pytorch.training.functional import stdp_online as _stdp_online
@@ -29,27 +29,28 @@ class Layer(_Module):
         self.spike_mode = spike_mode.lower() if isinstance(spike_mode, str) else None
 
 
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+    def forward_steps(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
-            *args: 输入
-            **kwargs: 输入
+            *args (*torch.Tensor): 输入
+            **kwargs (str: Any): 输入
         Returns:
             res (torch.Tensor): 输出
         """
-        args, kwargs, tb = _SF.merge_time_steps_batch_size(args, kwargs)
+        time_steps, batch_size = args[0].shape[:2]
+        args = [_SF.merge_time_steps_batch_size(arg)[0] for arg in args]
         res = self.forward_step(*args, **kwargs)
-        res = _SF.split_time_steps_batch_size(res, tb)
+        res = _SF.split_time_steps_batch_size(res, (time_steps, batch_size))
         return res
 
 
-    def forward(self, *args, **kwargs) -> torch.Tensor:
+    def forward(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
         """
         前向传播函数。
         Args:
-            *args: 输入
-            **kwargs: 输入
+            *args (*torch.Tensor): 输入
+            **kwargs (str: Any): 输入
         Returns:
             res (torch.Tensor): 输出
         """
@@ -135,8 +136,8 @@ class f_stdp_linear(torch.autograd.Function):
             output_trace (torch.Tensor): 输出的迹，累积的输出效应
         """
         if multi_step_mode:
-            flattened_input, _, tb = _SF.merge_time_steps_batch_size(input)
-            psp = _F.linear(flattened_input[0], weight, bias = None)
+            flattened_input, tb = _SF.merge_time_steps_batch_size(input)
+            psp = _F.linear(flattened_input, weight, bias = None)
             psp = _SF.split_time_steps_batch_size(psp, tb)
         else:
             psp = _F.linear(input, weight, bias = None)
@@ -285,8 +286,8 @@ class f_stdp_conv2d(torch.autograd.Function):
             output_trace (torch.Tensor): 输出的迹，累积的输出效应
         """
         if multi_step_mode:
-            flattened_input, _, tb = _SF.merge_time_steps_batch_size(input)
-            psp = _F.conv2d(flattened_input[0], weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
+            flattened_input, tb = _SF.merge_time_steps_batch_size(input)
+            psp = _F.conv2d(flattened_input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
             psp = _SF.split_time_steps_batch_size(psp, tb)
         else:
             psp = _F.conv2d(input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))

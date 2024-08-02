@@ -44,11 +44,11 @@ class Container(_Module):
 
 
 class Sequential(Container, nn.Sequential):
-    def __init__(self, *args) -> None:
+    def __init__(self, *args: _Tuple[nn.Module]) -> None:
         """
         对Sequential进行重写，涵盖ANN与SNN的网络。
         Args:
-            args (*nn.Module): 按空间顺序传入的各个模块
+            *args (*nn.Module): 按空间顺序传入的各个模块
             multi_step_mode (nn.Module): 是否支持多时间步模式。
         """
         multi_step_mode = False
@@ -132,7 +132,7 @@ class Sequential(Container, nn.Sequential):
         return super().insert(index, module)
 
 
-    def forward(self, *args, **kwargs) -> torch.Tensor:
+    def forward(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
         """
         前向传播函数，默认接受的张量形状为[T,B,...]（需要将时间维度通过permute等函数转到最外）
         Args:
@@ -145,11 +145,11 @@ class Sequential(Container, nn.Sequential):
 
 
 class Spatial(Sequential):
-    def __init__(self, *args) -> None:
+    def __init__(self, *args: _Tuple[nn.Module]) -> None:
         """
         SNN的空间容器，用法同nn.Sequential，加入一些特殊的作用于SNN的函数。
         Args:
-            *args ([nn.Module]): 按空间顺序传入的各个模块
+            *args (*nn.Module): 按空间顺序传入的各个模块
         """
         for module in args:
             self._check_if_snn_module(module)
@@ -224,12 +224,12 @@ class Temporal(Container):
         self.module = module
 
 
-    def forward_step(self, *args, **kwargs) -> torch.Tensor:
+    def forward_step(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
-            *args: 输入
-            **kwargs: 输入
+            *args (*torch.Tensor): 输入
+            **kwargs (str: Any): 输入
         Returns:
             res (torch.Tensor): 输出
         """
@@ -485,12 +485,12 @@ class Agent(_Module):
         return self
 
 
-    def forward_step(self, *args, **kwargs) -> torch.Tensor:
+    def forward_step(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
-            *args: 输入
-            **kwargs: 输入
+            *args (*torch.Tensor): 输入
+            **kwargs (str: Any): 输入
         Returns:
             res (torch.Tensor): 输出
         """
@@ -500,12 +500,12 @@ class Agent(_Module):
         return res
 
 
-    def forward(self, *args, **kwargs) -> torch.Tensor:
+    def forward(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
         """
         前向传播函数。
         Args:
-            *args: 输入
-            **kwargs: 输入
+            *args (*torch.Tensor): 输入
+            **kwargs (str: Any): 输入
         Returns:
             res (torch.Tensor): 输出
         """

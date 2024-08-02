@@ -6,7 +6,7 @@ SNN模块的框架，在torch.nn的基础上，定义了几个SNN的基本函数
 
 import torch
 import torch.nn as nn
-from typing import Tuple as _Tuple
+from typing import Any as _Any, Tuple as _Tuple, Mapping as _Mapping
 
 
 class Module(nn.Module):
@@ -111,24 +111,24 @@ class Module(nn.Module):
         return self
 
 
-    def forward_step(self, *args, **kwargs) -> torch.Tensor:
+    def forward_step(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
-            *args: 输入
-            **kwargs: 输入
+            *args (*torch.Tensor): 输入
+            **kwargs (str: Any): 输入
         Returns:
             res (torch.Tensor): 输出
         """
         pass
 
 
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+    def forward_steps(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
-            *args: 输入
-            **kwargs: 输入
+            *args (*torch.Tensor): 输入
+            **kwargs (str: Any): 输入
         Returns:
             res (torch.Tensor): 输出
         """
@@ -147,12 +147,12 @@ class Module(nn.Module):
         return y
 
 
-    def forward(self, *args, **kwargs) -> torch.Tensor:
+    def forward(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
         """
         前向传播函数。
         Args:
-            *args: 输入
-            **kwargs: 输入
+            *args (*torch.Tensor): 输入
+            **kwargs (str: Any): 输入
         Returns:
             res (torch.Tensor): 输出
         """

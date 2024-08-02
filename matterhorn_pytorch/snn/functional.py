@@ -26,23 +26,17 @@ def to(u: _Optional[_Union[torch.Tensor, int, float]], x: torch.Tensor) -> torch
     return torch.zeros_like(x)
 
 
-def merge_time_steps_batch_size(tensors: _Union[torch.Tensor, _Tuple[torch.Tensor]], tensor_map: _Optional[_Mapping[str, torch.Tensor]] = None) -> _Tuple[_Iterable, _Mapping, _Iterable]:
-    if not isinstance(tensors, _Tuple):
-        tensors = (tensors,)
-    time_steps = tensors[0].shape[0]
-    batch_size = tensors[0].shape[1]
-    tensors = (tensor.flatten(0, 1) if isinstance(tensor, torch.Tensor) else tensor for tensor in tensors)
-    if tensor_map is not None:
-        tensor_map = {name: tensor.flatten(0, 1) if isinstance(tensor, torch.Tensor) else tensor for name, tensor in tensor_map.items()}
-    return tensors, tensor_map, [time_steps, batch_size]
+def merge_time_steps_batch_size(tensor: torch.Tensor) -> _Union[torch.Tensor, _Tuple[int, int]]:
+    time_steps, batch_size = tensor.shape[:2]
+    tensor = tensor.flatten(0, 1)
+    return tensor, (time_steps, batch_size)
 
 
-def split_time_steps_batch_size(tensors: _Union[torch.Tensor, _Tuple[torch.Tensor]], time_steps_batch_size: _Iterable) -> _Union[torch.Tensor, _Tuple[torch.Tensor]]:
-    if isinstance(tensors, _Tuple):
-        tensors = (tensor.reshape(list(time_steps_batch_size) + list(tensor.shape[1:])) if isinstance(tensor, torch.Tensor) else tensor for tensor in tensors)
-    else:
-        tensors = tensors.reshape(list(time_steps_batch_size) + list(tensors.shape[1:])) if isinstance(tensors, torch.Tensor) else tensors
-    return tensors
+def split_time_steps_batch_size(tensor: torch.Tensor, time_steps_batch_size: _Tuple[int, int]) -> torch.Tensor:
+    time_steps, batch_size = time_steps_batch_size
+    assert time_steps * batch_size == tensor.shape[0], "Incorrect shape for splitting."
+    tensor = tensor.reshape([time_steps, batch_size] + list(tensor.shape[1:]))
+    return tensor
 
 
 class _val_to_spike(torch.autograd.Function):

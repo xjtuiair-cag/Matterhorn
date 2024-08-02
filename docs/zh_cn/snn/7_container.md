@@ -30,7 +30,7 @@ SNN 模块的容器，用于组合各个 `matterhorn_pytorch.snn.Module` 。
 
 ```python
 Spatial(
-    *args
+    *args: Tuple[nn.Module]
 )
 ```
 
@@ -93,7 +93,7 @@ SNN 序列容器，结合了 `Spatial` 容器与 `Temporal` 容器的产物。�
 
 ```python
 Sequential(
-    *args
+    *args: Tuple[nn.Module]
 )
 ```
 

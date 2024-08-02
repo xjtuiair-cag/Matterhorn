@@ -81,7 +81,7 @@ class Soma(_Module):
         构建单个扩展。
         Args:
             ext_name (str): 扩展名
-            **kwargs: 构建参数
+            **kwargs (str: Any): 构建参数
         """
         res = None
         try:

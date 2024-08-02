@@ -12,7 +12,7 @@ import matterhorn_pytorch.snn.functional as _SF
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 from torch.nn.modules.normalization import _shape_t
 from matterhorn_pytorch.snn.skeleton import Module as _Module
-from typing import Tuple as _Tuple, Union as _Union, Optional as _Optional
+from typing import Any as _Any, Tuple as _Tuple, Mapping as _Mapping, Union as _Union, Optional as _Optional
 
 
 class Synapse(_Module):
@@ -23,18 +23,19 @@ class Synapse(_Module):
         super().__init__()
 
 
-    def forward_steps(self, *args, **kwargs) -> torch.Tensor:
+    def forward_steps(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
-            *args: 输入
-            **kwargs: 输入
+            *args (*torch.Tensor): 输入
+            **kwargs (str: Any): 输入
         Returns:
             res (torch.Tensor): 输出
         """
-        args, kwargs, tb = _SF.merge_time_steps_batch_size(args, kwargs)
+        time_steps, batch_size = args[0].shape[:2]
+        args = [_SF.merge_time_steps_batch_size(arg)[0] for arg in args]
         res = self.forward_step(*args, **kwargs)
-        res = _SF.split_time_steps_batch_size(res, tb)
+        res = _SF.split_time_steps_batch_size(res, (time_steps, batch_size))
         return res
 
 

@@ -6,9 +6,9 @@
 
 import torch
 import torch.nn as nn
-from torchvision.transforms import Compose
-import matterhorn_pytorch.data.functional as DF
-from typing import Iterable
+import torchvision.transforms as _tf
+import matterhorn_pytorch.snn.functional as _SF
+import matterhorn_pytorch.data.functional as _DF
 
 
 class Clip(nn.Module):
@@ -44,3 +44,12 @@ class Sampling(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return x[::self.sampling_span]
+
+
+class TemporalCompose(_tf.Compose):
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:
+        x, tb = _SF.merge_time_steps_batch_size(x)
+        for t in self.transforms:
+            x = t(x)
+        x = _SF.split_time_steps_batch_size(x, tb)
+        return x

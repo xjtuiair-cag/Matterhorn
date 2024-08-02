@@ -30,7 +30,7 @@ Spatial container, similar to `torch.nn.Sequential`, but:
 
 ```python
 Spatial(
-    *args
+    *args: Tuple[nn.Module]
 )
 ```
 
@@ -93,7 +93,7 @@ SNN sequential container, a combination of `Spatial` and `Temporal` containers. 
 
 ```python
 Sequential(
-    *args
+    *args: Tuple[nn.Module]
 )
 ```
 
