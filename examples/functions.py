@@ -248,7 +248,7 @@ def train_and_test(epochs: int, model: torch.nn.Module, train_data_loader: DataL
         )
         last_data = current_data
         with open(os.path.join(log_dir, "result.csv"), "a") as f:
-            f.write("%d, %g, %g, %g, %g, %g\n" % (e, learning_rate, train_loss, train_acc, test_loss, test_acc, duration))
+            f.write("%d, %g, %g, %g, %g, %g, %g\n" % (e, learning_rate, train_loss, train_acc, test_loss, test_acc, duration))
 
         if scheduler is not None:
             scheduler.step()
