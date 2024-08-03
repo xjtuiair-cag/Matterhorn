@@ -18,7 +18,7 @@ def main():
     parser.add_argument("--batch-size", type = int, default = 64, help = "Batch size.")
     parser.add_argument("--device", type = str, default = "cpu", help = "Device for running the models.")
     parser.add_argument("--epochs", type = int, default = 100, help = "Training epochs.")
-    parser.add_argument("--learning-rate", type = float, default = 0.001, help = "Learning rate.")
+    parser.add_argument("--learning-rate", type = float, default = 0.1, help = "Learning rate.")
     parser.add_argument("--momentum", type = float, default = 0.9, help = "Momentum for optimizer.")
     parser.add_argument("--tau-m", type = float, default = 2.0, help = "Membrane constant.")
 
@@ -47,12 +47,12 @@ def main():
             time_steps = time_steps
         ),
         snn.Flatten(),
-        snn.Linear(28 * 28, 80),
+        snn.WSLinear(28 * 28, 80),
         lsm.LSM(
             adjacent = lsm.functional.init_adjacent_uniform(80, 0.4),
             soma = snn.LIF()
         ),
-        snn.Linear(80, 10),
+        snn.WSLinear(80, 10),
         lsm.LSM(
             adjacent = lsm.functional.init_adjacent_uniform(10, 0.4),
             soma = snn.LIF()

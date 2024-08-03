@@ -39,6 +39,39 @@ class Synapse(_Module):
         return res
 
 
+class _WeightStd(_Module):
+    def __init__(self, num_features: int, affine: bool = True, eps: float = 1e-6, device: torch.device = None, dtype: torch.dtype = None) -> None:
+        """
+        权重标准化。
+        Args:
+            num_features (int): 输出通道个数
+            affine (bool): 是否对标准化后的权重进行仿射操作
+            eps (float): 方差偏移量
+            device (torch.device): 所计算的设备
+            dtype (torch.dtype): 所计算的数据类型
+        """
+        self.num_features = num_features
+        self.eps = eps
+        self.gamma = nn.Parameter(torch.ones(num_features, device = device, dtype = dtype), requires_grad = affine)
+        self.beta = nn.Parameter(torch.zeros(num_features, device = device, dtype = dtype), requires_grad = False)
+
+
+    @property
+    def weight_std(self) -> torch.Tensor:
+        assert hasattr(self, "weight"), "The property weight doesn't exist."
+        weight: torch.Tensor = getattr(self, "weight")
+        dims = tuple(range(1, weight.ndim))
+        affine_shape = [self.num_features] + [1] * (weight.ndim - 1)
+        n = torch.prod(torch.tensor(weight.shape[1:])).to(weight)
+        mean = torch.mean(weight, dim = dims, keepdims = True).detach()
+        var = torch.var(weight, dim = dims, keepdims = True).detach()
+        weight = (weight - mean) / ((var * n) ** 0.5 + self.eps)
+        gamma = self.gamma.reshape(*affine_shape)
+        beta = self.beta.reshape(*affine_shape)
+        weight = weight * gamma + beta
+        return weight
+
+
 class Linear(Synapse, nn.Linear):
     def __init__(self, in_features: int, out_features: int, bias: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -79,6 +112,49 @@ class Linear(Synapse, nn.Linear):
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.Linear.forward(self, o)
+        return x
+
+
+class WSLinear(_WeightStd, Linear):
+    def __init__(self, in_features: int, out_features: int, bias: bool = True, affine: bool = True, eps: float = 1e-6, device: torch.device = None, dtype: torch.dtype = None) -> None:
+        """
+        权重标准化的全连接操作。
+        Args:
+            in_features: 输入的长度L_{in}
+            out_features: 输出的长度L_{out}
+            bias (bool): 是否要加入偏置
+            affine (bool): 是否对标准化后的权重进行仿射操作
+            eps (float): 方差偏移量
+            device (torch.device): 所计算的设备
+            dtype (torch.dtype): 所计算的数据类型
+        """
+        Linear.__init__(
+            self,
+            in_features = in_features,
+            out_features = out_features,
+            bias = bias,
+            device = device,
+            dtype = dtype
+        )
+        _WeightStd.__init__(
+            self,
+            num_features = out_features,
+            affine = affine,
+            eps = eps,
+            device = device,
+            dtype = dtype
+        )
+
+
+    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
+        """
+        单个时间步的前向传播函数。
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        """
+        x = _F.linear(o, self.weight_std, self.bias)
         return x
 
 
@@ -137,6 +213,61 @@ class Conv1d(Synapse, nn.Conv1d):
         return x
 
 
+class WSConv1d(_WeightStd, Conv1d):
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: _Union[_size_1_t, str] = 0, dilation: _size_1_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", affine: bool = True, eps: float = 1e-6, device: torch.device = None, dtype: torch.dtype = None) -> None:
+        """
+        权重标准化的一维卷积操作。
+        Args:
+            in_channels (int): 输入的频道数C_{in}
+            out_channels (int): 输出的频道C_{out}
+            kernel_size (size_1_t): 卷积核的形状
+            stride (size_1_t): 卷积的输出步长，决定卷积输出的形状
+            padding (size_1_t | str): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            dilation (size_1_t): 卷积的输入步长
+            groups (int): 分组进行卷积操作的组数
+            bias (bool): 是否要加入偏置
+            padding_mode (str): 边缘填充的方式
+            affine (bool): 是否对标准化后的权重进行仿射操作
+            eps (float): 方差偏移量
+            device (torch.device): 所计算的设备
+            dtype (torch.dtype): 所计算的数据类型
+        """
+        Conv1d.__init__(
+            self,
+            in_channels = in_channels,
+            out_channels = out_channels,
+            kernel_size = kernel_size,
+            stride = stride,
+            padding = padding,
+            dilation = dilation,
+            groups = groups,
+            bias = bias,
+            padding_mode = padding_mode,
+            device = device,
+            dtype = dtype
+        )
+        _WeightStd.__init__(
+            self,
+            num_features = out_channels,
+            affine = affine,
+            eps = eps,
+            device = device,
+            dtype = dtype
+        )
+
+
+    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
+        """
+        单个时间步的前向传播函数。
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        """
+        x = _F.conv1d(o, self.weight_std, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        return x
+
+
 class Conv2d(Synapse, nn.Conv2d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _Union[_size_2_t, str] = 0, dilation: _size_2_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -192,6 +323,61 @@ class Conv2d(Synapse, nn.Conv2d):
         return x
 
 
+class WSConv2d(_WeightStd, Conv2d):
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _Union[_size_2_t, str] = 0, dilation: _size_2_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", affine: bool = True, eps: float = 1e-6, device: torch.device = None, dtype: torch.dtype = None) -> None:
+        """
+        权重标准化的二维卷积操作。
+        Args:
+            in_channels (int): 输入的频道数C_{in}
+            out_channels (int): 输出的频道C_{out}
+            kernel_size (size_2_t): 卷积核的形状
+            stride (size_2_t): 卷积的输出步长，决定卷积输出的形状
+            padding (size_2_t | str): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            dilation (size_2_t): 卷积的输入步长
+            groups (int): 分组进行卷积操作的组数
+            bias (bool): 是否要加入偏置
+            padding_mode (str): 边缘填充的方式
+            affine (bool): 是否对标准化后的权重进行仿射操作
+            eps (float): 方差偏移量
+            device (torch.device): 所计算的设备
+            dtype (torch.dtype): 所计算的数据类型
+        """
+        Conv2d.__init__(
+            self,
+            in_channels = in_channels,
+            out_channels = out_channels,
+            kernel_size = kernel_size,
+            stride = stride,
+            padding = padding,
+            dilation = dilation,
+            groups = groups,
+            bias = bias,
+            padding_mode = padding_mode,
+            device = device,
+            dtype = dtype
+        )
+        _WeightStd.__init__(
+            self,
+            num_features = out_channels,
+            affine = affine,
+            eps = eps,
+            device = device,
+            dtype = dtype
+        )
+
+
+    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
+        """
+        单个时间步的前向传播函数。
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        """
+        x = _F.conv2d(o, self.weight_std, self.bias, self.stride, self.padding, self.dilation, self.groups)
+        return x
+
+
 class Conv3d(Synapse, nn.Conv3d):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _Union[_size_3_t, str] = 0, dilation: _size_3_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -244,6 +430,61 @@ class Conv3d(Synapse, nn.Conv3d):
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
         x = nn.Conv3d.forward(self, o)
+        return x
+
+
+class WSConv3d(_WeightStd, Conv3d):
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _Union[_size_3_t, str] = 0, dilation: _size_3_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", affine: bool = True, eps: float = 1e-6, device: torch.device = None, dtype: torch.dtype = None) -> None:
+        """
+        权重标准化的三维卷积操作。
+        Args:
+            in_channels (int): 输入的频道数C_{in}
+            out_channels (int): 输出的频道C_{out}
+            kernel_size (size_3_t): 卷积核的形状
+            stride (size_3_t): 卷积的输出步长，决定卷积输出的形状
+            padding (size_3_t | str): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
+            dilation (size_3_t): 卷积的输入步长
+            groups (int): 分组进行卷积操作的组数
+            bias (bool): 是否要加入偏置
+            padding_mode (str): 边缘填充的方式
+            affine (bool): 是否对标准化后的权重进行仿射操作
+            eps (float): 方差偏移量
+            device (torch.device): 所计算的设备
+            dtype (torch.dtype): 所计算的数据类型
+        """
+        Conv3d.__init__(
+            self,
+            in_channels = in_channels,
+            out_channels = out_channels,
+            kernel_size = kernel_size,
+            stride = stride,
+            padding = padding,
+            dilation = dilation,
+            groups = groups,
+            bias = bias,
+            padding_mode = padding_mode,
+            device = device,
+            dtype = dtype
+        )
+        _WeightStd.__init__(
+            self,
+            num_features = out_channels,
+            affine = affine,
+            eps = eps,
+            device = device,
+            dtype = dtype
+        )
+
+
+    def forward_step(self, o: torch.Tensor) -> torch.Tensor:
+        """
+        单个时间步的前向传播函数。
+        Args:
+            o (torch.Tensor): 来自上一层的输入脉冲$O_{j}^{l-1}(t)$
+        Returns:
+            x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
+        """
+        x = _F.conv3d(o, self.weight_std, self.bias, self.stride, self.padding, self.dilation, self.groups)
         return x
 
 
