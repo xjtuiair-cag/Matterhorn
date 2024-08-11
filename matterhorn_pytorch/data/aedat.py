@@ -83,8 +83,8 @@ class AEDAT(EventDataset2d):
         with open(filename, 'rb') as f:
             data_str = f.read()
             lines = data_str.split(b'\n')
-            for line in range(len(lines)):
-                if not lines[line].startswith(b'#'):
+            for line, contents in enumerate(lines):
+                if not contents.startswith(b'#'):
                     break
             lines = lines[line:]
             data_str = b'\n'.join(lines)
@@ -386,8 +386,8 @@ class DVS128Gesture(AEDAT):
         with open(filename, 'rb') as f:
             data_str = f.read()
             lines = data_str.split(b'\n')
-            for line in range(len(lines)):
-                if not lines[line].startswith(b'#'):
+            for line, contents in enumerate(lines):
+                if not contents.startswith(b'#'):
                     break
             lines = lines[line:]
             data_str = b'\n'.join(lines)

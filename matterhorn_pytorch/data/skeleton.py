@@ -228,7 +228,7 @@ class EventDataset(Dataset):
                 wait(task_pool)
 
                 # 检查线程有无出错
-                for k in range(len(task_pool)):
+                for k, t in enumerate(task_pool):
                     t = task_pool[k]
                     if t.exception():
                         print("[red bold]Error occured in thread %d:[/red bold]" % (idx,))

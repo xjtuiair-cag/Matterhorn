@@ -27,6 +27,14 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
     model = deepcopy(model)
     res: snn.Module = None
     # 1. 逐个替换模块
+    def _clone_params(ann_module: nn.Module, snn_module: snn.Module) -> snn.Module:
+        params = ann_module.state_dict()
+        new_params = snn_module.state_dict()
+        for name in params:
+            new_params[name] = params[name].clone()
+        snn_module.load_state_dict(new_params)
+        return snn_module
+
     def _replace(ann_module: nn.Module) -> snn.Module:
         snn_module: snn.Module = None
         # 全连接层
@@ -38,10 +46,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 device = ann_module.weight.device,
                 dtype = ann_module.weight.dtype
             )
-            params = ann_module.state_dict()
-            for name in params:
-                params[name] = params[name].clone()
-            snn_module.load_state_dict()
+            snn_module = _clone_params(ann_module, snn_module)
         # 卷积层
         elif isinstance(ann_module, (nn.Conv1d, nn.Conv2d, nn.Conv3d)):
             kwargs = dict(
@@ -63,10 +68,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 snn_module = snn.Conv2d(**kwargs)
             elif isinstance(ann_module, nn.Conv3d):
                 snn_module = snn.Conv3d(**kwargs)
-            params = ann_module.state_dict()
-            for name in params:
-                params[name] = params[name].clone()
-            snn_module.load_state_dict(params)
+            snn_module = _clone_params(ann_module, snn_module)
         # 转置卷积层
         elif isinstance(ann_module, (nn.ConvTranspose1d, nn.ConvTranspose2d, nn.ConvTranspose3d)):
             kwargs = dict(
@@ -89,10 +91,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 snn_module = snn.ConvTranspose2d(**kwargs)
             elif isinstance(ann_module, nn.ConvTranspose3d):
                 snn_module = snn.ConvTranspose3d(**kwargs)
-            params = ann_module.state_dict()
-            for name in params:
-                params[name] = params[name].clone()
-            snn_module.load_state_dict(params)
+            snn_module = _clone_params(ann_module, snn_module)
         elif isinstance(ann_module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.LayerNorm)):
             snn_module = snn.synapse.NormPlaceholder(
                 num_features = ann_module.num_features,
@@ -103,10 +102,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 device = ann_module.running_mean.device,
                 dtype = ann_module.running_mean.dtype
             )
-            params = ann_module.state_dict()
-            for name in params:
-                params[name] = params[name].clone()
-            snn_module.load_state_dict(params)
+            snn_module = _clone_params(ann_module, snn_module)
         # 激活函数
         elif isinstance(ann_module, (nn.ReLU, nn.LeakyReLU, nn.ELU, nn.SELU, nn.GELU)):
             snn_module = snn.IF(
@@ -297,7 +293,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                     gamma = norm_params["weight"]
                     beta = norm_params["bias"]
                     w = synapse_params["weight"].clone()
-                    for i in range(len(mu)):
+                    for i, el in enumerate(mu):
                         w[i] = gamma[i] / sigma[i] * w[i]
                     synapse_params["weight"] = w
                     has_bias = "bias" in synapse_params

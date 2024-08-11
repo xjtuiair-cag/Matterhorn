@@ -73,6 +73,41 @@ class Direct(Encoder):
         return y
 
 
+class Analog(Encoder):
+    def __init__(self, time_steps: int = 1) -> None:
+        """
+        模拟值值编码，每个时间步都输入模拟值。
+        Args:
+            time_steps (int): 生成的时间步长
+        """
+        super().__init__()
+        self.time_steps = time_steps
+
+
+    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        单步前向传播函数。
+        Args:
+            x (torch.Tensor): 输入张量，形状为[B,...]
+        Returns:
+            y (torch.Tensor): 输出张量，形状为[B,...]
+        """
+        y = x
+        return y
+    
+
+    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        多步前向传播函数。
+        Args:
+            x (torch.Tensor): 输入张量，形状为[B,...]
+        Returns:
+            y (torch.Tensor): 输出张量，形状为[T, B,...]
+        """
+        y = torch.stack([x] * self.time_steps)
+        return y
+
+
 class Poisson(Encoder):
     def __init__(self, time_steps: int = 1, input_range: _Optional[_Union[_Tuple, float, int]] = None, precision: float = 1e-9, spike_mode: str = "s") -> None:
         """

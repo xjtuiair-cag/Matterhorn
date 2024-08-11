@@ -71,7 +71,7 @@ def translate_stacks(expr: str):
         return es, eb
     
     last_is_op = False
-    for idx in range(len(expr)):
+    for idx, s in enumerate(expr):
         s = expr[idx]
         if s == "(":
             if bracket_level == 0:
@@ -167,8 +167,7 @@ def translate(expr: str):
 
 
 def param_init(param_list: List, param_dict: Dict = {}):
-    for idx in range(len(param_list)):
-        p = param_list[idx]
+    for idx, p in enumerate(param_list):
         if not isinstance(p, float):
             assert p in param_dict, "Unknown parameter %s" % (p,)
             param_list[idx] = param_dict[p]

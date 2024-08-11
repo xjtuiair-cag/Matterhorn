@@ -689,8 +689,9 @@ def graph_plot_by_adjacent(adjacent: Union[np.ndarray, torch.Tensor], show: bool
     synapses = []
     axons, dendrites = torch.nonzero(adjacent, as_tuple = True)
     axons, dendrites = axons.cpu().numpy().tolist(), dendrites.cpu().numpy().tolist()
-    for i in range(len(axons)):
-        synapses.append({"source": axons[i], "target": dendrites[i]})
+    for i, axon in enumerate(axons):
+        dendrite = dendrites[i]
+        synapses.append({"source": axon, "target": dendrite})
     graph = Graph({
         "title": "LSM Graph",
         "width": "1920px",

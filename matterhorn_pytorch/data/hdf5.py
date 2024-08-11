@@ -183,14 +183,13 @@ class SpikingHeidelbergDigits(HDF5):
             is_train_str = "train" if is_train else "test"
             raw_data = SpikingHeidelbergDigits.filename_to_data(os.path.join(self.extracted_folder, "shd_%s.h5" % (is_train_str,)))
             label_list = raw_data["labels"][:]
-            for idx in track(range(len(label_list)), description = "Processing %sing set" % (is_train_str,)):
+            for idx, label in track(enumerate(label_list), description = "Processing %sing set" % (is_train_str,)):
                 t = np.floor(raw_data["spikes"]["times"][idx] * self.precision).astype("uint32")
                 x = raw_data["spikes"]["units"][idx]
                 event_data = np.zeros((len(x), 2), dtype = "uint32")
                 event_data[:, 0] = t
                 event_data[:, 1] = x
                 event_data = event_data[np.argsort(event_data[:, 0])]
-                label = label_list[idx]
                 self.create_processed(file_idx, event_data)
                 file_list.append([file_idx, label, is_train])
                 file_idx += 1

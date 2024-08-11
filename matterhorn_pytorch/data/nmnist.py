@@ -161,8 +161,7 @@ class NMNIST(EventDataset2d):
         file_idx = 0
         for is_train in range(2):
             is_train_str = "Train" if is_train else "Test"
-            for label in track(range(len(self.labels)), description = "Processing %sing set" % (is_train_str.lower(),)):
-                label_str = self.labels[label]
+            for label, label_str in track(enumerate(self.labels), description = "Processing %sing set" % (is_train_str.lower(),)):
                 raw_file_dir = os.path.join(self.extracted_folder, is_train_str, label_str)
                 raw_file_list = os.listdir(raw_file_dir)
                 for raw_filename in raw_file_list:

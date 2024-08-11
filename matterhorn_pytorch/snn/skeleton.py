@@ -141,7 +141,7 @@ class Module(nn.Module):
             kwargs_t = {k: x[t] if isinstance(x, torch.Tensor) else x for k, x in kwargs}
             result.append(self.forward_step(*args_t, **kwargs_t))
         if isinstance(result[0], _Tuple):
-            y = (torch.stack([result[t][col] for t in range(len(result))]) if isinstance(result[0][col], torch.Tensor) else result[0][col] for col in range(len(result[0])))
+            y = (torch.stack([r[col] for r in result]) if isinstance(el, torch.Tensor) else el for col, el in enumerate(result[0]))
         else:
             y = torch.stack(result)
         return y

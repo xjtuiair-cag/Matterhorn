@@ -32,7 +32,7 @@ def event_seq_to_spike_train(event_seq: torch.Tensor, shape: Iterable = None, or
     if original_shape is None:
         original_shape = shape
     spike_train = torch.zeros(*shape, dtype = torch.float)
-    for idx in range(len(shape)):
+    for idx, el in enumerate(shape):
         if not event_seq.shape[0]:
             spike_train = spike_train.to(event_seq.device)
             return spike_train

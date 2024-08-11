@@ -34,15 +34,6 @@ class Container(_Module):
         super().__init__()
 
 
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来。
-        Returns:
-            repr_str (str): 参数表
-        """
-        return ""
-
-
 class Sequential(Container, nn.Sequential):
     def __init__(self, *args: _Tuple[nn.Module]) -> None:
         """
@@ -67,8 +58,7 @@ class Sequential(Container, nn.Sequential):
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
         """
         Container.multi_step_mode_(self, if_on)
-        for idx in range(len(self)):
-            module = self[idx]
+        for idx, module in enumerate(self):
             is_snn_module = isinstance(module, _Module)
             if is_snn_module:
                 self[idx] = _multi_step_mode_(module, if_on)
@@ -134,7 +124,7 @@ class Sequential(Container, nn.Sequential):
 
     def forward(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
         """
-        前向传播函数，默认接受的张量形状为[T,B,...]（需要将时间维度通过permute等函数转到最外）
+        前向传播函数，默认接受的张量形状为[B,...]（需要将时间维度通过permute等函数转到最外）
         Args:
             x (torch.Tensor): 输入张量
         Returns:
@@ -233,7 +223,9 @@ class Temporal(Container):
         Returns:
             res (torch.Tensor): 输出
         """
-        return self.module.forward_step(*args, **kwargs)
+        if self.module.multi_step_mode:
+            self.module.single_step_mode_()
+        return self.module(*args, **kwargs)
 
 
 class ModuleList(Container, nn.ModuleList):
@@ -248,6 +240,19 @@ class ModuleList(Container, nn.ModuleList):
             self,
             modules = modules
         )
+
+
+    def multi_step_mode_(self, if_on: bool = True) -> nn.Module:
+        """
+        调整模型至多时间步模式。
+        Args
+            if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
+        """
+        for idx, module in enumerate(self):
+            is_snn_module = isinstance(module, _Module)
+            if is_snn_module:
+                self[idx] = _multi_step_mode_(module, if_on)
+        return self
 
 
     def __add__(self, other: _Iterable[nn.Module]) -> "ModuleList":
@@ -277,6 +282,19 @@ class ModuleDict(Container, nn.ModuleDict):
             self,
             modules = modules
         )
+
+
+    def multi_step_mode_(self, if_on: bool = True) -> nn.Module:
+        """
+        调整模型至多时间步模式。
+        Args
+            if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
+        """
+        for idx, module in enumerate(self):
+            is_snn_module = isinstance(module, _Module)
+            if is_snn_module:
+                self[idx] = _multi_step_mode_(module, if_on)
+        return self
 
 
 class Agent(_Module):
@@ -494,8 +512,6 @@ class Agent(_Module):
         Returns:
             res (torch.Tensor): 输出
         """
-        if not isinstance(args, _Tuple):
-            args = (args,)
         res = self.nn_module(*args, **kwargs)
         return res
 
