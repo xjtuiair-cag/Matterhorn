@@ -79,6 +79,7 @@ class Module(nn.Module):
             self._multi_step_mode = False
         else:
             raise ValueError("Unsupported time step conversion on module %s" % (self.__class__.__name__,))
+        self.reset()
         return self
     
 

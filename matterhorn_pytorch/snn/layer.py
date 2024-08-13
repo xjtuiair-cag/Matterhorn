@@ -19,14 +19,14 @@ from matterhorn_pytorch.training.functional import stdp_online as _stdp_online
 
 
 class Layer(_Module):
-    def __init__(self, spike_mode: str = None) -> None:
+    def __init__(self, count: bool = False) -> None:
         """
         突触函数的骨架，定义突触最基本的函数。
         Args:
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         super().__init__()
-        self.spike_mode = spike_mode.lower() if isinstance(spike_mode, str) else None
+        self.count = count
 
 
     def forward_steps(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
@@ -55,12 +55,11 @@ class Layer(_Module):
             res (torch.Tensor): 输出
         """
         res = super().forward(*args, **kwargs)
-        if self.spike_mode in ("s", "m"):
-            f = _SF.floor if self.spike_mode == "m" else _SF.val_to_spike
-            if isinstance(res, _Tuple):
-                res = (f(y) if isinstance(y, torch.Tensor) else y for y in res)
-            else:
-                res = f(res)
+        f = _SF.floor if self.count else _SF.val_to_spike
+        if isinstance(res, _Tuple):
+            res = (f(y) if isinstance(y, torch.Tensor) else y for y in res)
+        else:
+            res = f(res)
         return res
 
 
@@ -444,7 +443,7 @@ class STDPConv2d(STDPLayer):
 
 
 class MaxPool1d(Layer, nn.MaxPool1d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, spike_mode: str = None) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, count: bool = False) -> None:
         """
         一维最大池化。
         Args:
@@ -454,11 +453,11 @@ class MaxPool1d(Layer, nn.MaxPool1d):
             dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.MaxPool1d.__init__(
             self,
@@ -493,7 +492,7 @@ class MaxPool1d(Layer, nn.MaxPool1d):
 
 
 class MaxPool2d(Layer, nn.MaxPool2d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, spike_mode: str = None) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, count: bool = False) -> None:
         """
         二维最大池化。
         Args:
@@ -503,11 +502,11 @@ class MaxPool2d(Layer, nn.MaxPool2d):
             dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.MaxPool2d.__init__(
             self,
@@ -542,7 +541,7 @@ class MaxPool2d(Layer, nn.MaxPool2d):
 
 
 class MaxPool3d(Layer, nn.MaxPool3d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, spike_mode: str = None) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, count: bool = False) -> None:
         """
         三维最大池化。
         Args:
@@ -552,11 +551,11 @@ class MaxPool3d(Layer, nn.MaxPool3d):
             dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.MaxPool3d.__init__(
             self,
@@ -591,7 +590,7 @@ class MaxPool3d(Layer, nn.MaxPool3d):
 
 
 class AvgPool1d(Layer, nn.AvgPool1d):
-    def __init__(self, kernel_size: _size_1_t, stride: _Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, spike_mode: str = None) -> None:
+    def __init__(self, kernel_size: _size_1_t, stride: _Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, count: bool = False) -> None:
         """
         一维平均池化。
         Args:
@@ -600,11 +599,11 @@ class AvgPool1d(Layer, nn.AvgPool1d):
             padding (size_1_t): 边界填充的长度
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.AvgPool1d.__init__(
             self,
@@ -638,7 +637,7 @@ class AvgPool1d(Layer, nn.AvgPool1d):
 
 
 class AvgPool2d(Layer, nn.AvgPool2d):
-    def __init__(self, kernel_size: _size_2_t, stride: _Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, spike_mode: str = None) -> None:
+    def __init__(self, kernel_size: _size_2_t, stride: _Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, count: bool = False) -> None:
         """
         二维平均池化。
         Args:
@@ -648,11 +647,11 @@ class AvgPool2d(Layer, nn.AvgPool2d):
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
             divisor_override (int | None): 是否用某个数取代总和作为除数
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.AvgPool2d.__init__(
             self,
@@ -687,7 +686,7 @@ class AvgPool2d(Layer, nn.AvgPool2d):
 
 
 class AvgPool3d(Layer, nn.AvgPool3d):
-    def __init__(self, kernel_size: _size_3_t, stride: _Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, spike_mode: str = None) -> None:
+    def __init__(self, kernel_size: _size_3_t, stride: _Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, count: bool = False) -> None:
         """
         三维平均池化。
         Args:
@@ -697,11 +696,11 @@ class AvgPool3d(Layer, nn.AvgPool3d):
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
             divisor_override (int | None): 是否用某个数取代总和作为除数
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.AvgPool3d.__init__(
             self,
@@ -736,18 +735,18 @@ class AvgPool3d(Layer, nn.AvgPool3d):
 
 
 class MaxUnpool1d(Layer, nn.MaxUnpool1d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, spike_mode: str = None) -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, count: bool = False) -> None:
         """
         一维最大反池化。
         Args:
             kernel_size (size_3_t): 池化核大小
             stride (size_3_t | None): 池化核步长
             padding (size_3_t): 边界填充的长度
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.MaxUnpool1d.__init__(
             self,
@@ -781,18 +780,18 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
 
 
 class MaxUnpool2d(Layer, nn.MaxUnpool2d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, spike_mode: str = None) -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, count: bool = False) -> None:
         """
         二维最大反池化。
         Args:
             kernel_size (size_3_t): 池化核大小
             stride (size_3_t | None): 池化核步长
             padding (size_3_t): 边界填充的长度
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.MaxUnpool2d.__init__(
             self,
@@ -826,18 +825,18 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
 
 
 class MaxUnpool3d(Layer, nn.MaxUnpool3d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, spike_mode: str = None) -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, count: bool = False) -> None:
         """
         一维最大反池化。
         Args:
             kernel_size (size_3_t): 池化核大小
             stride (size_3_t | None): 池化核步长
             padding (size_3_t): 边界填充的长度
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.MaxUnpool3d.__init__(
             self,
@@ -871,7 +870,7 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
 
 
 class Upsample(Layer, nn.Upsample):
-    def __init__(self, size: _Optional[_Union[int, _Tuple[int]]] = None, scale_factor: _Optional[_Union[float, _Tuple[float]]] = None, mode: str = 'nearest', align_corners: _Optional[bool] = None, recompute_scale_factor: _Optional[bool] = None, spike_mode: str = None) -> None:
+    def __init__(self, size: _Optional[_Union[int, _Tuple[int]]] = None, scale_factor: _Optional[_Union[float, _Tuple[float]]] = None, mode: str = 'nearest', align_corners: _Optional[bool] = None, recompute_scale_factor: _Optional[bool] = None, count: bool = False) -> None:
         """
         上采样（反池化）。
         Args:
@@ -880,11 +879,11 @@ class Upsample(Layer, nn.Upsample):
             mode (str): 以何种形式上采样
             align_corners (bool): 若为True，使输入和输出张量的角像素对齐，从而保留这些像素的值
             recompute_scale_factor (bool): 若为True，则必须传入scale_factor并且scale_factor用于计算输出大小。计算出的输出大小将用于推断插值的新比例；若为False，那么size或scale_factor将直接用于插值
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.Upsample.__init__(
             self,
@@ -918,17 +917,17 @@ class Upsample(Layer, nn.Upsample):
 
 
 class Flatten(Layer, nn.Flatten):
-    def __init__(self, start_dim: int = 1, end_dim: int = -1, spike_mode: str = None) -> None:
+    def __init__(self, start_dim: int = 1, end_dim: int = -1, count: bool = False) -> None:
         """
         展平层。
         Args:
             start_dim (int): 起始维度，默认为1
             end_dim (int): 终止维度
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.Flatten.__init__(
             self,
@@ -972,17 +971,17 @@ class Flatten(Layer, nn.Flatten):
 
 
 class Unflatten(Layer, nn.Unflatten):
-    def __init__(self, dim: _Union[int, str], unflattened_size: _size, spike_mode: str = None) -> None:
+    def __init__(self, dim: _Union[int, str], unflattened_size: _size, count: bool = False) -> None:
         """
         反展开层。
         Args:
             dim (int | str): 在哪个维度反展开
             unflattened_size: 这个维度上的张量要反展开成什么形状
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.Unflatten.__init__(
             self,
@@ -1026,17 +1025,17 @@ class Unflatten(Layer, nn.Unflatten):
 
 
 class Dropout(Layer, nn.Dropout):
-    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = None) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, count: bool = False) -> None:
         """
         遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.Dropout.__init__(
             self,
@@ -1067,17 +1066,17 @@ class Dropout(Layer, nn.Dropout):
 
 
 class Dropout1d(Layer, nn.Dropout1d):
-    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = None) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, count: bool = False) -> None:
         """
         一维遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.Dropout1d.__init__(
             self,
@@ -1108,17 +1107,17 @@ class Dropout1d(Layer, nn.Dropout1d):
 
 
 class Dropout2d(Layer, nn.Dropout2d):
-    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = None) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, count: bool = False) -> None:
         """
         二维遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.Dropout2d.__init__(
             self,
@@ -1149,17 +1148,17 @@ class Dropout2d(Layer, nn.Dropout2d):
 
 
 class Dropout3d(Layer, nn.Dropout3d):
-    def __init__(self, p: float = 0.5, inplace: bool = False, spike_mode: str = None) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, count: bool = False) -> None:
         """
         三维遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
-            spike_mode (str): 脉冲发放模式，有单值（"s"），多值（"m"）和不进行脉冲转换（None）3种
+            count (bool): 是否发送脉冲计数
         """
         Layer.__init__(
             self,
-            spike_mode = spike_mode
+            count = count
         )
         nn.Dropout3d.__init__(
             self,

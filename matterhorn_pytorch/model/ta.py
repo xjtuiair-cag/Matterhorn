@@ -10,6 +10,7 @@ Reference:
 import torch
 import torch.nn as nn
 import matterhorn_pytorch.snn as snn
+import matterhorn_pytorch.snn.functional as SF
 import math
 
 

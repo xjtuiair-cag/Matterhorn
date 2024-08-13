@@ -19,7 +19,6 @@ class Encoder(_Module):
         """
         super().__init__()
         self.multi_step_mode_()
-        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -66,10 +65,8 @@ class Direct(Encoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[T,B,...]
         """
-        idx = [i for i, j in enumerate(x.shape)]
-        assert len(idx) >= 2, "There is no temporal dimension."
-        idx[0], idx[1] = idx[1], idx[0]
-        y = x.permute(*idx)
+        assert x.ndim >= 2, "Expect input 2D or more. %dD found." % (x.ndim,)
+        y = x.permute(*([1, 0] + list(range(2, x.ndim))))
         return y
 
 
@@ -109,11 +106,14 @@ class Analog(Encoder):
 
 
 class Poisson(Encoder):
-    def __init__(self, time_steps: int = 1, input_range: _Optional[_Union[_Tuple, float, int]] = None, precision: float = 1e-9, spike_mode: str = "s") -> None:
+    def __init__(self, time_steps: int = 1, input_range: _Optional[_Union[_Tuple, float, int]] = None, precision: float = 1e-5, count: bool = False) -> None:
         """
         泊松编码（速率编码），将值转化为脉冲发放率（多步）
         Args:
             time_steps (int): 生成的时间步长
+            input_range (int[2]): 输入的值范围，默认为[0, 1]
+            precision (float): 精度，值越小输出的脉冲计数分辨率越高
+            count (bool): 是否发送脉冲计数
         """
         super().__init__()
         self.time_steps = time_steps
@@ -129,7 +129,7 @@ class Poisson(Encoder):
             self.max = input_range if input_range is not None and isinstance(input_range, (int, float)) else 1.0
         assert self.max > self.min, "Invalid range for Poisson encoder."
         self.precision = precision
-        self.spike_mode = spike_mode
+        self.count = count
 
 
     def extra_repr(self) -> str:
@@ -149,15 +149,8 @@ class Poisson(Encoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        p = torch.clamp((x - self.min) / (self.max - self.min), 0.0, 1.0 - self.precision)
-        if x.device.type == "mps":
-            r = torch.poisson(-torch.log(1.0 - p.cpu())).to(p)
-        else:
-            r = torch.poisson(-torch.log(1.0 - p))
-        if self.spike_mode == "m":
-            y = r
-        else:
-            y = _SF.gt(r, torch.zeros_like(r))
+        x = (x - self.min) / (self.max - self.min)
+        y = _SF.encode_poisson(x, self.precision, self.count)
         return y
     
 
@@ -169,9 +162,9 @@ class Poisson(Encoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[T, B,...]
         """
-        res_shape = [self.time_steps] + list(x.shape)
-        v = torch.ones(*res_shape).to(x) * x
-        y = self.forward_step(v)
+        x = torch.stack([x] * self.time_steps)
+        x = (x - self.min) / (self.max - self.min)
+        y = _SF.encode_poisson(x, self.precision, self.count)
         return y
 
 
@@ -208,9 +201,7 @@ class Temporal(Encoder):
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
         x = self.transform(x)
-        f = _SF.le(x, self.current_time_step)
-        r = _SF.le(torch.rand_like(x), self.prob)
-        y = f * r
+        y = _SF.encode_temporal(x, 1, self.current_time_step, self.prob)[0]
         self.current_time_step += 1
         return y
     
@@ -223,8 +214,7 @@ class Temporal(Encoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[T, B,...]
         """
-        y_seq = []
-        for t in range(time_steps):
-            y_seq.append(self.forward_step(x))
-        y = torch.stack(y_seq)
+        x = self.transform(x)
+        y = _SF.temporal_encode(x, time_steps, self.current_time_step, self.prob)
+        self.current_time_step += time_steps
         return y

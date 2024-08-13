@@ -7,7 +7,7 @@
 
 import torch
 import torch.nn as nn
-from typing import Tuple as _Tuple, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union, Any as _Any
+from typing import List as _List, Tuple as _Tuple, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union, Any as _Any
 
 
 def to(u: _Optional[_Union[torch.Tensor, int, float]], x: torch.Tensor) -> torch.Tensor:
@@ -24,6 +24,33 @@ def to(u: _Optional[_Union[torch.Tensor, int, float]], x: torch.Tensor) -> torch
     elif isinstance(u, int) or isinstance(u, float):
         return torch.full_like(x, u)
     return torch.zeros_like(x)
+
+
+@torch.jit.script
+def transpose(x: torch.Tensor, dims: _Optional[_List[int]] = None) -> torch.Tensor:
+    """
+    转置一个张量。
+    Args:
+        x (torch.Tensor): 转置前的张量
+        dims (int*): 要转置的维度
+    Returns:
+        x (torch.Tensor): 转置后的张量
+    """
+    permute_dims: _List[int] = []
+    if dims is None:
+        for d in range(x.ndim - 1, -1, -1):
+            permute_dims.append(d)
+    else:
+        leading_dims: _List[int] = []
+        for d in range(len(dims) - 1, -1, -1):
+            leading_dims.append(dims[d])
+        trailing_dims: _List[int] = []
+        for d in range(x.ndim):
+            if d not in dims:
+                trailing_dims.append(d)
+        permute_dims = leading_dims + trailing_dims
+    y: torch.Tensor = x.permute(permute_dims)
+    return y
 
 
 def merge_time_steps_batch_size(tensor: torch.Tensor) -> _Union[torch.Tensor, _Tuple[int, int]]:
@@ -509,3 +536,111 @@ def round(x: torch.Tensor) -> torch.Tensor:
         res (torch.Tensor): 比较结果
     """
     return _multi_firing_round.apply(x)
+
+
+@torch.jit.script
+def encode_poisson(x: torch.Tensor, precision: float = 1e-5, count: bool = False) -> torch.Tensor:
+    """
+    泊松编码（速率编码），将值转化为脉冲发放率。
+    Args:
+        x (torch.Tensor): 数值
+        precision (float): 精度，值越小输出的脉冲计数分辨率越高
+        count (bool): 是否发送脉冲计数
+    Returns:
+        y (torch.Tensor): 脉冲序列
+    """
+    p = torch.clamp(x, 0.0, 1.0 - precision)
+    if p.device.type == "mps":
+        r = torch.poisson(-torch.log(1.0 - p.cpu())).to(p)
+    else:
+        r = torch.poisson(-torch.log(1.0 - p))
+    if count:
+        y = r
+    else:
+        y = gt(r, torch.zeros_like(r))
+    return y
+
+
+@torch.jit.script
+def encode_temporal(x: torch.Tensor, time_steps: int, t_offset: int = 0, prob: float = 1.0) -> torch.Tensor:
+    """
+    时间编码，将值转化为脉冲发放时间。
+    Args:
+        x (torch.Tensor): 数值
+        time_steps (int): 时间编码的时间步
+        t_offset (int): 时间步偏移量，从第几个时间步开始
+        prob (float): 是否发送脉冲计数
+    Returns:
+        y (torch.Tensor): 脉冲序列
+    """
+    y_seq = []
+    for t in range(time_steps):
+        f = le(x, torch.full_like(x, t + t_offset))
+        r = le(torch.rand_like(x), torch.full_like(x, prob))
+        y = f * r
+        y_seq.append(y)
+    y = torch.stack(y_seq)
+    return y
+
+
+@torch.jit.script
+def decode_sum_spike(x: torch.Tensor) -> torch.Tensor:
+    """
+    总脉冲计数解码，将脉冲转化为脉冲计数。
+    Args:
+        x (torch.Tensor): 脉冲序列
+    Returns:
+        y (torch.Tensor): 解码后的脉冲序列
+    """
+    y = x.sum(dim = 0)
+    return y
+
+
+@torch.jit.script
+def decode_avg_spike(x: torch.Tensor) -> torch.Tensor:
+    """
+    平均脉冲计数解码，将脉冲转化为平均脉冲计数。
+    Args:
+        x (torch.Tensor): 脉冲序列
+    Returns:
+        y (torch.Tensor): 解码后的脉冲序列
+    """
+    y = x.mean(dim = 0)
+    return y
+
+
+@torch.jit.script
+def decode_min_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> torch.Tensor:
+    """
+    最短时间解码，将脉冲转化为首个脉冲的时间。
+    Args:
+        x (torch.Tensor): 脉冲序列
+        t_offset (int): 时间步偏移量，从第几个时间步开始
+        empty_fill (float): 如果脉冲序列为全0序列，值应该用什么替代，在TNN中该参数应设为torch.inf
+    Returns:
+        y (torch.Tensor): 解码后的脉冲序列
+    """
+    t = (torch.argmax(x, dim = 0) + t_offset).to(x)
+    x_sum = x.sum(dim = 0)
+    mask = x_sum > 0
+    y = torch.where(mask, t, torch.full_like(t, empty_fill))
+    return y
+
+
+@torch.jit.script
+def decode_avg_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> torch.Tensor:
+    """
+    平均脉冲时间解码，将脉冲转化为平均脉冲时间。
+    Args:
+        x (torch.Tensor): 脉冲序列
+        t_offset (int): 时间步偏移量，从第几个时间步开始
+        empty_fill (float): 如果脉冲序列为全0序列，值应该用什么替代，在TNN中该参数应设为torch.inf
+    Returns:
+        y (torch.Tensor): 解码后的脉冲序列
+    """
+    t = transpose(transpose(x) * torch.arange(x.shape[0]).to(x))
+    t_sum = t.sum(dim = 0)
+    x_sum = x.sum(dim = 0)
+    mask = x_sum > 0
+    y = torch.where(mask, t_sum / x_sum + t_offset, torch.full_like(t_sum, empty_fill))
+    return y

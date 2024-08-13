@@ -7,7 +7,7 @@
 
 import torch
 import torch.nn as nn
-from matterhorn_pytorch.__func__ import transpose as _transpose
+import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
 from typing import Callable as _Callable
 
@@ -19,7 +19,6 @@ class Decoder(_Module):
         """
         super().__init__()
         self.multi_step_mode_()
-        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -35,6 +34,7 @@ class Decoder(_Module):
         """
         重置解码器。
         """
+        self.hist_spikes = []
         self.current_time_step = 0
         return super().reset()
 
@@ -56,7 +56,9 @@ class SumSpike(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        return x
+        self.hist_spikes.append(x)
+        y = _SF.decode_sum_spike(torch.stack(self.hist_spikes))
+        return y
 
 
     def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
@@ -67,7 +69,8 @@ class SumSpike(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        y = x.sum(dim = 0)
+        self.hist_spikes.append(x)
+        y = _SF.decode_sum_spike(torch.cat(self.hist_spikes))
         return y
 
 
@@ -88,7 +91,9 @@ class AverageSpike(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        return x
+        self.hist_spikes.append(x)
+        y = _SF.decode_avg_spike(torch.stack(self.hist_spikes))
+        return y
 
 
     def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
@@ -99,7 +104,8 @@ class AverageSpike(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        y = x.mean(dim = 0)
+        self.hist_spikes.append(x)
+        y = _SF.decode_avg_spike(torch.cat(self.hist_spikes))
         return y
 
 
@@ -133,8 +139,10 @@ class TimeBased(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        y = torch.where(x > 0, torch.full_like(x, self.current_time_step), torch.full_like(x, self.empty_fill))
+        self.hist_spikes.append(x)
+        y = self.f_decode(torch.stack(self.hist_spikes))
         self.current_time_step += 1
+        y = self.transform(y)
         return y
 
 
@@ -146,10 +154,8 @@ class TimeBased(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        y = self.f_decode(x).to(x)
-        y = y.to(x)
-        mask = x.mean(dim = 0) > 0
-        y = torch.where(mask, y, torch.full_like(y, self.empty_fill))
+        self.hist_spikes.append(x)
+        y = self.f_decode(torch.cat(self.hist_spikes))
         self.current_time_step += x.shape[0]
         y = self.transform(y)
         return y
@@ -178,7 +184,7 @@ class MinTime(TimeBased):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        y = torch.argmax(x, dim = 0) + self.current_time_step
+        y = _SF.decode_min_time(x, 0, self.empty_fill)
         return y
 
 
@@ -205,9 +211,5 @@ class AverageTime(TimeBased):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        xt = _transpose(_transpose(x) * torch.arange(x.shape[0]).to(x))
-        tsum = torch.sum(xt, dim = 0)
-        xsum = torch.sum(x, dim = 0)
-        mask = xsum > 0
-        y = torch.where(mask, tsum / xsum, torch.zeros_like(xsum))
+        y = _SF.decode_avg_time(x, 0, self.empty_fill)
         return y

@@ -1,5 +1,0 @@
-include matterhorn_cpp_extensions/*.h
-include matterhorn_cpp_extensions/*.cpp
-include matterhorn_cuda_extensions/*.h
-include matterhorn_cuda_extensions/*.cpp
-include matterhorn_cuda_extensions/*.cu

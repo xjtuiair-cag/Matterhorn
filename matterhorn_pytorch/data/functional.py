@@ -7,7 +7,6 @@
 import numpy as np
 import torch
 from typing import Iterable
-from matterhorn_pytorch.__func__ import transpose
 import matterhorn_pytorch.snn.functional as _SF
 
 
@@ -78,18 +77,15 @@ def spike_train_to_spike_times(spike_train: torch.Tensor, zero_fill: int = -1) -
     return spike_times
 
 
-def spike_times_to_spike_train(spike_times: torch.Tensor, t_max: int, t_offset: int = 0) -> torch.Tensor:
+def spike_times_to_spike_train(spike_times: torch.Tensor, time_steps: int, t_offset: int = 0) -> torch.Tensor:
     """
     将脉冲时间转换为脉冲序列。
     Args:
         spike_times (torch.Tensor): 时间序列，形状为[...]
-        t_max (int): 最大时间步T
-        t_offset (int): 时间步偏移量，从第几个时间步开始，一般为0
+        time_steps (int): 最大时间步T
+        t_offset (int): 时间步偏移量，从第几个时间步开始
     Returns:
         spike_train (torch.Tensor): 脉冲序列，形状为[T, ...]
     """
-    time_steps = t_max + t_offset
-    spike_ts = torch.ones([time_steps] + list(spike_times.shape)) * (spike_times + t_offset)
-    current_ts = transpose(transpose(torch.ones_like(spike_ts)) * torch.arange(time_steps)).to(spike_ts)
-    spike_train = _SF.ge(current_ts, spike_ts)
+    spike_train = _SF.encode_temporal(spike_times, time_steps, t_offset)
     return spike_train
