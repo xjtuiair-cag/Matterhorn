@@ -27,6 +27,7 @@ def main():
     time_steps = args.time_steps
     batch_size = args.batch_size
     device = torch.device(args.device)
+    dtype = torch.half
     epochs = args.epochs
     learning_rate = args.learning_rate
     momentum = args.momentum
@@ -121,7 +122,8 @@ def main():
         optimizer = optimizer,
         scheduler = lr_scheduler,
         log_dir = log_dir,
-        device = device
+        device = device,
+        dtype = dtype
     )
 
 

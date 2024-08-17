@@ -55,7 +55,7 @@ class Soma(_Module):
         Returns:
             repr_str (str): 参数表
         """
-        exts = self.exts
+        exts = self.exts if self.enable_exts else dict()
         return ", ".join(["u_threshold=%g" % self.u_threshold, "u_rest=%g" % self.u_rest, "reset=%s" % ('"zero"' if self.hard_reset else '"sub"',)]) + ((", exts=" + repr(list(exts.keys()))) if len(exts.keys()) else "") + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
