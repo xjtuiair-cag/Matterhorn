@@ -44,7 +44,7 @@ def main():
 
     model = SEWRes18(
         input_h_w = (128, 128),
-        num_classes = 10,
+        loss_fn = loss_fn,
         tau_m = tau
     )
     model.multi_step_mode_()
@@ -83,6 +83,8 @@ def main():
 
     print_title("Preparations for Training")
 
+    def loss_fn(o: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return torch.nn.functional.cross_entropy(o.float(), y.float())
     optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
     log_dir = "./examples/logs"
@@ -101,7 +103,7 @@ def main():
         model = model,
         train_data_loader = train_data_loader,
         test_data_loader = test_data_loader,
-        num_classes = 10,
+        loss_fn = loss_fn,
         optimizer = optimizer,
         scheduler = lr_scheduler,
         log_dir = log_dir,

@@ -26,7 +26,7 @@ warnings.simplefilter('once', UserWarning)
 
 
 class Soma(_Module):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, enable_exts: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -46,6 +46,7 @@ class Soma(_Module):
         self.u_rest = nn.Parameter(torch.tensor(u_rest, device = device, dtype = dtype), requires_grad = False)
         self.spiking_function: _Firing = spiking_function
         self.hard_reset = hard_reset
+        self.enable_exts = enable_exts
 
 
     def extra_repr(self) -> str:
@@ -188,16 +189,17 @@ class Soma(_Module):
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
         device: torch.device = x.device
-        exts = self.exts
-        if device.type == "cuda" and "cuda" in exts:
-            return self.forward_steps_on_ext(x, exts, "cuda")
-        if device.type == "cpu" and "cpp" in exts:
-            return self.forward_steps_on_ext(x, exts, "cpp")
+        if self.enable_exts:
+            exts = self.exts
+            if device.type == "cuda" and "cuda" in exts:
+                return self.forward_steps_on_ext(x, exts, "cuda")
+            if device.type == "cpu" and "cpp" in exts:
+                return self.forward_steps_on_ext(x, exts, "cpp")
         return super().forward_steps(x)
 
 
 class IF(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, enable_exts: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Integrate-and-Fire(IF)神经元。
         无泄漏过程，一阶电位变换公式为：
@@ -215,6 +217,7 @@ class IF(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
+            enable_exts = enable_exts,
             device = device,
             dtype = dtype
         )
@@ -234,7 +237,7 @@ class IF(Soma):
 
 
 class LIF(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, enable_exts: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
@@ -254,6 +257,7 @@ class LIF(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
+            enable_exts = enable_exts,
             device = device,
             dtype = dtype
         )
@@ -339,7 +343,7 @@ class LIF(Soma):
 
 
 class QIF(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, u_c: float = 1.0, a_0: float = 1.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, u_c: float = 1.0, a_0: float = 1.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, enable_exts: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Quadratic Integrate-and-Fire(QIF)神经元。
         一阶电位变换公式为：
@@ -361,6 +365,7 @@ class QIF(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
+            enable_exts = enable_exts,
             device = device,
             dtype = dtype
         )
@@ -393,7 +398,7 @@ class QIF(Soma):
 
 
 class ExpIF(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, enable_exts: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Exponential Integrate-and-Fire(ExpIF)神经元。
         一阶电位变换公式为：
@@ -415,6 +420,7 @@ class ExpIF(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
+            enable_exts = enable_exts,
             device = device,
             dtype = dtype
         )
@@ -447,7 +453,7 @@ class ExpIF(Soma):
 
 
 class Izhikevich(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, a: float = 1.0, b: float = 1.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, a: float = 1.0, b: float = 1.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, enable_exts: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """, 
         Izhikevich神经元。
         一阶电位变换公式为：
@@ -469,6 +475,7 @@ class Izhikevich(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
+            enable_exts = enable_exts,
             device = device,
             dtype = dtype
         )
@@ -526,7 +533,7 @@ class Izhikevich(Soma):
 
 
 class KLIF(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, k: float = 0.2, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, k: float = 0.2, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, trainable: bool = False, enable_exts: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         KLIF神经元
         Args:
@@ -545,6 +552,7 @@ class KLIF(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
+            enable_exts = enable_exts,
             device = device,
             dtype = dtype
         )
@@ -577,7 +585,7 @@ class KLIF(Soma):
 
 
 class AnalogSoma(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, enable_exts: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         带有模拟输出的Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -598,6 +606,7 @@ class AnalogSoma(Soma):
             u_rest = u_rest,
             spiking_function = spiking_function,
             hard_reset = hard_reset,
+            enable_exts = enable_exts,
             device = device,
             dtype = dtype
         )
@@ -633,7 +642,7 @@ class AnalogSoma(Soma):
 
 
 class LIAF(AnalogSoma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, spiking_function: _Firing = _Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, trainable: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, spiking_function: _Firing = _Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, trainable: bool = False, enable_exts: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Leaky Integrate-and-Analog-Fire(LIAF)神经元
         Args:
@@ -653,6 +662,7 @@ class LIAF(AnalogSoma):
             spiking_function = spiking_function,
             activation_function = activation_function,
             hard_reset = hard_reset,
+            enable_exts = enable_exts,
             device = device,
             dtype = dtype
         )

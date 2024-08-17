@@ -5,7 +5,7 @@ import time
 import datetime
 import os
 from argparse import Namespace
-from typing import Tuple, Dict, Union
+from typing import Tuple, Dict, Callable, Union
 from rich import print
 from rich.panel import Panel
 from rich.text import Text
@@ -13,7 +13,7 @@ from rich.progress import track
 from rich.table import Table
 
 
-def train_one_epoch(model: torch.nn.Module, data_loader: DataLoader, num_classes: int, optimizer: torch.optim.Optimizer = None, device: torch.device = None, dtype: torch.dtype = None) -> Tuple[torch.nn.Module, float, float]:
+def train_one_epoch(model: torch.nn.Module, data_loader: DataLoader, loss_fn: Callable, optimizer: torch.optim.Optimizer = None, device: torch.device = None, dtype: torch.dtype = None) -> Tuple[torch.nn.Module, float, float]:
     """
     一个轮次的训练。
     Args:
@@ -32,13 +32,12 @@ def train_one_epoch(model: torch.nn.Module, data_loader: DataLoader, num_classes
     for x, y in track(data_loader, description = "Training"):
         if optimizer is not None:
             optimizer.zero_grad()
-        x = x.to(device)
-        y = y.to(device)
-        y0 = torch.nn.functional.one_hot(y, num_classes = num_classes).float()
+        x = x.to(device = device, dtype = dtype)
+        y = y.to(device = device, dtype = dtype)
         o = model(x)
         if isinstance(model, mth.snn.Module):
             model.reset()
-        loss = torch.nn.functional.mse_loss(o, y0)
+        loss = loss_fn(o, y)
         loss.backward()
         if optimizer is not None:
             optimizer.step()
@@ -53,7 +52,7 @@ def train_one_epoch(model: torch.nn.Module, data_loader: DataLoader, num_classes
     return model, train_loss, train_acc
 
 
-def test_one_epoch(model: torch.nn.Module, data_loader: DataLoader, num_classes: int, device: torch.device = None, dtype: torch.dtype = None) -> Tuple[torch.nn.Module, float, float]:
+def test_one_epoch(model: torch.nn.Module, data_loader: DataLoader, loss_fn: Callable, device: torch.device = None, dtype: torch.dtype = None) -> Tuple[torch.nn.Module, float, float]:
     """
     一个轮次的测试。
     Args:
@@ -70,14 +69,13 @@ def test_one_epoch(model: torch.nn.Module, data_loader: DataLoader, num_classes:
 
     with torch.no_grad():
         for x, y in track(data_loader, description = "Testing"):
-            x = x.to(device)
-            y = y.to(device)
-            y0 = torch.nn.functional.one_hot(y, num_classes = num_classes).float()
+            x = x.to(device = device, dtype = dtype)
+            y = y.to(device = device, dtype = dtype)
             
             o = model(x)
             if isinstance(model, mth.snn.Module):
                 model.reset()
-            loss = torch.nn.functional.mse_loss(o, y0)
+            loss = loss_fn(o, y)
 
             test_samples += y.numel()
             test_loss += loss.item() * y.numel()
@@ -190,7 +188,7 @@ def print_result(ep: int, data: Tuple[float], last_data: Tuple[float], max_test_
     print(result_table)
 
 
-def train_and_test(epochs: int, model: torch.nn.Module, train_data_loader: DataLoader, test_data_loader: DataLoader, num_classes: int, optimizer: torch.optim.Optimizer = None, scheduler: torch.optim.lr_scheduler._LRScheduler = None, log_dir: str = "./logs/", device: torch.device = None, dtype: torch.dtype = None) -> None:
+def train_and_test(epochs: int, model: torch.nn.Module, train_data_loader: DataLoader, test_data_loader: DataLoader, loss_fn: Callable, optimizer: torch.optim.Optimizer = None, scheduler: torch.optim.lr_scheduler._LRScheduler = None, log_dir: str = "./logs/", device: torch.device = None, dtype: torch.dtype = None) -> None:
     """
     训练模型。
     Args:
@@ -218,15 +216,16 @@ def train_and_test(epochs: int, model: torch.nn.Module, train_data_loader: DataL
         model, train_loss, train_acc = train_one_epoch(
             model = model,
             data_loader = train_data_loader,
-            num_classes = num_classes,
+            loss_fn = loss_fn,
             optimizer = optimizer,
-            device = device
+            device = device,
+            dtype = dtype
         )
 
         model, test_loss, test_acc = test_one_epoch(
             model = model,
             data_loader = test_data_loader,
-            num_classes = num_classes,
+            loss_fn = loss_fn,
             device = device,
             dtype = dtype
         )
