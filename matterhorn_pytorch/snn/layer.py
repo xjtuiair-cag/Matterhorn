@@ -55,7 +55,7 @@ class Layer(_Module):
             res (torch.Tensor): 输出
         """
         res = super().forward(*args, **kwargs)
-        f = _SF.floor if self.count else _SF.val_to_spike
+        f = _SF.floor if self.count else _SF.to_spike_train
         if isinstance(res, _Tuple):
             res = (f(y) if isinstance(y, torch.Tensor) else y for y in res)
         else:

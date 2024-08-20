@@ -80,7 +80,7 @@ class _from_spike_train(torch.autograd.Function):
         Returns:
             o (torch.Tensor): 脉冲值（0、1）
         """
-        return o.to(torch.float)
+        return o
 
 
     @staticmethod
@@ -116,7 +116,7 @@ class _to_spike_train(torch.autograd.Function):
         Returns:
             o (torch.Tensor): 脉冲值（0、1）
         """
-        return x.to(torch.bool)
+        return x.gt(0.0).to(x)
 
 
     @staticmethod
