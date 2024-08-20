@@ -578,7 +578,6 @@ def round(x: torch.Tensor) -> torch.Tensor:
     return _multi_firing_round.apply(x)
 
 
-@torch.jit.script
 def encode_poisson(x: torch.Tensor, precision: float = 1e-5, count: bool = False) -> torch.Tensor:
     """
     泊松编码（速率编码），将值转化为脉冲发放率。
@@ -601,7 +600,6 @@ def encode_poisson(x: torch.Tensor, precision: float = 1e-5, count: bool = False
     return y
 
 
-@torch.jit.script
 def encode_temporal(x: torch.Tensor, time_steps: int, t_offset: int = 0, prob: float = 1.0) -> torch.Tensor:
     """
     时间编码，将值转化为脉冲发放时间。
@@ -623,7 +621,6 @@ def encode_temporal(x: torch.Tensor, time_steps: int, t_offset: int = 0, prob: f
     return y
 
 
-@torch.jit.script
 def decode_sum_spike(x: torch.Tensor) -> torch.Tensor:
     """
     总脉冲计数解码，将脉冲转化为脉冲计数。
@@ -636,7 +633,6 @@ def decode_sum_spike(x: torch.Tensor) -> torch.Tensor:
     return y
 
 
-@torch.jit.script
 def decode_avg_spike(x: torch.Tensor) -> torch.Tensor:
     """
     平均脉冲计数解码，将脉冲转化为平均脉冲计数。
@@ -649,7 +645,6 @@ def decode_avg_spike(x: torch.Tensor) -> torch.Tensor:
     return y
 
 
-@torch.jit.script
 def decode_min_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> torch.Tensor:
     """
     最短时间解码，将脉冲转化为首个脉冲的时间。
@@ -667,7 +662,6 @@ def decode_min_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> t
     return y
 
 
-@torch.jit.script
 def decode_avg_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> torch.Tensor:
     """
     平均脉冲时间解码，将脉冲转化为平均脉冲时间。

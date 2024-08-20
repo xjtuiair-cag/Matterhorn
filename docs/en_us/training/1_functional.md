@@ -22,8 +22,7 @@ stdp(
     a_pos: float,
     tau_pos: float,
     a_neg: float,
-    tau_neg: float,
-    precision: float = 1e-6
+    tau_neg: float
 ) -> torch.Tensor
 ```
 
@@ -42,8 +41,6 @@ stdp(
 `a_neg (float)`: STDP parameter $A_{-}$.
 
 `tau_neg (float)`: STDP parameter $\tau_{-}$.
-
-`precision (float)`: Precision. The STDP algorithm may produce errors due to precision differences when computed on different platforms. This parameter specifies the minimum value of $\Delta w$, numbers smaller than this value will be treated as $0$.
 
 ### Returns
 

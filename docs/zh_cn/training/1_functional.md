@@ -22,8 +22,7 @@ stdp(
     a_pos: float,
     tau_pos: float,
     a_neg: float,
-    tau_neg: float,
-    precision: float = 1e-6
+    tau_neg: float
 ) -> torch.Tensor
 ```
 
@@ -42,8 +41,6 @@ stdp(
 `a_neg (float)` ： STDP 参数 $A_{-}$ 。
 
 `tau_neg (float)` ： STDP 参数 $\tau_{-}$ 。
-
-`precision (float)` ：精度。 STDP 的算法在不同的平台上计算时，会由于精度的不同产生误差。该参数规定了 $\Delta w$ 的最小值，小于这个值的数字会被当做 $0$ 处理。
 
 ### 返回值
 
