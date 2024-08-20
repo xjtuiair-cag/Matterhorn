@@ -7,19 +7,21 @@ ANN转SNN小工具，完成ANN与SNN的转换。
 import torch
 import torch.nn as nn
 import matterhorn_pytorch.snn as snn
-from typing import Tuple, Iterable, Callable
+from typing import Tuple, Iterable, Callable, Optional
 from torch.utils.data import Dataset
 from copy import deepcopy
 from rich import print
 from rich.progress import track
 
 
-def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lambda x: x[0], mode: str = "max") -> snn.Module:
+def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lambda x: x[0], replace_rule: Optional[Callable] = None, mode: str = "max") -> snn.Module:
     """
     ANN转SNN。
     Args:
         model (nn.Module): 待转的ANN模型
         demo_data (torch.utils.data.Dataset): 示例数据，用于确定ReLU的最大值
+        pre_process (Callable): 数据预处理方法
+        replace_rule (Callable): 自定义结点替换规则，否则按照默认节点替换规则
         mode (str): 如何确定转换倍率lambda
     Returns:
         res (snn.Module): 转换后的SNN模型
@@ -37,8 +39,14 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
 
     def _replace(ann_module: nn.Module) -> snn.Module:
         snn_module: snn.Module = None
+        if replace_rule is not None:
+            snn_module = replace_rule(deepcopy(ann_module))
+            if snn_module is not None:
+                return snn_module
+        if isinstance(ann_module, snn.Module):
+            snn_module = deepcopy(ann_module)
         # 全连接层
-        if isinstance(ann_module, nn.Linear):
+        elif isinstance(ann_module, nn.Linear):
             snn_module = snn.Linear(
                 in_features = ann_module.in_features,
                 out_features = ann_module.out_features,
@@ -144,6 +152,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             elif isinstance(ann_module, nn.MaxPool3d):
                 kwargs["divisor_override"] = ann_module.divisor_override
                 snn_module = snn.AvgPool3d(**kwargs)
+        # 展开和反展开
         elif isinstance(ann_module, (nn.Flatten, nn.Unflatten)):
             if isinstance(ann_module, nn.Flatten):
                 snn_module = snn.Flatten(
@@ -155,6 +164,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                     dim = ann_module.dim,
                     unflattened_size = ann_module.unflattened_size
                 )
+        # 遗忘层
         elif isinstance(ann_module, (nn.Dropout, nn.Dropout1d, nn.Dropout2d, nn.Dropout3d)):
             kwargs = dict(
                 p = ann_module.p,
@@ -239,7 +249,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             for item in track(demo_data, description = "Updating lambdas"):
                 x = pre_process(item)
                 if x is None:
-                    break
+                    continue
                 o = model(x[None])
         remove_hook(hooks)
 

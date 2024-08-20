@@ -66,23 +66,27 @@ def split_time_steps_batch_size(tensor: torch.Tensor, time_steps_batch_size: _Tu
     return tensor
 
 
-class _val_to_spike(torch.autograd.Function):
+def is_spike_train(x: torch.Tensor) -> bool:
+    return x.dtype == torch.bool
+
+
+class _from_spike_train(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: _Any, x: torch.Tensor) -> torch.Tensor:
+    def forward(ctx: _Any, o: torch.Tensor) -> torch.Tensor:
         """
-        模拟值转脉冲的前向传播函数，以0.5为界
+        脉冲转模拟值的前向传播函数。
         Args:
             x (torch.Tensor): 模拟值
         Returns:
             o (torch.Tensor): 脉冲值（0、1）
         """
-        return abs(x).ge(0.5).to(x)
+        return o.to(torch.float)
 
 
     @staticmethod
     def backward(ctx: _Any, grad_output: torch.Tensor) -> torch.Tensor:
         """
-        模拟值转脉冲的反向传播函数
+        脉冲转模拟值的反向传播函数。
         Args:
             grad_output (torch.Tensor): 输出梯度
         Returns:
@@ -91,15 +95,51 @@ class _val_to_spike(torch.autograd.Function):
         return grad_output
 
 
-def val_to_spike(x: torch.Tensor) -> torch.Tensor:
+def from_spike_train(o: torch.Tensor) -> torch.Tensor:
     """
-    模拟值转脉冲，以0.5为界
+    脉冲转模拟值。
+    Args:
+        o (torch.Tensor): 脉冲值（0、1）
+    Returns:
+        x (torch.Tensor): 模拟值
+    """
+    return _from_spike_train.apply(o)
+
+
+class _to_spike_train(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx: _Any, x: torch.Tensor) -> torch.Tensor:
+        """
+        模拟值转脉冲的前向传播函数。
+        Args:
+            x (torch.Tensor): 模拟值
+        Returns:
+            o (torch.Tensor): 脉冲值（0、1）
+        """
+        return x.to(torch.bool)
+
+
+    @staticmethod
+    def backward(ctx: _Any, grad_output: torch.Tensor) -> torch.Tensor:
+        """
+        模拟值转脉冲的反向传播函数。
+        Args:
+            grad_output (torch.Tensor): 输出梯度
+        Returns:
+            grad_input (torch.Tensor): 输入梯度
+        """
+        return grad_output
+
+
+def to_spike_train(x: torch.Tensor) -> torch.Tensor:
+    """
+    模拟值转脉冲。
     Args:
         x (torch.Tensor): 模拟值
     Returns:
         o (torch.Tensor): 脉冲值（0、1）
     """
-    return _val_to_spike.apply(x)
+    return _to_spike_train.apply(x)
 
 
 @torch.jit.script

@@ -54,6 +54,7 @@ class _WeightStd(_Module):
         self.eps = eps
         self.gamma = nn.Parameter(torch.ones(num_features, device = device, dtype = dtype), requires_grad = affine)
         self.beta = nn.Parameter(torch.zeros(num_features, device = device, dtype = dtype), requires_grad = False)
+        self.loa
 
 
     @property

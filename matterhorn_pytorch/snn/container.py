@@ -306,7 +306,7 @@ class Agent(_Module):
             force_spike_output (bool): 是否强制脉冲输出
         """
         super().__init__()
-        assert not isinstance(nn_module, _Module), "Already an SNN module."
+        assert not isinstance(nn_module, _Module), "The module %s.%s is already an SNN module." % (nn_module.__module__, nn_module.__class__.__name__)
         self.force_spike_output = force_spike_output
         self.nn_module: nn.Module = nn_module
 
@@ -528,7 +528,7 @@ class Agent(_Module):
         res = super().forward(*args, **kwargs)
         if self.force_spike_output:
             if isinstance(res, _Tuple):
-                res = (_SF.val_to_spike(y) if isinstance(y, torch.Tensor) else y for y in res)
+                res = (_SF.to_spike_train(y) if isinstance(y, torch.Tensor) else y for y in res)
             else:
-                res = _SF.val_to_spike(res)
+                res = _SF.to_spike_train(res)
         return res

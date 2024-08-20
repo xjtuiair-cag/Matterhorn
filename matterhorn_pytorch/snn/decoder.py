@@ -34,7 +34,7 @@ class Decoder(_Module):
         """
         重置解码器。
         """
-        self.hist_spikes = []
+        self.hist_spike_train = []
         self.current_time_step = 0
         return super().reset()
 
@@ -56,8 +56,8 @@ class SumSpike(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        self.hist_spikes.append(x)
-        y = _SF.decode_sum_spike(torch.stack(self.hist_spikes))
+        self.hist_spike_train.append(x)
+        y = _SF.decode_sum_spike(torch.stack(self.hist_spike_train))
         return y
 
 
@@ -69,8 +69,8 @@ class SumSpike(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        self.hist_spikes.append(x)
-        y = _SF.decode_sum_spike(torch.cat(self.hist_spikes))
+        self.hist_spike_train.append(x)
+        y = _SF.decode_sum_spike(torch.cat(self.hist_spike_train))
         return y
 
 
@@ -91,8 +91,8 @@ class AverageSpike(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        self.hist_spikes.append(x)
-        y = _SF.decode_avg_spike(torch.stack(self.hist_spikes))
+        self.hist_spike_train.append(x)
+        y = _SF.decode_avg_spike(torch.stack(self.hist_spike_train))
         return y
 
 
@@ -104,8 +104,8 @@ class AverageSpike(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        self.hist_spikes.append(x)
-        y = _SF.decode_avg_spike(torch.cat(self.hist_spikes))
+        self.hist_spike_train.append(x)
+        y = _SF.decode_avg_spike(torch.cat(self.hist_spike_train))
         return y
 
 
@@ -139,8 +139,8 @@ class TimeBased(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        self.hist_spikes.append(x)
-        y = self.f_decode(torch.stack(self.hist_spikes))
+        self.hist_spike_train.append(x)
+        y = self.f_decode(torch.stack(self.hist_spike_train))
         self.current_time_step += 1
         y = self.transform(y)
         return y
@@ -154,8 +154,8 @@ class TimeBased(Decoder):
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        self.hist_spikes.append(x)
-        y = self.f_decode(torch.cat(self.hist_spikes))
+        self.hist_spike_train.append(x)
+        y = self.f_decode(torch.cat(self.hist_spike_train))
         self.current_time_step += x.shape[0]
         y = self.transform(y)
         return y

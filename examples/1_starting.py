@@ -25,7 +25,7 @@ def main():
     time_steps = args.time_steps
     batch_size = args.batch_size
     device = torch.device(args.device)
-    dtype = torch.half
+    dtype = torch.float
     epochs = args.epochs
     learning_rate = args.learning_rate
     momentum = args.momentum

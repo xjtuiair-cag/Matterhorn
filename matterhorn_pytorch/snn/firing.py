@@ -11,12 +11,12 @@ from matterhorn_pytorch.snn.skeleton import Module as _Module
 
 
 class Firing(_Module):
-    def __init__(self, multi_spikes: bool = False):
+    def __init__(self, multi_spike_train: bool = False):
         """
         发射函数，产生脉冲的函数。
         """
         super().__init__()
-        self.multi_spikes = multi_spikes
+        self.multi_spike_train = multi_spike_train
 
 
 class Rectangular(Firing):
@@ -157,7 +157,7 @@ class Floor(Firing):
         多值脉冲函数，脉冲为电位向下取整。
         """
         super().__init__(
-            multi_spikes = True
+            multi_spike_train = True
         )
 
 
@@ -180,7 +180,7 @@ class Ceil(Firing):
         多值脉冲函数，脉冲为电位向上取整。
         """
         super().__init__(
-            multi_spikes = True
+            multi_spike_train = True
         )
 
 
@@ -203,7 +203,7 @@ class Round(Firing):
         多值脉冲函数，脉冲为电位四舍五入。
         """
         super().__init__(
-            multi_spikes = True
+            multi_spike_train = True
         )
 
 

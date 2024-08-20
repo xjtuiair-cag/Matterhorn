@@ -10,12 +10,12 @@
 
 该模块为 `matterhorn_pytorch.snn` 模块的函数库，存储所被调用的函数。
 
-## `matterhorn_pytorch.snn.functional.val_to_spike`
+## `matterhorn_pytorch.snn.functional.to_spike_train`
 
 以 $x \ge 0.5$ 为界，将值转为脉冲（有或无）。
 
 ```python
-val_to_spike(
+to_spike_train(
     x: torch.Tensor
 ) -> torch.Tensor
 ```
@@ -37,7 +37,7 @@ import matterhorn.snn.functional as SF
 
 x = torch.rand(2, 3)
 print(x)
-y = SF.val_to_spike(x)
+y = SF.to_spike_train(x)
 print(y)
 ```
 

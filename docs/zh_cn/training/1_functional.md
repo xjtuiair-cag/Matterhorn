@@ -59,8 +59,8 @@ from matterhorn_pytorch.training.functional import stdp
 
 
 delta_weight = torch.zeros(4, 6, dtype = torch.float) # [O = 4, I = 6]
-input_spike_train = SF.val_to_spike(torch.rand(8, 1, 6)) # [T = 8, B = 1, I = 6]
-output_spike_train = SF.val_to_spike(torch.rand(8, 1, 4)) # [T = 8, B = 1, O = 4]
+input_spike_train = SF.to_spike_train(torch.rand(8, 1, 6)) # [T = 8, B = 1, I = 6]
+output_spike_train = SF.to_spike_train(torch.rand(8, 1, 4)) # [T = 8, B = 1, O = 4]
 delta_weight = stdp(delta_weight, input_spike_train, output_spike_train, 0.2, 2, 0.2, 2)
 print(delta_weight)
 ```

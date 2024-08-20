@@ -30,7 +30,7 @@ import matterhorn_pytorch as mth
 import matterhorn_pytorch.snn.functional as SF
 
 
-data = SF.val_to_spike(torch.rand(8, 1, 6)) # [T, B, ...]
+data = SF.to_spike_train(torch.rand(8, 1, 6)) # [T, B, ...]
 print(data)
 decoder = mth.snn.SumSpikeDecoder()
 res = decoder(data)
@@ -57,7 +57,7 @@ import matterhorn_pytorch as mth
 import matterhorn_pytorch.snn.functional as SF
 
 
-data = SF.val_to_spike(torch.rand(8, 1, 6)) # [T, B, ...]
+data = SF.to_spike_train(torch.rand(8, 1, 6)) # [T, B, ...]
 print(data)
 decoder = mth.snn.AvgSpikeDecoder()
 res = decoder(data)
@@ -91,7 +91,7 @@ import matterhorn_pytorch as mth
 import matterhorn_pytorch.snn.functional as SF
 
 
-data = SF.val_to_spike(torch.rand(8, 1, 6)) # [T, B, ...]
+data = SF.to_spike_train(torch.rand(8, 1, 6)) # [T, B, ...]
 print(data)
 decoder = mth.snn.MinTimeDecoder()
 res = decoder(data)
@@ -127,7 +127,7 @@ import matterhorn_pytorch as mth
 import matterhorn_pytorch.snn.functional as SF
 
 
-data = SF.val_to_spike(torch.rand(8, 1, 6)) # [T, B, ...]
+data = SF.to_spike_train(torch.rand(8, 1, 6)) # [T, B, ...]
 print(data)
 decoder = mth.snn.AvgTimeDecoder()
 res = decoder(data)

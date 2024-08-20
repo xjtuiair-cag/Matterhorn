@@ -10,12 +10,12 @@
 
 This module is a function library for the `matterhorn_pytorch.snn` module, storing functions that are called.
 
-## `matterhorn_pytorch.snn.functional.val_to_spike`
+## `matterhorn_pytorch.snn.functional.to_spike_train`
 
 Converts values to spikes (either on or off) with $x \ge 0.5$ as the threshold.
 
 ```python
-val_to_spike(
+to_spike_train(
     x: torch.Tensor
 ) -> torch.Tensor
 ```
@@ -37,7 +37,7 @@ import matterhorn.snn.functional as SF
 
 x = torch.rand(2, 3)
 print(x)
-y = SF.val_to_spike(x)
+y = SF.to_spike_train(x)
 print(y)
 ```
 
