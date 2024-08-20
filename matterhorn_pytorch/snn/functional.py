@@ -621,6 +621,24 @@ def encode_temporal(x: torch.Tensor, time_steps: int, t_offset: int = 0, prob: f
     return y
 
 
+def encode_binary(x: torch.Tensor, length: int = 8, repeat: int = 1) -> torch.Tensor:
+    """
+    二进制（相位）编码，将值转化为二进制位。
+    Args:
+        x (torch.Tensor): 数值
+        length (int): 二进制位长度
+        repeat (int): 重复次数
+    Returns:
+        y (torch.Tensor): 脉冲序列
+    """
+    b = torch.where(x >= 0, x, x + (2 << length)).to(torch.long)
+    y_seq = []
+    for i in range(length):
+        y_seq.append((b >> (length - 1 - i)) & 0x1)
+    y = torch.stack(y_seq * repeat)
+    return y.to(x)
+
+
 def decode_sum_spike(x: torch.Tensor) -> torch.Tensor:
     """
     总脉冲计数解码，将脉冲转化为脉冲计数。
