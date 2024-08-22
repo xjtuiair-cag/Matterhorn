@@ -67,12 +67,16 @@ class Module(nn.Module):
         return not self._multi_step_mode
 
 
-    def multi_step_mode_(self, if_on: bool = True) -> nn.Module:
+    def multi_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
         """
         调整模型至多时间步模式。
         Args
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
         """
+        if recursive:
+            for module in self.modules():
+                if isinstance(module, Module):
+                    module.multi_step_mode_(if_on, recursive = False)
         if self.supports_multi_step_mode and if_on:
             self._multi_step_mode = True
         elif self.supports_single_step_mode and not if_on:
@@ -83,13 +87,13 @@ class Module(nn.Module):
         return self
     
 
-    def single_step_mode_(self, if_on: bool = True) -> nn.Module:
+    def single_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
         """
         调整模型至单时间步模式。
         Args
             if_on (bool): 当前需要调整为什么模式（True为单时间步模式，False为多时间步模式）
         """
-        return self.multi_step_mode_(not if_on)
+        return self.multi_step_mode_(not if_on, recursive = recursive)
 
 
     def reset(self) -> nn.Module:
