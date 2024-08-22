@@ -1047,7 +1047,7 @@ class MultiheadAttention(Synapse, nn.MultiheadAttention):
         attn_mask_steps = (attn_mask is not None and value.ndim == attn_mask.ndim)
         y_seq = []
         y_w_seq = []
-        for t in range(query.shape[0]):
+        for t in range(value.shape[0]):
             attn_output, attn_output_weights = self.forward_step(
                 query = query[t] if query_steps else query,
                 key = key[t] if key_steps else key,
