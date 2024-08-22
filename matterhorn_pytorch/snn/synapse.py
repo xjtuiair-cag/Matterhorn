@@ -1041,16 +1041,20 @@ class MultiheadAttention(Synapse, nn.MultiheadAttention):
 
 
     def forward_steps(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, key_padding_mask: _Optional[torch.Tensor] = None, need_weights: bool = True, attn_mask: _Optional[torch.Tensor] = None, average_attn_weights: bool = True, is_causal: bool = False) -> _Tuple[torch.Tensor, _Optional[torch.Tensor]]:
+        query_steps = (value.ndim == query.ndim)
+        key_steps = (value.ndim == key.ndim)
+        key_padding_mask_steps = (key_padding_mask is not None and value.ndim == key_padding_mask.ndim)
+        attn_mask_steps = (attn_mask is not None and value.ndim == attn_mask.ndim)
         y_seq = []
         y_w_seq = []
         for t in range(query.shape[0]):
             attn_output, attn_output_weights = self.forward_step(
-                query = query[t],
-                key = key[t],
+                query = query[t] if query_steps else query,
+                key = key[t] if key_steps else key,
                 value = value[t],
-                key_padding_mask = key_padding_mask,
+                key_padding_mask = key_padding_mask[t] if key_padding_mask_steps else key_padding_mask,
                 need_weights = need_weights,
-                attn_mask = attn_mask,
+                attn_mask = attn_mask[t] if attn_mask_steps else attn_mask,
                 average_attn_weights = average_attn_weights,
                 is_causal = is_causal
             )
