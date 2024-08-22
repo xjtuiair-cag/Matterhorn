@@ -1036,11 +1036,11 @@ class MultiheadAttention(Synapse, nn.MultiheadAttention):
         )
 
 
-    def forward_step(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, key_padding_mask: _Optional[torch.Tensor] = None, need_weights: bool = True, attn_mask: _Optional[torch.Tensor] = None, average_attn_weights: bool = True, is_causal: bool = False) -> _Tuple[torch.Tensor, _Optional[torch.Tensor]]:
-        return nn.MultiheadAttention.forward(self, query, key, value, key_padding_mask, need_weights, attn_mask, average_attn_weights, is_causal)
+    def forward_step(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, key_padding_mask: _Optional[torch.Tensor] = None, need_weights: bool = True, attn_mask: _Optional[torch.Tensor] = None, average_attn_weights: bool = True) -> _Tuple[torch.Tensor, _Optional[torch.Tensor]]:
+        return nn.MultiheadAttention.forward(self, query, key, value, key_padding_mask, need_weights, attn_mask, average_attn_weights)
 
 
-    def forward_steps(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, key_padding_mask: _Optional[torch.Tensor] = None, need_weights: bool = True, attn_mask: _Optional[torch.Tensor] = None, average_attn_weights: bool = True, is_causal: bool = False) -> _Tuple[torch.Tensor, _Optional[torch.Tensor]]:
+    def forward_steps(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, key_padding_mask: _Optional[torch.Tensor] = None, need_weights: bool = True, attn_mask: _Optional[torch.Tensor] = None, average_attn_weights: bool = True) -> _Tuple[torch.Tensor, _Optional[torch.Tensor]]:
         query_steps = (value.ndim == query.ndim)
         key_steps = (value.ndim == key.ndim)
         key_padding_mask_steps = (key_padding_mask is not None and value.ndim == key_padding_mask.ndim)
@@ -1055,8 +1055,7 @@ class MultiheadAttention(Synapse, nn.MultiheadAttention):
                 key_padding_mask = key_padding_mask[t] if key_padding_mask_steps else key_padding_mask,
                 need_weights = need_weights,
                 attn_mask = attn_mask[t] if attn_mask_steps else attn_mask,
-                average_attn_weights = average_attn_weights,
-                is_causal = is_causal
+                average_attn_weights = average_attn_weights
             )
             y_seq.append(attn_output)
             y_w_seq.append(attn_output_weights)
