@@ -12,15 +12,15 @@ from matterhorn_pytorch.snn.skeleton import Module as _Module
 from typing import Any as _Any, Iterable as _Iterable, Mapping as _Mapping, Tuple as _Tuple, Union as _Union, Optional as _Optional
 
 
-def _multi_step_mode_(module: _Module, if_on: bool) -> _Module:
+def _safe_multi_step_mode_(module: _Module, if_on: bool, recursive: bool = False) -> _Module:
     if if_on and not module.multi_step_mode:
         if module.supports_multi_step_mode:
-            module.multi_step_mode_()
+            module.multi_step_mode_(recursive = recursive)
         else:
             module = Temporal(module)
     if not if_on and module.multi_step_mode:
         if module.supports_single_step_mode:
-            module.single_step_mode_()
+            module.single_step_mode_(recursive = recursive)
         else:
             raise ValueError("Unsupported step mode conversion on module %s" % (module.__class__.__name__,))
     return module
@@ -51,17 +51,17 @@ class Sequential(Container, nn.Sequential):
         self.multi_step_mode_(multi_step_mode)
 
 
-    def multi_step_mode_(self, if_on: bool = True) -> nn.Module:
+    def multi_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
         """
         调整模型至多时间步模式。
         Args
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
         """
-        Container.multi_step_mode_(self, if_on)
+        Container.multi_step_mode_(self, if_on, recursive = False)
         for idx, module in enumerate(self):
             is_snn_module = isinstance(module, _Module)
             if is_snn_module:
-                self[idx] = _multi_step_mode_(module, if_on)
+                self[idx] = _safe_multi_step_mode_(module, if_on, recursive = recursive)
         return self
 
 
@@ -210,7 +210,7 @@ class Temporal(Container):
         """
         assert isinstance(module, _Module) and not module.multi_step_mode, "Temporal container can only accept SNN module with single step mode."
         super().__init__()
-        self.multi_step_mode_()
+        self.multi_step_mode_(recursive = False)
         self.module = module
 
 
@@ -242,7 +242,7 @@ class ModuleList(Container, nn.ModuleList):
         )
 
 
-    def multi_step_mode_(self, if_on: bool = True) -> nn.Module:
+    def multi_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
         """
         调整模型至多时间步模式。
         Args
@@ -251,7 +251,7 @@ class ModuleList(Container, nn.ModuleList):
         for idx, module in enumerate(self):
             is_snn_module = isinstance(module, _Module)
             if is_snn_module:
-                self[idx] = _multi_step_mode_(module, if_on)
+                self[idx] = _safe_multi_step_mode_(module, if_on, recursive = recursive)
         return self
 
 
@@ -284,7 +284,7 @@ class ModuleDict(Container, nn.ModuleDict):
         )
 
 
-    def multi_step_mode_(self, if_on: bool = True) -> nn.Module:
+    def multi_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
         """
         调整模型至多时间步模式。
         Args
@@ -293,7 +293,7 @@ class ModuleDict(Container, nn.ModuleDict):
         for idx, module in enumerate(self):
             is_snn_module = isinstance(module, _Module)
             if is_snn_module:
-                self[idx] = _multi_step_mode_(module, if_on)
+                self[idx] = _safe_multi_step_mode_(module, if_on, recursive = recursive)
         return self
 
 
@@ -463,20 +463,6 @@ class Agent(_Module):
             attrs (str*): 属性和操作列表
         """
         return dir(self.nn_module)
-
-
-    def multi_step_mode_(self, if_on: bool = True) -> nn.Module:
-        """
-        调整模型至多时间步模式。
-        Args
-            if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
-        """
-        for name, module in self.nn_module.named_children():
-            is_snn_module = isinstance(module, _Module)
-            if is_snn_module:
-                setattr(self.nn_module, name, _multi_step_mode_(module, if_on))
-        super().multi_step_mode_(if_on)
-        return self
 
 
     def reset(self) -> nn.Module:
