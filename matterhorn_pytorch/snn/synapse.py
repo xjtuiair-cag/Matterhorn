@@ -54,7 +54,6 @@ class _WeightStd(_Module):
         self.eps = eps
         self.gamma = nn.Parameter(torch.ones(num_features, device = device, dtype = dtype), requires_grad = affine)
         self.beta = nn.Parameter(torch.zeros(num_features, device = device, dtype = dtype), requires_grad = False)
-        self.loa
 
 
     @property
@@ -1016,3 +1015,44 @@ class Identity(Synapse, nn.Identity):
         """
         x = nn.Identity.forward(self, x)
         return x
+
+
+class MultiheadAttention(Synapse, nn.MultiheadAttention):
+    def __init__(self, embed_dim: int, num_heads: int, dropout: float = 0.0, bias: bool = True, add_bias_kv: bool = False, add_zero_attn: bool = False, kdim: _Optional[int] = None, vdim: _Optional[int] = None, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+        super().__init__(
+            embed_dim = embed_dim,
+            num_heads = num_heads,
+            dropout = dropout,
+            bias = bias,
+            add_bias_kv = add_bias_kv,
+            add_zero_attn = add_zero_attn,
+            kdim = kdim,
+            vdim = vdim,
+            batch_first = batch_first,
+            device = device,
+            dtype = dtype
+        )
+
+
+    def forward_step(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, key_padding_mask: _Optional[torch.Tensor] = None, need_weights: bool = True, attn_mask: _Optional[torch.Tensor] = None, average_attn_weights: bool = True, is_causal: bool = False) -> _Tuple[torch.Tensor, _Optional[torch.Tensor]]:
+        return nn.MultiheadAttention.forward(self, query, key, value, key_padding_mask, need_weights, attn_mask, average_attn_weights, is_causal)
+
+
+    def forward_steps(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, key_padding_mask: _Optional[torch.Tensor] = None, need_weights: bool = True, attn_mask: _Optional[torch.Tensor] = None, average_attn_weights: bool = True, is_causal: bool = False) -> _Tuple[torch.Tensor, _Optional[torch.Tensor]]:
+        y_seq = []
+        y_w_seq = []
+        for t in range(query.shape[0]):
+            attn_output, attn_output_weights = self.forward_step(
+                query = query[t],
+                key = key[t],
+                value = value[t],
+                key_padding_mask = key_padding_mask,
+                need_weights = need_weights,
+                attn_mask = attn_mask,
+                average_attn_weights = average_attn_weights,
+                is_causal = is_causal
+            )
+            y_seq.append(attn_output)
+            y_w_seq.append(attn_output_weights)
+        y = tuple([torch.stack(x) if x[0] is not None else None for x in [y_seq, y_w_seq]])
+        return y
