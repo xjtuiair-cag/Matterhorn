@@ -1019,7 +1019,9 @@ class Identity(Synapse, nn.Identity):
 
 class MultiheadAttention(Synapse, nn.MultiheadAttention):
     def __init__(self, embed_dim: int, num_heads: int, dropout: float = 0.0, bias: bool = True, add_bias_kv: bool = False, add_zero_attn: bool = False, kdim: _Optional[int] = None, vdim: _Optional[int] = None, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
-        super().__init__(
+        Synapse.__init__(self)
+        nn.MultiheadAttention.__init__(
+            self,
             embed_dim = embed_dim,
             num_heads = num_heads,
             dropout = dropout,
