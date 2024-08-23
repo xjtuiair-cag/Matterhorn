@@ -12,7 +12,7 @@ from matterhorn_pytorch.snn.skeleton import Module as _Module
 from typing import Any as _Any, Iterable as _Iterable, Mapping as _Mapping, Tuple as _Tuple, Union as _Union, Optional as _Optional
 
 
-def _safe_multi_step_mode_(module: _Module, if_on: bool, recursive: bool = False) -> _Module:
+def _safe_multi_step_mode_(module: _Module, if_on: bool, recursive: bool = True) -> _Module:
     if if_on and not module.multi_step_mode:
         if module.supports_multi_step_mode:
             module.multi_step_mode_(recursive = recursive)
@@ -51,11 +51,12 @@ class Sequential(Container, nn.Sequential):
         self.multi_step_mode_(multi_step_mode)
 
 
-    def multi_step_mode_(self, if_on: bool = True, recursive: bool = False) -> nn.Module:
+    def multi_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
         """
         调整模型至多时间步模式。
-        Args
+        Args:
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
+            recursive (bool): 是否递归调整子模块的时间步模式
         """
         Container.multi_step_mode_(self, if_on, recursive = False)
         for idx, module in enumerate(self):
@@ -242,11 +243,12 @@ class ModuleList(Container, nn.ModuleList):
         )
 
 
-    def multi_step_mode_(self, if_on: bool = True, recursive: bool = False) -> nn.Module:
+    def multi_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
         """
         调整模型至多时间步模式。
-        Args
+        Args:
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
+            recursive (bool): 是否递归调整子模块的时间步模式
         """
         for idx, module in enumerate(self):
             is_snn_module = isinstance(module, _Module)
@@ -284,11 +286,12 @@ class ModuleDict(Container, nn.ModuleDict):
         )
 
 
-    def multi_step_mode_(self, if_on: bool = True, recursive: bool = False) -> nn.Module:
+    def multi_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
         """
         调整模型至多时间步模式。
-        Args
+        Args:
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
+            recursive (bool): 是否递归调整子模块的时间步模式
         """
         for idx, module in enumerate(self):
             is_snn_module = isinstance(module, _Module)

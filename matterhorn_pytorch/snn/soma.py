@@ -59,6 +59,16 @@ class Soma(_Module):
         return ", ".join(["u_threshold=%g" % self.u_threshold, "u_rest=%g" % self.u_rest, "reset=%s" % ('"zero"' if self.hard_reset else '"sub"',)]) + ((", exts=" + repr(list(exts.keys()))) if len(exts.keys()) else "") + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
+    def multi_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
+        """
+        调整模型至多时间步模式。
+        Args:
+            if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
+            recursive (bool): 是否递归调整子模块的时间步模式
+        """
+        return super().multi_step_mode_(if_on, recursive = False)
+
+
     def reset(self) -> None:
         """
         重置整个神经元。
