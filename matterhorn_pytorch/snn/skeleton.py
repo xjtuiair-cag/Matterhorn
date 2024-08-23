@@ -145,6 +145,9 @@ class Module(nn.Module):
         for t in range(time_steps):
             args_t = (x[t] if isinstance(x, torch.Tensor) else x for x in args)
             kwargs_t = {k: x[t] if isinstance(x, torch.Tensor) else x for k, x in kwargs}
+            for module in self.children():
+                if isinstance(module, Module):
+                    module.single_step_mode_()
             result.append(self.forward_step(*args_t, **kwargs_t))
         if isinstance(result[0], _Tuple):
             y = (torch.stack([r[col] for r in result]) if isinstance(el, torch.Tensor) else el for col, el in enumerate(result[0]))
