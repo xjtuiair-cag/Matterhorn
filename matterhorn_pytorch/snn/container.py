@@ -51,7 +51,7 @@ class Sequential(Container, nn.Sequential):
         self.multi_step_mode_(multi_step_mode)
 
 
-    def multi_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
+    def multi_step_mode_(self, if_on: bool = True, recursive: bool = False) -> nn.Module:
         """
         调整模型至多时间步模式。
         Args
@@ -242,7 +242,7 @@ class ModuleList(Container, nn.ModuleList):
         )
 
 
-    def multi_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
+    def multi_step_mode_(self, if_on: bool = True, recursive: bool = False) -> nn.Module:
         """
         调整模型至多时间步模式。
         Args
@@ -284,7 +284,7 @@ class ModuleDict(Container, nn.ModuleDict):
         )
 
 
-    def multi_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
+    def multi_step_mode_(self, if_on: bool = True, recursive: bool = False) -> nn.Module:
         """
         调整模型至多时间步模式。
         Args
