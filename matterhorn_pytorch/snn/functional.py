@@ -10,22 +10,6 @@ import torch.nn as nn
 from typing import List as _List, Tuple as _Tuple, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union, Any as _Any
 
 
-def to(u: _Optional[_Union[torch.Tensor, int, float]], x: torch.Tensor) -> torch.Tensor:
-    """
-    校正张量形状。
-    Args:
-        u (torch.Tensor): 待校正的数据，可能是张量或浮点值
-        x (torch.Tensor): 带有正确数据类型、所在设备和形状的张量
-    Returns:
-        u (torch.Tensor): 经过校正的张量
-    """
-    if isinstance(u, torch.Tensor):
-        return u.to(x)
-    elif isinstance(u, int) or isinstance(u, float):
-        return torch.full_like(x, u)
-    return torch.zeros_like(x)
-
-
 @torch.jit.script
 def transpose(x: torch.Tensor, dims: _Optional[_List[int]] = None) -> torch.Tensor:
     """

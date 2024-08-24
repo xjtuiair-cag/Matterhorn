@@ -85,7 +85,7 @@ def main():
     print_title("Preparations for Training")
 
     def loss_fn(o: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        return torch.nn.functional.cross_entropy(o.float(), y.float())
+        return torch.nn.functional.cross_entropy(o.float(), y.long())
     optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
     log_dir = "./examples/logs"

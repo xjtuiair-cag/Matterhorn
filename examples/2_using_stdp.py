@@ -15,11 +15,11 @@ def main():
     print_title("Hyper Parameters")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--time-steps", type = int, default = 128, help = "Time steps.")
-    parser.add_argument("--batch-size", type = int, default = 64, help = "Batch size.")
+    parser.add_argument("--time-steps", type = int, default = 32, help = "Time steps.")
+    parser.add_argument("--batch-size", type = int, default = 512, help = "Batch size.")
     parser.add_argument("--device", type = str, default = "cpu", help = "Device for running the models.")
     parser.add_argument("--epochs", type = int, default = 100, help = "Training epochs.")
-    parser.add_argument("--learning-rate", type = float, default = 0.1, help = "Learning rate.")
+    parser.add_argument("--learning-rate", type = float, default = 0.01, help = "Learning rate.")
     parser.add_argument("--momentum", type = float, default = 0.9, help = "Momentum for optimizer.")
     parser.add_argument("--tau-m", type = float, default = 2.0, help = "Membrane constant.")
 
@@ -99,7 +99,7 @@ def main():
     print_title("Preparations for Training")
 
     def loss_fn(o: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        return torch.nn.functional.cross_entropy(o.float(), y.float())
+        return torch.nn.functional.cross_entropy(o.float(), y.long())
     optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
     log_dir = "./examples/logs"

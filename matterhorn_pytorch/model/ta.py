@@ -78,7 +78,7 @@ class TemporalWiseAttention(snn.Module):
             x (torch.Tensor): 过滤后的脉冲张量
         """
         dim = x.ndim
-        s = x.clone().detach().requires_grad_(self.training)
+        s = x.clone().detach()
         pre_permute = []
         post_permute = []
         # 获取统计向量$s^{n-1}$

@@ -1041,23 +1041,39 @@ class MultiheadAttention(Synapse, nn.MultiheadAttention):
 
 
     def forward_steps(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, key_padding_mask: _Optional[torch.Tensor] = None, need_weights: bool = True, attn_mask: _Optional[torch.Tensor] = None, average_attn_weights: bool = True) -> _Tuple[torch.Tensor, _Optional[torch.Tensor]]:
-        query_steps = (value.ndim == query.ndim)
-        key_steps = (value.ndim == key.ndim)
-        key_padding_mask_steps = (key_padding_mask is not None and value.ndim == key_padding_mask.ndim)
-        attn_mask_steps = (attn_mask is not None and value.ndim == attn_mask.ndim)
-        y_seq = []
-        y_w_seq = []
-        for t in range(value.shape[0]):
-            attn_output, attn_output_weights = self.forward_step(
-                query = query[t] if query_steps else query,
-                key = key[t] if key_steps else key,
-                value = value[t],
-                key_padding_mask = key_padding_mask[t] if key_padding_mask_steps else key_padding_mask,
-                need_weights = need_weights,
-                attn_mask = attn_mask[t] if attn_mask_steps else attn_mask,
-                average_attn_weights = average_attn_weights
-            )
-            y_seq.append(attn_output)
-            y_w_seq.append(attn_output_weights)
-        y = tuple([torch.stack(x) if x[0] is not None else None for x in [y_seq, y_w_seq]])
-        return y
+        T = value.shape[0]
+        reshape = lambda x, dim: torch.stack([x] * T) if x.ndim < dim else x
+        query = reshape(query, value.ndim)
+        key = reshape(key, value.ndim)
+        key_padding_mask = reshape(key_padding_mask, value.ndim - 1)
+        attn_mask = reshape(attn_mask, value.ndim)
+        B = 1
+        if value.ndim > 3:
+            if self.batch_first:
+                B = value.shape[-3]
+                merge_tb = lambda x: x.flatten(0, 1)
+                split_tb = lambda x: x.reshape([T, B] + list(x.shape[1:]))
+            else:
+                B = value.shape[-2]
+                merge_tb = lambda x: x.swapaxes(1, 2).flatten(0, 1).swapaxes(0, 1)
+                split_tb = lambda x: x.reshape([x.shape[0], T, B] + list(x.shape[2:])).swapaxes(0, 1)
+            merge_mask = lambda x: x.flatten(0, 1)
+            split_wt = lambda x: x.reshape([T, B] + list(x.shape[1:]))
+        else:
+            if self.batch_first:
+                merge_tb = lambda x: x
+                split_tb = lambda x: x
+            else:
+                merge_tb = lambda x: x.swapaxes(0, 1)
+                split_tb = lambda x: x.swapaxes(0, 1)
+            merge_mask = lambda x: x
+            split_wt = lambda x: x
+        query = merge_tb(query)
+        key = merge_tb(key)
+        value = merge_tb(value)
+        key_padding_mask = merge_mask(key_padding_mask)
+        attn_mask = merge_mask(attn_mask)
+        attn_output, attn_output_weights = nn.MultiheadAttention.forward(self, query, key, value, key_padding_mask, need_weights, attn_mask, average_attn_weights)
+        attn_output = split_tb(attn_output)
+        attn_output_weights = split_wt(attn_output_weights) if attn_output_weights is not None and isinstance(attn_output_weights, torch.Tensor) else attn_output_weights
+        return attn_output, attn_output_weights

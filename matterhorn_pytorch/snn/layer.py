@@ -88,27 +88,33 @@ class STDPLayer(_Module):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["pos=%g*exp(-x/%g)" % (self.a_pos, self.tau_pos), "neg=-%g*exp(x/%g)" % (self.a_neg, self.tau_neg)]) + (", " + super().extra_repr(self) if len(super().extra_repr(self)) else "")
+        return ", ".join(["pos=%g*exp(-x/%g)" % (self.a_pos, self.tau_pos), "neg=-%g*exp(x/%g)" % (self.a_neg, self.tau_neg)]) + (", " + super().extra_repr() if len(super().extra_repr()) else "")
 
 
-    def reset(self) -> nn.Module:
+    def reset(self) -> _Module:
         """
         重置模型。
         """
+        super().reset()
         self.input_trace = None
         self.output_trace = None
-        return super().reset()
+        return self
 
 
-    def check_if_reset(self, u: torch.Tensor, x: torch.Tensor) -> None:
+    def _check_buffer(self, x: torch.Tensor, input_trace_shape: _Tuple[int], output_trace_shape: _Tuple[int]) -> _Module:
         """
-        检查张量是否（在形状上）一致。若不一致，重置胞体。
+        检查临时变量。
         Args:
-            u (torch.Tensor): 待检测张量
-            x (torch.Tensor): 需要保持一致的张量
+            x (torch.Tensor): 关键张量
+            input_trace_shape (int*): 输入形状
+            output_trace_shape (int*): 输出形状
         """
-        if isinstance(u, torch.Tensor) and u.shape != x.shape:
-            self.reset()
+        self.detach()
+        if self.input_trace is None or (isinstance(self.input_trace, torch.Tensor) and self.input_trace.shape != input_trace_shape):
+            self.input_trace = torch.zeros(input_trace_shape).to(x)
+        if self.output_trace is None or (isinstance(self.output_trace, torch.Tensor) and self.output_trace.shape != output_trace_shape):
+            self.output_trace = torch.zeros(output_trace_shape).to(x)
+        return self
 
 
 class f_stdp_linear(torch.autograd.Function):
@@ -230,7 +236,7 @@ class STDPLinear(STDPLayer):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["in_features=%d" % self.in_features, "out_features=%d" % self.out_features]) + (", " + super().extra_repr(self) if len(super().extra_repr(self)) else "")
+        return ", ".join(["in_features=%d" % self.in_features, "out_features=%d" % self.out_features]) + (", " + super().extra_repr() if len(super().extra_repr()) else "")
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -247,12 +253,7 @@ class STDPLinear(STDPLayer):
             T = 1
             B, C = x.shape
         N, C = self.weight.shape
-        input_trace_shape = torch.zeros(B, N, C).to(x)
-        output_trace_shape = torch.zeros(B, N, C).to(x)
-        self.check_if_reset(self.input_trace, input_trace_shape)
-        self.check_if_reset(self.output_trace, output_trace_shape)
-        self.input_trace = _SF.to(self.input_trace, input_trace_shape)
-        self.output_trace = _SF.to(self.output_trace, output_trace_shape)
+        self._check_buffer(x, (B, N, C), (B, N, C))
         soma = self.soma.forward_steps if self.multi_step_mode else self.soma.forward_step
         y, self.input_trace, self.output_trace = f_stdp_linear.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)
         return y
@@ -409,7 +410,7 @@ class STDPConv2d(STDPLayer):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["in_channels=%d" % self.in_channels, "out_channels=%d" % self.out_channels, "kernel_size=(%d, %d)" % tuple(self.kernel_size), "stride=(%d, %d)" % tuple(self.stride), "padding=(%d, %d)" % tuple(self.padding), "dilation=(%d, %d)" % tuple(self.dilation)]) + (", " + super().extra_repr(self) if len(super().extra_repr(self)) else "")
+        return ", ".join(["in_channels=%d" % self.in_channels, "out_channels=%d" % self.out_channels, "kernel_size=(%d, %d)" % tuple(self.kernel_size), "stride=(%d, %d)" % tuple(self.stride), "padding=(%d, %d)" % tuple(self.padding), "dilation=(%d, %d)" % tuple(self.dilation)]) + (", " + super().extra_repr() if len(super().extra_repr()) else "")
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -431,12 +432,7 @@ class STDPConv2d(STDPLayer):
         DH, DW = self.dilation
         HO = (HI + 2 * PH - HK * DH) // SH + 1
         WO = (WI + 2 * PW - WK * DW) // SW + 1
-        input_trace_shape = torch.zeros(B, N, C, HI, WI).to(x)
-        output_trace_shape = torch.zeros(B, N, C, HO, WO).to(x)
-        self.check_if_reset(self.input_trace, input_trace_shape)
-        self.check_if_reset(self.output_trace, output_trace_shape)
-        self.input_trace = _SF.to(self.input_trace, input_trace_shape)
-        self.output_trace = _SF.to(self.output_trace, output_trace_shape)
+        self._check_buffer(x, (B, N, C, HI, WI), (B, N, C, HO, WO))
         soma = self.soma.forward_steps if self.multi_step_mode else self.soma.forward_step
         y, self.input_trace, self.output_trace = f_stdp_conv2d.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.stride, self.padding, self.dilation, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)
         return y

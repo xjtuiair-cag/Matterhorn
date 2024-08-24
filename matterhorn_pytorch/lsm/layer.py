@@ -28,7 +28,7 @@ class LSM(_Module):
         """
         assert adjacent.ndim == 2 and adjacent.shape[0] == adjacent.shape[1], "Incorrect adjacent matrix."
         super().__init__()
-        self.o = None
+        self.register_buffer("o", None)
         self.adjacent = nn.Parameter(adjacent.to(torch.float), requires_grad = False)
         self.soma = soma
         self.neuron_num = self.adjacent.shape[0]
@@ -43,26 +43,40 @@ class LSM(_Module):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["neuron_num=%d" % self.neuron_num, "adjacent=\n%s\n" % self.adjacent]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+        return ", ".join(["neuron_num=%d" % self.neuron_num, "synapse_prob=%g" % self.adjacent.mean()]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+
+
+    def _check_buffer(self, x: torch.Tensor) -> _Module:
+        """
+        检查临时变量。
+        Args:
+            x (torch.Tensor): 关键张量
+        """
+        self.detach()
+        if self.o is None or (isinstance(self.o, torch.Tensor) and self.o.shape != x.shape):
+            self.o = torch.full_like(x, 0.0)
+        return self
 
 
     def reset(self) -> _Module:
         """
         重置整个神经元。
         """
-        self.o = None
+        self.detach()
+        super().reset()
+        if self.o is not None:
+            self.o = torch.full_like(self.o, 0.0)
         return super().reset()
 
 
-    def check_if_reset(self, u: torch.Tensor, x: torch.Tensor) -> None:
+    def detach(self) -> _Module:
         """
-        检查张量是否（在形状上）一致。若不一致，重置胞体。
-        Args:
-            u (torch.Tensor): 待检测张量
-            x (torch.Tensor): 需要保持一致的张量
+        将历史电位与权重从计算图中分离，以停止在时间上进行反向传播。
         """
-        if isinstance(u, torch.Tensor) and u.shape != x.shape:
-            self.reset()
+        super().detach()
+        if isinstance(self.o, torch.Tensor):
+            self.o = self.o.detach()
+        return self
 
 
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
@@ -73,8 +87,7 @@ class LSM(_Module):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self.o = self.check_if_reset(self.o, x)
-        self.o = _SF.to(self.o, x)
+        self._check_buffer(x)
         y = x + _F.linear(self.o, self.weight * self.adjacent.T, None)
         o = self.soma.forward_step(y)
         self.o = o

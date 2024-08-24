@@ -41,7 +41,7 @@ class Soma(_Module):
             dtype (torch.dtype): 所计算的数据类型
         """
         super().__init__()
-        self.u = None
+        self.register_buffer("u", None)
         self.u_threshold = nn.Parameter(torch.tensor(u_threshold, device = device, dtype = dtype), requires_grad = False)
         self.u_rest = nn.Parameter(torch.tensor(u_rest, device = device, dtype = dtype), requires_grad = False)
         self.spiking_function: _Firing = spiking_function
@@ -69,58 +69,37 @@ class Soma(_Module):
         return super().multi_step_mode_(if_on, recursive = False)
 
 
-    def reset(self) -> None:
+    def _check_buffer(self, x: torch.Tensor) -> _Module:
+        """
+        检查临时变量。
+        Args:
+            x (torch.Tensor): 关键张量
+        """
+        self.detach()
+        if self.u is None or (isinstance(self.u, torch.Tensor) and self.u.shape != x.shape):
+            self.u = torch.full_like(x, self.u_rest)
+        return self
+
+
+    def reset(self) -> _Module:
         """
         重置整个神经元。
         """
         self.detach()
-        self.u = self.u_rest.item()
-        return super().reset()
+        super().reset()
+        if self.u is not None:
+            self.u = torch.full_like(self.u, self.u_rest)
+        return self
 
     
     def detach(self) -> _Module:
         """
         将历史电位从计算图中分离，以停止在时间上进行反向传播。
         """
+        super().detach()
         if isinstance(self.u, torch.Tensor):
-            self.u = self.u.float().detach().requires_grad_(self.training)
-        return super().detach()
-
-
-    def build_ext(self, ext_name: str, **kwargs) -> _Any:
-        """
-        构建单个扩展。
-        Args:
-            ext_name (str): 扩展名
-            **kwargs (str: Any): 构建参数
-        """
-        res = None
-        try:
-            kwargs["verbose"] = _EXT_DEBUG_MODE
-            res = load_inline(**kwargs)
-        except Exception as e:
-            if _EXT_DEBUG_MODE:
-                warnings.warn("Failed to compile %s extensions. %s" % (ext_name, str(e).split("\n")[0]))
-        return res
-
-
-    @property
-    def exts(self) -> _Mapping[str, object]:
-        """
-        构建扩展。
-        """
-        return dict()
-
-
-    def check_if_reset(self, u: torch.Tensor, x: torch.Tensor) -> None:
-        """
-        检查张量是否（在形状上）一致。若不一致，重置胞体。
-        Args:
-            u (torch.Tensor): 待检测张量
-            x (torch.Tensor): 需要保持一致的张量
-        """
-        if isinstance(u, torch.Tensor) and u.shape != x.shape:
-            self.reset()
+            self.u = self.u.float().detach()
+        return self
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -163,6 +142,31 @@ class Soma(_Module):
         return h
 
 
+    def build_ext(self, ext_name: str, **kwargs) -> _Any:
+        """
+        构建单个扩展。
+        Args:
+            ext_name (str): 扩展名
+            **kwargs (str: Any): 构建参数
+        """
+        res = None
+        try:
+            kwargs["verbose"] = _EXT_DEBUG_MODE
+            res = load_inline(**kwargs)
+        except Exception as e:
+            if _EXT_DEBUG_MODE:
+                warnings.warn("Failed to compile %s extensions. %s" % (ext_name, str(e).split("\n")[0]))
+        return res
+
+
+    @property
+    def exts(self) -> _Mapping[str, object]:
+        """
+        构建扩展。
+        """
+        return dict()
+
+
     def forward_step(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
@@ -171,8 +175,7 @@ class Soma(_Module):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self.check_if_reset(self.u, x)
-        self.u = _SF.to(self.u, x)
+        self._check_buffer(x)
         self.u = self.f_response(self.u, x)
         o = self.f_firing(self.u)
         self.u = self.f_reset(self.u, o)
@@ -338,7 +341,7 @@ class LIF(Soma):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self.u = _SF.to(self.u, x[0])
+        self._check_buffer(x)
         if ext_name == "cpp":
             fp = exts["cpp"].fp_lif
             bp = exts["cpp"].bp_lif
@@ -489,7 +492,7 @@ class Izhikevich(Soma):
             device = device,
             dtype = dtype
         )
-        self.w = None
+        self.register_buffer("w", None)
         self.a = nn.Parameter(torch.tensor(a, device = device, dtype = dtype), requires_grad = trainable)
         self.b = nn.Parameter(torch.tensor(b, device = device, dtype = dtype), requires_grad = trainable)
     
@@ -503,25 +506,38 @@ class Izhikevich(Soma):
         return ", ".join(["a=%g" % self.a, "b=%g" % self.b]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
-    def reset(self) -> None:
+    def _check_buffer(self, x: torch.Tensor) -> _Module:
+        """
+        检查临时变量。
+        Args:
+            x (torch.Tensor): 关键张量
+        """
+        self.detach()
+        super()._check_buffer(x)
+        if self.w is None or (isinstance(self.u, torch.Tensor) and self.u.shape != x.shape):
+            self.w = torch.full_like(x, 0.0)
+        return self
+
+
+    def reset(self) -> _Module:
         """
         重置整个神经元
         """
         self.detach()
-        self.u = self.u_rest.item()
-        self.w = 0.0
-        return super().reset()
+        super().reset()
+        if self.w is not None:
+            self.w = torch.full_like(self.w, 0.0)
+        return self
 
-    
-    def detach(self) -> None:
+
+    def detach(self) -> _Module:
         """
         将历史电位与权重从计算图中分离，以停止在时间上进行反向传播。
         """
-        if isinstance(self.u, torch.Tensor):
-            self.u = self.u.detach().requires_grad_(True)
+        super().detach()
         if isinstance(self.w, torch.Tensor):
-            self.w = self.w.detach().requires_grad_(True)
-        return super().detach()
+            self.w = self.w.detach()
+        return self
 
 
     def f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -533,8 +549,6 @@ class Izhikevich(Soma):
         Returns:
             u (torch.Tensor): 当前电位$U_{i}^{l}(t)$
         """
-        self.check_if_reset(self.w, h)
-        self.w = _SF.to(self.w, h)
         dw = self.a * (self.b * h - self.w)
         self.w = self.w + dw
         du = 0.00004 * h * h + 0.005 * h + 0.14 + self.u_rest - self.w + x
@@ -642,8 +656,7 @@ class AnalogSoma(Soma):
         Returns:
             y (torch.Tensor): 当前模拟输出$Y_{i}^{l}(t)$
         """
-        self.check_if_reset(self.u, x)
-        self.u = _SF.to(self.u, x)
+        self._check_buffer(x)
         self.u = self.f_response(self.u, x)
         o = self.f_firing(self.u)
         y = self.f_activation(self.u)
@@ -743,7 +756,7 @@ class LIAF(AnalogSoma):
         Returns:
             y (torch.Tensor): 当前模拟输出$Y_{i}^{l}(t)$
         """
-        self.u = _SF.to(self.u, x[0])
+        self._check_buffer(x)
         if ext_name == "cpp":
             fp = exts["cpp"].fp_lif
             bp = exts["cpp"].bp_lif

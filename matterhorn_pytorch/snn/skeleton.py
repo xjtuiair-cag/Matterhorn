@@ -97,16 +97,6 @@ class Module(nn.Module):
         return self.multi_step_mode_(not if_on, recursive = recursive)
 
 
-    def reset(self) -> nn.Module:
-        """
-        重置模型。
-        """
-        for name, module in self.named_children():
-            if isinstance(module, Module):
-                module.reset()
-        return self
-
-
     def detach(self) -> nn.Module:
         """
         将模型中的某些变量从其计算图中分离。
@@ -114,6 +104,16 @@ class Module(nn.Module):
         for name, module in self.named_children():
             if isinstance(module, Module):
                 module.detach()
+        return self
+
+
+    def reset(self) -> nn.Module:
+        """
+        重置模型。
+        """
+        for name, module in self.named_children():
+            if isinstance(module, Module):
+                module.reset()
         return self
 
 
