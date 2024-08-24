@@ -1041,12 +1041,13 @@ class MultiheadAttention(Synapse, nn.MultiheadAttention):
 
 
     def forward_steps(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, key_padding_mask: _Optional[torch.Tensor] = None, need_weights: bool = True, attn_mask: _Optional[torch.Tensor] = None, average_attn_weights: bool = True) -> _Tuple[torch.Tensor, _Optional[torch.Tensor]]:
+        is_tensor = lambda x: x is not None and isinstance(x, torch.Tensor)
         T = value.shape[0]
         reshape = lambda x, dim: torch.stack([x] * T) if x.ndim < dim else x
         query = reshape(query, value.ndim)
         key = reshape(key, value.ndim)
-        key_padding_mask = reshape(key_padding_mask, value.ndim - 1)
-        attn_mask = reshape(attn_mask, value.ndim)
+        key_padding_mask = reshape(key_padding_mask, value.ndim - 1) if is_tensor(key_padding_mask) else attn_mask
+        attn_mask = reshape(attn_mask, value.ndim) if is_tensor(attn_mask) else attn_mask
         B = 1
         if value.ndim > 3:
             if self.batch_first:
@@ -1071,9 +1072,9 @@ class MultiheadAttention(Synapse, nn.MultiheadAttention):
         query = merge_tb(query)
         key = merge_tb(key)
         value = merge_tb(value)
-        key_padding_mask = merge_mask(key_padding_mask)
-        attn_mask = merge_mask(attn_mask)
+        key_padding_mask = merge_mask(key_padding_mask) if is_tensor(key_padding_mask) else None
+        attn_mask = merge_mask(attn_mask) if is_tensor(attn_mask) else None
         attn_output, attn_output_weights = nn.MultiheadAttention.forward(self, query, key, value, key_padding_mask, need_weights, attn_mask, average_attn_weights)
         attn_output = split_tb(attn_output)
-        attn_output_weights = split_wt(attn_output_weights) if attn_output_weights is not None and isinstance(attn_output_weights, torch.Tensor) else attn_output_weights
+        attn_output_weights = split_wt(attn_output_weights) if is_tensor(attn_output_weights) else attn_output_weights
         return attn_output, attn_output_weights
