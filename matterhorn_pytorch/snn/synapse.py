@@ -676,18 +676,7 @@ class _BatchNorm(Synapse, nn.modules.batchnorm._NormBase):
     @torch.jit.script
     def _forward_steps(x: torch.Tensor, running_mean: _Optional[torch.Tensor], running_var: _Optional[torch.Tensor], weight: _Optional[torch.Tensor], bias: _Optional[torch.Tensor], bn_training: bool, momentum: float, eps: float) -> torch.Tensor:
         time_steps = x.shape[0]
-        out = []
-        for t in range(time_steps):
-            out.append(_F.batch_norm(
-                input = x[t],
-                running_mean = running_mean,
-                running_var = running_var,
-                weight = weight,
-                bias = bias,
-                training = bn_training,
-                momentum = momentum,
-                eps = eps
-            ))
+        out = [_F.batch_norm(x[t], running_mean, running_var, weight, bias, bn_training, momentum, eps) for t in range(time_steps)]
         y = torch.stack(out)
         return y
 
@@ -702,16 +691,7 @@ class _BatchNorm(Synapse, nn.modules.batchnorm._NormBase):
         """
         self._check_input_dim(x)
         running_mean, running_var, exponential_average_factor, bn_training = self._init_params(self.training, self.track_running_stats, self.running_mean, self.running_var, self.momentum, self.num_batches_tracked)
-        x = _BatchNorm._forward_steps(
-            x = x,
-            running_mean = running_mean,
-            running_var = running_var,
-            weight = self.weight,
-            bias = self.bias,
-            bn_training = bn_training,
-            momentum = exponential_average_factor,
-            eps = self.eps
-        )
+        x = _BatchNorm._forward_steps(x, running_mean, running_var, self.weight, self.bias, bn_training, exponential_average_factor, self.eps)
         return x
 
 

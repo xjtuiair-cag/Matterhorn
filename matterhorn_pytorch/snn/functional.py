@@ -595,13 +595,7 @@ def encode_temporal(x: torch.Tensor, time_steps: int, t_offset: int = 0, prob: f
     Returns:
         y (torch.Tensor): 脉冲序列
     """
-    y_seq = []
-    for t in range(time_steps):
-        f = le(x, torch.full_like(x, t + t_offset))
-        r = le(torch.rand_like(x), torch.full_like(x, prob))
-        y = f * r
-        y_seq.append(y)
-    y = torch.stack(y_seq)
+    y = torch.stack([le(x, torch.full_like(x, t + t_offset)) * le(torch.rand_like(x), torch.full_like(x, prob)) for t in range(time_steps)])
     return y
 
 
@@ -616,10 +610,7 @@ def encode_binary(x: torch.Tensor, length: int = 8, repeat: int = 1) -> torch.Te
         y (torch.Tensor): 脉冲序列
     """
     b = torch.where(x >= 0, x, x + (2 << length)).to(torch.long)
-    y_seq = []
-    for i in range(length):
-        y_seq.append((b >> (length - 1 - i)) & 0x1)
-    y = torch.stack(y_seq * repeat)
+    y = torch.stack([(b >> (length - 1 - i)) & 0x1 for i in range(length)] * repeat)
     return y.to(x)
 
 

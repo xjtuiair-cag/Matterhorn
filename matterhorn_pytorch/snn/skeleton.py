@@ -75,9 +75,7 @@ class Module(nn.Module):
             recursive (bool): 是否递归调整子模块的时间步模式
         """
         if recursive:
-            for module in self.children():
-                if isinstance(module, Module):
-                    module.multi_step_mode_(if_on, recursive = recursive)
+            _ = [module.multi_step_mode_(if_on, recursive = recursive) if isinstance(module, Module) else None for module in self.children()]
         if self.supports_multi_step_mode and if_on:
             self._multi_step_mode = True
         elif self.supports_single_step_mode and not if_on:
@@ -101,9 +99,7 @@ class Module(nn.Module):
         """
         将模型中的某些变量从其计算图中分离。
         """
-        for name, module in self.named_children():
-            if isinstance(module, Module):
-                module.detach()
+        _ = [module.detach() if isinstance(module, Module) else None for name, module in self.named_children()]
         return self
 
 
@@ -111,9 +107,7 @@ class Module(nn.Module):
         """
         重置模型。
         """
-        for name, module in self.named_children():
-            if isinstance(module, Module):
-                module.reset()
+        _ = [module.reset() if isinstance(module, Module) else None for name, module in self.named_children()]
         return self
 
 
@@ -126,7 +120,7 @@ class Module(nn.Module):
         Returns:
             res (torch.Tensor): 输出
         """
-        pass
+        raise NotImplementedError("Single step forward function for %s should be defined." % self.__class__.__name__)
 
 
     def forward_steps(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
@@ -141,14 +135,10 @@ class Module(nn.Module):
         if not isinstance(args, _Tuple):
             args = (args,)
         time_steps = args[0].shape[0]
-        result = []
-        for t in range(time_steps):
-            args_t = (x[t] if isinstance(x, torch.Tensor) else x for x in args)
-            kwargs_t = {k: x[t] if isinstance(x, torch.Tensor) else x for k, x in kwargs}
-            for module in self.children():
-                if isinstance(module, Module):
-                    module.single_step_mode_()
-            result.append(self.forward_step(*args_t, **kwargs_t))
+        def _forward_per_time_step(t, args_t, kwargs_t):
+            _ = [module.single_step_mode_() if isinstance(module, Module) else None for module in self.children()] if not t else None
+            return self.forward_step(*args_t, **kwargs_t)
+        result = [_forward_per_time_step(t, tuple(x[t] if isinstance(x, torch.Tensor) else x for x in args), kwargs) for t in range(time_steps)]
         if isinstance(result[0], _Tuple):
             y = (torch.stack([r[col] for r in result]) if isinstance(el, torch.Tensor) else el for col, el in enumerate(result[0]))
         else:

@@ -293,7 +293,7 @@ class ModuleDict(Container, nn.ModuleDict):
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
             recursive (bool): 是否递归调整子模块的时间步模式
         """
-        for idx, module in enumerate(self):
+        for idx, module in self.items():
             is_snn_module = isinstance(module, _Module)
             if is_snn_module:
                 self[idx] = _safe_multi_step_mode_(module, if_on, recursive = recursive)
@@ -472,11 +472,9 @@ class Agent(_Module):
         """
         重置模型。
         """
-        for name, module in self.nn_module.named_children():
-            is_snn_module = isinstance(module, _Module)
-            if is_snn_module:
-                module.reset()
-        return super().reset()
+        super().reset()
+        _ = [module.reset() if isinstance(module, _Module) else None for name, module in self.nn_module.named_children()] if self.nn_module is not None else None
+        return self
 
 
     def detach(self) -> nn.Module:
@@ -484,11 +482,7 @@ class Agent(_Module):
         将模型中的某些变量从其计算图中分离。
         """
         super().detach()
-        if self.nn_module is not None:
-            for name, module in self.nn_module.named_children():
-                is_snn_module = isinstance(module, _Module)
-                if is_snn_module:
-                    module.detach()
+        _ = [module.detach() if isinstance(module, _Module) else None for name, module in self.nn_module.named_children()] if self.nn_module is not None else None
         return self
 
 
