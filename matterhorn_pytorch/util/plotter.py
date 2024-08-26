@@ -15,10 +15,6 @@ from matplotlib.font_manager import FontProperties, findSystemFonts
 from typing import Tuple, Iterable, Union, Optional
 
 
-plt.rcParams['font.family'] = ['Helvetica Neue', 'Arial']
-plt.rcParams['mathtext.fontset'] = 'stix'
-
-
 def transition_color(val: float, min_val: float = 0., max_val: float = 1., min_color: str = "#000000", max_color: str = "#ffffff"):
     """
     获取过渡色。
