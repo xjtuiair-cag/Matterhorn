@@ -98,7 +98,7 @@ class Soma(_Module):
         """
         super().detach()
         if isinstance(self.u, torch.Tensor):
-            self.u = self.u.float().detach()
+            self.u = self.u.detach()
         return self
 
 

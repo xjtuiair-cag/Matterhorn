@@ -29,7 +29,7 @@ class LSM(_Module):
         assert adjacent.ndim == 2 and adjacent.shape[0] == adjacent.shape[1], "Incorrect adjacent matrix."
         super().__init__()
         self.register_buffer("o", None)
-        self.adjacent = nn.Parameter(adjacent.to(torch.float), requires_grad = False)
+        self.adjacent = nn.Parameter(adjacent.to(device = device, dtype = dtype), requires_grad = False)
         self.soma = soma
         self.neuron_num = self.adjacent.shape[0]
         self.weight = nn.Parameter(torch.empty((self.neuron_num, self.neuron_num), device = device, dtype = dtype))
