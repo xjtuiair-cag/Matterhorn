@@ -8,7 +8,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as _F
-from torch.utils.cpp_extension import CUDA_HOME, ROCM_HOME
 import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
 from matterhorn_pytorch.snn.firing import Firing as _Firing, Gaussian as _Gaussian
