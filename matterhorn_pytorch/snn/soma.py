@@ -16,7 +16,7 @@ from matterhorn_pytorch.snn.soma_functional import *
 from torch.utils.cpp_extension import load_inline
 import matterhorn_pytorch._ext.cpp as _ext_cpp
 import matterhorn_pytorch._ext.cuda as _ext_cu
-from typing import Any as _Any, Mapping as _Mapping, Callable as _Callable
+from typing import Any as _Any, Mapping as _Mapping, Callable as _Callable, Optional as _Optional
 import warnings
 from subprocess import SubprocessError
 
@@ -75,7 +75,6 @@ class Soma(_Module):
         Args:
             x (torch.Tensor): 关键张量
         """
-        self.detach()
         if self.u is None or (isinstance(self.u, torch.Tensor) and self.u.shape != x.shape):
             self.u = torch.full_like(x, self.u_rest)
         return self
@@ -98,7 +97,7 @@ class Soma(_Module):
         """
         super().detach()
         if isinstance(self.u, torch.Tensor):
-            self.u = self.u.float().detach()
+            self.u.detach_()
         return self
 
 
@@ -167,7 +166,7 @@ class Soma(_Module):
         return dict()
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor, u_0: _Optional[torch.Tensor] = None) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -175,10 +174,16 @@ class Soma(_Module):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self._check_buffer(x)
+        if u_0 is not None:
+            assert u_0.shape == x.shape, "Unmatched shape for input (%s) and initial potential (%s)." % (repr(x.shape), repr(u_0.shape))
+            self.u = u_0
+        else:
+            self._check_buffer(x)
         self.u = self.f_response(self.u, x)
         o = self.f_firing(self.u)
         self.u = self.f_reset(self.u, o)
+        if u_0 is not None:
+            return o, self.u
         return o
 
 
@@ -193,7 +198,7 @@ class Soma(_Module):
         return super().forward_steps(x)
 
 
-    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_steps(self, x: torch.Tensor, u_0: _Optional[torch.Tensor] = None) -> torch.Tensor:
         """
         多个时间步的前向传播函数。
         Args:
@@ -201,14 +206,20 @@ class Soma(_Module):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
+        if u_0 is not None:
+            assert u_0.shape == x[0].shape, "Unmatched shape for input (%s) and initial potential (%s)." % (repr(x[0].shape), repr(u_0.shape))
+            self.u = u_0
         device: torch.device = x.device
         if self.enable_exts:
             exts = self.exts
             if device.type == "cuda" and "cuda" in exts:
-                return self.forward_steps_on_ext(x, exts, "cuda")
+                o = self.forward_steps_on_ext(x, exts, "cuda")
             if device.type == "cpu" and "cpp" in exts:
-                return self.forward_steps_on_ext(x, exts, "cpp")
-        return super().forward_steps(x)
+                o = self.forward_steps_on_ext(x, exts, "cpp")
+        o = super().forward_steps(x)
+        if u_0 is not None:
+            return o, self.u
+        return o
 
 
 class IF(Soma):
@@ -512,7 +523,6 @@ class Izhikevich(Soma):
         Args:
             x (torch.Tensor): 关键张量
         """
-        self.detach()
         super()._check_buffer(x)
         if self.w is None or (isinstance(self.u, torch.Tensor) and self.u.shape != x.shape):
             self.w = torch.full_like(x, 0.0)
@@ -648,7 +658,7 @@ class AnalogSoma(Soma):
         return self.activation_function(u - self.u_rest)
     
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward_step(self, x: torch.Tensor, u_0: _Optional[torch.Tensor]) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -656,11 +666,17 @@ class AnalogSoma(Soma):
         Returns:
             y (torch.Tensor): 当前模拟输出$Y_{i}^{l}(t)$
         """
-        self._check_buffer(x)
+        if u_0 is not None:
+            assert u_0.shape == x.shape, "Unmatched shape for input (%s) and initial potential (%s)." % (repr(x.shape), repr(u_0.shape))
+            self.u = u_0
+        else:
+            self._check_buffer(x)
         self.u = self.f_response(self.u, x)
         o = self.f_firing(self.u)
         y = self.f_activation(self.u)
         self.u = self.f_reset(self.u, o)
+        if u_0 is not None:
+            return y, self.u
         return y
 
 

@@ -318,7 +318,7 @@ class EventDataset(Dataset):
             data = self.event_data_to_tensor(data)
         target = self.data_target[index][1]
         if self.target_transform is not None:
-            target = self.target_transform(data)
+            target = self.target_transform(target)
         return data, target
 
 

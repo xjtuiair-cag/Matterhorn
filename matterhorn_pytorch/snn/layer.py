@@ -109,7 +109,6 @@ class STDPLayer(_Module):
             input_trace_shape (int*): 输入形状
             output_trace_shape (int*): 输出形状
         """
-        self.detach()
         if self.input_trace is None or (isinstance(self.input_trace, torch.Tensor) and self.input_trace.shape != input_trace_shape):
             self.input_trace = torch.zeros(input_trace_shape).to(x)
         if self.output_trace is None or (isinstance(self.output_trace, torch.Tensor) and self.output_trace.shape != output_trace_shape):

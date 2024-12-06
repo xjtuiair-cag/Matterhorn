@@ -52,7 +52,6 @@ class LSM(_Module):
         Args:
             x (torch.Tensor): 关键张量
         """
-        self.detach()
         if self.o is None or (isinstance(self.o, torch.Tensor) and self.o.shape != x.shape):
             self.o = torch.full_like(x, 0.0)
         return self
@@ -75,7 +74,7 @@ class LSM(_Module):
         """
         super().detach()
         if isinstance(self.o, torch.Tensor):
-            self.o = self.o.detach()
+            self.o.detach_()
         return self
 
 
