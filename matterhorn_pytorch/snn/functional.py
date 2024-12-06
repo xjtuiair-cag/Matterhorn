@@ -206,7 +206,7 @@ def bp_polynomial(x: torch.Tensor, a: float) -> torch.Tensor:
     Returns:
         grad_input (torch.Tensor): 输入梯度
     """
-    h = ((a ** 0.5) / 2.0 - a / 4.0 * torch.abs(x)) * torch.sign(2.0 / (a ** 0.5) - torch.abs(x)) * (torch.abs(x) < (2.0 / (a ** 0.5))).float()
+    h = ((a ** 0.5) / 2.0 - a / 4.0 * torch.abs(x)) * torch.sign(2.0 / (a ** 0.5) - torch.abs(x)) * (torch.abs(x) < (2.0 / (a ** 0.5))).to(x)
     return h
 
 
