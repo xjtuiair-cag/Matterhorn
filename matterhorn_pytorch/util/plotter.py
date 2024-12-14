@@ -8,11 +8,11 @@ import numpy as np
 import torch
 import os
 import re
-import matplotlib
+import matplotlib as mpl
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.font_manager import FontProperties, findSystemFonts
-from typing import Tuple, Iterable, Union, Optional
+from typing import Any, Tuple, Iterable, Union, Optional
 
 
 def transition_color(val: float, min_val: float = 0., max_val: float = 1., min_color: str = "#000000", max_color: str = "#ffffff"):
@@ -111,7 +111,7 @@ def event_plot_2d(indices_pos: np.ndarray, indices_neg: np.ndarray = None, value
         plt.title(title)
 
 
-def spike_train_plot_yx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def spike_train_plot_yx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> Any:
     """
     二维空间的脉冲序列数据打印。
     Args:
@@ -132,7 +132,7 @@ def spike_train_plot_yx(data: Union[np.ndarray, torch.Tensor], polarity: bool = 
         event_plot_2d(
             indices[[1, 0]].T,
             values_pos = data[indices[0], indices[1]],
-            color_pos = "#00ff00",
+            color_pos = "#ff00ff",
             title = get_title(0),
             index_0 = "x",
             index_1 = "y",
@@ -165,7 +165,7 @@ def spike_train_plot_yx(data: Union[np.ndarray, torch.Tensor], polarity: bool = 
                 event_plot_2d(
                     indices_this_batch[[1, 0]].T,
                     values_pos = data[b, indices_this_batch[0], indices_this_batch[1]],
-                    color_pos = "#00ff00",
+                    color_pos = "#ff00ff",
                     title = get_title(b),
                     index_0 = "x",
                     index_1 = "y",
@@ -199,9 +199,10 @@ def spike_train_plot_yx(data: Union[np.ndarray, torch.Tensor], polarity: bool = 
     if save is not None:
         plt.savefig(save)
         plt.close()
+    return fig
 
 
-def event_seq_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def event_seq_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> Any:
     """
     二维空间的事件序列数据打印。
     Args:
@@ -238,7 +239,7 @@ def event_seq_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, sh
         event_plot_2d(
             data[:, [1, 0]],
             values_pos = values,
-            color_pos = "#00ff00",
+            color_pos = "#ff00ff",
             title = get_title(0),
             index_0 = "x",
             index_1 = "y",
@@ -250,9 +251,10 @@ def event_seq_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, sh
     if save is not None:
         plt.savefig(save)
         plt.close()
+    return fig
 
 
-def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> None:
+def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> Any:
     """
     二维空间的事件数据打印。
     Args:
@@ -266,7 +268,7 @@ def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None,
         is_seq (bool): 是否为序列，True表明事件为形状为[n, 4]的序列，否则为形状为[T, C(P), H, W]的张量
     """
     if is_seq:
-        event_seq_plot_yx(
+        return event_seq_plot_yx(
             data = data,
             shape = shape,
             show = show,
@@ -275,7 +277,7 @@ def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None,
             figsize = figsize
         )
     else:
-        spike_train_plot_yx(
+        return spike_train_plot_yx(
             data = data,
             polarity = polarity,
             show = show,
@@ -285,7 +287,7 @@ def event_plot_yx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None,
         )
 
 
-def spike_train_plot_tx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def spike_train_plot_tx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> Any:
     """
     一维空间+一维时间的脉冲序列数据打印。
     Args:
@@ -306,11 +308,11 @@ def spike_train_plot_tx(data: Union[np.ndarray, torch.Tensor], polarity: bool = 
         event_plot_2d(
             indices[[0, 1]].T,
             values_pos = data[indices[0], indices[1]],
-            color_pos = "#00ff00",
+            color_pos = "#ff00ff",
             title = get_title(0),
             shape = (data.shape[0], data.shape[1])
         )
-        event_plot_2d(data, indices, color_pos = "#00ff00", title = get_title(0))
+        event_plot_2d(data, indices, color_pos = "#ff00ff", title = get_title(0))
     if dim == 3:
         if polarity: # [T, C(P), L]
             indices_pos = indices[:, indices[1] == 1][[0, 2]]
@@ -336,7 +338,7 @@ def spike_train_plot_tx(data: Union[np.ndarray, torch.Tensor], polarity: bool = 
                 event_plot_2d(
                     indices_this_batch[[0, 1]].T,
                     values_pos = data[b, indices_this_batch[0], indices_this_batch[1]],
-                    color_pos = "#00ff00",
+                    color_pos = "#ff00ff",
                     title = get_title(b),
                     shape = (data.shape[1], data.shape[2])
                 )
@@ -366,9 +368,10 @@ def spike_train_plot_tx(data: Union[np.ndarray, torch.Tensor], polarity: bool = 
     if save is not None:
         plt.savefig(save)
         plt.close()
+    return fig
 
 
-def event_seq_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def event_seq_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> Any:
     """
     一维空间+一维时间的事件序列数据打印。
     Args:
@@ -403,7 +406,7 @@ def event_seq_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, sh
         event_plot_2d(
             data[:, [0, 1]],
             values_pos = values,
-            color_pos = "#00ff00",
+            color_pos = "#ff00ff",
             title = get_title(0),
             shape = (get_shape(0), get_shape(1))
         )
@@ -413,9 +416,10 @@ def event_seq_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, sh
     if save is not None:
         plt.savefig(save)
         plt.close()
+    return fig
 
 
-def event_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> None:
+def event_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> Any:
     """
     一维空间+一维时间的事件数据打印。
     Args:
@@ -429,7 +433,7 @@ def event_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None,
         is_seq (bool): 是否为序列，True表明事件为形状为[n, 4]的序列，否则为形状为[T, C(P), H, W]的张量
     """
     if is_seq:
-        event_seq_plot_tx(
+        return event_seq_plot_tx(
             data = data,
             shape = shape,
             show = show,
@@ -438,7 +442,7 @@ def event_plot_tx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None,
             figsize = figsize
         )
     else:
-        spike_train_plot_tx(
+        return spike_train_plot_tx(
             data = data,
             polarity = polarity,
             show = show,
@@ -494,7 +498,7 @@ def event_plot_3d(ax: Axes3D, indices_pos: np.ndarray, indices_neg: np.ndarray =
         ax.set_title(title)
 
 
-def spike_train_plot_tyx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def spike_train_plot_tyx(data: Union[np.ndarray, torch.Tensor], polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> Any:
     """
     二维空间+一维时间的脉冲序列数据打印。
     Args:
@@ -517,7 +521,7 @@ def spike_train_plot_tyx(data: Union[np.ndarray, torch.Tensor], polarity: bool =
             ax,
             indices[[0, 1, 2]].T,
             values_pos = data[indices[0], indices[1], indices[2]],
-            color_pos = "#00ff00",
+            color_pos = "#ff00ff",
             title = get_title(0),
             shape = (data.shape[0], data.shape[1], data.shape[2])
         )
@@ -552,11 +556,11 @@ def spike_train_plot_tyx(data: Union[np.ndarray, torch.Tensor], polarity: bool =
                     ax,
                     indices_this_batch[[0, 1, 2]].T,
                     values_pos = data[b, indices_this_batch[0], indices_this_batch[1], indices_this_batch[2]],
-                    color_pos = "#00ff00",
+                    color_pos = "#ff00ff",
                     title = get_title(b),
                     shape = (data.shape[1], data.shape[2], data.shape[3])
                 )
-                event_plot_3d(ax, data[b], indices[:, indices[0] == b][[1, 2, 3]], color_pos = "#00ff00", title = get_title(b))
+                event_plot_3d(ax, data[b], indices[:, indices[0] == b][[1, 2, 3]], color_pos = "#ff00ff", title = get_title(b))
     if dim == 5: # [B, T, C(P), H, W]
         batch_size = data.shape[0]
         rows = batch_size
@@ -587,9 +591,10 @@ def spike_train_plot_tyx(data: Union[np.ndarray, torch.Tensor], polarity: bool =
     if save is not None:
         plt.savefig(save)
         plt.close()
+    return fig
 
 
-def event_seq_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> None:
+def event_seq_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6)) -> Any:
     """
     二维空间+一维时间的事件序列数据打印。
     Args:
@@ -627,7 +632,7 @@ def event_seq_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, s
             ax,
             data[:, [0, 1, 2]],
             values_pos = values,
-            color_pos = "#00ff00",
+            color_pos = "#ff00ff",
             title = get_title(0),
             shape = (get_shape(0), get_shape(1), get_shape(2))
         )
@@ -637,9 +642,10 @@ def event_seq_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Iterable, s
     if save is not None:
         plt.savefig(save)
         plt.close()
+    return fig
 
 
-def event_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> None:
+def event_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None, polarity: bool = True, show: bool = True, save: str = None, titles: Iterable[str] = None, figsize: Tuple = (8, 6), is_seq: bool = False) -> Any:
     """
     二维空间+一维时间的事件数据打印。
     Args:
@@ -653,7 +659,7 @@ def event_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None
         is_seq (bool): 是否为序列，True表明事件为形状为[n, 4]的序列，否则为形状为[T, C(P), H, W]的张量
     """
     if is_seq:
-        event_seq_plot_tyx(
+        return event_seq_plot_tyx(
             data = data,
             shape = shape,
             show = show,
@@ -662,7 +668,7 @@ def event_plot_tyx(data: Union[np.ndarray, torch.Tensor], shape: Iterable = None
             figsize = figsize
         )
     else:
-        spike_train_plot_tyx(
+        return spike_train_plot_tyx(
             data = data,
             polarity = polarity,
             show = show,
