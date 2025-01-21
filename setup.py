@@ -13,10 +13,15 @@ with open(os.path.join(os.path.abspath("."), "README.md"), "r", encoding="utf-8"
     long_description = fh.read()
 
 
+__version__ = None
+with open(os.path.join(os.path.abspath("."), "matterhorn_pytorch", "__info__.py"), "r", encoding="utf-8") as fh:
+    exec(fh.read())
+
+
 setup(
     install_requires = install_requires,
     name = "matterhorn_pytorch",
-    version = "1.4.3",
+    version = __version__,
     author = "CAG, IAIR, XJTU, Xi'an, China",
     author_email = "ericwang017@stu.xjtu.edu.cn",
     description = "Matterhorn is a novel general neuromorphic computing framework based on PyTorch.",

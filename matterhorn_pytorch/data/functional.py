@@ -10,7 +10,7 @@ from typing import Iterable
 import matterhorn_pytorch.snn.functional as _SF
 
 
-def event_seq_to_spike_train(event_seq: torch.Tensor, shape: Iterable = None, original_shape: Iterable = None, count: bool = False) -> torch.Tensor:
+def event_seq_to_spike_train(event_seq: torch.Tensor, shape: Iterable = None, original_shape: Iterable = None, count: bool = False, dtype: torch.dtype = torch.float, device: torch.device = None) -> torch.Tensor:
     """
     将事件序列转为脉冲序列。
     Args:
@@ -18,34 +18,33 @@ def event_seq_to_spike_train(event_seq: torch.Tensor, shape: Iterable = None, or
         shape (int*): 输出脉冲序列的形状
         original_shape (int*): 事件原本的画幅，若置空，则视为与脉冲序列形状一致
         count (bool): 是否输出事件计数，默认为False，即只输出脉冲（0或1）
+        dtype (torch.dtype): 输出脉冲序列的数据类型
+        device (torch.device): 输出脉冲序列的设备
     Return:
         spike_train (torch.Tensor): 脉冲序列，形状为[T, C, ...]
     """
-    if not isinstance(event_seq, torch.Tensor):
-        if isinstance(event_seq, np.ndarray):
-            event_seq = event_seq.tolist()
-        event_seq = torch.tensor(event_seq, dtype = torch.long)
-    event_seq = event_seq.to(torch.float)
+    assert isinstance(event_seq, torch.Tensor), "The event sequence must be a tensor."
     if shape is None:
         shape = tuple([torch.max(event_seq[:, idx]) for idx in event_seq.shape[1]])
     if original_shape is None:
         original_shape = shape
-    spike_train = torch.zeros(*shape, dtype = torch.float)
-    for idx, el in enumerate(shape):
-        if not event_seq.shape[0]:
-            spike_train = spike_train.to(event_seq.device)
-            return spike_train
-        event_seq[:, idx] = torch.floor(event_seq[:, idx] * shape[idx] / original_shape[idx])
-        event_filter = (event_seq[:, idx] >= 0) & (event_seq[:, idx] < shape[idx])
-        event_seq = event_seq[event_filter]
-    if not event_seq.shape[0]:
-        spike_train = spike_train.to(event_seq.device)
+    if device is None:
+        device = event_seq.device
+    assert event_seq.ndim == 2, "Need 2D input for the event sequence. %dD found." % (event_seq.ndim,)
+    seq_len, ndim = event_seq.shape
+    assert len(shape) == ndim, "The dimensions(columns) of event sequence aren't match. %d needed and %d received." % (len(shape), ndim)
+    spike_train = torch.zeros(shape, dtype = dtype, device = device)
+    if not seq_len:
         return spike_train
-    event_seq, counts = torch.unique(event_seq, dim = 0, return_counts = True)
-    event_seq = event_seq.permute(1, 0).to(torch.long)
-    counts = counts.to(torch.float)
-    spike_train[event_seq.tolist()] = (counts if count else 1.0)
-    spike_train = spike_train.to(event_seq.device)
+    indices = torch.zeros(seq_len)
+    for dim in range(ndim):
+        dim_indices = torch.clamp(torch.floor(event_seq[:, dim] * shape[dim] / original_shape[dim]), 0, shape[dim] - 1)
+        indices = (indices + dim_indices) * (shape[dim + 1] if dim < ndim - 1 else 1)
+    indices = indices.long()
+    if count:
+        spike_train.view(-1).scatter_add_(0, indices, torch.ones_like(indices, dtype = dtype))
+    else:
+        spike_train.view(-1).scatter_(0, indices, torch.ones_like(indices, dtype = dtype))
     return spike_train
 
 
@@ -57,10 +56,9 @@ def spike_train_to_event_seq(spike_train: torch.Tensor) -> torch.Tensor:
     Return:
         event_seq (torch.Tensor): 事件序列，形状为[N, A]
     """
-    if not isinstance(spike_train, torch.Tensor):
-        spike_train = torch.tensor(spike_train, dtype = torch.float)
+    assert isinstance(spike_train, torch.Tensor), "The spike train must be a tensor."
     event_seq = spike_train.nonzero()
-    event_seq = event_seq.to(spike_train.device)
+    event_seq = event_seq.to(spike_train)
     return event_seq
 
 
