@@ -12,7 +12,7 @@ import matterhorn_pytorch.snn.functional as _SF
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 from torch.nn.modules.normalization import _shape_t
 from matterhorn_pytorch.snn.skeleton import Module as _Module
-from typing import Any as _Any, Tuple as _Tuple, Mapping as _Mapping, Union as _Union, Optional as _Optional
+from typing import Any as _Any, Tuple as _Tuple, Iterable as _Iterable, Mapping as _Mapping, Union as _Union, Optional as _Optional
 
 
 class Synapse(_Module):
@@ -997,9 +997,28 @@ class Identity(Synapse, nn.Identity):
         return x
 
 
+
 class MultiheadAttention(Synapse, nn.MultiheadAttention):
     def __init__(self, embed_dim: int, num_heads: int, dropout: float = 0.0, bias: bool = True, add_bias_kv: bool = False, add_zero_attn: bool = False, kdim: _Optional[int] = None, vdim: _Optional[int] = None, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
-        Synapse.__init__(self)
+        """
+        多头自注意机制（默认序列长度为时间步）。
+        Args:
+            embed_dim (int): 特征维度$C$
+            num_heads (int): 头的个数
+            dropout (float): 遗忘率（丢弃信息的概率）
+            bias (bool): 是否具有偏置
+            add_bias_kv (bool): key和value是否具备特殊偏置
+            add_zero_attn (bool): 是否在key和value上加一个新的批
+            kdim (int | None): key的特征维度，默认为embed_dim
+            vdim (int | None): value的特征维度，默认为embed_dim
+            batch_first (bool): 第一维为批(True)还是时间(False)
+            device (torch.device): 所计算的设备
+            dtype (torch.dtype): 所计算的数据类型
+        """
+        Synapse.__init__(
+            self,
+            batch_first = batch_first
+        )
         nn.MultiheadAttention.__init__(
             self,
             embed_dim = embed_dim,
@@ -1014,47 +1033,72 @@ class MultiheadAttention(Synapse, nn.MultiheadAttention):
             device = device,
             dtype = dtype
         )
+    
+
+    def _merge(self, x: torch.Tensor, ndim: int = 3) -> _Tuple[torch.Tensor, _Iterable[int]]:
+        shape = []
+        if x.ndim < 3:
+            return x, shape
+        if self.batch_first:
+            x = x.swapaxes(0, 1) # [T, B, C, ...]
+        x = x.swapaxes(1, 2) # [T, C, B, ...]
+        if x.ndim > ndim:
+            shape = x.shape[ndim - 1:]
+            x = x.flatten(ndim - 1) # [T, C, B]
+        x = x.swapaxes(2, 1) # [T, B, C]
+        if self.batch_first:
+            x = x.swapaxes(1, 0) # [B, T, C]
+        return x, shape
 
 
-    def forward_step(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, key_padding_mask: _Optional[torch.Tensor] = None, need_weights: bool = True, attn_mask: _Optional[torch.Tensor] = None, average_attn_weights: bool = True) -> _Tuple[torch.Tensor, _Optional[torch.Tensor]]:
-        return nn.MultiheadAttention.forward(self, query, key, value, key_padding_mask, need_weights, attn_mask, average_attn_weights)
+    def _split(self, x: torch.Tensor, shape: _Iterable[int]) -> torch.Tensor:
+        if x.ndim < 3:
+            return x
+        if self.batch_first:
+            x = x.swapaxes(0, 1) # [T, B, C]
+        x = x.swapaxes(1, 2) # [T, C, B]
+        x = x.unflatten(x.ndim - 1, shape) # [T, C, B, ...]
+        x = x.swapaxes(2, 1) # [T, B, C, ...]
+        if self.batch_first:
+            x = x.swapaxes(1, 0) # [B, T, C, ...]
+        return x
 
 
-    def forward_steps(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, key_padding_mask: _Optional[torch.Tensor] = None, need_weights: bool = True, attn_mask: _Optional[torch.Tensor] = None, average_attn_weights: bool = True) -> _Tuple[torch.Tensor, _Optional[torch.Tensor]]:
-        is_tensor = lambda x: x is not None and isinstance(x, torch.Tensor)
-        T = value.shape[0]
-        reshape = lambda x, dim: torch.stack([x] * T) if x.ndim < dim else x
-        query = reshape(query, value.ndim)
-        key = reshape(key, value.ndim)
-        key_padding_mask = reshape(key_padding_mask, value.ndim - 1) if is_tensor(key_padding_mask) else attn_mask
-        attn_mask = reshape(attn_mask, value.ndim) if is_tensor(attn_mask) else attn_mask
-        B = 1
-        if value.ndim > 3:
-            if self.batch_first:
-                B = value.shape[-3]
-                merge_tb = lambda x: x.flatten(0, 1)
-                split_tb = lambda x: x.reshape([T, B] + list(x.shape[1:]))
-            else:
-                B = value.shape[-2]
-                merge_tb = lambda x: x.swapaxes(1, 2).flatten(0, 1).swapaxes(0, 1)
-                split_tb = lambda x: x.reshape([x.shape[0], T, B] + list(x.shape[2:])).swapaxes(0, 1)
-            merge_mask = lambda x: x.flatten(0, 1)
-            split_wt = lambda x: x.reshape([T, B] + list(x.shape[1:]))
+    def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, key_padding_mask: _Optional[torch.Tensor] = None, need_weights: bool = True, attn_mask: _Optional[torch.Tensor] = None, average_attn_weights: bool = True) -> _Tuple[torch.Tensor, _Optional[torch.Tensor]]:
+        """
+        前向传播函数。
+        Args:
+            query (torch.Tensor): query张量$Q^{l}$，形状为[B, T, $C_{q}$](batch_first = True)或[T, B, $C_{q}$](batch_first = False)
+            key (torch.Tensor): key张量$K^{l}$，形状为[B, $T_{kv}$, $C_{k}$](batch_first = True)或[$T_{kv}$, B, $C_{k}$](batch_first = False)
+            value (torch.Tensor): value张量$V^{l}$，形状为[B, $T_{kv}$, $C_{v}$](batch_first = True)或[$T_{kv}$, B, $C_{v}$](batch_first = False)
+            key_padding_mask (torch.Tensor | None): key的掩膜，指定哪些key不参与注意力计算，形状为[B, $T_{kv}$]
+            need_weights (bool): 是否需要返回`attn_output_weights`
+            attn_mask (torch.Tensor | None): 注意力掩膜，形状为[B * H, T, $T_{kv}$]
+            average_attn_weights (bool): 若为True，返回的`attn_output_weights`会把所有头的做均值处理，否则单独返回每个头的`attn_output_weights`
+        Returns:
+            attn_output (torch.Tensor): 自注意力输出$Y^{l}$，形状为[B, T, C](batch_first = True)或[T, B, C](batch_first = False)
+            attn_output_weights (torch.Tensor | None): 自注意力输出的权重，形状为[B, T, $T_{kv}$](average_attn_weights = True)或[B * H, T, $T_{kv}$](average_attn_weights = False)
+        """
+        query, q_shape = self._merge(query) # [L, B, C]
+        key, k_shape = self._merge(key) # [L, B, C]
+        value, v_shape = self._merge(value) # [L, B, C]
+        l = lambda x: x.shape[0 if self.batch_first else 1]
+        assert l(query) == l(value), "Shape of query (%d) not match shape of value (%d)." % (l(query), l(value))
+        assert l(key) == l(value), "Shape of key (%d) not match shape of value (%d)." % (l(key), l(value))
+        attn_output = nn.MultiheadAttention.forward(self, query, key, value, key_padding_mask, need_weights, attn_mask, average_attn_weights)
+        if need_weights:
+            attn_output, attn_output_weights = attn_output
         else:
-            if self.batch_first:
-                merge_tb = lambda x: x
-                split_tb = lambda x: x
-            else:
-                merge_tb = lambda x: x.swapaxes(0, 1)
-                split_tb = lambda x: x.swapaxes(0, 1)
-            merge_mask = lambda x: x
-            split_wt = lambda x: x
-        query = merge_tb(query)
-        key = merge_tb(key)
-        value = merge_tb(value)
-        key_padding_mask = merge_mask(key_padding_mask) if is_tensor(key_padding_mask) else None
-        attn_mask = merge_mask(attn_mask) if is_tensor(attn_mask) else None
-        attn_output, attn_output_weights = nn.MultiheadAttention.forward(self, query, key, value, key_padding_mask, need_weights, attn_mask, average_attn_weights)
-        attn_output = split_tb(attn_output)
-        attn_output_weights = split_wt(attn_output_weights) if is_tensor(attn_output_weights) else attn_output_weights
-        return attn_output, attn_output_weights
+            attn_output_weights = None
+        attn_output = self._split(attn_output, v_shape)
+        w_shape = [el for el in v_shape]
+        if attn_output_weights is not None and len(w_shape) > 1:
+            if not average_attn_weights:
+                w_shape[0] *= self.num_heads
+            attn_output_weights = attn_output_weights.swapaxes(0, 1).swapaxes(1, 2) # [T, T_kv, B]
+            attn_output_weights = attn_output_weights.unflatten(attn_output_weights.ndim - 1, w_shape) # [T, T_kv, B, ...]
+            attn_output_weights = attn_output_weights.swapaxes(2, 1).swapaxes(1, 0) # [B, T, T_kv, ...]
+        if need_weights:
+            return attn_output, attn_output_weights
+        else:
+            return attn_output
