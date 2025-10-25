@@ -163,15 +163,11 @@ Like building ANNs in PyTorch, we can build our SNN model in Matterhorn by the c
 import torch
 import matterhorn_pytorch.snn as snn
 
-snn_model = snn.Temporal(
-    snn.Spatial(
-        snn.Linear(28 * 28, 10),
-        snn.LIF()
-    )
+snn_model = snn.Sequential(
+    snn.Linear(28 * 28, 10),
+    snn.LIF()
 )
 ```
-
-In the code, `Spatial` is one of Matterhorn's containers to represent sequential SNN layers on spatial dimension, and `Temporal` is another Matterhorn's container to repeat calculating potential and spikes on temporal dimension. By using `Spatial` and `Temporal`, an spatio-temporal topology network is built and thus used for training and evaluating.
 
 The built network takes an $n+1$ dimensional `torch.Tensor` as input spike train. It will take the first dimension as time steps, thus calculating through each time step. after that, it will generate a `torch.Tensor` as output spike train, just like what ANNs takes and generates in PyTorch. The only difference, which is also a key point, is that we should encode our information into spike train and decode the output spike train.
 
@@ -246,12 +242,12 @@ model = snn.Sequential(
     ),
     snn.Flatten(),
     snn.Linear(28 * 28, 10, bias = False),
-    snn.LIF(tau_m = tau, trainable = True),
+    snn.LIF(tau_m = tau),
     snn.AvgSpikeDecoder()
-).multi_step_mode_()
+)
 ```
 
-You should notice that `.multi_step_mode_()` is applied on `snn.Sequential` module. Step mode is switched by `multi_step_mode()` ( and `single_step_mode()`, which equals to `multi_step_mode(False)` ) functions. In single step mode, every time step you should input the spike tensors with the same shape as feature maps (`[B, ...]`), while in multi step mode, the spikes are calculated at once, and you should input the spike tensors with another dimension `T` as the first dimension (`[T, B, ...]`).
+The default mode in SNNs is multi step mode. In multi step mode, the spikes are calculated at once, and you should input the spike tensors with another dimension `T` as the first dimension (`[T, B, ...]`).
 
 By now, you have experienced what SNNs look like and how to build it by Matterhorn. For further experience, you can refer to [examples/1_starting.py](./examples/1_starting.py).
 

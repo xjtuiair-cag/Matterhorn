@@ -204,16 +204,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
         # 其它自定义ANN模块
         else:
             hybrid_module = deepcopy(ann_module)
-            params = ann_module.state_dict()
-            for name in params:
-                params[name] = params[name].clone()
-            hybrid_module.load_state_dict(params)
-            for name, module in ann_module.named_children():
-                setattr(hybrid_module, name, _replace(module))
-            snn_module = snn.Agent(
-                nn_module = hybrid_module,
-                force_spike_output = False
-            )
+            snn_module = hybrid_module
         return snn_module
     
     res = snn.Temporal(

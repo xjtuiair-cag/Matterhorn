@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
-from typing import Callable as _Callable
+from typing import Callable as _Callable, Optional as _Optional
 
 
 class Decoder(_Module):
@@ -18,7 +18,6 @@ class Decoder(_Module):
         解码器的基类。解码器是一个多时间步模型。
         """
         super().__init__()
-        self.multi_step_mode_()
 
 
     def extra_repr(self) -> str:
@@ -30,15 +29,6 @@ class Decoder(_Module):
         return super().extra_repr()
 
 
-    def reset(self) -> _Module:
-        """
-        重置解码器。
-        """
-        self.hist_spike_train = []
-        self.current_time_step = 0
-        return super().reset()
-
-
 class SumSpike(Decoder):
     def __init__(self) -> None:
         """
@@ -48,29 +38,15 @@ class SumSpike(Decoder):
         super().__init__()
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单步前向传播函数。
-        Args:
-            x (torch.Tensor): 输入张量，形状为[B,...]
-        Returns:
-            y (torch.Tensor): 输出张量，形状为[B,...]
-        """
-        self.hist_spike_train.append(x)
-        y = _SF.decode_sum_spike(torch.stack(self.hist_spike_train))
-        return y
-
-
-    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 输入张量，形状为[T,B,...]
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        self.hist_spike_train.append(x)
-        y = _SF.decode_sum_spike(torch.cat(self.hist_spike_train))
+        y = _SF.decode_sum_spike(x)
         return y
 
 
@@ -83,34 +59,20 @@ class AverageSpike(Decoder):
         super().__init__()
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单步前向传播函数。
-        Args:
-            x (torch.Tensor): 输入张量，形状为[B,...]
-        Returns:
-            y (torch.Tensor): 输出张量，形状为[B,...]
-        """
-        self.hist_spike_train.append(x)
-        y = _SF.decode_avg_spike(torch.stack(self.hist_spike_train))
-        return y
-
-
-    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        多步前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 输入张量，形状为[T,B,...]
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        self.hist_spike_train.append(x)
-        y = _SF.decode_avg_spike(torch.cat(self.hist_spike_train))
+        y = _SF.decode_avg_spike(x)
         return y
 
 
 class TimeBased(Decoder):
-    def __init__(self, empty_fill: float = -1, transform: _Callable = lambda x: x) -> None:
+    def __init__(self, empty_fill: float = -1, transform: _Optional[_Callable] = None) -> None:
         """
         基于时间的解码器。
         Args:
@@ -131,38 +93,22 @@ class TimeBased(Decoder):
         return ", ".join(["empty_fill=%g" % self.empty_fill]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单步前向传播函数。
-        Args:
-            x (torch.Tensor): 输入张量，形状为[B,...]
-        Returns:
-            y (torch.Tensor): 输出张量，形状为[B,...]
-        """
-        self.hist_spike_train.append(x)
-        y = self.f_decode(torch.stack(self.hist_spike_train))
-        self.current_time_step += 1
-        y = self.transform(y)
-        return y
-
-
-    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        多步前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 输入张量，形状为[T,B,...]
         Returns:
             y (torch.Tensor): 输出张量，形状为[B,...]
         """
-        self.hist_spike_train.append(x)
-        y = self.f_decode(torch.cat(self.hist_spike_train))
-        self.current_time_step += x.shape[0]
-        y = self.transform(y)
+        y = self.f_decode(x)
+        if self.transform is not None:
+            y = self.transform(y)
         return y
 
 
 class MinTime(TimeBased):
-    def __init__(self, empty_fill: float = -1, transform: _Callable = lambda x: x) -> None:
+    def __init__(self, empty_fill: float = -1, transform: _Optional[_Callable] = None) -> None:
         """
         取张量在时间维度上的最小值。
         $$o_{i}=min(tO_{i}^{K}(t))$$
@@ -189,7 +135,7 @@ class MinTime(TimeBased):
 
 
 class AverageTime(TimeBased):
-    def __init__(self, empty_fill: float = -1, transform: _Callable = lambda x: x) -> None:
+    def __init__(self, empty_fill: float = -1, transform: _Optional[_Callable] = None) -> None:
         """
         取张量在时间维度上的时间加权平均值
         $$o_{i}=\frac{1}{T}\sum_{t=1}^{T}{tO_{i}^{K}(t)}$$

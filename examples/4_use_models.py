@@ -16,7 +16,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--time-steps", type = int, default = 32, help = "Time steps.")
     parser.add_argument("--batch-size", type = int, default = 8, help = "Batch size.")
-    parser.add_argument("--device", type = str, default = "cpu", help = "Device for running the models.")
     parser.add_argument("--epochs", type = int, default = 100, help = "Training epochs.")
     parser.add_argument("--learning-rate", type = float, default = 0.01, help = "Learning rate.")
     parser.add_argument("--momentum", type = float, default = 0.9, help = "Momentum for optimizer.")
@@ -25,7 +24,7 @@ def main():
     args = parser.parse_args()
     time_steps = args.time_steps
     batch_size = args.batch_size
-    device = torch.device(args.device)
+    device = get_proper_device()
     dtype = torch.float
     epochs = args.epochs
     learning_rate = args.learning_rate
@@ -48,7 +47,6 @@ def main():
         loss_fn = loss_fn,
         tau_m = tau
     )
-    model.multi_step_mode_()
     model = model.to(device)
     print_model(model)
 
@@ -69,6 +67,7 @@ def main():
     train_data_loader = DataLoader(
         dataset = train_dataset,
         batch_size = batch_size,
+        num_workers = min(batch_size, max_workers()),
         shuffle = True,
         drop_last = True,
         pin_memory = True
@@ -76,6 +75,7 @@ def main():
     test_data_loader = DataLoader(
         dataset = test_dataset,
         batch_size = batch_size,
+        num_workers = min(batch_size, max_workers()),
         shuffle = True,
         drop_last = True,
         pin_memory = True

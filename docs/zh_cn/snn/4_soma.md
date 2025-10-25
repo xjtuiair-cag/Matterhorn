@@ -148,7 +148,6 @@ LIF(
     tau_m: float = 2.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -165,8 +164,6 @@ LIF(
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`trainable (bool)` ：参数 $\tau_{m}$ 是否可以被训练。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -229,7 +226,6 @@ QIF(
     a_0: float = 1.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -250,8 +246,6 @@ QIF(
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`trainable (bool)` ：参数 $\tau_{m}$ 、 $u_{c}$ 和 $a_{0}$ 是否可以被训练。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -316,7 +310,6 @@ ExpIF(
     delta_t: float = 0.001,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -337,8 +330,6 @@ ExpIF(
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`trainable (bool)` ：参数 $\tau_{m}$ 、 $u_{T}$ 和 $\Delta_{T}$ 是否可以被训练。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -408,7 +399,6 @@ Izhikevich(
     b: float = 1.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -427,8 +417,6 @@ Izhikevich(
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`trainable (bool)` ：参数 $a$ 和 $b$ 是否可以被训练。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -489,7 +477,6 @@ KLIF(
     k: float = 0.2,
     spiking_function: Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -508,8 +495,6 @@ KLIF(
 `spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`trainable (bool)` ：参数 $\tau_{m}$ 和 $k$ 是否可以被训练。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -555,7 +540,6 @@ LIAF(
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     activation_function: torch.nn.Module = nn.ReLU(),
     hard_reset: bool = True,
-    trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -574,8 +558,6 @@ LIAF(
 `activation_function (torch.nn.Module)` ：输出所使用的激活函数 $f(U^{l}(t)-u_{th})$ 。
 
 `hard_reset (bool)` ：是否为硬重置。
-
-`trainable (bool)` ：参数 $\tau_{m}$ 是否可以被训练。
 
 `device (torch.device)` ：计算所使用的计算设备。
 

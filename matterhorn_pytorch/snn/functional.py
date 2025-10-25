@@ -7,51 +7,8 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as _F
 from typing import List as _List, Tuple as _Tuple, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union, Any as _Any
-
-
-@torch.jit.script
-def transpose(x: torch.Tensor, dims: _Optional[_List[int]] = None) -> torch.Tensor:
-    """
-    转置一个张量。
-    Args:
-        x (torch.Tensor): 转置前的张量
-        dims (int*): 要转置的维度
-    Returns:
-        x (torch.Tensor): 转置后的张量
-    """
-    permute_dims: _List[int] = []
-    if dims is None:
-        for d in range(x.ndim - 1, -1, -1):
-            permute_dims.append(d)
-    else:
-        leading_dims: _List[int] = []
-        for d in range(len(dims) - 1, -1, -1):
-            leading_dims.append(dims[d])
-        trailing_dims: _List[int] = []
-        for d in range(x.ndim):
-            if d not in dims:
-                trailing_dims.append(d)
-        permute_dims = leading_dims + trailing_dims
-    y: torch.Tensor = x.permute(permute_dims)
-    return y
-
-
-def merge_time_steps_batch_size(tensor: torch.Tensor) -> _Union[torch.Tensor, _Tuple[int, int]]:
-    time_steps, batch_size = tensor.shape[:2]
-    tensor = tensor.flatten(0, 1)
-    return tensor, (time_steps, batch_size)
-
-
-def split_time_steps_batch_size(tensor: torch.Tensor, time_steps_batch_size: _Tuple[int, int]) -> torch.Tensor:
-    time_steps, batch_size = time_steps_batch_size
-    assert time_steps * batch_size == tensor.shape[0], "Incorrect shape for splitting."
-    tensor = tensor.reshape([time_steps, batch_size] + list(tensor.shape[1:]))
-    return tensor
-
-
-def is_spike_train(x: torch.Tensor) -> bool:
-    return x.dtype == torch.bool
 
 
 class _from_spike_train(torch.autograd.Function):
@@ -100,7 +57,7 @@ class _to_spike_train(torch.autograd.Function):
         Returns:
             o (torch.Tensor): 脉冲值（0、1）
         """
-        return x.gt(0.0).to(x)
+        return x.gt(0.5).to(x)
 
 
     @staticmethod
@@ -450,7 +407,7 @@ class _multi_firing_floor(torch.autograd.Function):
         Returns:
             y (torch.Tensor): 输出
         """
-        ctx.save_for_backward(x.ge(0.0))
+        ctx.save_for_backward(x)
         return torch.max(torch.floor(x), torch.zeros_like(x))
     
 
@@ -464,8 +421,9 @@ class _multi_firing_floor(torch.autograd.Function):
         Returns:
             grad_input (torch.Tensor): 输入梯度
         """
-        mask, = ctx.saved_tensors
-        return grad_output * mask.to(grad_output)
+        x, = ctx.saved_tensors
+        # Seen as y = torch.log(torch.exp(x - 1.0) + 1.0)
+        return grad_output * torch.nn.functional.sigmoid(x - 1.0)
 
 
 class _multi_firing_ceil(torch.autograd.Function):
@@ -479,7 +437,7 @@ class _multi_firing_ceil(torch.autograd.Function):
         Returns:
             y (torch.Tensor): 输出
         """
-        ctx.save_for_backward(x.gt(0.0))
+        ctx.save_for_backward(x)
         return torch.max(torch.ceil(x), torch.zeros_like(x))
     
 
@@ -493,8 +451,9 @@ class _multi_firing_ceil(torch.autograd.Function):
         Returns:
             grad_input (torch.Tensor): 输入梯度
         """
-        mask, = ctx.saved_tensors
-        return grad_output * mask.to(grad_output)
+        x, = ctx.saved_tensors
+        # Seen as y = torch.log(torch.exp(x) + 1.0)
+        return grad_output * torch.nn.functional.sigmoid(x)
 
 
 class _multi_firing_round(torch.autograd.Function):
@@ -508,7 +467,7 @@ class _multi_firing_round(torch.autograd.Function):
         Returns:
             y (torch.Tensor): 输出
         """
-        ctx.save_for_backward(x.gt(0.0))
+        ctx.save_for_backward(x)
         return torch.max(torch.round(x), torch.zeros_like(x))
     
 
@@ -522,8 +481,9 @@ class _multi_firing_round(torch.autograd.Function):
         Returns:
             grad_input (torch.Tensor): 输入梯度
         """
-        mask, = ctx.saved_tensors
-        return grad_output * mask.to(grad_output)
+        x, = ctx.saved_tensors
+        # Seen as y = torch.log(torch.exp(x - 0.5) + 1.0)
+        return grad_output * torch.nn.functional.sigmoid(x - 0.5)
 
 
 def floor(x: torch.Tensor) -> torch.Tensor:
@@ -562,6 +522,7 @@ def round(x: torch.Tensor) -> torch.Tensor:
     return _multi_firing_round.apply(x)
 
 
+@torch.jit.script
 def encode_poisson(x: torch.Tensor, precision: float = 1e-5, count: bool = False) -> torch.Tensor:
     """
     泊松编码（速率编码），将值转化为脉冲发放率。
@@ -584,6 +545,7 @@ def encode_poisson(x: torch.Tensor, precision: float = 1e-5, count: bool = False
     return y
 
 
+@torch.jit.script
 def encode_temporal(x: torch.Tensor, time_steps: int, t_offset: int = 0, prob: float = 1.0) -> torch.Tensor:
     """
     时间编码，将值转化为脉冲发放时间。
@@ -599,6 +561,7 @@ def encode_temporal(x: torch.Tensor, time_steps: int, t_offset: int = 0, prob: f
     return y
 
 
+@torch.jit.script
 def encode_binary(x: torch.Tensor, length: int = 8, repeat: int = 1) -> torch.Tensor:
     """
     二进制（相位）编码，将值转化为二进制位。
@@ -614,6 +577,7 @@ def encode_binary(x: torch.Tensor, length: int = 8, repeat: int = 1) -> torch.Te
     return y.to(x)
 
 
+@torch.jit.script
 def decode_sum_spike(x: torch.Tensor) -> torch.Tensor:
     """
     总脉冲计数解码，将脉冲转化为脉冲计数。
@@ -626,6 +590,7 @@ def decode_sum_spike(x: torch.Tensor) -> torch.Tensor:
     return y
 
 
+@torch.jit.script
 def decode_avg_spike(x: torch.Tensor) -> torch.Tensor:
     """
     平均脉冲计数解码，将脉冲转化为平均脉冲计数。
@@ -638,6 +603,7 @@ def decode_avg_spike(x: torch.Tensor) -> torch.Tensor:
     return y
 
 
+@torch.jit.script
 def decode_min_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> torch.Tensor:
     """
     最短时间解码，将脉冲转化为首个脉冲的时间。
@@ -655,6 +621,7 @@ def decode_min_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> t
     return y
 
 
+@torch.jit.script
 def decode_avg_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> torch.Tensor:
     """
     平均脉冲时间解码，将脉冲转化为平均脉冲时间。
@@ -665,9 +632,157 @@ def decode_avg_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> t
     Returns:
         y (torch.Tensor): 解码后的脉冲序列
     """
-    t = transpose(transpose(x) * torch.arange(x.shape[0]).to(x))
+    if x.ndim > 1:
+        t = (x.swapaxes(0, -1) * torch.arange(x.shape[0]).to(x)).swapaxes(0, -1)
+    else:
+        t = x * torch.arange(x.shape[0]).to(x)
     t_sum = t.sum(dim = 0)
     x_sum = x.sum(dim = 0)
     mask = x_sum > 0
     y = torch.where(mask, t_sum / x_sum + t_offset, torch.full_like(t_sum, empty_fill))
     return y
+
+
+@torch.jit.script
+def reset_hard(u: torch.Tensor, o: torch.Tensor, u_rest: torch.Tensor = torch.tensor(0.0)) -> torch.Tensor:
+    s = to_spike_train(o)
+    h = u * (1.0 - s) + u_rest.to(u) * s
+    return h
+
+
+@torch.jit.script
+def reset_soft(u: torch.Tensor, o: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor = torch.tensor(0.0)) -> torch.Tensor:
+    h = u - o * (u_threshold.to(u) - u_rest.to(u))
+    return h
+
+
+def _firing(u: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, firing: str = "heaviside") -> torch.Tensor:
+    if firing == "floor":
+        return floor(u / (u_threshold - u_rest).to(u))
+    elif firing == "ceil":
+        return ceil(u / (u_threshold - u_rest).to(u))
+    elif firing == "round":
+        return round(u / (u_threshold - u_rest).to(u))
+    elif firing == "rectangular":
+        return heaviside_rectangular(u / (u_threshold - u_rest).to(u))
+    elif firing == "polynomial":
+        return heaviside_polynomial(u / (u_threshold - u_rest).to(u))
+    elif firing == "sigmoid":
+        return heaviside_sigmoid(u / (u_threshold - u_rest).to(u))
+    else:
+        return heaviside_gaussian(u - u_threshold.to(u))
+
+
+@torch.jit.script
+def if_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, torch.Tensor]:
+    o_seq = []
+    for t in range(x.shape[0]):
+        du = x[t]
+        u = h + du
+        o = _firing(u, u_threshold, u_rest, firing)
+        if hard_reset:
+            h = reset_hard(u, o, u_rest)
+        else:
+            h = reset_soft(u, o, u_threshold, u_rest)
+        o_seq.append(o)
+    o = torch.stack(o_seq)
+    return o, h
+
+
+@torch.jit.script
+def lif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, tau_m: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, torch.Tensor]:
+    o_seq = []
+    for t in range(x.shape[0]):
+        du = (1.0 / tau_m.to(x)) * (-(h - u_rest.to(x)) + x[t])
+        u = h + du
+        o = _firing(u, u_threshold, u_rest, firing)
+        if hard_reset:
+            h = reset_hard(u, o, u_rest)
+        else:
+            h = reset_soft(u, o, u_threshold, u_rest)
+        o_seq.append(o)
+    o = torch.stack(o_seq)
+    return o, h
+
+
+@torch.jit.script
+def qif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, tau_m: torch.Tensor, u_c: torch.Tensor, a_0: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, torch.Tensor]:
+    o_seq = []
+    for t in range(x.shape[0]):
+        du = (1.0 / tau_m.to(x)) * (a_0.to(x) * (h - u_rest.to(x)) * (h - u_c.to(x)) + x[t])
+        u = h + du
+        o = _firing(u, u_threshold, u_rest, firing)
+        if hard_reset:
+            h = reset_hard(u, o, u_rest)
+        else:
+            h = reset_soft(u, o, u_threshold, u_rest)
+        o_seq.append(o)
+    o = torch.stack(o_seq)
+    return o, h
+
+
+@torch.jit.script
+def expif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, tau_m: torch.Tensor, u_t: torch.Tensor, delta_t: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, torch.Tensor]:
+    o_seq = []
+    for t in range(x.shape[0]):
+        du = (1.0 / tau_m) * (-(h - u_rest) + delta_t * torch.exp((h - u_t) / delta_t) + x)
+        u = h + du
+        o = _firing(u, u_threshold, u_rest, firing)
+        if hard_reset:
+            h = reset_hard(u, o, u_rest)
+        else:
+            h = reset_soft(u, o, u_threshold, u_rest)
+        o_seq.append(o)
+    o = torch.stack(o_seq)
+    return o, h
+
+
+@torch.jit.script
+def izhikevich_neuron(x: torch.Tensor, h: torch.Tensor, w: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, a: torch.Tensor, b: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, _Tuple[torch.Tensor, torch.Tensor]]:
+    o_seq = []
+    for t in range(x.shape[0]):
+        dw = a * (b * h - w)
+        w = w + dw
+        du = 0.00004 * h * h + 0.005 * h + 0.14 + u_rest - w + x
+        u = h + du
+        o = _firing(u, u_threshold, u_rest, firing)
+        if hard_reset:
+            h = reset_hard(u, o, u_rest)
+        else:
+            h = reset_soft(u, o, u_threshold, u_rest)
+        o_seq.append(o)
+    o = torch.stack(o_seq)
+    return o, (h, w)
+
+
+@torch.jit.script
+def klif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, tau_m: torch.Tensor, k: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, torch.Tensor]:
+    o_seq = []
+    for t in range(x.shape[0]):
+        du = (1.0 / tau_m.to(x)) * (-(h - u_rest.to(x)) + x[t])
+        u = h + du
+        u = _F.relu(k * (u - u_rest)) + u_rest
+        o = _firing(u, u_threshold, u_rest, firing)
+        if hard_reset:
+            h = reset_hard(u, o, u_rest)
+        else:
+            h = reset_soft(u, o, u_threshold, u_rest)
+        o_seq.append(o)
+    o = torch.stack(o_seq)
+    return o, h
+
+
+@torch.jit.script
+def lim_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, tau_m: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, torch.Tensor]:
+    u_seq = []
+    for t in range(x.shape[0]):
+        du = (1.0 / tau_m.to(x)) * (-(h - u_rest.to(x)) + x[t])
+        u = h + du
+        o = _firing(u, u_threshold, u_rest, firing)
+        if hard_reset:
+            h = reset_hard(u, o, u_rest)
+        else:
+            h = reset_soft(u, o, u_threshold, u_rest)
+        u_seq.append(u)
+    u = torch.stack(u_seq)
+    return u, h

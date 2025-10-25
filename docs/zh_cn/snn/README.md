@@ -10,7 +10,7 @@
 
 该模块涵盖了能够包裹 SNN 模块的容器，通过这些容器，基于`matterhorn_pytorch.snn.Module`的 SNN 模块可以组成时空计算网络。
 
-含有的 `matterhorn_pytorch.snn` 模块： `Spatial` 、 `Temporal` 和 `Sequential` 。
+含有的 `matterhorn_pytorch.snn` 模块： `Sequential` 。
 
 您可以阅读[文档](./7_container.md)以了解更多类与变量的使用方法。
 

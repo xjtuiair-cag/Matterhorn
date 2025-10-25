@@ -20,13 +20,9 @@ Layer()
 
 ### Overridable Methods
 
-#### `forward_step(self, o: torch.Tensor) -> torch.Tensor`
+#### `forward(self, o: torch.Tensor) -> torch.Tensor`
 
-Synaptic function within a single time step. Since synaptic operations are independent of time steps, synaptic functions in multi-time-step mode can be run in parallel, and only need to override the synaptic function within a single time step.
-
-#### `forward_steps(self, o: torch.Tensor) -> torch.Tensor`
-
-If synaptic operations are related to time steps, please override this function and specify the association between different time steps using variables.
+Same as `nn.Module.forward`.
 
 ## `matterhorn_pytorch.snn.STDPLinear` / `matterhorn_pytorch.snn.layer.STDPLinear`
 

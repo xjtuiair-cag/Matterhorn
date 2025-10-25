@@ -148,7 +148,6 @@ LIF(
     tau_m: float = 2.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -165,8 +164,6 @@ LIF(
 `spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`trainable (bool)`: Whether the parameter $\tau_{m}$ can be trained.
 
 `device (torch.device)`: Computational device to use.
 
@@ -229,7 +226,6 @@ QIF(
     a_0: float = 1.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -250,8 +246,6 @@ QIF(
 `spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`trainable (bool)`: Whether the parameters $\tau_{m}$, $u_{c}$, and $a_{0}$ can be trained.
 
 `device (torch.device)`: Computational device to use.
 
@@ -316,7 +310,6 @@ ExpIF(
     delta_t: float = 0.001,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -337,8 +330,6 @@ ExpIF(
 `spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`trainable (bool)`: Whether the parameters $\tau_{m}$, $u_{T}$, and $\Delta_{T}$ can be trained.
 
 `device (torch.device)`: Computational device to use.
 
@@ -408,7 +399,6 @@ Izhikevich(
     b: float = 1.0,
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -427,8 +417,6 @@ Izhikevich(
 `spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`trainable (bool)`: Whether the parameters $a$ and $b$ can be trained.
 
 `device (torch.device)`: Computational device to use.
 
@@ -489,7 +477,6 @@ KLIF(
     k: float = 0.2,
     spiking_function: Module = surrogate.Gaussian(),
     hard_reset: bool = True,
-    trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -508,8 +495,6 @@ KLIF(
 `spiking_function (torch.nn.Module)`: The surrogate function used for computing spikes, details can be found in [`matterhorn_pytorch.snn.firing`](./3_surrogate.md).
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`trainable (bool)`: Whether the parameter $\tau_{m}$ and $k$ can be trained.
 
 `device (torch.device)`: Computational device to use.
 
@@ -555,7 +540,6 @@ LIAF(
     spiking_function: torch.nn.Module = surrogate.Gaussian(),
     activation_function: torch.nn.Module = nn.ReLU(),
     hard_reset: bool = True,
-    trainable: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -574,8 +558,6 @@ LIAF(
 `activation_function (torch.nn.Module)`: The activation function $f(U^{l}(t)-u_{th})$ used for output.
 
 `hard_reset (bool)`: Whether to perform a hard reset.
-
-`trainable (bool)`: Whether the parameter $\tau_{m}$ can be trained.
 
 `device (torch.device)`: Computational device to use.
 

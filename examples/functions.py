@@ -4,6 +4,7 @@ import matterhorn_pytorch as mth
 import time
 import datetime
 import os
+import multiprocessing
 from argparse import Namespace
 from typing import Tuple, Dict, Callable, Union
 from rich import print
@@ -34,9 +35,10 @@ def train_one_epoch(model: torch.nn.Module, data_loader: DataLoader, loss_fn: Ca
             optimizer.zero_grad()
         x = x.to(device = device, dtype = dtype)
         y = y.to(device = device, dtype = dtype)
+        
         o = model(x)
-        if isinstance(model, mth.snn.Module):
-            model.reset()
+        if isinstance(o, Tuple):
+            o = o[0]
         loss = loss_fn(o, y)
         loss.backward()
         if optimizer is not None:
@@ -73,8 +75,8 @@ def test_one_epoch(model: torch.nn.Module, data_loader: DataLoader, loss_fn: Cal
             y = y.to(device = device, dtype = dtype)
             
             o = model(x)
-            if isinstance(model, mth.snn.Module):
-                model.reset()
+            if isinstance(o, Tuple):
+                o = o[0]
             loss = loss_fn(o, y)
 
             test_samples += y.numel()
@@ -85,6 +87,19 @@ def test_one_epoch(model: torch.nn.Module, data_loader: DataLoader, loss_fn: Cal
     test_acc /= test_samples
 
     return model, test_loss, test_acc
+
+
+def get_proper_device() -> torch.device:
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda:0"
+    # elif torch.backends.mps.is_available():
+    #     device = "mps"
+    return torch.device(device)
+
+
+def max_workers() -> int:
+    return multiprocessing.cpu_count()
 
 
 def init_logs(log_dir: str, args: Namespace, model: torch.nn.Module) -> None:

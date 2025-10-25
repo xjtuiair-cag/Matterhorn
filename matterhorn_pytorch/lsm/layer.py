@@ -12,8 +12,6 @@ from typing import Any as _Any, Tuple as _Tuple, Callable as _Callable
 import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
 from matterhorn_pytorch.snn.soma import Soma as _Soma
-from matterhorn_pytorch.snn.container import Temporal as _Temporal
-from matterhorn_pytorch.training.functional import stdp_online as _stdp_online
 
 
 class LSM(_Module):
@@ -34,7 +32,6 @@ class LSM(_Module):
         self.neuron_num = self.adjacent.shape[0]
         self.weight = nn.Parameter(torch.empty((self.neuron_num, self.neuron_num), device = device, dtype = dtype))
         nn.init.kaiming_uniform_(self.weight, a = 5.0 ** 0.5)
-        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -46,39 +43,7 @@ class LSM(_Module):
         return ", ".join(["neuron_num=%d" % self.neuron_num, "synapse_prob=%g" % self.adjacent.mean()]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
-    def _check_buffer(self, x: torch.Tensor) -> _Module:
-        """
-        检查临时变量。
-        Args:
-            x (torch.Tensor): 关键张量
-        """
-        if self.o is None or (isinstance(self.o, torch.Tensor) and self.o.shape != x.shape):
-            self.o = torch.full_like(x, 0.0)
-        return self
-
-
-    def reset(self) -> _Module:
-        """
-        重置整个神经元。
-        """
-        self.detach()
-        super().reset()
-        if self.o is not None:
-            self.o = torch.full_like(self.o, 0.0)
-        return super().reset()
-
-
-    def detach(self) -> _Module:
-        """
-        将历史电位与权重从计算图中分离，以停止在时间上进行反向传播。
-        """
-        super().detach()
-        if isinstance(self.o, torch.Tensor):
-            self.o.detach_()
-        return self
-
-
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         单个时间步的前向传播函数。
         Args:
@@ -86,8 +51,9 @@ class LSM(_Module):
         Returns:
             o (torch.Tensor): 胞体当前的输出脉冲$O_{i}^{l}(t)$
         """
-        self._check_buffer(x)
-        y = x + _F.linear(self.o, self.weight * self.adjacent.T, None)
-        o = self.soma.forward_step(y)
-        self.o = o
+        o = x
+        # TODO: LSM
+        # y = x + _F.linear(self.o, self.weight * self.adjacent.T, None)
+        # o = self.soma.forward(y)
+        # self.o = o
         return o

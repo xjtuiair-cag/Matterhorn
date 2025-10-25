@@ -18,13 +18,9 @@ Layer()
 
 ### 可重载的方法
 
-#### `forward_step(self, o: torch.Tensor) -> torch.Tensor`
+#### `forward(self, o: torch.Tensor) -> torch.Tensor`
 
-单个时间步内的突触函数。由于突触的运算和时间步无关，多时间步模式下的突触函数可以并行运行，仅需重载单个时间步内的突触函数。
-
-#### `forward_steps(self, o: torch.Tensor) -> torch.Tensor`
-
-若突触的运算与时间步有关，请重载这一函数，并用变量指明不同时间步之间的关联。
+与 `nn.Module.forward` 一致。
 
 ## `matterhorn_pytorch.snn.STDPLinear` / `matterhorn_pytorch.snn.layer.STDPLinear`
 

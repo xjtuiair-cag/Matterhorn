@@ -65,7 +65,7 @@ class ResIAND(snn.Module):
         return (1.0 - a) * s
 
 
-def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: int = 1, tau_m: float = 2.0, spiking_function: snn.Module = snn.Gaussian(), trainable: bool = False):
+def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: int = 1, tau_m: float = 2.0, spiking_function: snn.Module = snn.Gaussian()):
     """
     绑定卷积神经元（突触）和LIF神经元（胞体）
     Args:
@@ -75,7 +75,6 @@ def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: i
         stride (int): 卷积步长
         tau_m (float): 参数τ_{m}，神经元时间常数
         spiking_function (snn.Module): 脉冲函数
-        trainable (bool): 参数是否可以训练
     """
     return snn.Sequential(
         snn.Conv2d(
@@ -90,14 +89,13 @@ def ConvLIF(in_channels: int, out_channels: int, kernel_size: int = 3, stride: i
         ),
         LIF(
             tau_m = tau_m,
-            spiking_function = spiking_function,
-            trainable = trainable
+            spiking_function = spiking_function
         )
-    ).multi_step_mode_()
+    )
 
 
 class SEWBlock(snn.Module):
-    def __init__(self, in_channels: int, out_channels: int, tau_m: float = 2.0, spiking_function: snn.Module = snn.Gaussian(), residual_connection: snn.Module = ResADD(), down_sampling: bool = False, trainable: bool = False) -> None:
+    def __init__(self, in_channels: int, out_channels: int, tau_m: float = 2.0, spiking_function: snn.Module = snn.Gaussian(), residual_connection: snn.Module = ResADD(), down_sampling: bool = False) -> None:
         """
         Spiking Element-Wise Block， SEW ResNet的单元。
         Args:
@@ -107,7 +105,6 @@ class SEWBlock(snn.Module):
             spiking_function (snn.Module): 脉冲函数
             residual_connection (snn.Module): 脉冲连接方式
             down_sampling (bool): 是否进行下采样（出来的图像大小是原大小的一半）
-            trainable (bool): 参数是否可以训练
         """
         super().__init__()
         self.in_channels = in_channels
@@ -118,8 +115,7 @@ class SEWBlock(snn.Module):
             kernel_size = 3,
             stride = 2 if down_sampling else 1,
             tau_m = tau_m,
-            spiking_function = spiking_function,
-            trainable = trainable
+            spiking_function = spiking_function
         )
         self.conv2 = ConvLIF(
             in_channels = out_channels,
@@ -127,8 +123,7 @@ class SEWBlock(snn.Module):
             kernel_size = 3,
             stride = 1,
             tau_m = tau_m,
-            spiking_function = spiking_function,
-            trainable = trainable
+            spiking_function = spiking_function
         )
         self.down_sampling = down_sampling
         if self.down_sampling:
@@ -138,8 +133,7 @@ class SEWBlock(snn.Module):
                 kernel_size = 1,
                 stride = 2,
                 tau_m = tau_m,
-                spiking_function = spiking_function,
-                trainable = trainable
+                spiking_function = spiking_function
             )
         elif in_channels != out_channels:
             self.down_sampling_block = ConvLIF(
@@ -147,8 +141,7 @@ class SEWBlock(snn.Module):
                 out_channels = out_channels,
                 kernel_size = 1,
                 tau_m = tau_m,
-                spiking_function = spiking_function,
-                trainable = trainable
+                spiking_function = spiking_function
             )
         else:
             self.down_sampling_block = None
@@ -163,9 +156,9 @@ class SEWBlock(snn.Module):
         Returns:
             o (torch.Tensor): 输出脉冲张量
         """
-        a = self.conv2(self.conv1(x))
+        a = self.conv2(self.conv1(x)[0])[0]
         if self.down_sampling_block is not None:
-            s = self.down_sampling_block(x)
+            s = self.down_sampling_block(x)[0]
         else:
             s = x
         o = self.residual_connection(a, s)
@@ -173,7 +166,7 @@ class SEWBlock(snn.Module):
 
 
 class SEWRes18(snn.Module):
-    def __init__(self, input_h_w: Tuple[int] = (128, 128), num_classes: int = 10, tau_m: float = 2.0, spiking_function: snn.Module = snn.Gaussian(), residual_connection: snn.Module = ResADD(), trainable: bool = False) -> None:
+    def __init__(self, input_h_w: Tuple[int] = (128, 128), num_classes: int = 10, tau_m: float = 2.0, spiking_function: snn.Module = snn.Gaussian(), residual_connection: snn.Module = ResADD()) -> None:
         """
         Spiking Element-Wise Block， SEW ResNet的单元。
         Args:
@@ -182,7 +175,6 @@ class SEWRes18(snn.Module):
             tau_m (float): 参数τ_{m}，神经元时间常数
             spiking_function (snn.Module): 脉冲函数
             residual_connection (snn.Module): 脉冲连接方式
-            trainable (bool): 参数是否可以训练
         """
         super().__init__()
         self.model = snn.Sequential(
@@ -193,8 +185,7 @@ class SEWRes18(snn.Module):
                 kernel_size = 3,
                 stride = 2,
                 tau_m = tau_m,
-                spiking_function = spiking_function,
-                trainable = trainable
+                spiking_function = spiking_function
             ), # 1, [T, 64, 64, 64]
             snn.MaxPool2d(
                 kernel_size = 2
@@ -204,16 +195,14 @@ class SEWRes18(snn.Module):
                 out_channels = 64,
                 tau_m = tau_m,
                 spiking_function = spiking_function,
-                residual_connection = residual_connection,
-                trainable = trainable
+                residual_connection = residual_connection
             ), # 3, 4, [T, 64, 32, 32]
             SEWBlock(
                 in_channels = 64,
                 out_channels = 64,
                 tau_m = tau_m,
                 spiking_function = spiking_function,
-                residual_connection = residual_connection,
-                trainable = trainable
+                residual_connection = residual_connection
             ), # 5, 6, [T, 64, 32, 32]
             SEWBlock(
                 in_channels = 64,
@@ -221,16 +210,14 @@ class SEWRes18(snn.Module):
                 tau_m = tau_m,
                 spiking_function = spiking_function,
                 residual_connection = residual_connection,
-                down_sampling = True,
-                trainable = trainable
+                down_sampling = True
             ), # 7, 8, [T, 128, 16, 16]
             SEWBlock(
                 in_channels = 128,
                 out_channels = 128,
                 tau_m = tau_m,
                 spiking_function = spiking_function,
-                residual_connection = residual_connection,
-                trainable = trainable
+                residual_connection = residual_connection
             ), # 9, 10, [T, 128, 16, 16]
             SEWBlock(
                 in_channels = 128,
@@ -238,16 +225,14 @@ class SEWRes18(snn.Module):
                 tau_m = tau_m,
                 spiking_function = spiking_function,
                 residual_connection = residual_connection,
-                down_sampling = True,
-                trainable = trainable
+                down_sampling = True
             ), # 11, 12, [T, 256, 8, 8]
             SEWBlock(
                 in_channels = 256,
                 out_channels = 256,
                 tau_m = tau_m,
                 spiking_function = spiking_function,
-                residual_connection = residual_connection,
-                trainable = trainable
+                residual_connection = residual_connection
             ), # 13, 14, [T, 256, 8, 8]
             SEWBlock(
                 in_channels = 256,
@@ -255,16 +240,14 @@ class SEWRes18(snn.Module):
                 tau_m = tau_m,
                 spiking_function = spiking_function,
                 residual_connection = residual_connection,
-                down_sampling = True,
-                trainable = trainable
+                down_sampling = True
             ), # 15, 16, [T, 512, 4, 4]
             SEWBlock(
                 in_channels = 512,
                 out_channels = 512,
                 tau_m = tau_m,
                 spiking_function = spiking_function,
-                residual_connection = residual_connection,
-                trainable = trainable
+                residual_connection = residual_connection
             ), # 17, 18, [T, 512, 4, 4]
             snn.AvgSpikeDecoder(), # [512, 4, 4]
             nn.AvgPool2d(
@@ -276,7 +259,7 @@ class SEWRes18(snn.Module):
                 out_features = num_classes
             ), # [10]
             nn.Softmax()
-        ).multi_step_mode_()
+        )
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -287,5 +270,5 @@ class SEWRes18(snn.Module):
         Returns:
             x (torch.Tensor): 输出张量
         """
-        x = self.model(x)
+        x = self.model(x)[0]
         return x

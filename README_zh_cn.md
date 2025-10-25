@@ -163,15 +163,11 @@ $$H^{l}(t)=U^{l}(t)[1-O^{l}(t)]+u_{rest}O^{l}(t)$$
 import torch
 import matterhorn_pytorch.snn as snn
 
-snn_model = snn.Temporal(
-    snn.Spatial(
-        snn.Linear(28 * 28, 10),
-        snn.LIF()
-    )
+snn_model = snn.Sequential(
+    snn.Linear(28 * 28, 10),
+    snn.LIF()
 )
 ```
-
-在以上代码中， `Spatial` 是 Matterhorn 的其中一个容器，用于表示在空间维度上依次排列的 SNN 层，而 `Temporal` 是 Matterhorn 的另一个容器，用于在时间维度上重复计算电位和脉冲。通过使用 `Spatial` 和 `Temporal` 两个容器，可以构建一个时空拓扑网络，从而进行 SNNs 的训练。
 
 构建的网络接受 $n+1$ 维的 `torch.Tensor` 作为输入脉冲序列。第一个维度默认为时间步，它会循环每个时间步去进行计算。之后，它将生成一个 `torch.Tensor` 作为输出脉冲序列。对它的计算就像对 PyTorch 中 ANN 模型的计算一样。这其中最重要的是对脉冲进行编解码。
 
@@ -246,12 +242,12 @@ model = snn.Sequential(
     ),
     snn.Flatten(),
     snn.Linear(28 * 28, 10, bias = False),
-    snn.LIF(tau_m = tau, trainable = True),
+    snn.LIF(tau_m = tau),
     snn.AvgSpikeDecoder()
-).multi_step_mode_()
+)
 ```
 
-值得注意的是，例子中的 `snn.Sequential` 模块后存在 `.multi_step_mode_()` 函数。这个函数（以及等价于 `multi_step_mode(False)` 的 `single_step_mode()` 函数）是用作切换多步/单步模式的。在单步模式下，每个时间步输入的脉冲序列形状和特征图一致（`[B, ...]`）；在多步模式下，所有时间步的脉冲序列被压在同一个张量中计算，这对张量的要求是在最外层加一个用来表示时间步 `T` 的维度（`[T, B, ...]`）。
+SNNs 的函数默认为多步模式。在多步模式下，所有时间步的脉冲序列被压在同一个张量中计算，这对张量的要求是在最外层加一个用来表示时间步 `T` 的维度（`[T, B, ...]`）。
 
 到目前为止，您已经知道了 SNNs 的样子以及如何使用 Matterhorn 构建它。要进行更深入的体验，您可以参考 [examples/1_starting.py](./examples/1_starting.py) 。
 

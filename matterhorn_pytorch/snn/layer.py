@@ -11,7 +11,6 @@ import torch.nn.functional as _F
 import matterhorn_pytorch.snn.functional as _SF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
 from matterhorn_pytorch.snn.soma import Soma as _Soma
-from matterhorn_pytorch.snn.container import Temporal as _Temporal
 from typing import Any as _Any, Tuple as _Tuple, Iterable as _Iterable, Mapping as _Mapping, Callable as _Callable, Optional as _Optional, Union as _Union
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
@@ -19,33 +18,35 @@ from matterhorn_pytorch.training.functional import stdp_online as _stdp_online
 
 
 class Layer(_Module):
-    def __init__(self, count: bool = False) -> None:
+    def __init__(self, batch_first: bool = False) -> None:
         """
-        突触函数的骨架，定义突触最基本的函数。
+        层的骨架，定义层最基本的函数。
         Args:
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
         super().__init__()
-        self.count = count
+        self.batch_first = batch_first
 
 
-    def forward_steps(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
+    def _merge(self, x: torch.Tensor, ndim: int) -> _Tuple[torch.Tensor, _Iterable[int]]:
         """
-        多个时间步的前向传播函数。
+        将前几个维度合并，以适应nn.Module中的预定义模块。
         Args:
-            *args (*torch.Tensor): 输入
-            **kwargs (str: Any): 输入
+            x (torch.Tensor): 未合并前的张量
+            ndim (int): 目标维度
         Returns:
-            res (torch.Tensor): 输出
+            y (torch.Tensor): 合并后的张量
+            shape (Tuple): 原张量形状
         """
-        time_steps, batch_size = args[0].shape[:2]
-        args = [_SF.merge_time_steps_batch_size(arg)[0] for arg in args]
-        res = self.forward_step(*args, **kwargs)
-        res = _SF.split_time_steps_batch_size(res, (time_steps, batch_size))
-        return res
+        flatten_dims = x.ndim - ndim
+        shape = []
+        if flatten_dims > 0:
+            shape = list(x.shape[:flatten_dims + 1])
+            x = x.flatten(0, flatten_dims)
+        return x, shape
 
 
-    def forward(self, *args: _Tuple[torch.Tensor], **kwargs: _Mapping[str, _Any]) -> torch.Tensor:
+    def _split(self, x: torch.Tensor, shape: _Iterable[int]) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -54,13 +55,9 @@ class Layer(_Module):
         Returns:
             res (torch.Tensor): 输出
         """
-        res = super().forward(*args, **kwargs)
-        f = _SF.floor if self.count else _SF.to_spike_train
-        if isinstance(res, _Tuple):
-            res = (f(y) if isinstance(y, torch.Tensor) else y for y in res)
-        else:
-            res = f(res)
-        return res
+        if len(shape):
+            x = x.unflatten(0, shape)
+        return x
 
 
 class STDPLayer(_Module):
@@ -91,34 +88,9 @@ class STDPLayer(_Module):
         return ", ".join(["pos=%g*exp(-x/%g)" % (self.a_pos, self.tau_pos), "neg=-%g*exp(x/%g)" % (self.a_neg, self.tau_neg)]) + (", " + super().extra_repr() if len(super().extra_repr()) else "")
 
 
-    def reset(self) -> _Module:
-        """
-        重置模型。
-        """
-        super().reset()
-        self.input_trace = None
-        self.output_trace = None
-        return self
-
-
-    def _check_buffer(self, x: torch.Tensor, input_trace_shape: _Tuple[int], output_trace_shape: _Tuple[int]) -> _Module:
-        """
-        检查临时变量。
-        Args:
-            x (torch.Tensor): 关键张量
-            input_trace_shape (int*): 输入形状
-            output_trace_shape (int*): 输出形状
-        """
-        if self.input_trace is None or (isinstance(self.input_trace, torch.Tensor) and self.input_trace.shape != input_trace_shape):
-            self.input_trace = torch.zeros(input_trace_shape).to(x)
-        if self.output_trace is None or (isinstance(self.output_trace, torch.Tensor) and self.output_trace.shape != output_trace_shape):
-            self.output_trace = torch.zeros(output_trace_shape).to(x)
-        return self
-
-
 class f_stdp_linear(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Callable, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_step_mode: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Callable, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         利用STDP进行学习的全连接层的前向传播函数。
         Args:
@@ -133,25 +105,17 @@ class f_stdp_linear(torch.autograd.Function):
             a_neg (float): STDP参数A-
             tau_neg (float): STDP参数tau-
             training (bool): 是否正在训练
-            multi_step_mode (bool): 是否为多时间步模式
         Returns:
             output (torch.Tensor): 输出脉冲序列
             input_trace (torch.Tensor): 输入的迹，累积的输入效应
             output_trace (torch.Tensor): 输出的迹，累积的输出效应
         """
-        if multi_step_mode:
-            flattened_input, tb = _SF.merge_time_steps_batch_size(input)
-            psp = _F.linear(flattened_input, weight, bias = None)
-            psp = _SF.split_time_steps_batch_size(psp, tb)
-        else:
-            psp = _F.linear(input, weight, bias = None)
+        T, B = input.shape[:2]
+        psp = _F.linear(input.flatten(0, 1), weight, bias = None)
+        psp = psp.unflatten(0, (T, B))
         output: torch.Tensor = soma(psp)
-        if multi_step_mode:
-            input_spike_train = input.clone()
-            output_spike_train = output.clone()
-        else:
-            input_spike_train = input[None]
-            output_spike_train = output[None]
+        input_spike_train = input.clone()
+        output_spike_train = output.clone()
         delta_weight = torch.zeros_like(weight)
         if training:
             T, B, C = input_spike_train.shape
@@ -174,7 +138,7 @@ class f_stdp_linear(torch.autograd.Function):
 
 
     @staticmethod
-    def backward(ctx: _Any, grad_output: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None]:
+    def backward(ctx: _Any, grad_output: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None]:
         """
         利用STDP进行学习的全连接层的反向传播函数。
         Args:
@@ -193,11 +157,10 @@ class f_stdp_linear(torch.autograd.Function):
             grad_a_neg (None): STDP参数A-的梯度，为None
             grad_tau_neg (None): STDP参数tau-的梯度，为None
             grad_training (None): 是否正在训练的梯度，为None
-            grad_multi_step_mode (None): 是否为多时间步模式的梯度，为None
         """
         delta_weight, input = ctx.saved_tensors
         delta_weight = -delta_weight
-        return torch.zeros_like(input), delta_weight, torch.zeros_like(grad_input_trace), torch.zeros_like(grad_output_trace), None, None, None, None, None, None, None
+        return torch.zeros_like(input), delta_weight, torch.zeros_like(grad_input_trace), torch.zeros_like(grad_output_trace), None, None, None, None, None, None
 
 
 class STDPLinear(STDPLayer):
@@ -226,7 +189,6 @@ class STDPLinear(STDPLayer):
         self.weight = nn.Parameter(torch.empty((out_features, in_features), device = device, dtype = dtype))
         nn.init.kaiming_uniform_(self.weight, a = 5.0 ** 0.5)
         self.soma = soma
-        self.reset()
 
 
     def extra_repr(self) -> str:
@@ -238,7 +200,7 @@ class STDPLinear(STDPLayer):
         return ", ".join(["in_features=%d" % self.in_features, "out_features=%d" % self.out_features]) + (", " + super().extra_repr() if len(super().extra_repr()) else "")
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, traces: _Optional[_Tuple[torch.Tensor, torch.Tensor]] = None) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -246,21 +208,23 @@ class STDPLinear(STDPLayer):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.multi_step_mode:
-            T, B, C = x.shape
-        else:
-            T = 1
-            B, C = x.shape
+        T, B, C = x.shape
         N, C = self.weight.shape
-        self._check_buffer(x, (B, N, C), (B, N, C))
-        soma = self.soma.forward_steps if self.multi_step_mode else self.soma.forward_step
-        y, self.input_trace, self.output_trace = f_stdp_linear.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)
-        return y
+
+        if traces is None:
+            traces = (None, None)
+        input_trace, output_trace = traces
+        if input_trace is None:
+            input_trace = torch.zeros(B, N, C).to(x)
+        if output_trace is None:
+            output_trace = torch.zeros(B, N, C).to(x)
+        y, input_trace, output_trace = f_stdp_linear.apply(x, self.weight, input_trace, output_trace, lambda x: self.soma.forward(x)[0], self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training)
+        return y, (input_trace, output_trace)
 
 
 class f_stdp_conv2d(torch.autograd.Function):
     @staticmethod
-    def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Callable, stride: _size_any_t, padding: _size_any_t, dilation: _size_any_t, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True, multi_step_mode: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Callable, stride: _size_any_t, padding: _size_any_t, dilation: _size_any_t, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         利用STDP进行学习的2维卷积层的前向传播函数。
         Args:
@@ -278,25 +242,17 @@ class f_stdp_conv2d(torch.autograd.Function):
             a_neg (float): STDP参数A-
             tau_neg (float): STDP参数tau-
             training (bool): 是否正在训练
-            multi_step_mode (bool): 是否为多时间步模式
         Returns:
             output (torch.Tensor): 输出脉冲序列
             input_trace (torch.Tensor): 输入的迹，累积的输入效应
             output_trace (torch.Tensor): 输出的迹，累积的输出效应
         """
-        if multi_step_mode:
-            flattened_input, tb = _SF.merge_time_steps_batch_size(input)
-            psp = _F.conv2d(flattened_input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
-            psp = _SF.split_time_steps_batch_size(psp, tb)
-        else:
-            psp = _F.conv2d(input, weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
-        output: torch.Tensor = soma(psp)
-        if multi_step_mode:
-            input_spike_train = input.clone()
-            output_spike_train = output.clone()
-        else:
-            input_spike_train = input[None]
-            output_spike_train = output[None]
+        T, B = input.shape[:2]
+        psp = _F.conv2d(input.flatten(0, 1), weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
+        psp = psp.unflatten(0, (T, B))
+        output = soma(psp)
+        input_spike_train = input.clone()
+        output_spike_train = output.clone()
         delta_weight = torch.zeros_like(weight)
         if training:
             T, B, C, HI, WI = input_spike_train.shape
@@ -330,7 +286,7 @@ class f_stdp_conv2d(torch.autograd.Function):
 
 
     @staticmethod
-    def backward(ctx: _Any, grad_output: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None, None, None, None]:
+    def backward(ctx: _Any, grad_output: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None, None, None]:
         """
         利用STDP进行学习的2维卷积层的反向传播函数。
         Args:
@@ -352,11 +308,10 @@ class f_stdp_conv2d(torch.autograd.Function):
             grad_a_neg (None): STDP参数A-的梯度，为None
             grad_tau_neg (None): STDP参数tau-的梯度，为None
             grad_training (None): 是否正在训练的梯度，为None
-            grad_multi_step_mode (None): 是否为多时间步模式的梯度，为None
         """
         delta_weight, input = ctx.saved_tensors
         delta_weight = -delta_weight
-        return torch.zeros_like(input), delta_weight, torch.zeros_like(grad_input_trace), torch.zeros_like(grad_output_trace), None, None, None, None, None, None, None, None, None, None
+        return torch.zeros_like(input), delta_weight, torch.zeros_like(grad_input_trace), torch.zeros_like(grad_output_trace), None, None, None, None, None, None, None, None, None
 
 
 class STDPConv2d(STDPLayer):
@@ -412,7 +367,7 @@ class STDPConv2d(STDPLayer):
         return ", ".join(["in_channels=%d" % self.in_channels, "out_channels=%d" % self.out_channels, "kernel_size=(%d, %d)" % tuple(self.kernel_size), "stride=(%d, %d)" % tuple(self.stride), "padding=(%d, %d)" % tuple(self.padding), "dilation=(%d, %d)" % tuple(self.dilation)]) + (", " + super().extra_repr() if len(super().extra_repr()) else "")
 
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, traces: _Optional[_Tuple[torch.Tensor, torch.Tensor]] = None) -> torch.Tensor:
         """
         前向传播函数。
         Args:
@@ -420,25 +375,27 @@ class STDPConv2d(STDPLayer):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.multi_step_mode:
-            T, B, C, HI, WI = x.shape
-        else:
-            T = 1
-            B, C, HI, WI = x.shape
+        T, B, C, HI, WI = x.shape
         N, C, HK, WK = self.weight.shape
         PH, PW = self.padding
         SH, SW = self.stride
         DH, DW = self.dilation
         HO = (HI + 2 * PH - HK * DH) // SH + 1
         WO = (WI + 2 * PW - WK * DW) // SW + 1
-        self._check_buffer(x, (B, N, C, HI, WI), (B, N, C, HO, WO))
-        soma = self.soma.forward_steps if self.multi_step_mode else self.soma.forward_step
-        y, self.input_trace, self.output_trace = f_stdp_conv2d.apply(x, self.weight, self.input_trace, self.output_trace, soma, self.stride, self.padding, self.dilation, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training, self.multi_step_mode)
+
+        if traces is None:
+            traces = (None, None)
+        input_trace, output_trace = traces
+        if input_trace is None:
+            input_trace = torch.zeros(B, N, C, HI, WI).to(x)
+        if output_trace is None:
+            output_trace = torch.zeros(B, N, C, HO, WO).to(x)
+        y, input_trace, output_trace = f_stdp_conv2d.apply(x, self.weight, input_trace, output_trace, lambda x: self.soma.forward(x)[0], self.stride, self.padding, self.dilation, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training)
         return y
 
 
 class MaxPool1d(Layer, nn.MaxPool1d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, count: bool = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, batch_first: bool = False) -> None:
         """
         一维最大池化。
         Args:
@@ -448,11 +405,11 @@ class MaxPool1d(Layer, nn.MaxPool1d):
             dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.MaxPool1d.__init__(
             self,
@@ -471,23 +428,29 @@ class MaxPool1d(Layer, nn.MaxPool1d):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.MaxPool1d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.MaxPool1d.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 3)
         y = nn.MaxPool1d.forward(self, x)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class MaxPool2d(Layer, nn.MaxPool2d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, count: bool = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, batch_first: bool = False) -> None:
         """
         二维最大池化。
         Args:
@@ -497,11 +460,12 @@ class MaxPool2d(Layer, nn.MaxPool2d):
             dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.MaxPool2d.__init__(
             self,
@@ -520,23 +484,29 @@ class MaxPool2d(Layer, nn.MaxPool2d):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.MaxPool2d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.MaxPool2d.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 4)
         y = nn.MaxPool2d.forward(self, x)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class MaxPool3d(Layer, nn.MaxPool3d):
-    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, count: bool = False) -> None:
+    def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, batch_first: bool = False) -> None:
         """
         三维最大池化。
         Args:
@@ -546,11 +516,12 @@ class MaxPool3d(Layer, nn.MaxPool3d):
             dilation (size_any_t): 输入侧的池化步长
             return_indices (bool): 是否返回带索引的内容
             ceil_mode (bool): 是否向上取整
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.MaxPool3d.__init__(
             self,
@@ -569,23 +540,29 @@ class MaxPool3d(Layer, nn.MaxPool3d):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.MaxPool3d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.MaxPool3d.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 5)
         y = nn.MaxPool3d.forward(self, x)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class AvgPool1d(Layer, nn.AvgPool1d):
-    def __init__(self, kernel_size: _size_1_t, stride: _Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, count: bool = False) -> None:
+    def __init__(self, kernel_size: _size_1_t, stride: _Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, batch_first: bool = False) -> None:
         """
         一维平均池化。
         Args:
@@ -594,11 +571,12 @@ class AvgPool1d(Layer, nn.AvgPool1d):
             padding (size_1_t): 边界填充的长度
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.AvgPool1d.__init__(
             self,
@@ -616,23 +594,29 @@ class AvgPool1d(Layer, nn.AvgPool1d):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.AvgPool1d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.AvgPool1d.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 3)
         y = nn.AvgPool1d.forward(self, x)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class AvgPool2d(Layer, nn.AvgPool2d):
-    def __init__(self, kernel_size: _size_2_t, stride: _Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, count: bool = False) -> None:
+    def __init__(self, kernel_size: _size_2_t, stride: _Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, batch_first: bool = False) -> None:
         """
         二维平均池化。
         Args:
@@ -642,11 +626,12 @@ class AvgPool2d(Layer, nn.AvgPool2d):
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
             divisor_override (int | None): 是否用某个数取代总和作为除数
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.AvgPool2d.__init__(
             self,
@@ -665,23 +650,29 @@ class AvgPool2d(Layer, nn.AvgPool2d):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.AvgPool2d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.AvgPool2d.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 4)
         y = nn.AvgPool2d.forward(self, x)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class AvgPool3d(Layer, nn.AvgPool3d):
-    def __init__(self, kernel_size: _size_3_t, stride: _Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, count: bool = False) -> None:
+    def __init__(self, kernel_size: _size_3_t, stride: _Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, batch_first: bool = False) -> None:
         """
         三维平均池化。
         Args:
@@ -691,11 +682,12 @@ class AvgPool3d(Layer, nn.AvgPool3d):
             ceil_mode (bool): 是否向上取整
             count_include_pad (bool): 是否连带边界一起计算
             divisor_override (int | None): 是否用某个数取代总和作为除数
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.AvgPool3d.__init__(
             self,
@@ -714,34 +706,41 @@ class AvgPool3d(Layer, nn.AvgPool3d):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.AvgPool3d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.AvgPool3d.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 5)
         y = nn.AvgPool3d.forward(self, x)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class MaxUnpool1d(Layer, nn.MaxUnpool1d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, count: bool = False) -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, batch_first: bool = False) -> None:
         """
         一维最大反池化。
         Args:
             kernel_size (size_3_t): 池化核大小
             stride (size_3_t | None): 池化核步长
             padding (size_3_t): 边界填充的长度
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.MaxUnpool1d.__init__(
             self,
@@ -757,12 +756,12 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.MaxUnpool1d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.MaxUnpool1d.extra_repr(self), _Module.extra_repr(self)])
     
 
-    def forward_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
             indices (torch.Tensor): 池化前脉冲的索引
@@ -770,23 +769,30 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 3)
         y = nn.MaxUnpool1d.forward(self, x, indices, output_size)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class MaxUnpool2d(Layer, nn.MaxUnpool2d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, count: bool = False) -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, batch_first: bool = False) -> None:
         """
         二维最大反池化。
         Args:
             kernel_size (size_3_t): 池化核大小
             stride (size_3_t | None): 池化核步长
             padding (size_3_t): 边界填充的长度
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.MaxUnpool2d.__init__(
             self,
@@ -802,12 +808,12 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.MaxUnpool2d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.MaxUnpool2d.extra_repr(self), _Module.extra_repr(self)])
     
 
-    def forward_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
             indices (torch.Tensor): 池化前脉冲的索引
@@ -815,23 +821,30 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 4)
         y = nn.MaxUnpool2d.forward(self, x, indices, output_size)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class MaxUnpool3d(Layer, nn.MaxUnpool3d):
-    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, count: bool = False) -> None:
+    def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, batch_first: bool = False) -> None:
         """
         一维最大反池化。
         Args:
             kernel_size (size_3_t): 池化核大小
             stride (size_3_t | None): 池化核步长
             padding (size_3_t): 边界填充的长度
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.MaxUnpool3d.__init__(
             self,
@@ -847,12 +860,12 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.MaxUnpool3d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.MaxUnpool3d.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
             indices (torch.Tensor): 池化前脉冲的索引
@@ -860,12 +873,18 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 5)
         y = nn.MaxUnpool3d.forward(self, x, indices, output_size)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class Upsample(Layer, nn.Upsample):
-    def __init__(self, size: _Optional[_Union[int, _Tuple[int]]] = None, scale_factor: _Optional[_Union[float, _Tuple[float]]] = None, mode: str = 'nearest', align_corners: _Optional[bool] = None, recompute_scale_factor: _Optional[bool] = None, count: bool = False) -> None:
+    def __init__(self, size: _Optional[_Union[int, _Tuple[int]]] = None, scale_factor: _Optional[_Union[float, _Tuple[float]]] = None, mode: str = 'nearest', align_corners: _Optional[bool] = None, recompute_scale_factor: _Optional[bool] = None, batch_first: bool = False) -> None:
         """
         上采样（反池化）。
         Args:
@@ -874,11 +893,12 @@ class Upsample(Layer, nn.Upsample):
             mode (str): 以何种形式上采样
             align_corners (bool): 若为True，使输入和输出张量的角像素对齐，从而保留这些像素的值
             recompute_scale_factor (bool): 若为True，则必须传入scale_factor并且scale_factor用于计算输出大小。计算出的输出大小将用于推断插值的新比例；若为False，那么size或scale_factor将直接用于插值
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.Upsample.__init__(
             self,
@@ -896,33 +916,40 @@ class Upsample(Layer, nn.Upsample):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.Upsample.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.Upsample.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, x.ndim - 1)
         y = nn.Upsample.forward(self, x)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class Flatten(Layer, nn.Flatten):
-    def __init__(self, start_dim: int = 1, end_dim: int = -1, count: bool = False) -> None:
+    def __init__(self, start_dim: int = 1, end_dim: int = -1, batch_first: bool = False) -> None:
         """
         展平层。
         Args:
             start_dim (int): 起始维度，默认为1
             end_dim (int): 终止维度
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.Flatten.__init__(
             self,
@@ -937,46 +964,40 @@ class Flatten(Layer, nn.Flatten):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.Flatten.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.Flatten.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, x.ndim - 1)
         y = nn.Flatten.forward(self, x)
-        return y
-
-
-    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
-        Returns:
-            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
-        """
-        dim_frac = lambda x: x + 1 if x >= 0 else x
-        y = torch.flatten(x, dim_frac(self.start_dim), dim_frac(self.end_dim))
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class Unflatten(Layer, nn.Unflatten):
-    def __init__(self, dim: _Union[int, str], unflattened_size: _size, count: bool = False) -> None:
+    def __init__(self, dim: _Union[int, str], unflattened_size: _size, batch_first: bool = False) -> None:
         """
         反展开层。
         Args:
             dim (int | str): 在哪个维度反展开
             unflattened_size: 这个维度上的张量要反展开成什么形状
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.Unflatten.__init__(
             self,
@@ -991,46 +1012,40 @@ class Unflatten(Layer, nn.Unflatten):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.Unflatten.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.Unflatten.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 3)
         y = nn.Unflatten.forward(self, x)
-        return y
-
-
-    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        多个时间步的前向传播函数。
-        Args:
-            x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
-        Returns:
-            y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
-        """
-        dim_frac = lambda x: x + 1 if x >= 0 else x
-        y = torch.unflatten(x, dim_frac(self.dim), self.unflattened_size)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class Dropout(Layer, nn.Dropout):
-    def __init__(self, p: float = 0.5, inplace: bool = False, count: bool = False) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, batch_first: bool = False) -> None:
         """
         遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.Dropout.__init__(
             self,
@@ -1045,33 +1060,40 @@ class Dropout(Layer, nn.Dropout):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.Dropout.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.Dropout.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, x.ndim - 1)
         y = nn.Dropout.forward(self, x)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class Dropout1d(Layer, nn.Dropout1d):
-    def __init__(self, p: float = 0.5, inplace: bool = False, count: bool = False) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, batch_first: bool = False) -> None:
         """
         一维遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.Dropout1d.__init__(
             self,
@@ -1086,33 +1108,40 @@ class Dropout1d(Layer, nn.Dropout1d):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.Dropout1d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.Dropout1d.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 3)
         y = nn.Dropout1d.forward(self, x)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class Dropout2d(Layer, nn.Dropout2d):
-    def __init__(self, p: float = 0.5, inplace: bool = False, count: bool = False) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, batch_first: bool = False) -> None:
         """
         二维遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.Dropout2d.__init__(
             self,
@@ -1127,33 +1156,40 @@ class Dropout2d(Layer, nn.Dropout2d):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.Dropout2d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.Dropout2d.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 4)
         y = nn.Dropout2d.forward(self, x)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y
 
 
 class Dropout3d(Layer, nn.Dropout3d):
-    def __init__(self, p: float = 0.5, inplace: bool = False, count: bool = False) -> None:
+    def __init__(self, p: float = 0.5, inplace: bool = False, batch_first: bool = False) -> None:
         """
         三维遗忘层。
         Args:
             p (float): 遗忘概率
             inplace (bool): 是否在原有张量上改动，若为True则直接改原张量，否则新建一个张量
-            count (bool): 是否发送脉冲计数
+            batch_first (bool): 第一维为批(True)还是时间(False)
         """
+        
         Layer.__init__(
             self,
-            count = count
+            batch_first = batch_first
         )
         nn.Dropout3d.__init__(
             self,
@@ -1168,16 +1204,22 @@ class Dropout3d(Layer, nn.Dropout3d):
         Returns:
             repr_str (str): 参数表
         """
-        return nn.Dropout3d.extra_repr(self) + (", " + Layer.extra_repr(self) if len(Layer.extra_repr(self)) else "")
+        return ", ".join([nn.Dropout3d.extra_repr(self), _Module.extra_repr(self)])
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        单个时间步的前向传播函数。
+        前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        if self.batch_first:
+            x = x.swapaxes(0, 1)
+        x, shape = self._merge(x, 5)
         y = nn.Dropout3d.forward(self, x)
+        y = self._split(y, shape)
+        if self.batch_first:
+            y = y.swapaxes(0, 1)
         return y

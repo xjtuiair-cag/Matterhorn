@@ -10,7 +10,7 @@
 
 This module covers containers that can encapsulate SNN modules. Through these containers, SNN modules based on `matterhorn_pytorch.snn.Module` can form spatio-temporal computing networks.
 
-Containing `matterhorn_pytorch.snn` modules: `Spatial`, `Temporal`, and `Sequential`.
+Containing `matterhorn_pytorch.snn` modules: `Sequential`.
 
 You can read [the documentation](./7_container.md) to learn more about the usage of classes and variables.
 

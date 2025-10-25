@@ -18,7 +18,6 @@ class Encoder(_Module):
         编码器的基类。
         """
         super().__init__()
-        self.multi_step_mode_()
 
 
     def extra_repr(self) -> str:
@@ -30,34 +29,15 @@ class Encoder(_Module):
         return super().extra_repr()
 
 
-    def reset(self) -> _Module:
-        """
-        重置编码器。
-        """
-        self.current_time_step = 0
-        return super().reset()
-
-
 class Direct(Encoder):
     def __init__(self) -> None:
         """
         直接编码，直接对传入的脉冲（事件）数据进行编码
         """
         super().__init__()
-
-
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        单步前向传播函数。
-        Args:
-            x (torch.Tensor): 输入张量，形状为[B,...]
-        Returns:
-            y (torch.Tensor): 输出张量，形状为[B,...]
-        """
-        return x
     
 
-    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         多步前向传播函数，直接将第二个维度作为时间维度，转置到首个维度上。
         Args:
@@ -66,7 +46,7 @@ class Direct(Encoder):
             y (torch.Tensor): 输出张量，形状为[T,B,...]
         """
         assert x.ndim >= 2, "Expect input 2D or more. %dD found." % (x.ndim,)
-        y = x.permute(*([1, 0] + list(range(2, x.ndim))))
+        y = x.swapaxes(0, 1)
         return y
 
 
@@ -79,21 +59,9 @@ class Analog(Encoder):
         """
         super().__init__()
         self.time_steps = time_steps
-
-
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        单步前向传播函数。
-        Args:
-            x (torch.Tensor): 输入张量，形状为[B,...]
-        Returns:
-            y (torch.Tensor): 输出张量，形状为[B,...]
-        """
-        y = x
-        return y
     
 
-    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         多步前向传播函数。
         Args:
@@ -139,22 +107,9 @@ class Poisson(Encoder):
             repr_str (str): 参数表
         """
         return ", ".join(["time_steps=%d" % self.time_steps]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
-
-
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        单步前向传播函数。
-        Args:
-            x (torch.Tensor): 输入张量，形状为[B,...]
-        Returns:
-            y (torch.Tensor): 输出张量，形状为[B,...]
-        """
-        x = (x - self.min) / (self.max - self.min)
-        y = _SF.encode_poisson(x, self.precision, self.count)
-        return y
     
 
-    def forward_steps(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         多步前向传播函数。
         Args:
@@ -192,21 +147,7 @@ class Temporal(Encoder):
         return ", ".join(["time_steps=%d" % self.time_steps, "prob=%g" % self.prob]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
 
 
-    def forward_step(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        单步前向传播函数。
-        Args:
-            x (torch.Tensor): 输入张量，形状为[B,...]
-        Returns:
-            y (torch.Tensor): 输出张量，形状为[B,...]
-        """
-        x = self.transform(x)
-        y = _SF.encode_temporal(x, 1, self.current_time_step, self.prob)[0]
-        self.current_time_step += 1
-        return y
-    
-
-    def forward_steps(self, x: torch.Tensor, time_steps: int) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, t_offset: int = 0) -> torch.Tensor:
         """
         多步前向传播函数。
         Args:
@@ -215,6 +156,5 @@ class Temporal(Encoder):
             y (torch.Tensor): 输出张量，形状为[T, B,...]
         """
         x = self.transform(x)
-        y = _SF.temporal_encode(x, time_steps, self.current_time_step, self.prob)
-        self.current_time_step += time_steps
-        return y
+        y = _SF.encode_temporal(x, self.time_steps, t_offset, self.prob)
+        return y, t_offset + self.time_steps

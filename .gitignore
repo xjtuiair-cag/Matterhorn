@@ -137,7 +137,8 @@ dmypy.json
 examples/data/
 examples/logs/
 *.pyc
-test
+test/
+tests/
 render.html
 
 # Apple computer

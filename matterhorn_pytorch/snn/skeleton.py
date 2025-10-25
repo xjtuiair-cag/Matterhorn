@@ -4,6 +4,7 @@ SNN模块的框架，在torch.nn的基础上，定义了几个SNN的基本函数
 """
 
 
+import warnings
 import torch
 import torch.nn as nn
 from typing import Any as _Any, Tuple as _Tuple, Mapping as _Mapping
@@ -15,36 +16,6 @@ class Module(nn.Module):
         脉冲神经网络模块的骨架。
         """
         nn.Module.__init__(self)
-        self._multi_step_mode = False
-
-
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来。
-        Returns:
-            repr_str (str): 参数表
-        """
-        return ("step_mode=%s" % ('"m"' if self.multi_step_mode else '"s"')) if self.multi_step_mode else ""
-
-
-    @property
-    def supports_single_step_mode(self) -> bool:
-        """
-        是否支持单个时间步。
-        Returns:
-            if_support (bool): 是否支持单个时间步
-        """
-        return True
-
-
-    @property
-    def supports_multi_step_mode(self) -> bool:
-        """
-        是否支持多个时间步。
-        Returns:
-            if_support (bool): 是否支持多个时间步
-        """
-        return True
 
 
     @property
@@ -54,7 +25,8 @@ class Module(nn.Module):
         Returns:
             if_on (bool): 当前是否为多个时间步模式
         """
-        return self._multi_step_mode
+        warnings.warn("Since Matterhorn 2.0.0, all modules will be multi-step, where the `multi_step_mode` attribute and `multi_step_mode_` function will be soon deprecated.", DeprecationWarning)
+        return True
     
 
     @property
@@ -64,7 +36,8 @@ class Module(nn.Module):
         Returns:
             if_on (bool): 当前是否为单个时间步模式
         """
-        return not self._multi_step_mode
+        warnings.warn("Since Matterhorn 2.0.0, all modules will be multi-step, where the `multi_step_mode` attribute and `multi_step_mode_` function will be soon deprecated.", DeprecationWarning)
+        return False
 
 
     def multi_step_mode_(self, if_on: bool = True, recursive: bool = True) -> nn.Module:
@@ -74,15 +47,7 @@ class Module(nn.Module):
             if_on (bool): 当前需要调整为什么模式（True为多时间步模式，False为单时间步模式）
             recursive (bool): 是否递归调整子模块的时间步模式
         """
-        if recursive:
-            _ = [module.multi_step_mode_(if_on, recursive = recursive) if isinstance(module, Module) else None for module in self.children()]
-        if self.supports_multi_step_mode and if_on:
-            self._multi_step_mode = True
-        elif self.supports_single_step_mode and not if_on:
-            self._multi_step_mode = False
-        else:
-            raise ValueError("Unsupported time step conversion on module %s" % (self.__class__.__name__,))
-        self.reset()
+        warnings.warn("Since Matterhorn 2.0.0, all modules will be multi-step, where the `multi_step_mode` attribute and `multi_step_mode_` function will be soon deprecated.", DeprecationWarning)
         return self
     
 
@@ -92,14 +57,6 @@ class Module(nn.Module):
         Args
             if_on (bool): 当前需要调整为什么模式（True为单时间步模式，False为多时间步模式）
         """
-        return self.multi_step_mode_(not if_on, recursive = recursive)
-
-
-    def detach(self) -> nn.Module:
-        """
-        将模型中的某些变量从其计算图中分离。
-        """
-        _ = [module.detach() if isinstance(module, Module) else None for name, module in self.named_children()]
         return self
 
 
@@ -107,7 +64,7 @@ class Module(nn.Module):
         """
         重置模型。
         """
-        _ = [module.reset() if isinstance(module, Module) else None for name, module in self.named_children()]
+        warnings.warn("Since Matterhorn 2.0.0, all modules will not have memory storage, where the `reset` function will be soon deprecated.", DeprecationWarning)
         return self
 
 
@@ -136,7 +93,6 @@ class Module(nn.Module):
             args = (args,)
         time_steps = args[0].shape[0]
         def _forward_per_time_step(t, args_t, kwargs_t):
-            _ = [module.single_step_mode_() if isinstance(module, Module) else None for module in self.children()] if not t else None
             return self.forward_step(*args_t, **kwargs_t)
         result = [_forward_per_time_step(t, tuple(x[t] if isinstance(x, torch.Tensor) else x for x in args), kwargs) for t in range(time_steps)]
         if isinstance(result[0], _Tuple):
@@ -155,7 +111,8 @@ class Module(nn.Module):
         Returns:
             res (torch.Tensor): 输出
         """
-        if self.multi_step_mode:
+        warnings.warn("Since Matterhorn 2.0.0, all modules will be multi-step, where the `forward_step` and `forward_steps` function will be deprecated. Please define `forward` function to make the module work.", DeprecationWarning)
+        if hasattr(self, "forward_steps"):
             res = self.forward_steps(*args, **kwargs)
         else:
             res = self.forward_step(*args, **kwargs)
