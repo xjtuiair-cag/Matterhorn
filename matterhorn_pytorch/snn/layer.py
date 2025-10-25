@@ -9,12 +9,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as _F
 import matterhorn_pytorch.snn.functional as _SF
+import matterhorn_pytorch.training.functional as _TF
 from matterhorn_pytorch.snn.skeleton import Module as _Module
 from matterhorn_pytorch.snn.soma import Soma as _Soma
 from typing import Any as _Any, Tuple as _Tuple, Iterable as _Iterable, Mapping as _Mapping, Callable as _Callable, Optional as _Optional, Union as _Union
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t, _size_any_t
 from torch.types import _size
-from matterhorn_pytorch.training.functional import stdp_online as _stdp_online
 
 
 class Layer(_Module):
@@ -88,81 +88,6 @@ class STDPLayer(_Module):
         return ", ".join(["pos=%g*exp(-x/%g)" % (self.a_pos, self.tau_pos), "neg=-%g*exp(x/%g)" % (self.a_neg, self.tau_neg)]) + (", " + super().extra_repr() if len(super().extra_repr()) else "")
 
 
-class f_stdp_linear(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Callable, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """
-        利用STDP进行学习的全连接层的前向传播函数。
-        Args:
-            ctx (Any): 上下文
-            input (torch.Tensor): 输入脉冲序列
-            weight (torch.Tensor): 权重矩阵
-            input_trace (torch.Tensor): 输入的迹，累积的输入效应
-            output_trace (torch.Tensor): 输出的迹，累积的输出效应
-            soma (snn.Module): 胞体
-            a_pos (float): STDP参数A+
-            tau_pos (float): STDP参数tau+
-            a_neg (float): STDP参数A-
-            tau_neg (float): STDP参数tau-
-            training (bool): 是否正在训练
-        Returns:
-            output (torch.Tensor): 输出脉冲序列
-            input_trace (torch.Tensor): 输入的迹，累积的输入效应
-            output_trace (torch.Tensor): 输出的迹，累积的输出效应
-        """
-        T, B = input.shape[:2]
-        psp = _F.linear(input.flatten(0, 1), weight, bias = None)
-        psp = psp.unflatten(0, (T, B))
-        output: torch.Tensor = soma(psp)
-        input_spike_train = input.clone()
-        output_spike_train = output.clone()
-        delta_weight = torch.zeros_like(weight)
-        if training:
-            T, B, C = input_spike_train.shape
-            T, B, N = output_spike_train.shape
-            N, C = weight.shape
-            for t in range(T):
-                delta_weight, input_trace, output_trace = _stdp_online(
-                    delta_weight = delta_weight, # [O, I]
-                    input_trace = input_trace, # [B, O, I]
-                    output_trace = output_trace, # [B, O, I]
-                    input_spike_train = input_spike_train[t], # [B, I]
-                    output_spike_train = output_spike_train[t], # [B, O]
-                    a_pos = a_pos,
-                    tau_pos = tau_pos,
-                    a_neg = a_neg,
-                    tau_neg = tau_neg
-                )
-        ctx.save_for_backward(delta_weight, input)
-        return output, input_trace, output_trace
-
-
-    @staticmethod
-    def backward(ctx: _Any, grad_output: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None]:
-        """
-        利用STDP进行学习的全连接层的反向传播函数。
-        Args:
-            ctx (Any): 上下文
-            grad_output (torch.Tensor): 输出脉冲序列梯度
-            grad_input_trace (torch.Tensor): 输入的迹梯度
-            grad_output_trace (torch.Tensor): 输出的迹梯度
-        Returns:
-            grad_input (torch.Tensor): 输入脉冲序列梯度
-            grad_weight (torch.Tensor): 权重矩阵梯度
-            grad_input_trace (torch.Tensor): 输入的迹梯度
-            grad_output_trace (torch.Tensor): 输出的迹梯度
-            grad_soma (None): 胞体的梯度，为None
-            grad_a_pos (None): STDP参数A+的梯度，为None
-            grad_tau_pos (None): STDP参数tau+的梯度，为None
-            grad_a_neg (None): STDP参数A-的梯度，为None
-            grad_tau_neg (None): STDP参数tau-的梯度，为None
-            grad_training (None): 是否正在训练的梯度，为None
-        """
-        delta_weight, input = ctx.saved_tensors
-        delta_weight = -delta_weight
-        return torch.zeros_like(input), delta_weight, torch.zeros_like(grad_input_trace), torch.zeros_like(grad_output_trace), None, None, None, None, None, None
-
-
 class STDPLinear(STDPLayer):
     def __init__(self, soma: _Soma, in_features: int, out_features: int, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
@@ -200,118 +125,21 @@ class STDPLinear(STDPLayer):
         return ", ".join(["in_features=%d" % self.in_features, "out_features=%d" % self.out_features]) + (", " + super().extra_repr() if len(super().extra_repr()) else "")
 
 
-    def forward(self, x: torch.Tensor, traces: _Optional[_Tuple[torch.Tensor, torch.Tensor]] = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, h_traces: _Optional[_Tuple[torch.Tensor, torch.Tensor, torch.Tensor]] = None) -> torch.Tensor:
         """
         前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+            h_traces (Tuple[torch.Tensor, torch.Tensor, torch.Tensor] | None): 当前层最初历史电位$H_{i}^{l}(0)$，输入迹和输出迹
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+            h_traces (Tuple[torch.Tensor, torch.Tensor, torch.Tensor] | None): 当前层最终历史电位$H_{i}^{l}(T)$，输入迹和输出迹
         """
-        T, B, C = x.shape
-        N, C = self.weight.shape
-
-        if traces is None:
-            traces = (None, None)
-        input_trace, output_trace = traces
-        if input_trace is None:
-            input_trace = torch.zeros(B, N, C).to(x)
-        if output_trace is None:
-            output_trace = torch.zeros(B, N, C).to(x)
-        y, input_trace, output_trace = f_stdp_linear.apply(x, self.weight, input_trace, output_trace, lambda x: self.soma.forward(x)[0], self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training)
-        return y, (input_trace, output_trace)
-
-
-class f_stdp_conv2d(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx: _Any, input: torch.Tensor, weight: torch.Tensor, input_trace: torch.Tensor, output_trace: torch.Tensor, soma: _Callable, stride: _size_any_t, padding: _size_any_t, dilation: _size_any_t, a_pos: float = 0.015, tau_pos: float = 2.0, a_neg: float = 0.015, tau_neg: float = 2.0, training: bool = True) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """
-        利用STDP进行学习的2维卷积层的前向传播函数。
-        Args:
-            ctx (Any): 上下文
-            input (torch.Tensor): 输入脉冲序列
-            weight (torch.Tensor): 权重矩阵
-            input_trace (torch.Tensor): 输入的迹，累积的输入效应
-            output_trace (torch.Tensor): 输出的迹，累积的输出效应
-            soma (snn.Module): 胞体
-            stride (size_t): 卷积的输出步长，决定卷积输出的形状
-            padding (size_t): 在边缘填充的量（一般为卷积核大小的一半，向下取整）
-            dilation (size_t): 卷积的输入步长
-            a_pos (float): STDP参数A+
-            tau_pos (float): STDP参数tau+
-            a_neg (float): STDP参数A-
-            tau_neg (float): STDP参数tau-
-            training (bool): 是否正在训练
-        Returns:
-            output (torch.Tensor): 输出脉冲序列
-            input_trace (torch.Tensor): 输入的迹，累积的输入效应
-            output_trace (torch.Tensor): 输出的迹，累积的输出效应
-        """
-        T, B = input.shape[:2]
-        psp = _F.conv2d(input.flatten(0, 1), weight, bias = None, stride = tuple(stride), padding = tuple(padding), dilation = tuple(dilation))
-        psp = psp.unflatten(0, (T, B))
-        output = soma(psp)
-        input_spike_train = input.clone()
-        output_spike_train = output.clone()
-        delta_weight = torch.zeros_like(weight)
-        if training:
-            T, B, C, HI, WI = input_spike_train.shape
-            T, B, N, HO, WO = output_spike_train.shape
-            N, C, HK, WK = weight.shape
-            SH, SW = stride
-            PH, PW = padding
-            DH, DW = dilation
-            for y in range(HO):
-                for x in range(WO):
-                    for p in range(HK):
-                        for q in range(WK):
-                            u = y * SH + p * DH - PH
-                            v = x * SW + q * DW - PW
-                            if u < 0 or u >= HI or v < 0 or v >= WI:
-                                continue
-                            for t in range(T):
-                                delta_weight[:, :, p, q], input_trace[:, :, :, u, v], output_trace[:, :, :, y, x] = _stdp_online(
-                                    delta_weight = delta_weight[:, :, p, q], # [CO, CI]
-                                    input_trace = input_trace[:, :, :, u, v], # [B, CO, CI]
-                                    output_trace = output_trace[:, :, :, y, x], # [B, CO, CI]
-                                    input_spike_train = input_spike_train[t, :, :, u, v], # [B, CI]
-                                    output_spike_train = output_spike_train[t, :, :, y, x], # [B, CO]
-                                    a_pos = a_pos,
-                                    tau_pos = tau_pos,
-                                    a_neg = a_neg,
-                                    tau_neg = tau_neg
-                                )
-        ctx.save_for_backward(delta_weight, input)
-        return output, input_trace, output_trace
-
-
-    @staticmethod
-    def backward(ctx: _Any, grad_output: torch.Tensor, grad_input_trace: torch.Tensor, grad_output_trace: torch.Tensor) -> _Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, None, None, None, None, None, None, None, None, None]:
-        """
-        利用STDP进行学习的2维卷积层的反向传播函数。
-        Args:
-            ctx (Any): 上下文
-            grad_output (torch.Tensor): 输出脉冲序列梯度
-            grad_input_trace (torch.Tensor): 输入的迹梯度
-            grad_output_trace (torch.Tensor): 输出的迹梯度
-        Returns:
-            grad_input (torch.Tensor): 输入脉冲序列梯度
-            grad_weight (torch.Tensor): 权重矩阵梯度
-            grad_input_trace (torch.Tensor): 输入的迹梯度
-            grad_output_trace (torch.Tensor): 输出的迹梯度
-            grad_soma (None): 胞体的梯度，为None
-            grad_stride (size_t): 输出步长的梯度，为None
-            grad_padding (size_t): 边缘填充的量的梯度，为None
-            grad_dilation (size_t): 输入步长的梯度，为None
-            grad_a_pos (None): STDP参数A+的梯度，为None
-            grad_tau_pos (None): STDP参数tau+的梯度，为None
-            grad_a_neg (None): STDP参数A-的梯度，为None
-            grad_tau_neg (None): STDP参数tau-的梯度，为None
-            grad_training (None): 是否正在训练的梯度，为None
-        """
-        delta_weight, input = ctx.saved_tensors
-        delta_weight = -delta_weight
-        return torch.zeros_like(input), delta_weight, torch.zeros_like(grad_input_trace), torch.zeros_like(grad_output_trace), None, None, None, None, None, None, None, None, None
+        if h_traces is None:
+            h_traces = (None, None, None)
+        h, input_trace, output_trace = h_traces
+        y, h, input_trace, output_trace = _TF.stdp_linear(x, self.weight, self.soma.forward, h, input_trace, output_trace, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training)
+        return y, (h, input_trace, output_trace)
 
 
 class STDPConv2d(STDPLayer):
@@ -367,31 +195,21 @@ class STDPConv2d(STDPLayer):
         return ", ".join(["in_channels=%d" % self.in_channels, "out_channels=%d" % self.out_channels, "kernel_size=(%d, %d)" % tuple(self.kernel_size), "stride=(%d, %d)" % tuple(self.stride), "padding=(%d, %d)" % tuple(self.padding), "dilation=(%d, %d)" % tuple(self.dilation)]) + (", " + super().extra_repr() if len(super().extra_repr()) else "")
 
 
-    def forward(self, x: torch.Tensor, traces: _Optional[_Tuple[torch.Tensor, torch.Tensor]] = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, h_traces: _Optional[_Tuple[torch.Tensor, torch.Tensor, torch.Tensor]] = None) -> torch.Tensor:
         """
         前向传播函数。
         Args:
             x (torch.Tensor): 上一层脉冲$O_{j}^{l-1}(t)$
+            h_traces (Tuple[torch.Tensor, torch.Tensor, torch.Tensor] | None): 当前层最初历史电位$H_{i}^{l}(0)$，输入迹和输出迹
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
+            h_traces (Tuple[torch.Tensor, torch.Tensor, torch.Tensor] | None): 当前层最终历史电位$H_{i}^{l}(T)$，输入迹和输出迹
         """
-        T, B, C, HI, WI = x.shape
-        N, C, HK, WK = self.weight.shape
-        PH, PW = self.padding
-        SH, SW = self.stride
-        DH, DW = self.dilation
-        HO = (HI + 2 * PH - HK * DH) // SH + 1
-        WO = (WI + 2 * PW - WK * DW) // SW + 1
-
-        if traces is None:
-            traces = (None, None)
-        input_trace, output_trace = traces
-        if input_trace is None:
-            input_trace = torch.zeros(B, N, C, HI, WI).to(x)
-        if output_trace is None:
-            output_trace = torch.zeros(B, N, C, HO, WO).to(x)
-        y, input_trace, output_trace = f_stdp_conv2d.apply(x, self.weight, input_trace, output_trace, lambda x: self.soma.forward(x)[0], self.stride, self.padding, self.dilation, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training)
-        return y
+        if h_traces is None:
+            h_traces = (None, None, None)
+        h, input_trace, output_trace = h_traces
+        y, h, input_trace, output_trace = _TF.stdp_conv2d(x, self.weight, self.soma.forward, self.stride, self.padding, self.dilation, h, input_trace, output_trace, self.a_pos, self.tau_pos, self.a_neg, self.tau_neg, self.training)
+        return y, (h, input_trace, output_trace)
 
 
 class MaxPool1d(Layer, nn.MaxPool1d):

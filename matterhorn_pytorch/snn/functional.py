@@ -657,20 +657,22 @@ def reset_soft(u: torch.Tensor, o: torch.Tensor, u_threshold: torch.Tensor, u_re
 
 
 def _firing(u: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, firing: str = "heaviside") -> torch.Tensor:
+    u_threshold = u_threshold.to(u)
+    u_rest = u_rest.to(u)
     if firing == "floor":
-        return floor(u / (u_threshold - u_rest).to(u))
+        return floor((u - u_rest) / (u_threshold - u_rest))
     elif firing == "ceil":
-        return ceil(u / (u_threshold - u_rest).to(u))
+        return ceil((u - u_rest) / (u_threshold - u_rest))
     elif firing == "round":
-        return round(u / (u_threshold - u_rest).to(u))
+        return round((u - u_rest) / (u_threshold - u_rest))
     elif firing == "rectangular":
-        return heaviside_rectangular(u / (u_threshold - u_rest).to(u))
+        return heaviside_rectangular(u - u_threshold)
     elif firing == "polynomial":
-        return heaviside_polynomial(u / (u_threshold - u_rest).to(u))
+        return heaviside_polynomial(u - u_threshold)
     elif firing == "sigmoid":
-        return heaviside_sigmoid(u / (u_threshold - u_rest).to(u))
+        return heaviside_sigmoid(u - u_threshold)
     else:
-        return heaviside_gaussian(u - u_threshold.to(u))
+        return heaviside_gaussian(u - u_threshold)
 
 
 @torch.jit.script
