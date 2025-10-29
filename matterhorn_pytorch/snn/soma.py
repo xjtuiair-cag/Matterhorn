@@ -304,7 +304,6 @@ class Izhikevich(Soma):
             device = device,
             dtype = dtype
         )
-        self.register_buffer("w", None)
         self.a = nn.Parameter(torch.tensor(a, device = device, dtype = dtype), requires_grad = False)
         self.b = nn.Parameter(torch.tensor(b, device = device, dtype = dtype), requires_grad = False)
     

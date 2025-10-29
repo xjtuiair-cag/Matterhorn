@@ -18,6 +18,9 @@ from torch.types import _size
 
 
 class Layer(_Module):
+    _required_ndims = None
+
+
     def __init__(self, batch_first: bool = False) -> None:
         """
         层的骨架，定义层最基本的函数。
@@ -28,35 +31,16 @@ class Layer(_Module):
         self.batch_first = batch_first
 
 
-    def _merge(self, x: torch.Tensor, ndim: int) -> _Tuple[torch.Tensor, _Iterable[int]]:
-        """
-        将前几个维度合并，以适应nn.Module中的预定义模块。
-        Args:
-            x (torch.Tensor): 未合并前的张量
-            ndim (int): 目标维度
-        Returns:
-            y (torch.Tensor): 合并后的张量
-            shape (Tuple): 原张量形状
-        """
-        flatten_dims = x.ndim - ndim
-        shape = []
-        if flatten_dims > 0:
-            shape = list(x.shape[:flatten_dims + 1])
-            x = x.flatten(0, flatten_dims)
-        return x, shape
+    def _check_ndim(self, x: torch.Tensor) -> None:
+        if (self._required_ndims is not None) and (x.ndim not in self._required_ndims):
+            raise AssertionError("Dimension of input tensor is required to be in %s, got %d." % (self._required_ndims, x.ndim))
 
 
-    def _split(self, x: torch.Tensor, shape: _Iterable[int]) -> torch.Tensor:
-        """
-        前向传播函数。
-        Args:
-            *args (*torch.Tensor): 输入
-            **kwargs (str: Any): 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        if len(shape):
-            x = x.unflatten(0, shape)
+    def _swap_batched_temporal(self, x: torch.Tensor, batched_ndim: int) -> torch.Tensor:
+        if x.ndim < batched_ndim:
+            return x
+        if self.batch_first:
+            x = x.swapaxes(0, 1) # [B, T] -> [T, B]
         return x
 
 
@@ -213,6 +197,9 @@ class STDPConv2d(STDPLayer):
 
 
 class MaxPool1d(Layer, nn.MaxPool1d):
+    _required_ndims = (3, 4) # [T, C, L] / [B, T, C, L]
+
+
     def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, batch_first: bool = False) -> None:
         """
         一维最大池化。
@@ -257,17 +244,17 @@ class MaxPool1d(Layer, nn.MaxPool1d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 3)
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x, 3)
         y = nn.MaxPool1d.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
 class MaxPool2d(Layer, nn.MaxPool2d):
+    _required_ndims = (4, 5) # [T, C, H, W] / [B, T, C, H, W]
+
+
     def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, batch_first: bool = False) -> None:
         """
         二维最大池化。
@@ -313,17 +300,17 @@ class MaxPool2d(Layer, nn.MaxPool2d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 4)
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x, 4)
         y = nn.MaxPool2d.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
 class MaxPool3d(Layer, nn.MaxPool3d):
+    _required_ndims = (5, 6) # [T, C, L, H, W] / [B, T, C, L, H, W]
+
+
     def __init__(self, kernel_size: _size_any_t, stride: _Optional[_size_any_t] = None, padding: _size_any_t = 0, dilation: _size_any_t = 1, return_indices: bool = False, ceil_mode: bool = False, batch_first: bool = False) -> None:
         """
         三维最大池化。
@@ -369,17 +356,17 @@ class MaxPool3d(Layer, nn.MaxPool3d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 5)
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x, 5)
         y = nn.MaxPool3d.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
 class AvgPool1d(Layer, nn.AvgPool1d):
+    _required_ndims = (3, 4) # [T, C, L] / [B, T, C, L]
+
+
     def __init__(self, kernel_size: _size_1_t, stride: _Optional[_size_1_t] = None, padding: _size_1_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, batch_first: bool = False) -> None:
         """
         一维平均池化。
@@ -423,17 +410,17 @@ class AvgPool1d(Layer, nn.AvgPool1d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 3)
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x, 3)
         y = nn.AvgPool1d.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
 class AvgPool2d(Layer, nn.AvgPool2d):
+    _required_ndims = (4, 5) # [T, C, H, W] / [B, T, C, H, W]
+
+
     def __init__(self, kernel_size: _size_2_t, stride: _Optional[_size_2_t] = None, padding: _size_2_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, batch_first: bool = False) -> None:
         """
         二维平均池化。
@@ -479,17 +466,17 @@ class AvgPool2d(Layer, nn.AvgPool2d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 4)
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x, 4)
         y = nn.AvgPool2d.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
 class AvgPool3d(Layer, nn.AvgPool3d):
+    _required_ndims = (5, 6) # [T, C, L, H, W] / [B, T, C, L, H, W]
+
+
     def __init__(self, kernel_size: _size_3_t, stride: _Optional[_size_3_t] = None, padding: _size_3_t = 0, ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: _Optional[int] = None, batch_first: bool = False) -> None:
         """
         三维平均池化。
@@ -535,17 +522,17 @@ class AvgPool3d(Layer, nn.AvgPool3d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 5)
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x, 5)
         y = nn.AvgPool3d.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
 class MaxUnpool1d(Layer, nn.MaxUnpool1d):
+    _required_ndims = (3, 4) # [T, C, L] / [B, T, C, L]
+
+
     def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, batch_first: bool = False) -> None:
         """
         一维最大反池化。
@@ -587,17 +574,17 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 3)
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x, 3)
         y = nn.MaxUnpool1d.forward(self, x, indices, output_size)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
 class MaxUnpool2d(Layer, nn.MaxUnpool2d):
+    _required_ndims = (4, 5) # [T, C, H, W] / [B, T, C, H, W]
+
+
     def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, batch_first: bool = False) -> None:
         """
         二维最大反池化。
@@ -639,17 +626,17 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 4)
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x, 4)
         y = nn.MaxUnpool2d.forward(self, x, indices, output_size)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
 class MaxUnpool3d(Layer, nn.MaxUnpool3d):
+    _required_ndims = (5, 6) # [T, C, L, H, W] / [B, T, C, L, H, W]
+
+
     def __init__(self, kernel_size: _Union[int, _Tuple[int]], stride: _Optional[_Union[int, _Tuple[int]]] = None, padding: _Union[int, _Tuple[int]] = 0, batch_first: bool = False) -> None:
         """
         一维最大反池化。
@@ -691,13 +678,10 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 5)
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x, 5)
         y = nn.MaxUnpool3d.forward(self, x, indices, output_size)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
@@ -745,13 +729,9 @@ class Upsample(Layer, nn.Upsample):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, x.ndim - 1)
+        x, shape = self._fold_for_parallel(x)
         y = nn.Upsample.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
@@ -793,13 +773,9 @@ class Flatten(Layer, nn.Flatten):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, x.ndim - 1)
+        x, shape = self._fold_for_parallel(x)
         y = nn.Flatten.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
@@ -841,13 +817,9 @@ class Unflatten(Layer, nn.Unflatten):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 3)
+        x, shape = self._fold_for_parallel(x)
         y = nn.Unflatten.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
@@ -889,17 +861,16 @@ class Dropout(Layer, nn.Dropout):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, x.ndim - 1)
+        x, shape = self._fold_for_parallel(x)
         y = nn.Dropout.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
 class Dropout1d(Layer, nn.Dropout1d):
+    _required_ndims = (3, 4) # [T, C, L] / [B, T, C, L]
+
+
     def __init__(self, p: float = 0.5, inplace: bool = False, batch_first: bool = False) -> None:
         """
         一维遗忘层。
@@ -937,17 +908,17 @@ class Dropout1d(Layer, nn.Dropout1d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 3)
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x, 3)
         y = nn.Dropout1d.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
 class Dropout2d(Layer, nn.Dropout2d):
+    _required_ndims = (4, 5) # [T, C, H, W] / [B, T, C, H, W]
+
+
     def __init__(self, p: float = 0.5, inplace: bool = False, batch_first: bool = False) -> None:
         """
         二维遗忘层。
@@ -985,17 +956,17 @@ class Dropout2d(Layer, nn.Dropout2d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 4)
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x, 4)
         y = nn.Dropout2d.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
 
 
 class Dropout3d(Layer, nn.Dropout3d):
+    _required_ndims = (5, 6) # [T, C, L, H, W] / [B, T, C, L, H, W]
+
+
     def __init__(self, p: float = 0.5, inplace: bool = False, batch_first: bool = False) -> None:
         """
         三维遗忘层。
@@ -1033,11 +1004,71 @@ class Dropout3d(Layer, nn.Dropout3d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, 5)
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x, 5)
         y = nn.Dropout3d.forward(self, x)
-        y = self._split(y, shape)
-        if self.batch_first:
-            y = y.swapaxes(0, 1)
+        y = self._unfold_from_parallel(y, shape)
         return y
+
+
+class TemporalWiseAttention(Layer):
+    def __init__(self, time_steps: int, d_threshold: float, expand: float = 1.0, batch_first: bool = False) -> None:
+        """
+        Tempora-wise Attention连接层：[Yao M, Gao H, Zhao G, et al. Temporal-wise attention spiking neural networks for event streams classification\[C\]//Proceedings of the IEEE/CVF International Conference on Computer Vision. 2021: 10221-10230.](https://openaccess.thecvf.com/content/ICCV2021/html/Yao_Temporal-Wise_Attention_Spiking_Neural_Networks_for_Event_Streams_Classification_ICCV_2021_paper.html)
+        Args:
+            time_steps (int): 时间步长
+            d_threshold (float): 注意阈值，用于阶跃函数
+            expand (float): 权重矩阵的放缩率
+            batch_first (bool): 第一维为批(True)还是时间(False)
+        """
+        super().__init__(
+            batch_first = batch_first
+        )
+        mid_steps = int(time_steps * expand)
+        self.attn = nn.Sequential(
+            nn.Linear(time_steps, mid_steps, bias = False),
+            nn.ReLU(),
+            nn.Linear(mid_steps, time_steps, bias = False),
+            nn.Sigmoid()
+        )
+        self.d_threshold = nn.Parameter(torch.tensor(d_threshold), requires_grad = False)
+
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        前向传播函数
+        Args:
+            x (torch.Tensor): 原始脉冲张量
+        Returns:
+            x (torch.Tensor): 过滤后的脉冲张量
+        """
+        dim = x.ndim
+        s = x.clone().detach()
+        pre_permute = []
+        post_permute = []
+        # 获取统计向量$s^{n-1}$
+        if x.ndim >= 3:
+            if self.batch_first:
+                x = x.swapaxes(0, 1) # [T, B, ...]
+            s = x.mean(dim = list(range(2, x.ndim))) # [T, B]
+            print(s.shape)
+        else:
+            s = x
+        # 获取分数向量$d^{n-1}$：$d^{n-1}=TA(s^{n-1})$
+        if s.ndim > 1:
+            s = s.swapaxes(0, 1) # [B, T]
+        d = self.attn(s) # [B, T]
+        if not self.training:
+            d = _SF.ge(d, self.d_threshold) # [B, T]
+        if d.ndim > 1:
+            d = d.swapaxes(0, 1) # [T, B]
+        # 过滤：$X^{t,n-1}=d_{t}^{n-1}X^{t,n-1}$
+        if x.ndim >= 3:
+            x = x.swapaxes(1, -1).swapaxes(0, -2) # [..., T, B]
+            x = d * x # [..., T, B]
+            x = x.swapaxes(0, -2).swapaxes(1, -1) # [T, B, ...]
+            if self.batch_first:
+                x = x.swapaxes(0, 1) # [B, T, ...]
+        else:
+            x = d * x
+        return x

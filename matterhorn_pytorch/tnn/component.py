@@ -111,22 +111,3 @@ class Firing(_Module):
         for i in range(1, res.shape[-1]):
             out = _TF.s_min(out, res[..., i:i + 1])
         return out
-
-
-if __name__ == "__main__":
-    up_times = Bitonic(4)
-    down_times = Bitonic(4)
-    firing = Firing(6)
-    x = _TF.t_to_s(torch.cat([torch.randint(1, 10, (1, 16)).float()], dim = 1), 16)
-    y = _TF.t_to_s(torch.cat([torch.randint(3, 12, (1, 16)).float()], dim = 1), 16)
-    print(_TF.s_to_t(x))
-    print(_TF.s_to_t(y))
-    x = up_times(x)
-    y = down_times(y)
-    z = firing(x, y)
-    print(_TF.s_to_t(z))
-    
-
-
-    
-

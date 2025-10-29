@@ -183,14 +183,14 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             modules = []
             for module in ann_module:
                 modules.append(_replace(module))
-            snn_module = snn.Spatial(*modules)
+            snn_module = snn.Sequential(*modules)
         # 模块集合
         elif isinstance(ann_module, (nn.ModuleList, nn.ModuleDict)):
             if isinstance(ann_module, nn.ModuleList):
                 modules = list()
                 for module in ann_module:
                     modules.append(_replace(module))
-                snn_module = snn.ModuleList(
+                snn_module = nn.ModuleList(
                     modules = modules
                 )
             elif isinstance(ann_module, nn.ModuleDict):
@@ -198,18 +198,19 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 for name in ann_module:
                     module = ann_module[name]
                     modules[name] = _replace(module)
-                snn_module = snn.ModuleDict(
+                snn_module = nn.ModuleDict(
                     modules = modules
                 )
         # 其它自定义ANN模块
         else:
-            hybrid_module = deepcopy(ann_module)
-            snn_module = hybrid_module
+            snn_module = deepcopy(ann_module)
+            for name, module in snn_module.named_children():
+                sub_module = _replace(module)
+                setattr(snn_module, name, sub_module)
+            snn_module = _clone_params(ann_module, snn_module)
         return snn_module
     
-    res = snn.Temporal(
-        module = _replace(model)
-    )
+    res = _replace(model)
 
     if mode is not None:
         global graph_cache

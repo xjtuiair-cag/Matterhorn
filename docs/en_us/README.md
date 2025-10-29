@@ -12,18 +12,6 @@ This module stores common methods for handling neural morphology datasets, which
 
 You can read [the documentation](./data/README.md) to learn more about the usage of classes and variables.
 
-## `matterhorn_pytorch.lsm`: Liquid State Machines
-
-This module implements the Liquid State Machines (LSMs). The structure and functionality of the Liquid State Machines can be referred to in reference [1].
-
-You can read [the documentation](./lsm/README.md) to learn more about the usage of classes and variables.
-
-## `matterhorn_pytorch.model`: Predefined Models
-
-This module defines some well-known SNN models.
-
-You can read [the documentation](./model/README.md) to learn more about the usage of classes and variables.
-
 ## `matterhorn_pytorch.snn`: Spiking Neural Networks
 
 This module is the main part of Matterhorn. It stores commonly used components of Spiking Neural Networks (SNNs), such as spiking neurons, synapses, containers, encoding mechanisms, etc., to implement the deployment of SNNs.

@@ -4,8 +4,6 @@
 """
 
 from .__info__ import __version__
-from . import lsm
 from . import snn
 from . import tnn
 from . import training
-from . import util

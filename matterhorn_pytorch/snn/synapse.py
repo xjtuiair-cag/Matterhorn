@@ -16,6 +16,9 @@ from typing import Any as _Any, Tuple as _Tuple, Iterable as _Iterable, Mapping 
 
 
 class Synapse(_Module):
+    _required_ndims = None
+
+
     def __init__(self, batch_first: bool = False) -> None:
         """
         突触函数的骨架，定义突触最基本的函数。
@@ -26,35 +29,16 @@ class Synapse(_Module):
         self.batch_first = batch_first
 
 
-    def _merge(self, x: torch.Tensor, ndim: int) -> _Tuple[torch.Tensor, _Iterable[int]]:
-        """
-        将前几个维度合并，以适应nn.Module中的预定义模块。
-        Args:
-            x (torch.Tensor): 未合并前的张量
-            ndim (int): 目标维度
-        Returns:
-            y (torch.Tensor): 合并后的张量
-            shape (Tuple): 原张量形状
-        """
-        flatten_dims = x.ndim - ndim
-        shape = []
-        if flatten_dims > 0:
-            shape = list(x.shape[:flatten_dims + 1])
-            x = x.flatten(0, flatten_dims)
-        return x, shape
+    def _check_ndim(self, x: torch.Tensor) -> None:
+        if (self._required_ndims is not None) and (x.ndim not in self._required_ndims):
+            raise AssertionError("Dimension of input tensor is required to be in %s, got %d." % (self._required_ndims, x.ndim))
 
 
-    def _split(self, x: torch.Tensor, shape: _Iterable[int]) -> torch.Tensor:
-        """
-        前向传播函数。
-        Args:
-            *args (*torch.Tensor): 输入
-            **kwargs (str: Any): 输入
-        Returns:
-            res (torch.Tensor): 输出
-        """
-        if len(shape):
-            x = x.unflatten(0, shape)
+    def _swap_batched_temporal(self, x: torch.Tensor, batched_ndim: int) -> torch.Tensor:
+        if x.ndim < batched_ndim:
+            return x
+        if self.batch_first:
+            x = x.swapaxes(0, 1) # [B, T] -> [T, B]
         return x
 
 
@@ -134,13 +118,9 @@ class Linear(Synapse, nn.Linear):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        if self.batch_first:
-            o = o.swapaxes(0, 1)
-        o, shape = self._merge(o, o.ndim - 1)
+        o, shape = self._fold_for_parallel(o, max(2, o.ndim - 1))
         x = nn.Linear.forward(self, o)
-        x = self._split(x, shape)
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
@@ -184,17 +164,16 @@ class WSLinear(_WeightStd, Linear):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        if self.batch_first:
-            o = o.swapaxes(0, 1)
-        o, shape = self._merge(o, o.ndim - 1)
+        o, shape = self._fold_for_parallel(o, max(2, o.ndim - 1))
         x = _F.linear(o, self.weight_std, self.bias)
-        x = self._split(x, shape)
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
 class Conv1d(Synapse, nn.Conv1d):
+    _required_ndims = (3, 4) # [T, C, L] / [B, T, C, L]
+
+
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: _Union[_size_1_t, str] = 0, dilation: _size_1_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         一维卷积操作，输入一个大小为[B, $C_{in}$, $L_{in}$]的张量，输出一个大小为[B, $C_{out}$, $L_{out}$]的张量。
@@ -249,17 +228,17 @@ class Conv1d(Synapse, nn.Conv1d):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        if self.batch_first:
-            o = o.swapaxes(0, 1)
-        o, shape = self._merge(o, 3)
+        self._check_ndim(o)
+        o, shape = self._fold_for_parallel(o, 3)
         x = nn.Conv1d.forward(self, o)
-        x = self._split(x, shape)
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
 class WSConv1d(_WeightStd, Conv1d):
+    _required_ndims = (3, 4) # [T, C, L] / [B, T, C, L]
+
+
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: _Union[_size_1_t, str] = 0, dilation: _size_1_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", affine: bool = True, eps: float = 1e-6, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         权重标准化的一维卷积操作。
@@ -311,17 +290,17 @@ class WSConv1d(_WeightStd, Conv1d):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        if self.batch_first:
-            o = o.swapaxes(0, 1)
-        o, shape = self._merge(o, 3)
+        self._check_ndim(o)
+        o, shape = self._fold_for_parallel(o, 3)
         x = _F.conv1d(o, self.weight_std, self.bias, self.stride, self.padding, self.dilation, self.groups)
-        x = self._split(x, shape)
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
 class Conv2d(Synapse, nn.Conv2d):
+    _required_ndims = (4, 5) # [T, C, H, W] / [B, T, C, H, W]
+
+
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _Union[_size_2_t, str] = 0, dilation: _size_2_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         二维卷积操作，输入一个大小为[B, $C_{in}$, $H_{in}$, $W_{in}$]的张量，输出一个大小为[B, $C_{out}$, $H_{out}$, $W_{out}$]的张量。
@@ -376,17 +355,17 @@ class Conv2d(Synapse, nn.Conv2d):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        if self.batch_first:
-            o = o.swapaxes(0, 1)
-        o, shape = self._merge(o, 4)
+        self._check_ndim(o)
+        o, shape = self._fold_for_parallel(o, 4)
         x = nn.Conv2d.forward(self, o)
-        x = self._split(x, shape)
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
 class WSConv2d(_WeightStd, Conv2d):
+    _required_ndims = (4, 5) # [T, C, H, W] / [B, T, C, H, W]
+
+
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _Union[_size_2_t, str] = 0, dilation: _size_2_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", affine: bool = True, eps: float = 1e-6, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         权重标准化的二维卷积操作。
@@ -438,17 +417,17 @@ class WSConv2d(_WeightStd, Conv2d):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        if self.batch_first:
-            o = o.swapaxes(0, 1)
-        o, shape = self._merge(o, 4)
+        self._check_ndim(o)
+        o, shape = self._fold_for_parallel(o, 4)
         x = _F.conv2d(o, self.weight_std, self.bias, self.stride, self.padding, self.dilation, self.groups)
-        x = self._split(x, shape)
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
 class Conv3d(Synapse, nn.Conv3d):
+    _required_ndims = (5, 6) # [T, C, L, H, W] / [B, T, C, L, H, W]
+
+
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _Union[_size_3_t, str] = 0, dilation: _size_3_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         三维卷积操作，输入一个大小为[B, $C_{in}$, $H_{in}$, $W_{in}$, $L_{in}$]的张量，输出一个大小为[B, $C_{out}$, $H_{out}$, $W_{out}$, $L_{out}$]的张量。
@@ -503,17 +482,17 @@ class Conv3d(Synapse, nn.Conv3d):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        if self.batch_first:
-            o = o.swapaxes(0, 1)
-        o, shape = self._merge(o, 5)
+        self._check_ndim(o)
+        o, shape = self._fold_for_parallel(o, 5)
         x = nn.Conv3d.forward(self, o)
-        x = self._split(x, shape)
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
 class WSConv3d(_WeightStd, Conv3d):
+    _required_ndims = (5, 6) # [T, C, L, H, W] / [B, T, C, L, H, W]
+
+
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _Union[_size_3_t, str] = 0, dilation: _size_3_t = 1, groups: int = 1, bias: bool = True, padding_mode: str = "zeros", affine: bool = True, eps: float = 1e-6, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         权重标准化的三维卷积操作。
@@ -565,17 +544,17 @@ class WSConv3d(_WeightStd, Conv3d):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        if self.batch_first:
-            o = o.swapaxes(0, 1)
-        o, shape = self._merge(o, 5)
+        self._check_ndim(o)
+        o, shape = self._fold_for_parallel(o, 5)
         x = _F.conv3d(o, self.weight_std, self.bias, self.stride, self.padding, self.dilation, self.groups)
-        x = self._split(x, shape)
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
 class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
+    _required_ndims = (3, 4) # [T, C, L] / [B, T, C, L]
+
+
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_1_t, stride: _size_1_t = 1, padding: _size_1_t = 0, output_padding: _size_1_t = 0, groups: int = 1, bias: bool = True, dilation: _size_1_t = 1, padding_mode: str = "zeros", batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         一维逆卷积操作，输入一个大小为[B, $C_{in}$, $L_{in}$]的张量，输出一个大小为[B, $C_{out}$, $L_{out}$]的张量。
@@ -632,17 +611,17 @@ class ConvTranspose1d(Synapse, nn.ConvTranspose1d):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        if self.batch_first:
-            o = o.swapaxes(0, 1)
-        o, shape = self._merge(o, 3)
+        self._check_ndim(o)
+        o, shape = self._fold_for_parallel(o, 3)
         x = nn.ConvTranspose1d.forward(self, o)
-        x = self._split(x, shape)
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
 class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
+    _required_ndims = (4, 5) # [T, C, H, W] / [B, T, C, H, W]
+
+
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_2_t, stride: _size_2_t = 1, padding: _size_2_t = 0, output_padding: _size_2_t = 0, groups: int = 1, bias: bool = True, dilation: _size_2_t = 1, padding_mode: str = "zeros", batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         二维逆卷积操作，输入一个大小为[B, $C_{in}$, $H_{in}$, $W_{in}$]的张量，输出一个大小为[B, $C_{out}$, $H_{out}$, $W_{out}$]的张量。
@@ -699,17 +678,17 @@ class ConvTranspose2d(Synapse, nn.ConvTranspose2d):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        if self.batch_first:
-            o = o.swapaxes(0, 1)
-        o, shape = self._merge(o, 4)
+        self._check_ndim(o)
+        o, shape = self._fold_for_parallel(o, 4)
         x = nn.ConvTranspose2d.forward(self, o)
-        x = self._split(x, shape)
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
 class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
+    _required_ndims = (5, 6) # [T, C, L, H, W] / [B, T, C, L, H, W]
+
+
     def __init__(self, in_channels: int, out_channels: int, kernel_size: _size_3_t, stride: _size_3_t = 1, padding: _size_3_t = 0, output_padding: _size_3_t = 0, groups: int = 1, bias: bool = True, dilation: _size_3_t = 1, padding_mode: str = "zeros", batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         三维逆卷积操作，输入一个大小为[B, $C_{in}$, $H_{in}$, $W_{in}$, $L_{in}$]的张量，输出一个大小为[B, $C_{out}$, $H_{out}$, $W_{out}$, $L_{out}$]的张量。
@@ -766,17 +745,58 @@ class ConvTranspose3d(Synapse, nn.ConvTranspose3d):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        if self.batch_first:
-            o = o.swapaxes(0, 1)
-        o, shape = self._merge(o, 5)
+        self._check_ndim(o)
+        o, shape = self._fold_for_parallel(o, 5)
         x = nn.ConvTranspose3d.forward(self, o)
-        x = self._split(x, shape)
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
-class BatchNorm1d(Synapse, nn.BatchNorm1d):
+class _BatchNorm(Synapse):
+    def __init__(self, batch_first: bool = False) -> None:
+        super().__init__(
+            batch_first = batch_first
+        )
+    
+
+    def _fold_for_parallel(self, x: torch.Tensor, target_dim: _Optional[int] = None) -> _Tuple[torch.Tensor, _Iterable[int]]:
+        """
+        将时间维度与特征维度后的那个维度合并，从而并行处理批归一化。
+        Args:
+            x (torch.Tensor): 未压缩前的张量
+            target_dim (int): 目标维度
+        Returns:
+            x (torch.Tensor): 压缩后的张量
+            shape (Tuple): 被压缩的形状信息
+        """
+        if not self.batch_first:
+            x = x.swapaxes(0, 1) # [B, T, C, ...]
+        x = x.swapaxes(1, 2) # [B, C, T, ...]
+        shape = list(x.shape[2:4])
+        x = x.flatten(2, 3) if x.ndim > 3 else x # [B, C, T * L]
+        return x, shape
+    
+
+    def _unfold_from_parallel(self, x: torch.Tensor, shape: _Iterable[int]) -> torch.Tensor:
+        """
+        解压因并行而压缩的维度。
+        Args:
+            x (torch.Tensor): 压缩后的张量
+            shape (Tuple): 被压缩的形状信息
+        Returns:
+            x (torch.Tensor): 未压缩前的张量
+        """
+        x = x.unflatten(2, shape) # [B, C, T] / [B, C, T, L]
+        x = x.swapaxes(2, 1) # [B, T, C] / [B, T, C, L]
+        if not self.batch_first:
+            x = x.swapaxes(1, 0) # [T, B, C] / [T, B, C, L]
+        return x
+
+
+class BatchNorm1d(_BatchNorm, nn.BatchNorm1d):
+    _required_ndims = (3, 4) # [B, T, C] / [B, T, C, L]
+
+
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         一维批归一化。
@@ -790,7 +810,7 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
+        _BatchNorm.__init__(
             self,
             batch_first = batch_first
         )
@@ -815,16 +835,6 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
         return nn.BatchNorm1d.extra_repr(self) + ((", " + Synapse.extra_repr(self)) if len(Synapse.extra_repr(self)) else "")
 
 
-    def _check_input_dim(self, x: torch.Tensor) -> None:
-        """
-        Batchnorm中重要的部分，检查输入维度。
-        Args:
-            input (torch.Tensor): 输入张量
-        """
-        supported_ndims = (3, 4)
-        assert x.ndim in supported_ndims, "Expected dims %s for normalization, got %d." % (supported_ndims, x.ndim)
-
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
@@ -833,21 +843,17 @@ class BatchNorm1d(Synapse, nn.BatchNorm1d):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        self._check_input_dim(x)
-        if not self.batch_first:
-            x = x.swapaxes(0, 1) # [B, T, C] / [B, T, C, L]
-        x = x.swapaxes(1, 2) # [B, C, T] / [B, C, T, L]
-        shape = list(x.shape[2:4])
-        x = x.flatten(2, 3) if x.ndim > 3 else x # [B, C, T * L]
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x)
         x = nn.BatchNorm1d.forward(self, x)
-        x = x.unflatten(2, shape) # [B, C, T] / [B, C, T, L]
-        x = x.swapaxes(2, 1) # [B, T, C] / [B, T, C, L]
-        if not self.batch_first:
-            x = x.swapaxes(1, 0) # [T, B, C] / [T, B, C, L]
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
-class BatchNorm2d(Synapse, nn.BatchNorm2d):
+class BatchNorm2d(_BatchNorm, nn.BatchNorm2d):
+    _required_ndims = (5,) # [B, T, C, H, W]
+
+    
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         二维批归一化。
@@ -861,7 +867,7 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
+        _BatchNorm.__init__(
             self,
             batch_first = batch_first
         )
@@ -886,16 +892,6 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
         return ", ".join([nn.BatchNorm2d.extra_repr(self), Synapse.extra_repr(self)])
 
 
-    def _check_input_dim(self, x: torch.Tensor) -> None:
-        """
-        Batchnorm中重要的部分，检查输入维度。
-        Args:
-            input (torch.Tensor): 输入张量
-        """
-        supported_ndims = (5,)
-        assert x.ndim in supported_ndims, "Expected dims %s for normalization, got %d." % (supported_ndims, x.ndim)
-
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
@@ -904,21 +900,17 @@ class BatchNorm2d(Synapse, nn.BatchNorm2d):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        self._check_input_dim(x)
-        if not self.batch_first:
-            x = x.swapaxes(0, 1) # [B, T, C, H, W]
-        x = x.swapaxes(1, 2) # [B, C, T, H, W]
-        shape = list(x.shape[2:4])
-        x = x.flatten(2, 3) # [B, C, T * H, W]
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x)
         x = nn.BatchNorm2d.forward(self, x)
-        x = x.unflatten(2, shape) # [B, C, T, H, W]
-        x = x.swapaxes(2, 1) # [B, T, C, H, W]
-        if not self.batch_first:
-            x = x.swapaxes(1, 0) # [T, B, C, H, W]
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
-class BatchNorm3d(Synapse, nn.BatchNorm3d):
+class BatchNorm3d(_BatchNorm, nn.BatchNorm3d):
+    _required_ndims = (6,) # [B, T, C, L, H, W]
+
+
     def __init__(self, num_features: int, eps: float = 0.00001, momentum: float = 0.1, affine: bool = True, track_running_stats: bool = True, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         三维批归一化。
@@ -932,7 +924,7 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
-        Synapse.__init__(
+        _BatchNorm.__init__(
             self,
             batch_first = batch_first
         )
@@ -957,16 +949,6 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
         return ", ".join([nn.BatchNorm3d.extra_repr(self), Synapse.extra_repr(self)])
 
 
-    def _check_input_dim(self, x: torch.Tensor) -> None:
-        """
-        Batchnorm中重要的部分，检查输入维度。
-        Args:
-            input (torch.Tensor): 输入张量
-        """
-        supported_ndims = (6,)
-        assert x.ndim in supported_ndims, "Expected dims %s for normalization, got %d." % (supported_ndims, x.ndim)
-
-
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         前向传播函数。
@@ -975,17 +957,10 @@ class BatchNorm3d(Synapse, nn.BatchNorm3d):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        self._check_input_dim(x)
-        if not self.batch_first:
-            x = x.swapaxes(0, 1) # [B, T, C, L, H, W]
-        x = x.swapaxes(1, 2) # [B, C, T, L, H, W]
-        shape = list(x.shape[2:4])
-        x = x.flatten(2, 3) # [B, C, T * L, H, W]
+        self._check_ndim(x)
+        x, shape = self._fold_for_parallel(x)
         x = nn.BatchNorm3d.forward(self, x)
-        x = x.unflatten(2, shape) # [B, C, T, L, H, W]
-        x = x.swapaxes(2, 1) # [B, T, C, L, H, W]
-        if not self.batch_first:
-            x = x.swapaxes(1, 0) # [T, B, C, L, H, W]
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
@@ -1032,13 +1007,9 @@ class LayerNorm(Synapse, nn.LayerNorm):
         Returns:
             x (torch.Tensor): 突触的突触后电位$X_{i}^{l}(t)$
         """
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
-        x, shape = self._merge(x, x.ndim - 1)
+        x, shape = self._fold_for_parallel(x)
         x = nn.LayerNorm.forward(self, x)
-        x = self._split(x, shape)
-        if self.batch_first:
-            x = x.swapaxes(0, 1)
+        x = self._unfold_from_parallel(x, shape)
         return x
 
 
@@ -1079,28 +1050,45 @@ class MultiheadAttention(Synapse, nn.MultiheadAttention):
         )
     
 
-    def _merge(self, x: torch.Tensor, ndim: int = 3) -> _Tuple[torch.Tensor, _Iterable[int]]:
+    def _fold_for_parallel(self, x: torch.Tensor, target_dim: int = 3) -> _Tuple[torch.Tensor, _Iterable[int]]:
+        """
+        将前几个维度压缩，以适应nn.Module中的预定义模块。
+        Args:
+            x (torch.Tensor): 未压缩前的张量
+            target_dim (int): 目标维度
+        Returns:
+            x (torch.Tensor): 压缩后的张量
+            shape (Tuple): 被压缩的形状信息
+        """
         shape = []
-        if x.ndim < 3:
+        if x.ndim < target_dim:
             return x, shape
         if self.batch_first:
             x = x.swapaxes(0, 1) # [T, B, C, ...]
         x = x.swapaxes(1, 2) # [T, C, B, ...]
-        if x.ndim > ndim:
-            shape = x.shape[ndim - 1:]
-            x = x.flatten(ndim - 1) # [T, C, B]
-        x = x.swapaxes(2, 1) # [T, B, C]
+        if x.ndim > target_dim:
+            shape = list(x.shape[target_dim - 1:])
+            x = x.flatten(target_dim - 1) # [T, C, B']
+        x = x.swapaxes(2, 1) # [T, B', C]
         if self.batch_first:
-            x = x.swapaxes(1, 0) # [B, T, C]
+            x = x.swapaxes(1, 0) # [B', T, C]
         return x, shape
 
 
-    def _split(self, x: torch.Tensor, shape: _Iterable[int]) -> torch.Tensor:
+    def _unfold_from_parallel(self, x: torch.Tensor, shape: _Iterable[int]) -> torch.Tensor:
+        """
+        解压因并行而压缩的维度。
+        Args:
+            x (torch.Tensor): 压缩后的张量
+            shape (Tuple): 被压缩的形状信息
+        Returns:
+            x (torch.Tensor): 未压缩前的张量
+        """
         if x.ndim < 3:
             return x
         if self.batch_first:
-            x = x.swapaxes(0, 1) # [T, B, C]
-        x = x.swapaxes(1, 2) # [T, C, B]
+            x = x.swapaxes(0, 1) # [T, B', C]
+        x = x.swapaxes(1, 2) # [T, C, B']
         x = x.unflatten(x.ndim - 1, shape) # [T, C, B, ...]
         x = x.swapaxes(2, 1) # [T, B, C, ...]
         if self.batch_first:
@@ -1123,9 +1111,9 @@ class MultiheadAttention(Synapse, nn.MultiheadAttention):
             attn_output (torch.Tensor): 自注意力输出$Y^{l}$，形状为[B, T, C](batch_first = True)或[T, B, C](batch_first = False)
             attn_output_weights (torch.Tensor | None): 自注意力输出的权重，形状为[B, T, $T_{kv}$](average_attn_weights = True)或[B * H, T, $T_{kv}$](average_attn_weights = False)
         """
-        query, q_shape = self._merge(query) # [L, B, C]
-        key, k_shape = self._merge(key) # [L, B, C]
-        value, v_shape = self._merge(value) # [L, B, C]
+        query, q_shape = self._fold_for_parallel(query) # [L, B, C]
+        key, k_shape = self._fold_for_parallel(key) # [L, B, C]
+        value, v_shape = self._fold_for_parallel(value) # [L, B, C]
         l = lambda x: x.shape[0 if self.batch_first else 1]
         assert l(query) == l(value), "Shape of query (%d) not match shape of value (%d)." % (l(query), l(value))
         assert l(key) == l(value), "Shape of key (%d) not match shape of value (%d)." % (l(key), l(value))
@@ -1134,7 +1122,7 @@ class MultiheadAttention(Synapse, nn.MultiheadAttention):
             attn_output, attn_output_weights = attn_output
         else:
             attn_output_weights = None
-        attn_output = self._split(attn_output, v_shape)
+        attn_output = self._unfold_from_parallel(attn_output, v_shape)
         w_shape = [el for el in v_shape]
         if attn_output_weights is not None and len(w_shape) > 1:
             if not average_attn_weights:

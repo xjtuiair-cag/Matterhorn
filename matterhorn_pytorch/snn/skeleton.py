@@ -7,7 +7,7 @@ SNN模块的框架，在torch.nn的基础上，定义了几个SNN的基本函数
 import warnings
 import torch
 import torch.nn as nn
-from typing import Any as _Any, Tuple as _Tuple, Mapping as _Mapping
+from typing import Any as _Any, Tuple as _Tuple, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional
 
 
 class Module(nn.Module):
@@ -16,6 +16,39 @@ class Module(nn.Module):
         脉冲神经网络模块的骨架。
         """
         nn.Module.__init__(self)
+
+
+    def _fold_for_parallel(self, x: torch.Tensor, target_dim: _Optional[int] = None) -> _Tuple[torch.Tensor, _Iterable[int]]:
+        """
+        将前几个维度压缩，以适应nn.Module中的预定义模块。
+        Args:
+            x (torch.Tensor): 未压缩前的张量
+            target_dim (int): 目标维度
+        Returns:
+            x (torch.Tensor): 压缩后的张量
+            shape (Tuple): 被压缩的形状信息
+        """
+        target_dim = target_dim if target_dim is not None else (x.ndim - 1)
+        flatten_dims = x.ndim - target_dim
+        shape = []
+        if flatten_dims > 0:
+            shape = list(x.shape[:flatten_dims + 1])
+            x = x.flatten(0, flatten_dims)
+        return x, shape
+
+
+    def _unfold_from_parallel(self, x: torch.Tensor, shape: _Iterable[int]) -> torch.Tensor:
+        """
+        解压因并行而压缩的维度。
+        Args:
+            x (torch.Tensor): 压缩后的张量
+            shape (Tuple): 被压缩的形状信息
+        Returns:
+            x (torch.Tensor): 未压缩前的张量
+        """
+        if len(shape):
+            x = x.unflatten(0, shape)
+        return x
 
 
     @property
