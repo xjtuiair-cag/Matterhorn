@@ -15,6 +15,8 @@ def main():
     print_title("Hyper Parameters")
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--data-path", type = str, default = "./examples/data", help = "Data path.")
+    parser.add_argument("--logs-path", type = str, default = "./examples/logs", help = "Logs path.")
     parser.add_argument("--time-steps", type = int, default = 32, help = "Time steps.")
     parser.add_argument("--batch-size", type = int, default = 512, help = "Batch size.")
     parser.add_argument("--epochs", type = int, default = 100, help = "Training epochs.")
@@ -68,13 +70,13 @@ def main():
     print_title("Dataset")
 
     train_dataset = MNIST(
-        root = "./examples/data",
+        root = args.data_path,
         train = True,
         transform = torchvision.transforms.ToTensor(),
         download = True
     )
     test_dataset = MNIST(
-        root = "./examples/data",
+        root = args.data_path,
         train = False,
         transform = torchvision.transforms.ToTensor(),
         download = True
@@ -103,7 +105,7 @@ def main():
         return torch.nn.functional.cross_entropy(o.float(), y.long())
     optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
-    log_dir = "./examples/logs"
+    log_dir = args.logs_path
     sub_dir = "2_stdp" + "_" + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
     log_dir = os.path.join(log_dir, sub_dir)
     init_logs(

@@ -9,16 +9,14 @@ import torch
 import os
 import re
 import shutil
-from torchvision.datasets.utils import check_integrity, download_url, extract_archive
-from typing import Iterable, Union, Callable, Optional
-from urllib.error import URLError
-from zipfile import BadZipFile
+from typing import Callable as _Callable, Optional as _Optional
 from rich import print
 from rich.progress import track
-from matterhorn_pytorch.data.skeleton import EventDataset2d
+import matterhorn_pytorch.data.functional as _DF
+from matterhorn_pytorch.data.skeleton import EventDataset2d as _EventDataset2d
 
 
-class AEDAT(EventDataset2d):
+class AEDAT(_EventDataset2d):
     original_data_polarity_exists = True
     original_size = (1, 2, 128, 128)
     mirrors = []
@@ -32,14 +30,14 @@ class AEDAT(EventDataset2d):
     p_shift = 0
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4") -> None:
+    def __init__(self, root: str, train: bool = True, transform: _Optional[_Callable] = None, target_transform: _Optional[_Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True, endian: str = ">", datatype: str = "u4") -> None:
         """
         原始数据后缀名为.aedat的数据集
         Args:
             root (str): 数据集的存储位置
             train (bool): 是否为训练集
-            transform (Callable | None): 数据如何变换
-            target_transform (Callable | None): 标签如何变换
+            transform (_Callable | None): 数据如何变换
+            target_transform (_Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
@@ -168,14 +166,14 @@ class CIFAR10DVS(AEDAT):
     p_shift = 0
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True) -> None:
+    def __init__(self, root: str, train: bool = True, transform: _Optional[_Callable] = None, target_transform: _Optional[_Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True) -> None:
         """
         CIFAR-10 DVS数据集，将CIFAR10数据集投影至LCD屏幕后，用事件相机录制的数据集
         Args:
             root (str): 数据集的存储位置
             train (bool): 是否为训练集
-            transform (Callable | None): 数据如何变换
-            target_transform (Callable | None): 标签如何变换
+            transform (_Callable | None): 数据如何变换
+            target_transform (_Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
@@ -223,22 +221,11 @@ class CIFAR10DVS(AEDAT):
             return
         os.makedirs(self.raw_folder, exist_ok = True)
         for fileurl, filename, md5 in self.resources:
-            if os.path.isfile(os.path.join(self.raw_folder, filename)):
-                print("[blue]File %s has already existed.[/blue]" % (os.path.join(self.raw_folder, filename),))
-                continue
-            is_downloaded = False
+            pathname = os.path.join(self.raw_folder, filename)
             for mirror in self.mirrors:
                 url = mirror + fileurl
-                try:
-                    print("[blue]Downloading %s from %s.[/blue]" % (os.path.join(self.raw_folder, filename), url))
-                    download_url(url, root = self.raw_folder, filename = filename, md5 = md5)
-                    is_downloaded = True
+                if _DF.download_file(url, pathname, md5):
                     break
-                except URLError as error:
-                    print("[red]Error in file %s downloaded from %s:\r\n\r\n    %s\r\n\r\nPlease manually download it.[/red]" % (os.path.join(self.raw_folder , filename), url, error))
-                    is_downloaded = False
-            if is_downloaded:
-                print("[green]Successfully downloaded %s.[/green]" % (os.path.join(self.raw_folder, filename),))
     
 
     def extract(self) -> None:
@@ -248,20 +235,11 @@ class CIFAR10DVS(AEDAT):
         zip_file_list = os.listdir(self.raw_folder)
         if not os.path.isdir(self.extracted_folder):
             os.makedirs(self.extracted_folder, exist_ok = True)
-        extracted_folder_list = os.listdir(self.extracted_folder)
-        if len(zip_file_list) == len(extracted_folder_list):
-            print("[blue]Files are already unzipped.[/blue]")
-            return
-        error_occured = False
+        success = True
         for filename in zip_file_list:
-            print("[blue]Trying to unzip file %s ...[/blue]" % (filename,))
-            try:
-                extract_archive(os.path.join(self.raw_folder, filename), self.extracted_folder)
-                print("[green]Sussessfully unzipped file %s.[/green]" % (filename,))
-            except BadZipFile as e:
-                print("[red]Error in unzipping file %s:\r\n\r\n    %s\r\n\r\nPlease manually fix the problem.[/red]" % (filename, e))
-                error_occured = True
-        if error_occured:
+            pathname = os.path.join(self.raw_folder, filename)
+            success = success and _DF.unzip_file(pathname, self.extracted_folder)
+        if not success:
             raise RuntimeError("There are error(s) in unzipping files.")
 
 
@@ -312,14 +290,14 @@ class DVS128Gesture(AEDAT):
     p_shift = 1
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True) -> None:
+    def __init__(self, root: str, train: bool = True, transform: _Optional[_Callable] = None, target_transform: _Optional[_Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, time_steps: int = 128, width: int = 128, height: int = 128, polarity: bool = True) -> None:
         """
         DVS128 Gesture数据集，用事件相机录制手势形成的数据集
         Args:
             root (str): 数据集的存储位置
             train (bool): 是否为训练集
-            transform (Callable | None): 数据如何变换
-            target_transform (Callable | None): 标签如何变换
+            transform (_Callable | None): 数据如何变换
+            target_transform (_Callable | None): 标签如何变换
             download (bool): 如果数据集不存在，是否应该下载
             cached (bool): 是否为数据集作缓存。若为 False，则不作缓存，但是代价是运行速度变慢
             cache_dtype (torch.dtype): 如果为数据集作缓存，缓存的数据类型。默认为8位整型数，若count=True，您可能需要更高的精度储存脉冲张量
@@ -416,33 +394,22 @@ class DVS128Gesture(AEDAT):
             return
         os.makedirs(self.raw_folder, exist_ok = True)
         for fileurl, filename, md5 in self.resources:
-            if os.path.isfile(os.path.join(self.raw_folder, filename)):
-                print("[blue]File %s has already existed.[/blue]" % (os.path.join(self.raw_folder, filename),))
-                continue
+            pathname = os.path.join(self.raw_folder, filename)
             for mirror in self.mirrors:
                 url = mirror + fileurl
                 # 本来就下不了，试过好几次了，所以直接报错完事
-                print("[red]Cannot download file %s from %s, please manually download it.[/red]" % (os.path.join(self.raw_folder, filename), url))
+                print("[red]Cannot download file %s from %s, please manually download it.[/red]" % (pathname, url))
 
 
     def extract(self) -> None:
         """
         解压下载下来的压缩包。
         """
-        if os.path.isdir(self.extracted_folder):
-            print("[blue]Files are already unzipped.[/blue]")
-            return
         os.makedirs(self.extracted_folder, exist_ok = True)
         filename = "DvsGesture.tar.gz"
-        error_occured = False
-        print("[blue]Trying to unzip file %s ...[/blue]" % (filename,))
-        try:
-            extract_archive(os.path.join(self.raw_folder, filename), self.extracted_folder)
-            print("[green]Sussessfully unzipped file %s.[/green]" % (filename,))
-        except BadZipFile as e:
-            print("[red]Error in unzipping file %s:\r\n\r\n    %s\r\n\r\nPlease manually fix the problem.[/red]" % (filename, e))
-            error_occured = True
-        if error_occured:
+        pathname = os.path.join(self.raw_folder, filename)
+        success = _DF.unzip_file(pathname, self.extracted_folder)
+        if not success:
             shutil.rmtree(self.extracted_folder)
             raise RuntimeError("There are error(s) in unzipping files.")
 

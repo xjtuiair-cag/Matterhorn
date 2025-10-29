@@ -4,13 +4,98 @@
 """
 
 
+import os
+import shutil
+import time
+import random
+import math
+import urllib
+import hashlib
+import zipfile
 import numpy as np
 import torch
-from typing import Iterable
+from torchvision.datasets.utils import download_url as _download_url, extract_archive as _extract_archive
+from typing import Tuple as _Tuple, Iterable as _Iterable, Optional as _Optional
 import matterhorn_pytorch.snn.functional as _SF
+from rich import print
 
 
-def event_seq_to_spike_train(event_seq: torch.Tensor, shape: Iterable = None, original_shape: Iterable = None, count: bool = False, dtype: torch.dtype = torch.float, device: torch.device = None) -> torch.Tensor:
+def get_md5(filename: str):
+    md5_hash = hashlib.md5()
+    with open(filename, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            md5_hash.update(byte_block)
+    return md5_hash.hexdigest().lower()
+
+
+def download_file(src: str, dest: str, md5: _Optional[str] = None, retry: int = 5) -> None:
+    md5 = md5.lower()
+    if os.path.isfile(dest):
+        if (md5 is not None) and get_md5(dest) != md5:
+            os.remove(dest)
+        else:
+            print("[purple]File %s has already existed.[/purple]" % (dest,))
+            return True
+    if retry <= 0:
+        print("[red]Failed to downloaded file %s from %s. Please manually download it.[/red]" % (dest, src))
+        return False
+    root, filename = os.path.split(dest)
+    try:
+        print("[blue]Trying to download %s from %s (retry=%d).[/blue]" % (dest, src, retry))
+        _download_url(src, root = root, filename = filename, md5 = md5)
+        print("[green]Successfully downloaded %s.[/green]" % (dest,))
+        return True
+    except urllib.error.URLError as e:
+        print("[yellow]Error occured in downloading file %s from %s: %s.[/yellow]" % (dest, src, e))
+        time.sleep(1.5 + random.random() * 1.0) # 防ban
+        return download_file(src, dest, md5, retry - 1)
+    except Exception as e:
+        print("[yellow]Error occured in downloading file %s from %s: %s.[/yellow]" % (dest, src, e))
+        return False
+
+
+def check_zip_file(src: str, dest: str) -> _Tuple[bool, _Iterable[str]]:
+    if not os.path.exists(dest):
+        return False, []
+    try:
+        success = True
+        res = []
+        with zipfile.ZipFile(src, "r") as zip_ref:
+            filelist = zip_ref.namelist()
+            for filename in filelist:
+                pathname = os.path.join(dest, filename)
+                file_exists = os.path.exists(pathname)
+                success = success and file_exists
+                if file_exists:
+                    res.append(pathname)
+        return success, res
+    except zipfile.BadZipFile as e:
+        print("[yellow]Error occured in zip file %s: %s.[/yellow]" % (src, e))
+        return False, []
+
+
+def unzip_file(src: str, dest: str) -> str:
+    success, existed_files = check_zip_file(src, dest)
+    if success:
+        print("[blue]File %s is already unzipped.[/blue]" % (src,))
+        return True
+    else:
+        for filename in existed_files:
+            if os.path.isfile(filename):
+                os.remove(filename)
+            if os.path.isdir(filename):
+                shutil.rmtree(filename)
+    try:
+        print("[blue]Trying to unzip file %s ...[/blue]" % (src,))
+        _extract_archive(src, dest)
+        print("[green]Successfully unzip file %s.[/green]" % (src,))
+        return True
+    except zipfile.BadZipFile as e:
+        print("[yellow]Error occured in unzipping file %s: %s.[/yellow]" % (src, e))
+        return False
+
+
+def event_seq_to_spike_train(event_seq: torch.Tensor, shape: _Iterable[int] = None, original_shape: _Iterable[int] = None, count: bool = False, dtype: torch.dtype = torch.float, device: torch.device = None) -> torch.Tensor:
     """
     将事件序列转为脉冲序列。
     Args:

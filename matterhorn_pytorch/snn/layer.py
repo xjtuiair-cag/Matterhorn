@@ -1051,7 +1051,6 @@ class TemporalWiseAttention(Layer):
             if self.batch_first:
                 x = x.swapaxes(0, 1) # [T, B, ...]
             s = x.mean(dim = list(range(2, x.ndim))) # [T, B]
-            print(s.shape)
         else:
             s = x
         # 获取分数向量$d^{n-1}$：$d^{n-1}=TA(s^{n-1})$

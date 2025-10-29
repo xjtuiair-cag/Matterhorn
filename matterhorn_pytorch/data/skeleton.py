@@ -18,7 +18,7 @@ import shutil
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor, wait
 import hashlib
-import matterhorn_pytorch.data.functional as DF
+import matterhorn_pytorch.data.functional as _DF
 
 
 class EventDataset(Dataset):
@@ -366,8 +366,8 @@ class EventDataset1d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, L]
         """
-        res = DF.event_seq_to_spike_train(
-            event_seq = data,
+        res = _DF.event_seq_to_spike_train(
+            event_seq = torch.from_numpy(data.astype(np.float32)),
             shape = (self.t_size, self.x_size),
             original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[2]),
             count = self.count
@@ -383,8 +383,8 @@ class EventDataset1d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, C(P), L]
         """
-        res = DF.event_seq_to_spike_train(
-            event_seq = data,
+        res = _DF.event_seq_to_spike_train(
+            event_seq = torch.from_numpy(data.astype(np.float32)),
             shape = (self.t_size, self.p_size, self.x_size),
             original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[1], self.original_size[2]),
             count = self.count
@@ -452,8 +452,8 @@ class EventDataset2d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, H, W]
         """
-        res = DF.event_seq_to_spike_train(
-            event_seq = data,
+        res = _DF.event_seq_to_spike_train(
+            event_seq = torch.from_numpy(data.astype(np.float32)),
             shape = (self.t_size, self.y_size, self.x_size),
             original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[2], self.original_size[3]),
             count = self.count
@@ -469,8 +469,8 @@ class EventDataset2d(EventDataset):
         Returns:
             data_tensor (torch.Tensor): 渲染成事件的张量，形状为[T, C(P), H, W]
         """
-        res = DF.event_seq_to_spike_train(
-            event_seq = data,
+        res = _DF.event_seq_to_spike_train(
+            event_seq = torch.from_numpy(data.astype(np.float32)),
             shape = (self.t_size, self.p_size, self.y_size, self.x_size),
             original_shape = (max(np.max(data[:, 0]) + 1, self.original_size[0]), self.original_size[1], self.original_size[2], self.original_size[3]),
             count = self.count

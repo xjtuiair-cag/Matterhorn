@@ -7,14 +7,13 @@ HDF5类数据集（后缀名为.h5）。
 import numpy as np
 import torch
 import os
-import h5py
-from torchvision.datasets.utils import check_integrity, download_url, extract_archive
-from typing import Iterable, Union, Callable, Optional
-from urllib.error import URLError
-from zipfile import BadZipFile
-from rich import print
+import re
+import shutil
+from typing import Callable as _Callable, Optional as _Optional
 from rich.progress import track
+import matterhorn_pytorch.data.functional as _DF
 from matterhorn_pytorch.data.skeleton import EventDataset1d
+import h5py
 
 
 class HDF5(EventDataset1d):
@@ -27,7 +26,7 @@ class HDF5(EventDataset1d):
     labels = []
 
 
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 128) -> None:
+    def __init__(self, root: str, train: bool = True, transform: _Optional[_Callable] = None, target_transform: _Optional[_Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, precision: int = 1e9, time_steps: int = 128, length: int = 128) -> None:
         """
         原始数据后缀名为.hdf5的数据集
         Args:
@@ -83,7 +82,7 @@ class SpikingHeidelbergDigits(HDF5):
     labels = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "null", "eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun"]
     
     
-    def __init__(self, root: str, train: bool = True, transform: Optional[Callable] = None, target_transform: Optional[Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, precision: float = 1e9, time_steps: int = 128, length: int = 700) -> None:
+    def __init__(self, root: str, train: bool = True, transform: _Optional[_Callable] = None, target_transform: _Optional[_Callable] = None, download: bool = False, cached: bool = True, cache_dtype: torch.dtype = torch.uint8, count: bool = False, precision: float = 1e9, time_steps: int = 128, length: int = 700) -> None:
         """
         Spiking Heidelberg Digits数据集，记录下英文和德语的0-9（总共20类），并转换成长度为700的脉冲。
         Args:
@@ -122,22 +121,11 @@ class SpikingHeidelbergDigits(HDF5):
             return
         os.makedirs(self.raw_folder, exist_ok = True)
         for fileurl, filename, md5 in self.resources:
-            if os.path.isfile(os.path.join(self.raw_folder, filename)):
-                print("[blue]File %s has already existed.[/blue]" % (os.path.join(self.raw_folder, filename),))
-                continue
-            is_downloaded = False
+            pathname = os.path.join(self.raw_folder, filename)
             for mirror in self.mirrors:
                 url = mirror + fileurl
-                try:
-                    print("[blue]Downloading %s from %s.[/blue]" % (os.path.join(self.raw_folder, filename), url))
-                    download_url(url, root = self.raw_folder, filename = filename, md5 = md5)
-                    is_downloaded = True
+                if _DF.download_file(url, pathname, md5):
                     break
-                except URLError as error:
-                    print("[red]Error in file %s downloaded from %s:\r\n\r\n    %s\r\n\r\nPlease manually download it.[/red]" % (os.path.join(self.raw_folder , filename), url, error))
-                    is_downloaded = False
-            if is_downloaded:
-                print("[green]Successfully downloaded %s.[/green]" % (os.path.join(self.raw_folder, filename),))
 
 
     def extract(self) -> None:
@@ -147,20 +135,11 @@ class SpikingHeidelbergDigits(HDF5):
         zip_file_list = os.listdir(self.raw_folder)
         if not os.path.isdir(self.extracted_folder):
             os.makedirs(self.extracted_folder, exist_ok = True)
-        extracted_folder_list = os.listdir(self.extracted_folder)
-        if len(zip_file_list) == len(extracted_folder_list):
-            print("[blue]Files are already unzipped.[/blue]")
-            return
-        error_occured = False
+        success = True
         for filename in zip_file_list:
-            print("[blue]Trying to unzip file %s ...[/blue]" % (filename,))
-            try:
-                extract_archive(os.path.join(self.raw_folder, filename), self.extracted_folder)
-                print("[green]Sussessfully unzipped file %s.[/green]" % (filename,))
-            except BadZipFile as e:
-                print("[red]Error in unzipping file %s:\r\n\r\n    %s\r\n\r\nPlease manually fix the problem.[/red]" % (filename, e))
-                error_occured = True
-        if error_occured:
+            pathname = os.path.join(self.raw_folder, filename)
+            success = success and _DF.unzip_file(pathname, self.extracted_folder)
+        if not success:
             raise RuntimeError("There are error(s) in unzipping files.")
 
 

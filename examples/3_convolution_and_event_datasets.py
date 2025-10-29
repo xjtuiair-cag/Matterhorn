@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import matterhorn_pytorch as mth
 import matterhorn_pytorch.snn as snn
-from matterhorn_pytorch.data import CIFAR10DVS
+from matterhorn_pytorch.data import NMNIST
 import argparse
 from functions import *
 from rich import print
@@ -15,8 +15,10 @@ def main():
     print_title("Hyper Parameters")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--time-steps", type = int, default = 128, help = "Time steps.")
-    parser.add_argument("--batch-size", type = int, default = 64, help = "Batch size.")
+    parser.add_argument("--data-path", type = str, default = "./examples/data", help = "Data path.")
+    parser.add_argument("--logs-path", type = str, default = "./examples/logs", help = "Logs path.")
+    parser.add_argument("--time-steps", type = int, default = 16, help = "Time steps.")
+    parser.add_argument("--batch-size", type = int, default = 8, help = "Batch size.")
     parser.add_argument("--epochs", type = int, default = 100, help = "Training epochs.")
     parser.add_argument("--learning-rate", type = float, default = 0.01, help = "Learning rate.")
     parser.add_argument("--momentum", type = float, default = 0.9, help = "Momentum for optimizer.")
@@ -45,83 +47,48 @@ def main():
 
     model = snn.Sequential(
         snn.DirectEncoder(),
-        snn.WSConv2d(
+        snn.Conv2d(
             in_channels = 2,
-            out_channels = 64,
+            out_channels = 32,
             kernel_size = 3,
             stride = 2,
             padding = 0
-        ), # [T, 64, 16, 16]
+        ), # [T, B, 32, 16, 16]
+        snn.BatchNorm2d(
+            num_features = 32
+        ),
         snn.LIF(
             tau_m = tau
         ),
-        snn.WSConv2d(
+        snn.Conv2d(
+            in_channels = 32,
+            out_channels = 64,
+            kernel_size = 3,
+            stride = 2,
+            padding = 1
+        ), # [T, B, 64, 8, 8]
+        snn.BatchNorm2d(
+            num_features = 64
+        ),
+        snn.LIF(
+            tau_m = tau
+        ),
+        snn.Conv2d(
             in_channels = 64,
             out_channels = 128,
             kernel_size = 3,
             stride = 2,
             padding = 1
-        ), # [T, 128, 8, 8]
-        snn.LIF(
-            tau_m = tau
+        ), # [T, B, 128, 4, 4]
+        snn.BatchNorm2d(
+            num_features = 128
         ),
-        snn.WSConv2d(
-            in_channels = 128,
-            out_channels = 256,
-            kernel_size = 3,
-            stride = 2,
-            padding = 1
-        ), # [T, 256, 4, 4]
-        snn.LIF(
-            tau_m = tau
-        ),
-        snn.WSConv2d(
-            in_channels = 256,
-            out_channels = 256,
-            kernel_size = 3
-        ), # [T, 256, 4, 4]
-        snn.LIF(
-            tau_m = tau
-        ),
-        snn.WSConv2d(
-            in_channels = 256,
-            out_channels = 512,
-            kernel_size = 3,
-            stride = 2,
-            padding = 1
-        ), # [T, 512, 2, 2]
-        snn.LIF(
-            tau_m = tau
-        ),
-        snn.WSConv2d(
-            in_channels = 512,
-            out_channels = 512,
-            kernel_size = 3
-        ), # [T, 512, 2, 2]
-        snn.LIF(
-            tau_m = tau
-        ),
-        snn.WSConv2d(
-            in_channels = 512,
-            out_channels = 512,
-            kernel_size = 3,
-            stride = 2,
-            padding = 1
-        ), # [T, 512, 1, 1]
-        snn.LIF(
-            tau_m = tau
-        ),
-        snn.WSConv2d(
-            in_channels = 512,
-            out_channels = 512,
-            kernel_size = 3
-        ), # [T, 512, 1, 1]
         snn.LIF(
             tau_m = tau
         ),
         snn.Flatten(),
         snn.Linear(
-            in_features = 512,
+            in_features = 128 * 4 * 4,
             out_features = 10,
             bias = False
         ),
@@ -132,15 +99,15 @@ def main():
 
     print_title("Dataset")
 
-    train_dataset = CIFAR10DVS(
-        root = "./examples/data",
+    train_dataset = NMNIST(
+        root = args.data_path,
         train = True,
         download = True,
         cached = False,
         time_steps = time_steps
     )
-    test_dataset = CIFAR10DVS(
-        root = "./examples/data",
+    test_dataset = NMNIST(
+        root = args.data_path,
         train = False,
         download = True,
         cached = False,
@@ -170,7 +137,7 @@ def main():
         return torch.nn.functional.cross_entropy(o.float(), y.long())
     optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = epochs)
-    log_dir = "./examples/logs"
+    log_dir = args.logs_path
     sub_dir = "3_conv" + "_" + datetime.datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
     log_dir = os.path.join(log_dir, sub_dir)
     init_logs(

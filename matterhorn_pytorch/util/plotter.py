@@ -7,7 +7,7 @@
 import re
 import numpy as np
 import torch
-import matterhorn_pytorch.data.functional as DF
+import matterhorn_pytorch.data.functional as _DF
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
@@ -183,7 +183,7 @@ def spike_train_plot_yx(data: torch.Tensor, ax: Axes = None, **kwargs) -> Axes:
         fig, ax = init_figure(ndim = 2)
 
     dim = data.ndim
-    indices = DF.spike_train_to_event_seq(data).long()
+    indices = _DF.spike_train_to_event_seq(data).long()
     values = data[tuple(indices[:, d] for d in range(indices.shape[1]))]
 
     default = dict(
@@ -227,7 +227,7 @@ def event_seq_plot_yx(data: torch.Tensor, shape: Iterable, ax: Axes = None, **kw
         ax (Axes): 图坐标轴
     """
     return spike_train_plot_yx(
-        data = DF.event_seq_to_spike_train(
+        data = _DF.event_seq_to_spike_train(
             event_seq = data,
             shape = shape,
             dtype = data.dtype,
@@ -278,7 +278,7 @@ def spike_train_plot_tx(data: torch.Tensor, ax: Axes = None, **kwargs) -> Axes:
         fig, ax = init_figure(ndim = 2)
 
     dim = data.ndim
-    indices = DF.spike_train_to_event_seq(data).long()
+    indices = _DF.spike_train_to_event_seq(data).long()
     values = data[tuple(indices[:, d] for d in range(indices.shape[1]))]
 
     default = dict()
@@ -319,7 +319,7 @@ def event_seq_plot_tx(data: torch.Tensor, shape: Iterable, ax: Axes = None, **kw
         ax (Axes): 图坐标轴
     """
     return spike_train_plot_tx(
-        data = DF.event_seq_to_spike_train(
+        data = _DF.event_seq_to_spike_train(
             event_seq = data,
             shape = shape,
             dtype = data.dtype,
@@ -370,7 +370,7 @@ def spike_train_plot_tyx(data: torch.Tensor, ax: Axes = None, **kwargs) -> Axes:
         fig, ax = init_figure(ndim = 3)
 
     dim = data.ndim
-    indices = DF.spike_train_to_event_seq(data).long()
+    indices = _DF.spike_train_to_event_seq(data).long()
     values = data[tuple(indices[:, d] for d in range(indices.shape[1]))]
 
     default = dict()
@@ -411,7 +411,7 @@ def event_seq_plot_tyx(data: torch.Tensor, shape: Iterable, ax: Axes = None, **k
         ax (Axes): 图坐标轴
     """
     return spike_train_plot_tyx(
-        data = DF.event_seq_to_spike_train(
+        data = _DF.event_seq_to_spike_train(
             event_seq = data,
             shape = shape,
             dtype = data.dtype
