@@ -26,6 +26,7 @@ class Sequential(Container, nn.Sequential):
         对Sequential进行重写，涵盖ANN与SNN的网络。
         Args:
             *args (*nn.Module): 按空间顺序传入的各个模块
+            return_states (bool): 是否返回状态变量
         """
         Container.__init__(self)
         nn.Sequential.__init__(self, *args)
