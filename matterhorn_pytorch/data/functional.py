@@ -17,6 +17,7 @@ import torch
 from torchvision.datasets.utils import download_url as _download_url, extract_archive as _extract_archive
 from typing import Tuple as _Tuple, Iterable as _Iterable, Optional as _Optional
 import matterhorn_pytorch.snn.functional as _SF
+import matterhorn_pytorch.tnn.functional as _TF
 from rich import print
 
 
@@ -147,28 +148,27 @@ def spike_train_to_event_seq(spike_train: torch.Tensor) -> torch.Tensor:
     return event_seq
 
 
-def spike_train_to_spike_times(spike_train: torch.Tensor, zero_fill: int = -1) -> torch.Tensor:
+def spike_train_to_spike_times(spike_train: torch.Tensor, t_offset: int = 0, empty_fill: int = -1) -> torch.Tensor:
     """
     将脉冲序列转换为脉冲时间。
     Args:
-        spike_train (torch.Tensor): 脉冲序列，形状为[T, ...]
-        zero_fill (int | torch.inf): 无脉冲时的默认值，一般为-1，可以设为torch.inf
+        x (torch.Tensor): 脉冲序列
+        t_offset (int): 时间步偏移量
+        empty_fill (float): 如果脉冲序列为全0序列，值应该用什么替代，默认为-1
     Returns:
-        spike_times (torch.Tensor): 时间序列，形状为[...]
+        spike_times (torch.Tensor): 时间序列
     """
-    spike_times = torch.where(torch.sum(spike_train, dim = 0).gt(0.0), torch.argmax(spike_train, dim = 0).to(spike_train), torch.full_like(spike_train[0], zero_fill))
-    return spike_times
+    return _SF.decode_min_time(spike_train, t_offset, empty_fill)
 
 
 def spike_times_to_spike_train(spike_times: torch.Tensor, time_steps: int, t_offset: int = 0) -> torch.Tensor:
     """
     将脉冲时间转换为脉冲序列。
     Args:
-        spike_times (torch.Tensor): 时间序列，形状为[...]
-        time_steps (int): 最大时间步T
-        t_offset (int): 时间步偏移量，从第几个时间步开始
+        x (torch.Tensor): 时间序列
+        time_steps (int): 时间编码的时间步
+        t_offset (int): 时间步偏移量
     Returns:
-        spike_train (torch.Tensor): 脉冲序列，形状为[T, ...]
+        y (torch.Tensor): 脉冲序列
     """
-    spike_train = _SF.encode_temporal(spike_times, time_steps, t_offset)
-    return spike_train
+    return _SF.encode_temporal(spike_times, time_steps, t_offset)

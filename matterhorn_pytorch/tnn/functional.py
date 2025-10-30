@@ -8,23 +8,22 @@ TNN的相关函数。
 import torch
 import torch.nn as nn
 import matterhorn_pytorch.snn.functional as _SF
-import matterhorn_pytorch.data.functional as _DF
 from typing import Any as _Any
 
 
 """
 以下是根据时空代数原语完备性定义的算子。
 """
-op_min = lambda x, y, min, max, inh: min(x, y)
-op_xmin = lambda x, y, min, max, inh: min(op_lt(x, y, min, max, inh), op_lt(y, x, min, max, inh))
-op_max = lambda x, y, min, max, inh: max(x, y)
-op_xmax = lambda x, y, min, max, inh: min(op_gt(x, y, min, max, inh), op_gt(y, x, min, max, inh))
-op_eq = lambda x, y, min, max, inh: max(op_le(x, y, min, max, inh), op_le(y, x, min, max, inh))
-op_ne = lambda x, y, min, max, inh: min(op_lt(x, y, min, max, inh), op_gt(x, y, min, max, inh))
-op_lt = lambda x, y, min, max, inh: inh(x, y)
-op_le = lambda x, y, min, max, inh: inh(x, inh(y, x))
-op_gt = lambda x, y, min, max, inh: max(inh(y, x), x)
-op_ge = lambda x, y, min, max, inh: inh(x, inh(x, y))
+_op_min = lambda x, y, min, max, inh: min(x, y)
+_op_xmin = lambda x, y, min, max, inh: min(_op_lt(x, y, min, max, inh), _op_lt(y, x, min, max, inh))
+_op_max = lambda x, y, min, max, inh: max(x, y)
+_op_xmax = lambda x, y, min, max, inh: min(_op_gt(x, y, min, max, inh), _op_gt(y, x, min, max, inh))
+_op_eq = lambda x, y, min, max, inh: max(_op_le(x, y, min, max, inh), _op_le(y, x, min, max, inh))
+_op_ne = lambda x, y, min, max, inh: min(_op_lt(x, y, min, max, inh), _op_gt(x, y, min, max, inh))
+_op_lt = lambda x, y, min, max, inh: inh(x, y)
+_op_le = lambda x, y, min, max, inh: inh(x, inh(y, x))
+_op_gt = lambda x, y, min, max, inh: max(inh(y, x), x)
+_op_ge = lambda x, y, min, max, inh: inh(x, inh(x, y))
 
 
 @torch.jit.script
@@ -47,11 +46,11 @@ def t_to_s(t: torch.Tensor, time_steps: int, t_offset: int = 0) -> torch.Tensor:
     Args:
         t (torch.Tensor): 时间序列，形状为[...]
         time_steps (int): 最大时间步T
-        t_offset (int): 时间步偏移量，从第几个时间步开始，一般为0
+        t_offset (int): 时间步偏移量，一般为0
     Returns:
         s (torch.Tensor): 脉冲序列，形状为[T, ...]
     """
-    return _DF.spike_times_to_spike_train(t, time_steps, t_offset)
+    return _SF.encode_temporal(t, time_steps, t_offset)
 
 
 @torch.jit.script
@@ -251,7 +250,7 @@ def t_min(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_min(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
+    out = _op_min(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
     return out
 
 
@@ -264,7 +263,7 @@ def t_xmin(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_xmin(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
+    out = _op_xmin(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
     return out
 
 
@@ -277,7 +276,7 @@ def t_max(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_max(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
+    out = _op_max(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
     return out
 
 
@@ -290,7 +289,7 @@ def t_xmax(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_xmax(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
+    out = _op_xmax(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
     return out
 
 
@@ -303,7 +302,7 @@ def t_eq(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_eq(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
+    out = _op_eq(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
     return out
 
 
@@ -316,7 +315,7 @@ def t_ne(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_ne(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
+    out = _op_ne(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
     return out
 
 
@@ -329,7 +328,7 @@ def t_lt(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_lt(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
+    out = _op_lt(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
     return out
 
 
@@ -342,7 +341,7 @@ def t_le(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_le(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
+    out = _op_le(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
     return out
 
 
@@ -355,7 +354,7 @@ def t_gt(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_gt(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
+    out = _op_gt(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
     return out
 
 
@@ -368,11 +367,11 @@ def t_ge(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_ge(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
+    out = _op_ge(x, y, t_rl_min.apply, t_rl_max.apply, t_rl_inh.apply)
     return out
 
 
-def s_to_t(s: torch.Tensor) -> torch.Tensor:
+def s_to_t(s: torch.Tensor, t_offset: int, empty_fill: float = torch.inf) -> torch.Tensor:
     """
     将脉冲序列转换为脉冲时间。若脉冲序列上无脉冲，则将其转为inf。
     Args:
@@ -380,7 +379,7 @@ def s_to_t(s: torch.Tensor) -> torch.Tensor:
     Returns:
         t (torch.Tensor): 时间序列，形状为[...]
     """
-    t = _DF.spike_train_to_spike_times(s, torch.inf)
+    t = _SF.decode_min_time(s, t_offset, empty_fill)
     return t
 
 
@@ -553,7 +552,7 @@ def s_min(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_min(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
+    out = _op_min(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
     return out
 
 
@@ -566,7 +565,7 @@ def s_xmin(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_xmin(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
+    out = _op_xmin(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
     return out
 
 
@@ -579,7 +578,7 @@ def s_max(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_max(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
+    out = _op_max(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
     return out
 
 
@@ -592,7 +591,7 @@ def s_xmax(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_xmax(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
+    out = _op_xmax(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
     return out
 
 
@@ -605,7 +604,7 @@ def s_eq(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_eq(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
+    out = _op_eq(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
     return out
 
 
@@ -618,7 +617,7 @@ def s_ne(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_ne(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
+    out = _op_ne(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
     return out
 
 
@@ -631,7 +630,7 @@ def s_lt(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_lt(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
+    out = _op_lt(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
     return out
 
 
@@ -644,7 +643,7 @@ def s_le(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_le(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
+    out = _op_le(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
     return out
 
 
@@ -657,7 +656,7 @@ def s_gt(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_gt(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
+    out = _op_gt(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
     return out
 
 
@@ -670,5 +669,5 @@ def s_ge(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     Returns:
         out (torch.Tensor): 输出信号
     """
-    out = op_ge(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
+    out = _op_ge(x, y, s_rl_min.apply, s_rl_max.apply, s_rl_inh.apply)
     return out

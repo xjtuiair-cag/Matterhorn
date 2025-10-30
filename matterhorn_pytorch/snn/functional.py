@@ -6,7 +6,6 @@
 
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as _F
 from typing import List as _List, Tuple as _Tuple, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union, Any as _Any
 
@@ -552,7 +551,7 @@ def encode_temporal(x: torch.Tensor, time_steps: int, t_offset: int = 0, prob: f
     Args:
         x (torch.Tensor): 数值
         time_steps (int): 时间编码的时间步
-        t_offset (int): 时间步偏移量，从第几个时间步开始
+        t_offset (int): 时间步偏移量
         prob (float): 是否发送脉冲计数
     Returns:
         y (torch.Tensor): 脉冲序列
@@ -609,7 +608,7 @@ def decode_min_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> t
     最短时间解码，将脉冲转化为首个脉冲的时间。
     Args:
         x (torch.Tensor): 脉冲序列
-        t_offset (int): 时间步偏移量，从第几个时间步开始
+        t_offset (int): 时间步偏移量
         empty_fill (float): 如果脉冲序列为全0序列，值应该用什么替代，在TNN中该参数应设为torch.inf
     Returns:
         y (torch.Tensor): 解码后的脉冲序列
@@ -627,7 +626,7 @@ def decode_avg_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> t
     平均脉冲时间解码，将脉冲转化为平均脉冲时间。
     Args:
         x (torch.Tensor): 脉冲序列
-        t_offset (int): 时间步偏移量，从第几个时间步开始
+        t_offset (int): 时间步偏移量
         empty_fill (float): 如果脉冲序列为全0序列，值应该用什么替代，在TNN中该参数应设为torch.inf
     Returns:
         y (torch.Tensor): 解码后的脉冲序列
@@ -645,6 +644,15 @@ def decode_avg_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> t
 
 @torch.jit.script
 def reset_hard(u: torch.Tensor, o: torch.Tensor, u_rest: torch.Tensor = torch.tensor(0.0)) -> torch.Tensor:
+    """
+    硬重置（归零重置）。
+    Args:
+        u (torch.Tensor): 当前电位
+        o (torch.Tensor): 当前脉冲
+        u_rest (torch.Tensor): 静息电位
+    Returns:
+        h (torch.Tensor): 当前残余电位
+    """
     s = to_spike_train(o)
     h = u * (1.0 - s) + u_rest.to(u) * s
     return h
@@ -652,11 +660,31 @@ def reset_hard(u: torch.Tensor, o: torch.Tensor, u_rest: torch.Tensor = torch.te
 
 @torch.jit.script
 def reset_soft(u: torch.Tensor, o: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor = torch.tensor(0.0)) -> torch.Tensor:
+    """
+    软重置（减法重置）。
+    Args:
+        u (torch.Tensor): 当前电位
+        o (torch.Tensor): 当前脉冲
+        u_threshold (torch.Tensor): 阈电位
+        u_rest (torch.Tensor): 静息电位
+    Returns:
+        h (torch.Tensor): 当前残余电位
+    """
     h = u - o * (u_threshold.to(u) - u_rest.to(u))
     return h
 
 
 def _firing(u: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, firing: str = "heaviside") -> torch.Tensor:
+    """
+    脉冲函数。
+    Args:
+        u (torch.Tensor): 当前电位
+        u_threshold (torch.Tensor): 阈电位
+        u_rest (torch.Tensor): 静息电位
+        firing (str): 选择替代梯度
+    Returns:
+        o (torch.Tensor): 当前脉冲
+    """
     u_threshold = u_threshold.to(u)
     u_rest = u_rest.to(u)
     if firing == "floor":
@@ -677,6 +705,19 @@ def _firing(u: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, fi
 
 @torch.jit.script
 def if_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, torch.Tensor]:
+    """
+    IF神经元。
+    Args:
+        x (torch.Tensor): 当前输入，形状为[T, B, ...]
+        h (torch.Tensor): 初始残余电位，形状为[B, ...]
+        u_threshold (torch.Tensor): 阈电位
+        u_rest (torch.Tensor): 静息电位
+        firing (str): 选择替代梯度
+        hard_reset (bool): 重置为硬重置/归零重置(True)还是软重置/减法重置(False)
+    Returns:
+        o (torch.Tensor): 当前脉冲，形状为[T, B, ...]
+        h (torch.Tensor): 最终残余电位，形状为[B, ...]
+    """
     o_seq = []
     for t in range(x.shape[0]):
         du = x[t]
@@ -693,6 +734,20 @@ def if_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_res
 
 @torch.jit.script
 def lif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, tau_m: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, torch.Tensor]:
+    """
+    LIF神经元。
+    Args:
+        x (torch.Tensor): 当前输入，形状为[T, B, ...]
+        h (torch.Tensor): 初始残余电位，形状为[B, ...]
+        u_threshold (torch.Tensor): 阈电位
+        u_rest (torch.Tensor): 静息电位
+        tau_m (torch.Tensor): 神经元时间常数
+        firing (str): 选择替代梯度
+        hard_reset (bool): 重置为硬重置/归零重置(True)还是软重置/减法重置(False)
+    Returns:
+        o (torch.Tensor): 当前脉冲，形状为[T, B, ...]
+        h (torch.Tensor): 最终残余电位，形状为[B, ...]
+    """
     o_seq = []
     for t in range(x.shape[0]):
         du = (1.0 / tau_m.to(x)) * (-(h - u_rest.to(x)) + x[t])
@@ -709,6 +764,22 @@ def lif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_re
 
 @torch.jit.script
 def qif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, tau_m: torch.Tensor, u_c: torch.Tensor, a_0: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, torch.Tensor]:
+    """
+    QIF神经元。
+    Args:
+        x (torch.Tensor): 当前输入，形状为[T, B, ...]
+        h (torch.Tensor): 初始残余电位，形状为[B, ...]
+        u_threshold (torch.Tensor): 阈电位
+        u_rest (torch.Tensor): 静息电位
+        tau_m (torch.Tensor): 神经元时间常数
+        u_c (torch.Tensor): 参数$u_{c}$
+        a_0 (torch.Tensor): 参数$a_{0}$
+        firing (str): 选择替代梯度
+        hard_reset (bool): 重置为硬重置/归零重置(True)还是软重置/减法重置(False)
+    Returns:
+        o (torch.Tensor): 当前脉冲，形状为[T, B, ...]
+        h (torch.Tensor): 最终残余电位，形状为[B, ...]
+    """
     o_seq = []
     for t in range(x.shape[0]):
         du = (1.0 / tau_m.to(x)) * (a_0.to(x) * (h - u_rest.to(x)) * (h - u_c.to(x)) + x[t])
@@ -725,6 +796,22 @@ def qif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_re
 
 @torch.jit.script
 def expif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, tau_m: torch.Tensor, u_t: torch.Tensor, delta_t: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, torch.Tensor]:
+    """
+    ExpIF神经元。
+    Args:
+        x (torch.Tensor): 当前输入，形状为[T, B, ...]
+        h (torch.Tensor): 初始残余电位，形状为[B, ...]
+        u_threshold (torch.Tensor): 阈电位
+        u_rest (torch.Tensor): 静息电位
+        tau_m (torch.Tensor): 神经元时间常数
+        u_t (torch.Tensor): 参数$u_{T}$
+        delta_t (torch.Tensor): 参数$\Delta_{T}$
+        firing (str): 选择替代梯度
+        hard_reset (bool): 重置为硬重置/归零重置(True)还是软重置/减法重置(False)
+    Returns:
+        o (torch.Tensor): 当前脉冲，形状为[T, B, ...]
+        h (torch.Tensor): 最终残余电位，形状为[B, ...]
+    """
     o_seq = []
     for t in range(x.shape[0]):
         du = (1.0 / tau_m) * (-(h - u_rest) + delta_t * torch.exp((h - u_t) / delta_t) + x)
@@ -741,6 +828,22 @@ def expif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_
 
 @torch.jit.script
 def izhikevich_neuron(x: torch.Tensor, h: torch.Tensor, w: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, a: torch.Tensor, b: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, _Tuple[torch.Tensor, torch.Tensor]]:
+    """
+    Izhikevich神经元。
+    Args:
+        x (torch.Tensor): 当前输入，形状为[T, B, ...]
+        h (torch.Tensor): 初始残余电位，形状为[B, ...]
+        w (torch.Tensor): 初始状态w，形状为[B, ...]
+        u_threshold (torch.Tensor): 阈电位
+        u_rest (torch.Tensor): 静息电位
+        a (torch.Tensor): 参数$a$
+        b (torch.Tensor): 参数$b$
+        firing (str): 选择替代梯度
+        hard_reset (bool): 重置为硬重置/归零重置(True)还是软重置/减法重置(False)
+    Returns:
+        o (torch.Tensor): 当前脉冲，形状为[T, B, ...]
+        h_w (torch.Tensor): 最终残余电位与状态w，形状均为[B, ...]
+    """
     o_seq = []
     for t in range(x.shape[0]):
         dw = a * (b * h - w)
@@ -759,6 +862,21 @@ def izhikevich_neuron(x: torch.Tensor, h: torch.Tensor, w: torch.Tensor, u_thres
 
 @torch.jit.script
 def klif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, tau_m: torch.Tensor, k: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, torch.Tensor]:
+    """
+    KLIF神经元。
+    Args:
+        x (torch.Tensor): 当前输入，形状为[T, B, ...]
+        h (torch.Tensor): 初始残余电位，形状为[B, ...]
+        u_threshold (torch.Tensor): 阈电位
+        u_rest (torch.Tensor): 静息电位
+        tau_m (torch.Tensor): 神经元时间常数
+        k (torch.Tensor): 常数$k$
+        firing (str): 选择替代梯度
+        hard_reset (bool): 重置为硬重置/归零重置(True)还是软重置/减法重置(False)
+    Returns:
+        o (torch.Tensor): 当前脉冲，形状为[T, B, ...]
+        h (torch.Tensor): 最终残余电位，形状为[B, ...]
+    """
     o_seq = []
     for t in range(x.shape[0]):
         du = (1.0 / tau_m.to(x)) * (-(h - u_rest.to(x)) + x[t])
@@ -776,6 +894,20 @@ def klif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_r
 
 @torch.jit.script
 def lim_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, tau_m: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, torch.Tensor]:
+    """
+    LIM神经元。
+    Args:
+        x (torch.Tensor): 当前输入，形状为[T, B, ...]
+        h (torch.Tensor): 初始残余电位，形状为[B, ...]
+        u_threshold (torch.Tensor): 阈电位
+        u_rest (torch.Tensor): 静息电位
+        tau_m (torch.Tensor): 神经元时间常数
+        firing (str): 选择替代梯度
+        hard_reset (bool): 重置为硬重置/归零重置(True)还是软重置/减法重置(False)
+    Returns:
+        u (torch.Tensor): 当前电位，形状为[T, B, ...]
+        h (torch.Tensor): 最终残余电位，形状为[B, ...]
+    """
     u_seq = []
     for t in range(x.shape[0]):
         du = (1.0 / tau_m.to(x)) * (-(h - u_rest.to(x)) + x[t])
