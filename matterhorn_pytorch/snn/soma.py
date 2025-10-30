@@ -15,7 +15,7 @@ from typing import Any as _Any, Tuple as _Tuple, Mapping as _Mapping, Callable a
 
 
 class Soma(_Module):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, return_states: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Response-Firing-Reset三段式神经元胞体骨架，分别为：
         （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
@@ -27,6 +27,7 @@ class Soma(_Module):
             spiking_function (Firing): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
             batch_first (bool): 第一维为批(True)还是时间(False)
+            return_states (bool): 是否返回状态变量
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
@@ -36,6 +37,7 @@ class Soma(_Module):
         self.spiking_function: _Firing = spiking_function
         self.hard_reset = hard_reset
         self.batch_first = batch_first
+        self.return_states = return_states
 
 
     def extra_repr(self) -> str:
@@ -44,7 +46,7 @@ class Soma(_Module):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["u_threshold=%g" % self.u_threshold, "u_rest=%g" % self.u_rest, "hard_reset=%s" % (self.hard_reset,), "batch_first=%s" % (self.batch_first,)]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+        return ", ".join(["u_threshold=%g" % self.u_threshold, "u_rest=%g" % self.u_rest, "hard_reset=%s" % (self.hard_reset,), "batch_first=%s" % (self.batch_first,), "return_states=%s" % (self.return_states,)])
     
 
     @property
@@ -53,7 +55,7 @@ class Soma(_Module):
 
 
 class IF(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, return_states: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Integrate-and-Fire(IF)神经元。
         无泄漏过程，一阶电位变换公式为：
@@ -64,6 +66,7 @@ class IF(Soma):
             spiking_function (Firing): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
             batch_first (bool): 第一维为批(True)还是时间(False)
+            return_states (bool): 是否返回状态变量
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
@@ -73,6 +76,7 @@ class IF(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             batch_first = batch_first,
+            return_states = return_states,
             device = device,
             dtype = dtype
         )
@@ -95,11 +99,13 @@ class IF(Soma):
         x, h = _SF.if_neuron(x, h, self.u_threshold, self.u_rest, self.firing_str, self.hard_reset)
         if self.batch_first:
             x = x.swapaxes(0, 1)
-        return x, h
+        if self.return_states:
+            return x, h
+        return x
 
 
 class LIF(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, return_states: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Leaky-Integrate-and-Fire(LIF)神经元。
         一阶电位变换公式为：
@@ -111,6 +117,7 @@ class LIF(Soma):
             spiking_function (Firing): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
             batch_first (bool): 第一维为批(True)还是时间(False)
+            return_states (bool): 是否返回状态变量
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
@@ -120,6 +127,7 @@ class LIF(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             batch_first = batch_first,
+            return_states = return_states,
             device = device,
             dtype = dtype
         )
@@ -132,7 +140,7 @@ class LIF(Soma):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["tau_m=%g" % self.tau_m]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+        return ", ".join([", ".join(["tau_m=%g" % self.tau_m]), Soma.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor, h: _Optional[torch.Tensor] = None) -> _Tuple[torch.Tensor, torch.Tensor]:
@@ -152,11 +160,13 @@ class LIF(Soma):
         x, h = _SF.lif_neuron(x, h, self.u_threshold, self.u_rest, self.tau_m, self.firing_str, self.hard_reset)
         if self.batch_first:
             x = x.swapaxes(0, 1)
-        return x, h
+        if self.return_states:
+            return x, h
+        return x
 
 
 class QIF(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, u_c: float = 1.0, a_0: float = 1.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, u_c: float = 1.0, a_0: float = 1.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, return_states: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Quadratic Integrate-and-Fire(QIF)神经元。
         一阶电位变换公式为：
@@ -170,6 +180,7 @@ class QIF(Soma):
             spiking_function (Firing): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
             batch_first (bool): 第一维为批(True)还是时间(False)
+            return_states (bool): 是否返回状态变量
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
@@ -179,6 +190,7 @@ class QIF(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             batch_first = batch_first,
+            return_states = return_states,
             device = device,
             dtype = dtype
         )
@@ -193,7 +205,7 @@ class QIF(Soma):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["tau_m=%g" % self.tau_m, "a_0=%g" % self.a_0, "u_C=%g" % self.u_c]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+        return ", ".join([", ".join(["tau_m=%g" % self.tau_m, "a_0=%g" % self.a_0, "u_C=%g" % self.u_c]), Soma.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor, h: _Optional[torch.Tensor] = None) -> _Tuple[torch.Tensor, torch.Tensor]:
@@ -213,11 +225,13 @@ class QIF(Soma):
         x, h = _SF.qif_neuron(x, h, self.u_threshold, self.u_rest, self.tau_m, self.u_c, self.a_0, self.firing_str, self.hard_reset)
         if self.batch_first:
             x = x.swapaxes(0, 1)
-        return x, h
+        if self.return_states:
+            return x, h
+        return x
 
 
 class ExpIF(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, u_t: float = 0.0, delta_t: float = 0.001, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, return_states: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Exponential Integrate-and-Fire(ExpIF)神经元。
         一阶电位变换公式为：
@@ -231,6 +245,7 @@ class ExpIF(Soma):
             spiking_function (Firing): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
             batch_first (bool): 第一维为批(True)还是时间(False)
+            return_states (bool): 是否返回状态变量
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
@@ -240,6 +255,7 @@ class ExpIF(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             batch_first = batch_first,
+            return_states = return_states,
             device = device,
             dtype = dtype
         )
@@ -254,7 +270,7 @@ class ExpIF(Soma):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["tau_m=%g" % self.tau_m, "u_t=%g" % self.u_t, "delta_t=%g" % self.delta_t]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+        return ", ".join([", ".join(["tau_m=%g" % self.tau_m, "u_t=%g" % self.u_t, "delta_t=%g" % self.delta_t]), Soma.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor, h: _Optional[torch.Tensor] = None) -> _Tuple[torch.Tensor, torch.Tensor]:
@@ -274,11 +290,13 @@ class ExpIF(Soma):
         x, h = _SF.expif_neuron(x, h, self.u_threshold, self.u_rest, self.tau_m, self.u_t, self.delta_t, self.firing_str, self.hard_reset)
         if self.batch_first:
             x = x.swapaxes(0, 1)
-        return x, h
+        if self.return_states:
+            return x, h
+        return x
 
 
 class Izhikevich(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, a: float = 1.0, b: float = 1.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, a: float = 1.0, b: float = 1.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, return_states: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """, 
         Izhikevich神经元。
         一阶电位变换公式为：
@@ -292,6 +310,7 @@ class Izhikevich(Soma):
             spiking_function (Firing): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
             batch_first (bool): 第一维为批(True)还是时间(False)
+            return_states (bool): 是否返回状态变量
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
@@ -301,6 +320,7 @@ class Izhikevich(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             batch_first = batch_first,
+            return_states = return_states,
             device = device,
             dtype = dtype
         )
@@ -314,7 +334,7 @@ class Izhikevich(Soma):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["a=%g" % self.a, "b=%g" % self.b]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+        return ", ".join([", ".join(["a=%g" % self.a, "b=%g" % self.b]), Soma.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor, h_w: _Optional[_Tuple[torch.Tensor, torch.Tensor]] = None) -> _Tuple[torch.Tensor, _Tuple[torch.Tensor, torch.Tensor]]:
@@ -339,11 +359,13 @@ class Izhikevich(Soma):
         x, (h, w) = _SF.izhikevich_neuron(x, h, w, self.u_threshold, self.u_rest, self.a, self.b, self.firing_str, self.hard_reset)
         if self.batch_first:
             x = x.swapaxes(0, 1)
-        return x, (h, w)
+        if self.return_states:
+            return x, (h, w)
+        return x
 
 
 class KLIF(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, k: float = 0.2, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, k: float = 0.2, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, return_states: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         KLIF神经元
         Args:
@@ -354,6 +376,7 @@ class KLIF(Soma):
             spiking_function (Firing): 计算脉冲时所使用的阶跃函数
             hard_reset (bool): 是否为硬重置
             batch_first (bool): 第一维为批(True)还是时间(False)
+            return_states (bool): 是否返回状态变量
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
@@ -363,6 +386,7 @@ class KLIF(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             batch_first = batch_first,
+            return_states = return_states,
             device = device,
             dtype = dtype
         )
@@ -376,7 +400,7 @@ class KLIF(Soma):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["tau_m=%g" % self.tau_m, "k=%g" % self.k]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+        return ", ".join([", ".join(["tau_m=%g" % self.tau_m, "k=%g" % self.k]), Soma.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor, h: _Optional[torch.Tensor] = None) -> _Tuple[torch.Tensor, torch.Tensor]:
@@ -396,11 +420,13 @@ class KLIF(Soma):
         x, h = _SF.klif_neuron(x, h, self.u_threshold, self.u_rest, self.tau_m, self.k, self.firing_str, self.hard_reset)
         if self.batch_first:
             x = x.swapaxes(0, 1)
-        return x, h
+        if self.return_states:
+            return x, h
+        return x
 
 
 class LIAF(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, spiking_function: _Firing = _Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, batch_first: bool = False, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, spiking_function: _Firing = _Gaussian(), activation_function: nn.Module = nn.ReLU(), hard_reset: bool = True, batch_first: bool = False, return_states: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         Leaky Integrate-and-Analog-Fire(LIAF)神经元
         Args:
@@ -411,6 +437,7 @@ class LIAF(Soma):
             activation_function (nn.Module): 激活函数
             hard_reset (bool): 是否为硬重置
             batch_first (bool): 第一维为批(True)还是时间(False)
+            return_states (bool): 是否返回状态变量
             device (torch.device): 所计算的设备
             dtype (torch.dtype): 所计算的数据类型
         """
@@ -420,6 +447,7 @@ class LIAF(Soma):
             spiking_function = spiking_function,
             hard_reset = hard_reset,
             batch_first = batch_first,
+            return_states = return_states,
             device = device,
             dtype = dtype
         )
@@ -433,7 +461,7 @@ class LIAF(Soma):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["tau_m=%g" % self.tau_m]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+        return ", ".join([", ".join(["tau_m=%g" % self.tau_m]), Soma.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor, h: _Optional[torch.Tensor] = None) -> _Tuple[torch.Tensor, torch.Tensor]:
@@ -454,4 +482,6 @@ class LIAF(Soma):
         x = self.activation_function(u)
         if self.batch_first:
             x = x.swapaxes(0, 1)
-        return x, h
+        if self.return_states:
+            return x, h
+        return x

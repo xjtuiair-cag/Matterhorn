@@ -21,7 +21,7 @@ class Container(_Module):
 
 
 class Sequential(Container, nn.Sequential):
-    def __init__(self, *args: _Tuple[nn.Module]) -> None:
+    def __init__(self, *args: _Tuple[nn.Module], return_states: bool = True) -> None:
         """
         对Sequential进行重写，涵盖ANN与SNN的网络。
         Args:
@@ -29,6 +29,16 @@ class Sequential(Container, nn.Sequential):
         """
         Container.__init__(self)
         nn.Sequential.__init__(self, *args)
+        self.return_states = return_states
+
+
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return ", ".join(["return_states=%s" % (self.return_states,)])
 
 
     def forward(self, x: torch.Tensor, states: _Optional[_Iterable] = None) -> _Union[torch.Tensor, _Tuple[torch.Tensor, _Iterable]]:
@@ -52,4 +62,6 @@ class Sequential(Container, nn.Sequential):
             if isinstance(x, _Tuple):
                 x, states[idx] = x
         
-        return x, states
+        if self.return_states:
+            return x, states
+        return x

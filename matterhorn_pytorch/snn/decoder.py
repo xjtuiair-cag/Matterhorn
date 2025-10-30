@@ -20,15 +20,6 @@ class Decoder(_Module):
         super().__init__()
 
 
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来。
-        Returns:
-            repr_str (str): 参数表
-        """
-        return super().extra_repr()
-
-
 class SumSpike(Decoder):
     def __init__(self) -> None:
         """
@@ -90,7 +81,7 @@ class TimeBased(Decoder):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["empty_fill=%g" % self.empty_fill]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+        return ", ".join(["empty_fill=%g" % self.empty_fill])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

@@ -20,15 +20,6 @@ class Encoder(_Module):
         super().__init__()
 
 
-    def extra_repr(self) -> str:
-        """
-        额外的表达式，把参数之类的放进来。
-        Returns:
-            repr_str (str): 参数表
-        """
-        return super().extra_repr()
-
-
 class Direct(Encoder):
     def __init__(self) -> None:
         """
@@ -106,8 +97,8 @@ class Poisson(Encoder):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["time_steps=%d" % self.time_steps]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
-    
+        return ", ".join(["time_steps=%d" % self.time_steps])
+
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -144,7 +135,7 @@ class Temporal(Encoder):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["time_steps=%d" % self.time_steps, "prob=%g" % self.prob]) + ((", " + super().extra_repr()) if len(super().extra_repr()) else "")
+        return ", ".join(["time_steps=%d" % self.time_steps, "prob=%g" % self.prob])
 
 
     def forward(self, x: torch.Tensor, t_offset: int = 0) -> torch.Tensor:

@@ -31,6 +31,15 @@ class Layer(_Module):
         self.batch_first = batch_first
 
 
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return ", ".join(["batch_first=%s" % (self.batch_first)])
+
+
     def _check_ndim(self, x: torch.Tensor) -> None:
         if (self._required_ndims is not None) and (x.ndim not in self._required_ndims):
             raise AssertionError("Dimension of input tensor is required to be in %s, got %d." % (self._required_ndims, x.ndim))
@@ -69,7 +78,7 @@ class STDPLayer(_Module):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["pos=%g*exp(-x/%g)" % (self.a_pos, self.tau_pos), "neg=-%g*exp(x/%g)" % (self.a_neg, self.tau_neg)]) + (", " + super().extra_repr() if len(super().extra_repr()) else "")
+        return ", ".join(["pos=%g*exp(-x/%g)" % (self.a_pos, self.tau_pos), "neg=-%g*exp(x/%g)" % (self.a_neg, self.tau_neg)])
 
 
 class STDPLinear(STDPLayer):
@@ -106,7 +115,7 @@ class STDPLinear(STDPLayer):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["in_features=%d" % self.in_features, "out_features=%d" % self.out_features]) + (", " + super().extra_repr() if len(super().extra_repr()) else "")
+        return ", ".join([", ".join(["%d" % self.in_features, "%d" % self.out_features]), STDPLayer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor, h_traces: _Optional[_Tuple[torch.Tensor, torch.Tensor, torch.Tensor]] = None) -> torch.Tensor:
@@ -176,7 +185,7 @@ class STDPConv2d(STDPLayer):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join(["in_channels=%d" % self.in_channels, "out_channels=%d" % self.out_channels, "kernel_size=(%d, %d)" % tuple(self.kernel_size), "stride=(%d, %d)" % tuple(self.stride), "padding=(%d, %d)" % tuple(self.padding), "dilation=(%d, %d)" % tuple(self.dilation)]) + (", " + super().extra_repr() if len(super().extra_repr()) else "")
+        return ", ".join([", ".join(["%d" % self.in_channels, "%d" % self.out_channels, "kernel_size=(%d, %d)" % tuple(self.kernel_size), "stride=(%d, %d)" % tuple(self.stride), "padding=(%d, %d)" % tuple(self.padding), "dilation=(%d, %d)" % tuple(self.dilation)]), STDPLayer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor, h_traces: _Optional[_Tuple[torch.Tensor, torch.Tensor, torch.Tensor]] = None) -> torch.Tensor:
@@ -233,7 +242,7 @@ class MaxPool1d(Layer, nn.MaxPool1d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.MaxPool1d.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.MaxPool1d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -289,7 +298,7 @@ class MaxPool2d(Layer, nn.MaxPool2d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.MaxPool2d.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.MaxPool2d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -345,7 +354,7 @@ class MaxPool3d(Layer, nn.MaxPool3d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.MaxPool3d.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.MaxPool3d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -399,7 +408,7 @@ class AvgPool1d(Layer, nn.AvgPool1d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.AvgPool1d.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.AvgPool1d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -455,7 +464,7 @@ class AvgPool2d(Layer, nn.AvgPool2d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.AvgPool2d.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.AvgPool2d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -511,7 +520,7 @@ class AvgPool3d(Layer, nn.AvgPool3d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.AvgPool3d.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.AvgPool3d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -561,7 +570,7 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.MaxUnpool1d.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.MaxUnpool1d.extra_repr(self), Layer.extra_repr(self)])
     
 
     def forward(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
@@ -613,7 +622,7 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.MaxUnpool2d.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.MaxUnpool2d.extra_repr(self), Layer.extra_repr(self)])
     
 
     def forward(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
@@ -665,7 +674,7 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.MaxUnpool3d.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.MaxUnpool3d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor, indices: torch.Tensor, output_size: _Optional[_Iterable[int]] = None) -> torch.Tensor:
@@ -718,7 +727,7 @@ class Upsample(Layer, nn.Upsample):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Upsample.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.Upsample.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -762,7 +771,7 @@ class Flatten(Layer, nn.Flatten):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Flatten.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.Flatten.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -806,7 +815,7 @@ class Unflatten(Layer, nn.Unflatten):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Unflatten.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.Unflatten.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -850,7 +859,7 @@ class Dropout(Layer, nn.Dropout):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Dropout.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.Dropout.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -897,7 +906,7 @@ class Dropout1d(Layer, nn.Dropout1d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Dropout1d.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.Dropout1d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -945,7 +954,7 @@ class Dropout2d(Layer, nn.Dropout2d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Dropout2d.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.Dropout2d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -993,7 +1002,7 @@ class Dropout3d(Layer, nn.Dropout3d):
         Returns:
             repr_str (str): 参数表
         """
-        return ", ".join([nn.Dropout3d.extra_repr(self), _Module.extra_repr(self)])
+        return ", ".join([nn.Dropout3d.extra_repr(self), Layer.extra_repr(self)])
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

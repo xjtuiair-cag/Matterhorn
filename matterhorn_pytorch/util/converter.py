@@ -14,6 +14,17 @@ from rich import print
 from rich.progress import track
 
 
+_NN_MODULE_LINEAR = (nn.Linear,)
+_NN_MODULE_CONV = (nn.Conv1d, nn.Conv2d, nn.Conv3d)
+_NN_MODULE_ICONV = (nn.ConvTranspose1d, nn.ConvTranspose2d, nn.ConvTranspose3d)
+_NN_MODULE_NORM = (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.LayerNorm)
+_NN_MODULE_ACTIVATIONS = (nn.ReLU, nn.LeakyReLU, nn.ELU, nn.SELU, nn.GELU, nn.SiLU)
+_NN_MODULE_MAX_POOL = (nn.MaxPool1d, nn.MaxPool2d, nn.MaxPool3d)
+_NN_MODULE_AVG_POOL = (nn.AvgPool1d, nn.AvgPool2d, nn.AvgPool3d)
+_NN_MODULE_RESHAPE = (nn.Flatten, nn.Unflatten)
+_NN_MODULE_DROPOUT = (nn.Dropout, nn.Dropout1d, nn.Dropout2d, nn.Dropout3d)
+
+
 def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lambda x: x[0], replace_rule: Optional[Callable] = None, mode: str = "max") -> snn.Module:
     """
     ANN转SNN。
@@ -26,10 +37,14 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
     Returns:
         res (snn.Module): 转换后的SNN模型
     """
+    global act_sn_lambdas
+    act_sn_lambdas = {}
+
     model = deepcopy(model)
     res: snn.Module = None
     # 1. 逐个替换模块
     def _clone_params(ann_module: nn.Module, snn_module: snn.Module) -> snn.Module:
+        global act_sn_lambdas
         params = ann_module.state_dict()
         new_params = snn_module.state_dict()
         for name in params:
@@ -38,6 +53,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
         return snn_module
 
     def _replace(ann_module: nn.Module) -> snn.Module:
+        global act_sn_lambdas
         snn_module: snn.Module = None
         if replace_rule is not None:
             snn_module = replace_rule(deepcopy(ann_module))
@@ -46,7 +62,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
         if isinstance(ann_module, snn.Module):
             snn_module = deepcopy(ann_module)
         # 全连接层
-        elif isinstance(ann_module, nn.Linear):
+        elif isinstance(ann_module, _NN_MODULE_LINEAR):
             snn_module = snn.Linear(
                 in_features = ann_module.in_features,
                 out_features = ann_module.out_features,
@@ -56,7 +72,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             )
             snn_module = _clone_params(ann_module, snn_module)
         # 卷积层
-        elif isinstance(ann_module, (nn.Conv1d, nn.Conv2d, nn.Conv3d)):
+        elif isinstance(ann_module, _NN_MODULE_CONV):
             kwargs = dict(
                 in_channels = ann_module.in_channels,
                 out_channels = ann_module.out_channels,
@@ -78,7 +94,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 snn_module = snn.Conv3d(**kwargs)
             snn_module = _clone_params(ann_module, snn_module)
         # 转置卷积层
-        elif isinstance(ann_module, (nn.ConvTranspose1d, nn.ConvTranspose2d, nn.ConvTranspose3d)):
+        elif isinstance(ann_module, _NN_MODULE_ICONV):
             kwargs = dict(
                 in_channels = ann_module.in_channels,
                 out_channels = ann_module.out_channels,
@@ -100,8 +116,8 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             elif isinstance(ann_module, nn.ConvTranspose3d):
                 snn_module = snn.ConvTranspose3d(**kwargs)
             snn_module = _clone_params(ann_module, snn_module)
-        elif isinstance(ann_module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, nn.LayerNorm)):
-            snn_module = snn.synapse.NormPlaceholder(
+        elif isinstance(ann_module, _NN_MODULE_NORM):
+            kwargs = dict(
                 num_features = ann_module.num_features,
                 eps = ann_module.eps,
                 momentum = ann_module.momentum,
@@ -110,17 +126,28 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 device = ann_module.running_mean.device,
                 dtype = ann_module.running_mean.dtype
             )
+            if isinstance(ann_module, nn.BatchNorm1d):
+                snn_module = snn.BatchNorm1d(**kwargs)
+            elif isinstance(ann_module, nn.BatchNorm2d):
+                snn_module = snn.BatchNorm2d(**kwargs)
+            elif isinstance(ann_module, nn.BatchNorm3d):
+                snn_module = snn.BatchNorm3d(**kwargs)
             snn_module = _clone_params(ann_module, snn_module)
         # 激活函数
-        elif isinstance(ann_module, (nn.ReLU, nn.LeakyReLU, nn.ELU, nn.SELU, nn.GELU)):
+        elif isinstance(ann_module, _NN_MODULE_ACTIVATIONS):
             snn_module = snn.IF(
                 u_threshold = 1.0,
                 u_rest = 0.0,
-                hard_reset = False
+                hard_reset = False,
+                return_states = False
             )
-            setattr(ann_module, "snn_module", snn_module)
+            act_sn_lambdas[id(snn_module)] = {
+                "module": snn_module,
+                "act_idx": id(ann_module),
+                "lambda_l": 1e-9
+            }
         # 最大池化
-        elif isinstance(ann_module, (nn.MaxPool1d, nn.MaxPool2d, nn.MaxPool3d)):
+        elif isinstance(ann_module, _NN_MODULE_MAX_POOL):
             kwargs = dict(
                 kernel_size = ann_module.kernel_size,
                 stride = ann_module.stride,
@@ -136,7 +163,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             elif isinstance(ann_module, nn.MaxPool3d):
                 snn_module = snn.MaxPool3d(**kwargs)
         # 平均池化
-        elif isinstance(ann_module, (nn.AvgPool1d, nn.AvgPool2d, nn.AvgPool3d)):
+        elif isinstance(ann_module, _NN_MODULE_AVG_POOL):
             kwargs = dict(
                 kernel_size = ann_module.kernel_size,
                 stride = ann_module.stride,
@@ -153,7 +180,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 kwargs["divisor_override"] = ann_module.divisor_override
                 snn_module = snn.AvgPool3d(**kwargs)
         # 展开和反展开
-        elif isinstance(ann_module, (nn.Flatten, nn.Unflatten)):
+        elif isinstance(ann_module, _NN_MODULE_RESHAPE):
             if isinstance(ann_module, nn.Flatten):
                 snn_module = snn.Flatten(
                     start_dim = ann_module.start_dim,
@@ -165,7 +192,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                     unflattened_size = ann_module.unflattened_size
                 )
         # 遗忘层
-        elif isinstance(ann_module, (nn.Dropout, nn.Dropout1d, nn.Dropout2d, nn.Dropout3d)):
+        elif isinstance(ann_module, _NN_MODULE_DROPOUT):
             kwargs = dict(
                 p = ann_module.p,
                 inplace = ann_module.inplace
@@ -183,7 +210,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             modules = []
             for module in ann_module:
                 modules.append(_replace(module))
-            snn_module = snn.Sequential(*modules)
+            snn_module = snn.Sequential(*modules, return_states = False)
         # 模块集合
         elif isinstance(ann_module, (nn.ModuleList, nn.ModuleDict)):
             if isinstance(ann_module, nn.ModuleList):
@@ -216,6 +243,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
         global graph_cache
         graph_cache = []
         def register_hook(model: snn.Module, hook: Callable) -> Iterable:
+            global act_sn_lambdas
             hooks = []
             hooks.append(model.register_forward_hook(hook))
             for name, module in model.named_children():
@@ -223,17 +251,20 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
             return hooks
         
         def remove_hook(hooks: Iterable) -> None:
+            global act_sn_lambdas
             for hook in hooks:
                 hook.remove()
 
         # 2. 赋予前向钩子，记录放缩值，记录在每个IF神经元的lambda_l参数中
         def lambda_hook(model: snn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
-            if isinstance(model, (nn.ReLU, nn.LeakyReLU, nn.ELU, nn.SELU, nn.GELU)):
+            global act_sn_lambdas
+            if isinstance(model, _NN_MODULE_ACTIVATIONS):
                 max_out = torch.max(output)
-                snn_model: snn.Module = getattr(model, "snn_module")
-                lambda_l = getattr(snn_model, "lambda_l") if hasattr(snn_model, "lambda_l") else torch.full_like(max_out, 1e-9)
-                lambda_l = max(max_out, lambda_l)
-                setattr(snn_model, "lambda_l", lambda_l)
+                for sn_idx in act_sn_lambdas:
+                    if id(model) == act_sn_lambdas[sn_idx]["act_idx"]:
+                        lambda_l = act_sn_lambdas[sn_idx]["lambda_l"]
+                        lambda_l = max(max_out, lambda_l)
+                        act_sn_lambdas[sn_idx]["lambda_l"] = lambda_l
 
         hooks = register_hook(model, lambda_hook)
         model.eval()
@@ -247,6 +278,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
 
         # 3. 根据所记录的lambda值，更新权重与偏置
         def scale_hook(model: snn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
+            global act_sn_lambdas
             is_node = (not len(list(model.children())) and not isinstance(model, snn.firing.Firing)) or isinstance(model, snn.soma.Soma)
             if not is_node:
                 return
@@ -261,7 +293,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                         graph_cache.append((model, i, output))
             
             def _search_node(start_tensor: torch.Tensor, return_cond: Callable, halt_cond: Callable) -> Tuple[snn.Module, bool, int]:
-                global graph_cache
+                global graph_cache, act_sn_lambdas
                 return_modules: Iterable[snn.Module] = []
                 search_succeed: bool = False
                 for _model, _input, _output in reversed(graph_cache):
@@ -280,7 +312,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 return return_modules, search_succeed
             
             is_synapse = lambda x: isinstance(x, (snn.Linear, snn.Conv1d, snn.Conv2d, snn.Conv3d, snn.ConvTranspose1d, snn.ConvTranspose2d, snn.ConvTranspose3d))
-            is_norm = lambda x: isinstance(x, (snn.synapse.NormPlaceholder,))
+            is_norm = lambda x: isinstance(x, (snn.BatchNorm1d, snn.BatchNorm2d, snn.BatchNorm3d))
             is_soma = lambda x: isinstance(x, (snn.IF,))
 
             if is_norm(model):
@@ -309,7 +341,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 for synapse in synapses:
                     # IF -> Conv
                     # print("IF -> Conv\n", model, "\n", synapse, "\n")
-                    lambda_l = getattr(model, "lambda_l") if hasattr(model, "lambda_l") else 1.0
+                    lambda_l = act_sn_lambdas[id(model)]["lambda_l"]
                     synapse_params = synapse.state_dict()
                     w = synapse_params["weight"].clone()
                     w = w / lambda_l
@@ -325,7 +357,7 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 for soma in somas:
                     # Conv -> IF
                     # print("Conv -> IF\n", model, "\n", soma, "\n")
-                    lambda_l = getattr(soma, "lambda_l") if hasattr(soma, "lambda_l") else 1.0
+                    lambda_l = act_sn_lambdas[id(soma)]["lambda_l"]
                     synapse_params = model.state_dict()
                     w = synapse_params["weight"].clone()
                     w = w * lambda_l
@@ -342,16 +374,16 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
         remove_hook(hooks)
     
     def _remove_norm(before: snn.Module) -> snn.Module:
+        global act_sn_lambdas
         after: snn.Module = None
         after = deepcopy(before)
         for name, module in before.named_children():
-            if isinstance(module, snn.synapse.NormPlaceholder):
-                setattr(after, name, snn.Identity())
-            elif isinstance(module, snn.IF):
-                if hasattr(module, "lambda_l"):
-                    delattr(module, "lambda_l")
+            if isinstance(module, (snn.BatchNorm1d, snn.BatchNorm2d, snn.BatchNorm3d)):
+                setattr(after, name, nn.Identity())
             else:
                 setattr(after, name, _remove_norm(module))
         return after
+    
     res = _remove_norm(res)
+    del act_sn_lambdas
     return res

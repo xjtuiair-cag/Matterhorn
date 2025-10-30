@@ -29,6 +29,15 @@ class Synapse(_Module):
         self.batch_first = batch_first
 
 
+    def extra_repr(self) -> str:
+        """
+        额外的表达式，把参数之类的放进来。
+        Returns:
+            repr_str (str): 参数表
+        """
+        return ", ".join(["batch_first=%s" % (self.batch_first)])
+
+
     def _check_ndim(self, x: torch.Tensor) -> None:
         if (self._required_ndims is not None) and (x.ndim not in self._required_ndims):
             raise AssertionError("Dimension of input tensor is required to be in %s, got %d." % (self._required_ndims, x.ndim))
