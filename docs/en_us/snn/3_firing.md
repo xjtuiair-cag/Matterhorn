@@ -2,9 +2,9 @@
 
 [Back to `matterhorn_pytorch.snn`](./README.md)
 
-[English](../../en_us/snn/3_surrogate.md)
+[English](../../en_us/snn/3_firing.md)
 
-[中文](../../zh_cn/snn/3_surrogate.md)
+[中文](../../zh_cn/snn/3_firing.md)
 
 ## Module Introduction
 
@@ -12,7 +12,7 @@ Spiking neurons rely on the Heaviside step function to determine whether to gene
 
 $$u(x) := x \ge u_{th} ? 1 : 0$$
 
-![Heaviside Step Function](../../../assets/docs/snn/surrogate_1.png)
+![Heaviside Step Function](../../../assets/docs/snn/firing_1.png)
 
 We use the `>=` operator to represent the Heaviside step function in spiking neurons. However, there is a problem: the derivative of the Heaviside step function, Dirac delta function
 
@@ -38,7 +38,7 @@ $$h(x)=\frac{1}{a}(|x|\le\frac{a}{2})$$
 
 Where the parameter $a$ is smaller, the narrower the rectangular window, and the higher the highest point $\frac{1}{a}$ of the rectangular window.
 
-![Rectangular Window Surrogate Gradient](../../../assets/docs/snn/surrogate_2.png)
+![Rectangular Window Surrogate Gradient](../../../assets/docs/snn/firing_2.png)
 
 Let $\frac{1}{a}=1$, we can get default value of parameter $a=1$.
 
@@ -72,7 +72,7 @@ $$h(x)=(\frac{\sqrt{a}}{2}-\frac{a}{4}|x|)sgn(\frac{2}{\sqrt{a}}-|x|),|x|<\frac{
 
 Where the parameter $a$ is larger, the narrower the triangular window, and the higher the highest point $\frac{\sqrt{a}}{2}$ of the triangular window.
 
-![Polynomial Surrogate Gradient](../../../assets/docs/snn/surrogate_3.png)
+![Polynomial Surrogate Gradient](../../../assets/docs/snn/firing_3.png)
 
 Let $\frac{\sqrt{a}}{2}=1$, we can get default value of parameter $a=2^{2}=4$.
 
@@ -106,7 +106,7 @@ $$h(x)=\frac{1}{a}\frac{e^{\frac{x}{a}}}{(1+e^{\frac{x}{a}})^{2}}$$
 
 Where the parameter $a$ is smaller, the tighter it is, and the higher the highest point $\frac{1}{4a}$.
 
-![Sigmoid Derivative as Surrogate Gradient](../../../assets/docs/snn/surrogate_4.png)
+![Sigmoid Derivative as Surrogate Gradient](../../../assets/docs/snn/firing_4.png)
 
 Let $\frac{1}{4a}=1$, we can get default value of parameter $a=\frac{1}{4}=0.25$.
 
@@ -140,7 +140,7 @@ $$h(x)=\frac{1}{\sqrt{2\pi a}}e^{\frac{-x^{2}}{2a}}$$
 
 Where the parameter $a$ is smaller, the tighter it is, and the higher the highest point $\frac{1}{\sqrt{2\pi a}}$.
 
-![Gaussian Surrogate Gradient](../../../assets/docs/snn/surrogate_5.png)
+![Gaussian Surrogate Gradient](../../../assets/docs/snn/firing_5.png)
 
 Let $\frac{1}{\sqrt{2\pi a}}=1$, we can get default value of parameter $a=\frac{1}{2\pi} \approx 0.16$.
 

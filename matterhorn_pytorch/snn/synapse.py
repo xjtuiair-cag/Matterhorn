@@ -152,6 +152,7 @@ class WSLinear(_WeightStd, Linear):
             in_features = in_features,
             out_features = out_features,
             bias = bias,
+            batch_first = batch_first,
             device = device,
             dtype = dtype
         )
@@ -278,6 +279,7 @@ class WSConv1d(_WeightStd, Conv1d):
             groups = groups,
             bias = bias,
             padding_mode = padding_mode,
+            batch_first = batch_first,
             device = device,
             dtype = dtype
         )
@@ -405,6 +407,7 @@ class WSConv2d(_WeightStd, Conv2d):
             groups = groups,
             bias = bias,
             padding_mode = padding_mode,
+            batch_first = batch_first,
             device = device,
             dtype = dtype
         )
@@ -532,6 +535,7 @@ class WSConv3d(_WeightStd, Conv3d):
             groups = groups,
             bias = bias,
             padding_mode = padding_mode,
+            batch_first = batch_first,
             device = device,
             dtype = dtype
         )

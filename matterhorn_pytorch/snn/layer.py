@@ -255,6 +255,11 @@ class MaxPool1d(Layer, nn.MaxPool1d):
         """
         self._check_ndim(x)
         x, shape = self._fold_for_parallel(x, 3)
+        if self.return_indices:
+            y, i = nn.MaxPool1d.forward(self, x)
+            y = self._unfold_from_parallel(y, shape)
+            i = self._unfold_from_parallel(i, shape)
+            return y, i
         y = nn.MaxPool1d.forward(self, x)
         y = self._unfold_from_parallel(y, shape)
         return y
@@ -311,6 +316,11 @@ class MaxPool2d(Layer, nn.MaxPool2d):
         """
         self._check_ndim(x)
         x, shape = self._fold_for_parallel(x, 4)
+        if self.return_indices:
+            y, i = nn.MaxPool2d.forward(self, x)
+            y = self._unfold_from_parallel(y, shape)
+            i = self._unfold_from_parallel(i, shape)
+            return y, i
         y = nn.MaxPool2d.forward(self, x)
         y = self._unfold_from_parallel(y, shape)
         return y
@@ -367,6 +377,11 @@ class MaxPool3d(Layer, nn.MaxPool3d):
         """
         self._check_ndim(x)
         x, shape = self._fold_for_parallel(x, 5)
+        if self.return_indices:
+            y, i = nn.MaxPool3d.forward(self, x)
+            y = self._unfold_from_parallel(y, shape)
+            i = self._unfold_from_parallel(i, shape)
+            return y, i
         y = nn.MaxPool3d.forward(self, x)
         y = self._unfold_from_parallel(y, shape)
         return y
@@ -546,9 +561,9 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
         """
         一维最大反池化。
         Args:
-            kernel_size (size_3_t): 池化核大小
-            stride (size_3_t | None): 池化核步长
-            padding (size_3_t): 边界填充的长度
+            kernel_size (int*): 池化核大小
+            stride (int* | None): 池化核步长
+            padding (int*): 边界填充的长度
             batch_first (bool): 第一维为批(True)还是时间(False)
         """
         
@@ -583,8 +598,10 @@ class MaxUnpool1d(Layer, nn.MaxUnpool1d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        assert x.shape == indices.shape, "Unmatched shape for input tensor %s and indices %s." % (x.shape, indices.shape)
         self._check_ndim(x)
         x, shape = self._fold_for_parallel(x, 3)
+        indices, _ = self._fold_for_parallel(indices, 3)
         y = nn.MaxUnpool1d.forward(self, x, indices, output_size)
         y = self._unfold_from_parallel(y, shape)
         return y
@@ -598,9 +615,9 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
         """
         二维最大反池化。
         Args:
-            kernel_size (size_3_t): 池化核大小
-            stride (size_3_t | None): 池化核步长
-            padding (size_3_t): 边界填充的长度
+            kernel_size (int*): 池化核大小
+            stride (int* | None): 池化核步长
+            padding (int*): 边界填充的长度
             batch_first (bool): 第一维为批(True)还是时间(False)
         """
         
@@ -635,8 +652,10 @@ class MaxUnpool2d(Layer, nn.MaxUnpool2d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        assert x.shape == indices.shape, "Unmatched shape for input tensor %s and indices %s." % (x.shape, indices.shape)
         self._check_ndim(x)
         x, shape = self._fold_for_parallel(x, 4)
+        indices, _ = self._fold_for_parallel(indices, 4)
         y = nn.MaxUnpool2d.forward(self, x, indices, output_size)
         y = self._unfold_from_parallel(y, shape)
         return y
@@ -650,9 +669,9 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
         """
         一维最大反池化。
         Args:
-            kernel_size (size_3_t): 池化核大小
-            stride (size_3_t | None): 池化核步长
-            padding (size_3_t): 边界填充的长度
+            kernel_size (int*): 池化核大小
+            stride (int* | None): 池化核步长
+            padding (int*): 边界填充的长度
             batch_first (bool): 第一维为批(True)还是时间(False)
         """
         
@@ -687,8 +706,10 @@ class MaxUnpool3d(Layer, nn.MaxUnpool3d):
         Returns:
             y (torch.Tensor): 当前层脉冲$O_{i}^{l}(t)$
         """
+        assert x.shape == indices.shape, "Unmatched shape for input tensor %s and indices %s." % (x.shape, indices.shape)
         self._check_ndim(x)
         x, shape = self._fold_for_parallel(x, 5)
+        indices, _ = self._fold_for_parallel(indices, 5)
         y = nn.MaxUnpool3d.forward(self, x, indices, output_size)
         y = self._unfold_from_parallel(y, shape)
         return y

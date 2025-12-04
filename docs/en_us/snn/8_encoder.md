@@ -32,6 +32,34 @@ res = encoder(data)
 print(res.shape)
 ```
 
+## `matterhorn_pytorch.snn.AnalogEncoder` / `matterhorn_pytorch.snn.encoder.Analog`
+
+An encoder for analog value encoding. After extracting data from the `DataLoader`, it duplicates the data unchanged to each time step, then outputs analog values with a shape of `[T, B, ...]`.
+
+```python
+Analog(
+    time_steps: int = 1,
+)
+```
+
+### Constructor Parameters
+
+`time_steps (int)`: The time step length `T` of the generated tensor after analog encoding.
+
+### Example Usage
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+data = torch.rand(4, 1, 28, 28) # [B, C, H, W]
+print(data.shape)
+encoder = mth.snn.AnalogEncoder(16)
+res = encoder(data)
+print(res.shape)
+```
+
 ## `matterhorn_pytorch.snn.PoissionEncoder` / `matterhorn_pytorch.snn.encoder.Poission`
 
 Encoder for Poisson encoding (rate encoding). Converts values to the probability of each neuron in the input layer emitting spikes. It can be described by the following formula:
@@ -42,13 +70,22 @@ where $rand(\cdot)$ is a random number function that generates random numbers in
 
 ```python
 Poisson(
-    time_steps: int = 1
+    time_steps: int = 1,
+    input_range: _Tuple[float, float] | _Tuple[int, int] | float | int | None = None,
+    precision: float = 1e-5,
+    count: bool = False
 )
 ```
 
 ### Constructor Arguments
 
 `time_steps (int)`: Length of the tensor after Poisson encoding, denoted as `T`.
+
+`input_range (float* | int*)`: The lower and upper bounds of the input, used for normalizing the input to suit Poisson encoding. Defaults to `(0.0, 1.0)`.
+
+`precision (float)`: Since $\lambda > 0$ in a Poisson distribution, this parameter specifies the lower bound for $\lambda`.
+
+`count (bool)`: Whether to send the spike count.
 
 ### Example Usage
 
@@ -57,7 +94,7 @@ import torch
 import matterhorn_pytorch as mth
 
 
-data = torch.rand(4, 1, 28, 28) # [B = 4, C, H, W]
+data = torch.rand(4, 1, 28, 28) # [B, C, H, W]
 print(data.shape)
 encoder = mth.snn.PoissionEncoder(32)
 res = encoder(data)

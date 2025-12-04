@@ -10,11 +10,17 @@
 
 SNNs and ANNs are fundamentally similar in synaptic computation. The synapses of SNNs take spike trains as input signals, undergo certain processing, and output postsynaptic potentials (PSP).
 
-## `matterhorn.snn.synapse.Synapse`
+## `matterhorn_pytorch.snn.synapse.Synapse`
 
 ```python
-Synapse()
+Synapse(
+    batch_first: bool = False
+)
 ```
+
+### Constructor Parameters
+
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
 
 ### Overridable Methods
 
@@ -35,6 +41,7 @@ Linear(
     in_features: int,
     out_features: int,
     bias: bool = True,
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -47,6 +54,8 @@ Linear(
 `out_features (int)`: Output length `O`. The output shape is `[B, O]` (single-time-step mode) or `[T, B, O]` (multi-time-step mode).
 
 `bias (bool)`: Whether to include bias. If `True`, it performs $W\vec{x}+\vec{b}$, otherwise $W\vec{x}$.
+
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
 
 `device (torch.device)`: Computational device to use.
 
@@ -81,6 +90,7 @@ Conv1d(
     groups: int = 1,
     bias: bool = True,
     padding_mode: str = "zeros",
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -105,6 +115,8 @@ Conv1d(
 `bias (bool)`: Whether to include bias.
 
 `padding_mode (str)`: Padding mode.
+
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
 
 `device (torch.device)`: Computational device to use.
 
@@ -141,6 +153,7 @@ Conv2d(
     groups: int = 1,
     bias: bool = True,
     padding_mode: str = "zeros",
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -171,6 +184,8 @@ Conv2d(
 `bias (bool)`: Whether to include bias.
 
 `padding_mode (str)`: Padding mode.
+
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
 
 `device (torch.device)`: Computational device to use.
 
@@ -205,6 +220,7 @@ Conv3d(
     groups: int = 1,
     bias: bool = True,
     padding_mode: str = "zeros",
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -229,6 +245,8 @@ Conv3d(
 `bias (bool)`: Whether to include bias.
 
 `padding_mode (str)`: Padding mode.
+
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
 
 `device (torch.device)`: Computational device to use.
 
@@ -260,6 +278,7 @@ ConvTranspose1d(
     bias: bool = True,
     dilation: _size_1_t = 1,
     padding_mode: str = "zeros",
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -286,6 +305,8 @@ ConvTranspose1d(
 `dilation (size_1_t)`: During the original convolution, how many pixels to perform a multiplication and addition operation.
 
 `padding_mode (str)`: Padding mode.
+
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
 
 `device (torch.device)`: Computational device to use.
 
@@ -317,7 +338,7 @@ ConvTranspose2d(
     bias: bool = True,
     dilation: _size_2_t = 1,
     padding_mode: str = "zeros",
-    ulti_time_step: bool = False,
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -344,6 +365,8 @@ ConvTranspose2d(
 `dilation (size_2_t)`: During the original convolution, how many pixels to perform a multiplication and addition operation.
 
 `padding_mode (str)`: Padding mode.
+
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
 
 `device (torch.device)`: Computational device to use.
 
@@ -373,6 +396,7 @@ ConvTranspose3d(
     bias: bool = True,
     dilation: _size_3_t = 1,
     padding_mode: str = "zeros",
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -401,6 +425,8 @@ Three-dimensional transposed convolution (deconvolution) operation of synapses.
 `dilation (size_3_t)`: During the original convolution, how many pixels to perform a multiplication and addition operation.
 
 `padding_mode (str)`: Padding mode.
+
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
 
 `device (torch.device)`: Computational device to use.
 
@@ -431,6 +457,7 @@ BatchNorm1d(
     momentum: float = 0.1,
     affine: bool = True,
     track_running_stats: bool = True,
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -447,6 +474,8 @@ BatchNorm1d(
 `affine (bool)`: Whether to enable parameters $\gamma$ and $\beta$ for affine transformation.
 
 `track_running_stats (bool)`: Whether to track the entire training process for batch normalization learning.
+
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
 
 `device (torch.device)`: Computational device to use.
 
@@ -477,6 +506,7 @@ BatchNorm2d(
     momentum: float = 0.1,
     affine: bool = True,
     track_running_stats: bool = True,
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -493,6 +523,8 @@ BatchNorm2d(
 `affine (bool)`: Whether to enable parameters $\gamma$ and $\beta$ for affine transformation.
 
 `track_running_stats (bool)`: Whether to track the entire training process for batch normalization learning.
+
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
 
 `device (torch.device)`: Computational device to use.
 
@@ -523,6 +555,7 @@ BatchNorm3d(
     momentum: float = 0.1,
     affine: bool = True,
     track_running_stats: bool = True,
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -539,6 +572,8 @@ BatchNorm3d(
 `affine (bool)`: Whether to enable parameters $\gamma$ and $\beta$ for affine transformation.
 
 `track_running_stats (bool)`: Whether to track the entire training process for batch normalization learning.
+
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
 
 `device (torch.device)`: Computational device to use.
 
@@ -567,6 +602,7 @@ LayerNorm(
     normalized_shape: _shape_t,
     eps: float = 0.00001,
     elementwise_affine: bool = True,
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -580,6 +616,8 @@ LayerNorm(
 
 `elementwise_affine (bool)`: Whether to enable parameters $\gamma$ and $\beta$ for element-wise affine transformation.
 
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
+
 `device (torch.device)`: Computational device to use.
 
 `dtype (torch.dtype)`: Data type to use for computation.
@@ -592,4 +630,58 @@ import matterhorn_pytorch as mth
 
 
 ln = mth.snn.LayerNorm((28, 28))
+```
+
+## `matterhorn_pytorch.snn.MultiheadAttention` / `matterhorn_pytorch.snn.synapse.MultiheadAttention`
+
+Multi-head self-attention mechanism, performing multi-head self-attention computation along the time dimension $T$.
+
+```python
+MultiheadAttention(
+    embed_dim: int,
+    num_heads: int,
+    dropout: float = 0.0,
+    bias: bool = True,
+    add_bias_kv: bool = False,
+    add_zero_attn: bool = False,
+    kdim: _Optional[int] = None,
+    vdim: _Optional[int] = None,
+    batch_first: bool = False,
+    device: torch.device = None,
+    dtype: torch.dtype = None
+)
+```
+
+### Constructor Parameters
+
+`embed_dim (int)`: Feature dimension $C$.
+
+`num_heads (int)`: Number of heads.
+
+`dropout (float)`: Dropout rate (probability of discarding information).
+
+`bias (bool)`: Whether to include bias.
+
+`add_bias_kv (bool)`: Whether `key` and `value` have a special bias.
+
+`add_zero_attn (bool)`: Whether to add a new batch to `key` and `value`.
+
+`kdim (int | None)`: Feature dimension of `key`. Defaults to `embed_dim`.
+
+`vdim (int | None)`: Feature dimension of `value`. Defaults to `embed_dim`.
+
+`batch_first (bool)`: Whether the first dimension is batch size (`True`) or time step (`False`).
+
+`device (torch.device)`: The computing device used for calculation.
+
+`dtype (torch.dtype)`: The data type used for calculation.
+
+### Example Usage
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+mha = mth.snn.MultiheadAttention(8, 4)
 ```

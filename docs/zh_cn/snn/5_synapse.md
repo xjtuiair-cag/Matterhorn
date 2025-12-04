@@ -10,11 +10,17 @@
 
 SNNs 与 ANNs 在突触的计算上基本一致。 SNNs 的突触将脉冲序列作为输入信号，经过一定的处理，输出突触后电位（PSP）。
 
-## `matterhorn.snn.synapse.Synapse`
+## `matterhorn_pytorch.snn.synapse.Synapse`
 
 ```python
-Synapse()
+Synapse(
+    batch_first: bool = False
+)
 ```
+
+### 构造函数参数
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
 
 ### 可重载的方法
 
@@ -35,6 +41,7 @@ Linear(
     in_features: int,
     out_features: int,
     bias: bool = True,
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -47,6 +54,8 @@ Linear(
 `out_features (int)` ：输出的长度 `O` 。输出的形状为 `[B, O]` （单时间步模式） 或 `[T, B, O]` （多时间步模式）。
 
 `bias (bool)` ：是否要加入偏置，为 `True` 则执行 $W\vec{x}+\vec{b}$ ，为 `False` 则执行 $W\vec{x}$ 。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -81,6 +90,7 @@ Conv1d(
     groups: int = 1,
     bias: bool = True,
     padding_mode: str = "zeros",
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -105,6 +115,8 @@ Conv1d(
 `bias (bool)` ：是否要加入偏置。
 
 `padding_mode (str)` ：边缘填充的方式。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -141,6 +153,7 @@ Conv2d(
     groups: int = 1,
     bias: bool = True,
     padding_mode: str = "zeros",
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -171,6 +184,8 @@ Conv2d(
 `bias (bool)` ：是否要加入偏置。
 
 `padding_mode (str)` ：边缘填充的方式。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -205,6 +220,7 @@ Conv3d(
     groups: int = 1,
     bias: bool = True,
     padding_mode: str = "zeros",
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -229,6 +245,8 @@ Conv3d(
 `bias (bool)` ：是否要加入偏置。
 
 `padding_mode (str)` ：边缘填充的方式。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -260,6 +278,7 @@ ConvTranspose1d(
     bias: bool = True,
     dilation: _size_1_t = 1,
     padding_mode: str = "zeros",
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -286,6 +305,8 @@ ConvTranspose1d(
 `dilation (size_1_t)` ：在原卷积时，每隔多少像素进行一次乘加操作。
 
 `padding_mode (str)` ：边缘填充的方式。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -317,7 +338,7 @@ ConvTranspose2d(
     bias: bool = True,
     dilation: _size_2_t = 1,
     padding_mode: str = "zeros",
-    ulti_time_step: bool = False,
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -344,6 +365,8 @@ ConvTranspose2d(
 `dilation (size_2_t)` ：在原卷积时，每隔多少像素进行一次乘加操作。
 
 `padding_mode (str)` ：边缘填充的方式。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -375,6 +398,7 @@ ConvTranspose3d(
     bias: bool = True,
     dilation: _size_3_t = 1,
     padding_mode: str = "zeros",
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -401,6 +425,8 @@ ConvTranspose3d(
 `dilation (size_3_t)` ：在原卷积时，每隔多少像素进行一次乘加操作。
 
 `padding_mode (str)` ：边缘填充的方式。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -431,6 +457,7 @@ BatchNorm1d(
     momentum: float = 0.1,
     affine: bool = True,
     track_running_stats: bool = True,
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -447,6 +474,8 @@ BatchNorm1d(
 `affine (bool)` ：是否启用参数 $\gamma$ 和 $\beta$ ，进行仿射变换。
 
 `track_running_stats (bool)` ：是否需要跟踪整个训练过程来进行批归一化的学习。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -477,6 +506,7 @@ BatchNorm2d(
     momentum: float = 0.1,
     affine: bool = True,
     track_running_stats: bool = True,
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -493,6 +523,8 @@ BatchNorm2d(
 `affine (bool)` ：是否启用参数 $\gamma$ 和 $\beta$ ，进行仿射变换。
 
 `track_running_stats (bool)` ：是否需要跟踪整个训练过程来进行批归一化的学习。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -523,6 +555,7 @@ BatchNorm3d(
     momentum: float = 0.1,
     affine: bool = True,
     track_running_stats: bool = True,
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -539,6 +572,8 @@ BatchNorm3d(
 `affine (bool)` ：是否启用参数 $\gamma$ 和 $\beta$ ，进行仿射变换。
 
 `track_running_stats (bool)` ：是否需要跟踪整个训练过程来进行批归一化的学习。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -567,6 +602,7 @@ LayerNorm(
     normalized_shape: _shape_t,
     eps: float = 0.00001,
     elementwise_affine: bool = True,
+    batch_first: bool = False,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -580,6 +616,8 @@ LayerNorm(
 
 `elementwise_affine (bool)` ：是否启用参数 $\gamma$ 和 $\beta$ ，进行逐元素仿射变换。
 
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
+
 `device (torch.device)` ：计算所使用的计算设备。
 
 `dtype (torch.dtype)` ：计算所使用的数据类型。
@@ -592,4 +630,58 @@ import matterhorn_pytorch as mth
 
 
 ln = mth.snn.LayerNorm((28, 28))
+```
+
+## `matterhorn_pytorch.snn.MultiheadAttention` / `matterhorn_pytorch.snn.synapse.MultiheadAttention`
+
+多头自注意力机制，沿时间维度 $T$ 进行多头自注意力计算。
+
+```python
+MultiheadAttention(
+    embed_dim: int,
+    num_heads: int,
+    dropout: float = 0.0,
+    bias: bool = True,
+    add_bias_kv: bool = False,
+    add_zero_attn: bool = False,
+    kdim: _Optional[int] = None,
+    vdim: _Optional[int] = None,
+    batch_first: bool = False,
+    device: torch.device = None,
+    dtype: torch.dtype = None
+)
+```
+
+### 构造函数参数
+
+`embed_dim (int)` ：特征维度 $C$。
+
+`num_heads (int)` ：头的个数。
+
+`dropout (float)` ：遗忘率（丢弃信息的概率）。
+
+`bias (bool)` ：是否具有偏置。
+
+`add_bias_kv (bool)` ：`key` 和 `value` 是否具备特殊偏置。
+
+`add_zero_attn (bool)` ：是否在 `key` 和 `value` 上加一个新的批次。
+
+`kdim (int | None)` ：`key` 的特征维度，默认为 `embed_dim`。
+
+`vdim (int | None)` ：`value` 的特征维度，默认为 `embed_dim`。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
+
+`device (torch.device)` ：计算所使用的计算设备。
+
+`dtype (torch.dtype)` ：计算所使用的数据类型。
+
+### 示例用法
+
+```python
+import torch
+import matterhorn_pytorch as mth
+
+
+mha = mth.snn.MultiheadAttention(8, 4)
 ```

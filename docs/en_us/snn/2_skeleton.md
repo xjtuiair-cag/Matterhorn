@@ -37,3 +37,35 @@ class Demo(mth.snn.Module):
 #### `extra_repr(self) -> str`
 
 Same usage as `torch.nn.Module.extra_repr()`, customizes the string containing module parameters for printing.
+
+### Private Methods
+
+#### `_fold_for_parallel(self, x: torch.Tensor, target_dim: int | None = None) -> Tuple[torch.Tensor, int*]`
+
+Compresses the first few dimensions of the data so that `x.ndim == target_dim`. Commonly used to compress the time dimension into the batch dimension, enabling the module to perform parallel computation across multiple time steps.
+
+**Parameters**
+
+`x (torch.Tensor)`: The uncompressed tensor.
+
+`target_dim (int | None)`: The target number of dimensions after compression. If `None`, the first two dimensions are compressed by default, regardless of the original number of dimensions.
+
+**Returns**
+
+`y (torch.Tensor)`: The compressed tensor.
+
+`shape (int*)`: The original shape of the compressed dimension (the first dimension).
+
+#### `_unfold_from_parallel(self, x: torch.Tensor, shape: int*) -> torch.Tensor`
+
+After parallel computation, decompresses the dimension that was compressed for parallel computation, restoring it to its correct shape.
+
+**Parameters**
+
+`x (torch.Tensor)`: The compressed tensor.
+
+`shape (int*)`: The original shape of the compressed dimension (the first dimension).
+
+**Returns**
+
+`y (torch.Tensor)`: The decompressed tensor.

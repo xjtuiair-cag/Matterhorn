@@ -17,10 +17,7 @@ from typing import Any as _Any, Tuple as _Tuple, Mapping as _Mapping, Callable a
 class Soma(_Module):
     def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, return_states: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
-        Response-Firing-Reset三段式神经元胞体骨架，分别为：
-        （1）通过上一时刻的电位$U_{i}^{l}(t-1)$和当前时刻的输入电位$X_{i}^{l}(t)$计算电位导数$dU/dt=U_{i}^{l}(t)-U_{i}^{l}(t-1)$，进而获得当前电位$U_{i}^{l}(t)$；
-        （2）通过当前电位$U_{i}^{l}(t)$计算当前脉冲$O_{i}^{l}(t)$；
-        （3）通过当前脉冲$O_{i}^{l}(t)$重置当前电位$U_{i}^{l}(t)$。
+        神经元胞体骨架。
         Args:
             u_threshold (float): 阈电位$u_{th}$
             u_rest (float): 静息电位$u_{rest}$
@@ -356,7 +353,7 @@ class Izhikevich(Soma):
             h = torch.full_like(x[0], self.u_rest)
         if w is None:
             w = torch.full_like(x[0], 0.0)
-        x, (h, w) = _SF.izhikevich_neuron(x, h, w, self.u_threshold, self.u_rest, self.a, self.b, self.firing_str, self.hard_reset)
+        x, (h, w) = _SF.izhikevich_neuron(x, (h, w), self.u_threshold, self.u_rest, self.a, self.b, self.firing_str, self.hard_reset)
         if self.batch_first:
             x = x.swapaxes(0, 1)
         if self.return_states:
@@ -365,7 +362,7 @@ class Izhikevich(Soma):
 
 
 class KLIF(Soma):
-    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, k: float = 0.2, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, return_states: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
+    def __init__(self, u_threshold: float = 1.0, u_rest: float = 0.0, tau_m: float = 2.0, k: float = 2.0, spiking_function: _Firing = _Gaussian(), hard_reset: bool = True, batch_first: bool = False, return_states: bool = True, device: torch.device = None, dtype: torch.dtype = None) -> None:
         """
         KLIF神经元
         Args:

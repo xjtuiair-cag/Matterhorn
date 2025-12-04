@@ -2,9 +2,9 @@
 
 [回到 `matterhorn_pytorch.snn`](./README.md)
 
-[English](../../en_us/snn/3_surrogate.md)
+[English](../../en_us/snn/3_firing.md)
 
-[中文](../../zh_cn/snn/3_surrogate.md)
+[中文](../../zh_cn/snn/3_firing.md)
 
 ## 模块简介
 
@@ -12,7 +12,7 @@
 
 $$u(x) := x \ge u_{th} ? 1 : 0$$
 
-![Heaviside 阶跃函数](../../../assets/docs/snn/surrogate_1.png)
+![Heaviside 阶跃函数](../../../assets/docs/snn/firing_1.png)
 
 我们使用 `>=` 算子来表示脉冲神经元中的 Heaviside 阶跃函数。此时出现一个问题： Heaviside 阶跃函数的导数—— Dirac 冲激响应函数
 
@@ -38,7 +38,7 @@ $$h(x)=\frac{1}{a}(|x|\le\frac{a}{2})$$
 
 其中，参数 $a$ 越小，对应的矩形窗越窄，矩形窗的最高点 $\frac{1}{a}$ 也越高。
 
-![矩形窗替代梯度](../../../assets/docs/snn/surrogate_2.png)
+![矩形窗替代梯度](../../../assets/docs/snn/firing_2.png)
 
 令 $\frac{1}{a}=1$ ，可得默认值 $a=1$ 。
 
@@ -72,7 +72,7 @@ $$h(x)=(\frac{\sqrt{a}}{2}-\frac{a}{4}|x|)sgn(\frac{2}{\sqrt{a}}-|x|),|x|<\frac{
 
 其中，参数 $a$ 越大，对应的三角形窗越窄，三角形窗的最高点 $\frac{\sqrt{a}}{2}$ 也越高。
 
-![多项式替代梯度](../../../assets/docs/snn/surrogate_3.png)
+![多项式替代梯度](../../../assets/docs/snn/firing_3.png)
 
 令 $\frac{\sqrt{a}}{2}=1$ ，可得默认值 $a=2^{2}=4$ 。
 
@@ -106,7 +106,7 @@ $$h(x)=\frac{1}{a}\frac{e^{\frac{x}{a}}}{(1+e^{\frac{x}{a}})^{2}}$$
 
 其中，参数 $a$ 越小，其越紧凑，最高点 $\frac{1}{4a}$ 也越高。
 
-![Sigmoid 导数作为替代梯度](../../../assets/docs/snn/surrogate_4.png)
+![Sigmoid 导数作为替代梯度](../../../assets/docs/snn/firing_4.png)
 
 令 $\frac{1}{4a}=1$ ，可得默认值 $a=\frac{1}{4}=0.25$ 。
 
@@ -140,7 +140,7 @@ $$h(x)=\frac{1}{\sqrt{2\pi a}}e^{\frac{-x^{2}}{2a}}$$
 
 其中，参数 $a$ 越小，其越紧凑，最高点 $\frac{1}{\sqrt{2\pi a}}$ 也越高。
 
-![高斯函数替代梯度](../../../assets/docs/snn/surrogate_5.png)
+![高斯函数替代梯度](../../../assets/docs/snn/firing_5.png)
 
 令 $\frac{1}{\sqrt{2\pi a}}=1$ ，可得默认值 $a=\frac{1}{2\pi} \approx 0.16$ 。
 

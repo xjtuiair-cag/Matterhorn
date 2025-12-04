@@ -57,17 +57,6 @@ y = TF.t_to_s(x, 8)
 print(y)
 ```
 
-```python
-import torch
-import matterhorn_pytorch.tnn.functional as TF
-
-
-x = torch.randint(6, (10,)).float()
-print(x)
-y = TF.t_to_s(x, 8)
-print(y)
-```
-
 ## `matterhorn_pytorch.tnn.functional.t_add`
 
 The "delay" operator in space-time algebra. Represented using $+$.
@@ -75,6 +64,13 @@ The "delay" operator in space-time algebra. Represented using $+$.
 $$Y=X+c \iff Y_{t}=X_{t}+c$$
 
 It represents delaying whole spike train by $c$ time steps.
+
+```python
+t_add(
+    x: torch.Tensor,
+    t: int
+) -> torch.Tensor
+```
 
 Prefixed with `t_` to indicate it computes spike times, so inputs and outputs are `[B, ...]`.
 
@@ -142,6 +138,7 @@ print(y)
 z = TF.t_min(x, y)
 print(z)
 ```
+
 ## `matterhorn_pytorch.tnn.functional.t_xmin`
 
 The "non-simultaneous earliest" operator in space-time algebra. Represented using $\times \veebar$.
@@ -314,6 +311,10 @@ print(z)
 
 The "non-simultaneous" operator in space-time algebra. Represented using $\ne$.
 
+| Operator | $A_{t} < B_{t}$ | $A_{t} = B_{t}$ | $A_{t} > B_{t}$ |
+| :---: | :---: | :---: | :---: |
+| $A \ne B$ | $A$ | $\infty$ | $A$ |
+
 ```python
 t_ne(
     x: torch.Tensor,
@@ -321,9 +322,6 @@ t_ne(
 ) -> torch.Tensor
 ```
 
-| Operator | $A_{t} < B_{t}$ | $A_{t} = B_{t}$ | $A_{t} > B_{t}$ |
-| :---: | :---: | :---: | :---: |
-| $A \ne B$ | $A$ | $\infty$ | $A$ |
 Prefixed with `t_` to indicate it computes spike times, so inputs and outputs are `[B, ...]`.
 
 ### Parameters

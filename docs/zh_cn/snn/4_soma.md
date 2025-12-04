@@ -26,8 +26,12 @@ Matterhorn 的突触模块用于整合来自上一层的脉冲，并将突触后
 Soma(
     u_threshold: float = 1.0,
     u_rest: float = 0.0,
-    spiking_function: torch.nn.Module = surrogate.Gaussian(),
-    hard_reset: bool = True
+    spiking_function: torch.nn.Module = firing.Gaussian(),
+    hard_reset: bool = True,
+    batch_first: bool = False,
+    return_states: bool = True,
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -37,33 +41,23 @@ Soma(
 
 `u_rest (float)` ：静息电位 $u_{rest}$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_firing.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
 
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
+
+`return_states (bool)` ：是否返回状态变量 $H^{l}(T)$。若为 `True`，则返回值为一个二元组 $(X^{l},H^{l}(T))$；若为 `False`，则返回值仅含 $X^{l}$。
+
+`device (torch.device)` ：计算所使用的计算设备。
+
+`dtype (torch.dtype)` ：计算所使用的数据类型。
+
 ### 可重载的方法
 
-胞体的计算过程可以被分为 3 个操作：
+#### `forward(self, o: torch.Tensor) -> torch.Tensor`
 
-#### `f_response(self, h: torch.Tensor, x: torch.Tensor) -> torch.Tensor` ：响应函数
-
-通过突触后电位 $X^{l}(t)$ 和历史电位 $H^{l}(t - 1)$ 计算出当前电位 $U^{l}(t)$ 。不同的脉冲神经元，其本质上的不同是响应函数的不同。
-
-#### `f_firing(self, u: torch.Tensor) -> torch.Tensor` ：脉冲函数
-
-一般为通过 Heaviside 阶跃函数，判断当前电位是否超过了阈电位。
-
-$$O^{l}(t)=(U^{l}(t) \ge u_{th})$$
-
-其中 $u_{th}$ 为阈电位， $\ge$ （`>=`）为代表 Heaviside 阶跃函数的算子。
-
-#### `f_reset(self, u: torch.Tensor, o: torch.Tensor) -> torch.Tensor` ：重置函数
-
-为设置不应期的函数。如果不存在不应期（只重置），就通过以下函数进行一次选择：
-
-$$H^{l}(t)=U^{l}(t)(1-O^{l}(t))+u_{rest}O^{l}(t)$$
-
-其中 $u_{rest}$ 为静息电位。如果存在不应期，则需要一个存储的张量用于记录不应期长度。
+与 `nn.Module.forward` 一致。
 
 ## `matterhorn_pytorch.snn.IF` / `matterhorn_pytorch.snn.soma.IF`
 
@@ -79,8 +73,12 @@ $$U^{l}(t)=H^{l}(t-1)+X^{l}(t)$$
 IF(
     u_threshold: float = 1.0,
     u_rest: float = 0.0,
-    spiking_function: torch.nn.Module = surrogate.Gaussian(),
-    hard_reset: bool = True
+    spiking_function: torch.nn.Module = firing.Gaussian(),
+    hard_reset: bool = True,
+    batch_first: bool = False,
+    return_states: bool = True,
+    device: torch.device = None,
+    dtype: torch.dtype = None
 )
 ```
 
@@ -90,9 +88,17 @@ IF(
 
 `u_rest (float)` ：静息电位 $u_{rest}$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_firing.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
+
+`return_states (bool)` ：是否返回状态变量 $H^{l}(T)$。若为 `True`，则返回值为一个二元组 $(X^{l},H^{l}(T))$；若为 `False`，则返回值仅含 $X^{l}$。
+
+`device (torch.device)` ：计算所使用的计算设备。
+
+`dtype (torch.dtype)` ：计算所使用的数据类型。
 
 ### 示例用法
 
@@ -146,8 +152,10 @@ LIF(
     u_threshold: float = 1.0,
     u_rest: float = 0.0,
     tau_m: float = 2.0,
-    spiking_function: torch.nn.Module = surrogate.Gaussian(),
+    spiking_function: torch.nn.Module = firing.Gaussian(),
     hard_reset: bool = True,
+    batch_first: bool = False,
+    return_states: bool = True,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -161,9 +169,13 @@ LIF(
 
 `tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_firing.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
+
+`return_states (bool)` ：是否返回状态变量 $H^{l}(T)$。若为 `True`，则返回值为一个二元组 $(X^{l},H^{l}(T))$；若为 `False`，则返回值仅含 $X^{l}$。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -224,8 +236,10 @@ QIF(
     tau_m: float = 2.0,
     u_c: float = 1.0,
     a_0: float = 1.0,
-    spiking_function: torch.nn.Module = surrogate.Gaussian(),
+    spiking_function: torch.nn.Module = firing.Gaussian(),
     hard_reset: bool = True,
+    batch_first: bool = False,
+    return_states: bool = True,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -243,9 +257,13 @@ QIF(
 
 `a_0 (float)` ：参数 $a_{0}$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_firing.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
+
+`return_states (bool)` ：是否返回状态变量 $H^{l}(T)$。若为 `True`，则返回值为一个二元组 $(X^{l},H^{l}(T))$；若为 `False`，则返回值仅含 $X^{l}$。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -308,8 +326,10 @@ ExpIF(
     tau_m: float = 2.0,
     u_t: float = 0.0,
     delta_t: float = 0.001,
-    spiking_function: torch.nn.Module = surrogate.Gaussian(),
+    spiking_function: torch.nn.Module = firing.Gaussian(),
     hard_reset: bool = True,
+    batch_first: bool = False,
+    return_states: bool = True,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -327,9 +347,13 @@ ExpIF(
 
 `delta_t (float)` ：参数 $\Delta_{T}$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_firing.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
+
+`return_states (bool)` ：是否返回状态变量 $H^{l}(T)$。若为 `True`，则返回值为一个二元组 $(X^{l},H^{l}(T))$；若为 `False`，则返回值仅含 $X^{l}$。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -397,8 +421,10 @@ Izhikevich(
     u_rest: float = 0.0,
     a: float = 1.0,
     b: float = 1.0,
-    spiking_function: torch.nn.Module = surrogate.Gaussian(),
+    spiking_function: torch.nn.Module = firing.Gaussian(),
     hard_reset: bool = True,
+    batch_first: bool = False,
+    return_states: bool = True,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -414,9 +440,13 @@ Izhikevich(
 
 `b (float)` ：参数 $b$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_firing.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
+
+`return_states (bool)` ：是否返回状态变量 $H^{l}(T)$。若为 `True`，则返回值为一个二元组 $(X^{l},H^{l}(T))$；若为 `False`，则返回值仅含 $X^{l}$。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -474,9 +504,11 @@ KLIF(
     u_threshold: float = 1.0,
     u_rest: float = 0.0,
     tau_m: float = 2.0,
-    k: float = 0.2,
-    spiking_function: Module = surrogate.Gaussian(),
+    k: float = 2.0,
+    spiking_function: Module = firing.Gaussian(),
     hard_reset: bool = True,
+    batch_first: bool = False,
+    return_states: bool = True,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -492,9 +524,13 @@ KLIF(
 
 `k (float)` ：参数 $k$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_firing.md) 。
 
 `hard_reset (bool)` ：是否为硬重置。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
+
+`return_states (bool)` ：是否返回状态变量 $H^{l}(T)$。若为 `True`，则返回值为一个二元组 $(X^{l},H^{l}(T))$；若为 `False`，则返回值仅含 $X^{l}$。
 
 `device (torch.device)` ：计算所使用的计算设备。
 
@@ -537,9 +573,11 @@ LIAF(
     u_threshold: float = 1.0,
     u_rest: float = 0.0,
     tau_m: float = 2.0,
-    spiking_function: torch.nn.Module = surrogate.Gaussian(),
+    spiking_function: torch.nn.Module = firing.Gaussian(),
     activation_function: torch.nn.Module = nn.ReLU(),
     hard_reset: bool = True,
+    batch_first: bool = False,
+    return_states: bool = True,
     device: torch.device = None,
     dtype: torch.dtype = None
 )
@@ -553,11 +591,15 @@ LIAF(
 
 `tau_m (float)` ：膜电位时间常数 $\tau_{m}$ 。
 
-`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_surrogate.md) 。
+`spiking_function (torch.nn.Module)` ：计算脉冲时所使用的阶跃函数，详情参考 [`matterhorn_pytorch.snn.firing`](./3_firing.md) 。
 
 `activation_function (torch.nn.Module)` ：输出所使用的激活函数 $f(U^{l}(t)-u_{th})$ 。
 
 `hard_reset (bool)` ：是否为硬重置。
+
+`batch_first (bool)` ：第一个维度是批大小（`True`）还是时间步（`False`）。
+
+`return_states (bool)` ：是否返回状态变量 $H^{l}(T)$。若为 `True`，则返回值为一个二元组 $(X^{l},H^{l}(T))$；若为 `False`，则返回值仅含 $X^{l}$。
 
 `device (torch.device)` ：计算所使用的计算设备。
 

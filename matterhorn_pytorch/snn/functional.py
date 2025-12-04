@@ -526,12 +526,13 @@ def encode_poisson(x: torch.Tensor, precision: float = 1e-5, count: bool = False
     """
     泊松编码（速率编码），将值转化为脉冲发放率。
     Args:
-        x (torch.Tensor): 数值
+        x (torch.Tensor): 模拟值，发放脉冲的概率。
         precision (float): 精度，值越小输出的脉冲计数分辨率越高
         count (bool): 是否发送脉冲计数
     Returns:
         y (torch.Tensor): 脉冲序列
     """
+    precision = min(1.0, max(1e-32, precision))
     p = torch.clamp(x, 0.0, 1.0 - precision)
     if p.device.type == "mps":
         r = torch.poisson(-torch.log(1.0 - p.cpu())).to(p)
@@ -549,13 +550,14 @@ def encode_temporal(x: torch.Tensor, time_steps: int, t_offset: int = 0, prob: f
     """
     时间编码，将值转化为脉冲发放时间。
     Args:
-        x (torch.Tensor): 数值
+        x (torch.Tensor): 模拟值，开始发放脉冲的时间步。
         time_steps (int): 时间编码的时间步
         t_offset (int): 时间步偏移量
-        prob (float): 是否发送脉冲计数
+        prob (float): 当到达开始发放脉冲的时间步后，发送脉冲的概率。
     Returns:
         y (torch.Tensor): 脉冲序列
     """
+    x = x.float()
     y = torch.stack([le(x, torch.full_like(x, t + t_offset)) * le(torch.rand_like(x), torch.full_like(x, prob)) for t in range(time_steps)])
     return y
 
@@ -603,7 +605,7 @@ def decode_avg_spike(x: torch.Tensor) -> torch.Tensor:
 
 
 @torch.jit.script
-def decode_min_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> torch.Tensor:
+def decode_min_time(x: torch.Tensor, t_offset: int = 0, empty_fill: float = -1) -> torch.Tensor:
     """
     最短时间解码，将脉冲转化为首个脉冲的时间。
     Args:
@@ -621,7 +623,7 @@ def decode_min_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> t
 
 
 @torch.jit.script
-def decode_avg_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> torch.Tensor:
+def decode_avg_time(x: torch.Tensor, t_offset: int = 0, empty_fill: float = -1) -> torch.Tensor:
     """
     平均脉冲时间解码，将脉冲转化为平均脉冲时间。
     Args:
@@ -640,6 +642,35 @@ def decode_avg_time(x: torch.Tensor, t_offset: int, empty_fill: float = -1) -> t
     mask = x_sum > 0
     y = torch.where(mask, t_sum / x_sum + t_offset, torch.full_like(t_sum, empty_fill))
     return y
+
+
+def _firing(u: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, firing: str = "heaviside") -> torch.Tensor:
+    """
+    脉冲函数。
+    Args:
+        u (torch.Tensor): 当前电位
+        u_threshold (torch.Tensor): 阈电位
+        u_rest (torch.Tensor): 静息电位
+        firing (str): 选择替代梯度
+    Returns:
+        o (torch.Tensor): 当前脉冲
+    """
+    u_threshold = u_threshold.to(u)
+    u_rest = u_rest.to(u)
+    if firing == "floor":
+        return floor((u - u_rest) / (u_threshold - u_rest))
+    elif firing == "ceil":
+        return ceil((u - u_rest) / (u_threshold - u_rest))
+    elif firing == "round":
+        return round((u - u_rest) / (u_threshold - u_rest))
+    elif firing == "rectangular":
+        return heaviside_rectangular(u - u_threshold)
+    elif firing == "polynomial":
+        return heaviside_polynomial(u - u_threshold)
+    elif firing == "sigmoid":
+        return heaviside_sigmoid(u - u_threshold)
+    else:
+        return heaviside_gaussian(u - u_threshold)
 
 
 @torch.jit.script
@@ -672,35 +703,6 @@ def reset_soft(u: torch.Tensor, o: torch.Tensor, u_threshold: torch.Tensor, u_re
     """
     h = u - o * (u_threshold.to(u) - u_rest.to(u))
     return h
-
-
-def _firing(u: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, firing: str = "heaviside") -> torch.Tensor:
-    """
-    脉冲函数。
-    Args:
-        u (torch.Tensor): 当前电位
-        u_threshold (torch.Tensor): 阈电位
-        u_rest (torch.Tensor): 静息电位
-        firing (str): 选择替代梯度
-    Returns:
-        o (torch.Tensor): 当前脉冲
-    """
-    u_threshold = u_threshold.to(u)
-    u_rest = u_rest.to(u)
-    if firing == "floor":
-        return floor((u - u_rest) / (u_threshold - u_rest))
-    elif firing == "ceil":
-        return ceil((u - u_rest) / (u_threshold - u_rest))
-    elif firing == "round":
-        return round((u - u_rest) / (u_threshold - u_rest))
-    elif firing == "rectangular":
-        return heaviside_rectangular(u - u_threshold)
-    elif firing == "polynomial":
-        return heaviside_polynomial(u - u_threshold)
-    elif firing == "sigmoid":
-        return heaviside_sigmoid(u - u_threshold)
-    else:
-        return heaviside_gaussian(u - u_threshold)
 
 
 @torch.jit.script
@@ -827,13 +829,12 @@ def expif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_
 
 
 @torch.jit.script
-def izhikevich_neuron(x: torch.Tensor, h: torch.Tensor, w: torch.Tensor, u_threshold: torch.Tensor, u_rest: torch.Tensor, a: torch.Tensor, b: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, _Tuple[torch.Tensor, torch.Tensor]]:
+def izhikevich_neuron(x: torch.Tensor, h_w: _Tuple[torch.Tensor, torch.Tensor], u_threshold: torch.Tensor, u_rest: torch.Tensor, a: torch.Tensor, b: torch.Tensor, firing: str = "heaviside", hard_reset: bool = True) -> _Tuple[torch.Tensor, _Tuple[torch.Tensor, torch.Tensor]]:
     """
     Izhikevich神经元。
     Args:
         x (torch.Tensor): 当前输入，形状为[T, B, ...]
-        h (torch.Tensor): 初始残余电位，形状为[B, ...]
-        w (torch.Tensor): 初始状态w，形状为[B, ...]
+        h_w (*torch.Tensor): 初始残余电位及状态w，形状均为[B, ...]
         u_threshold (torch.Tensor): 阈电位
         u_rest (torch.Tensor): 静息电位
         a (torch.Tensor): 参数$a$
@@ -842,8 +843,9 @@ def izhikevich_neuron(x: torch.Tensor, h: torch.Tensor, w: torch.Tensor, u_thres
         hard_reset (bool): 重置为硬重置/归零重置(True)还是软重置/减法重置(False)
     Returns:
         o (torch.Tensor): 当前脉冲，形状为[T, B, ...]
-        h_w (torch.Tensor): 最终残余电位与状态w，形状均为[B, ...]
+        h_w (*torch.Tensor): 最终残余电位及状态w，形状均为[B, ...]
     """
+    h, w = h_w
     o_seq = []
     for t in range(x.shape[0]):
         dw = a * (b * h - w)

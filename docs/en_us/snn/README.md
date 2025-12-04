@@ -66,7 +66,7 @@ This module defines surrogate gradients for the Heaviside step function of spiki
 
 Containing `matterhorn_pytorch.snn` modules: `Rectangular`, `Polynomial`, `Sigmoid`, and `Gaussian`.
 
-You can read [the documentation](./3_surrogate.md) to learn more about the usage of classes and variables.
+You can read [the documentation](./3_firing.md) to learn more about the usage of classes and variables.
 
 ## `matterhorn_pytorch.snn.synapse`: Synapse of Spiking Neurons
 

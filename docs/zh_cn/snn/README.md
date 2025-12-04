@@ -66,7 +66,7 @@
 
 含有的 `matterhorn_pytorch.snn` 模块： `Rectangular` 、 `Polynomial` 、 `Sigmoid` 和 `Gaussian` 。
 
-您可以阅读[文档](./3_surrogate.md)以了解更多类与变量的使用方法。
+您可以阅读[文档](./3_firing.md)以了解更多类与变量的使用方法。
 
 ## `matterhorn_pytorch.snn.synapse` ： 脉冲神经元的突触
 
