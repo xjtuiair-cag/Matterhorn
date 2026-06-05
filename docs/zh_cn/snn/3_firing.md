@@ -26,7 +26,7 @@ $$\delta (x) := x = u_{th} ? +\infty : 0$$
 
 （2） $\int_{- \infty}^{+ \infty}{h(x)dx}=1$ 。
 
-模块中定义了 4 个 Heaviside 阶跃函数的替代梯度，您可以在参考文献 [1] 中找到关于它们的详细定义。
+模块中定义了 7 个 Heaviside 阶跃函数的替代梯度（`Rectangular` 、 `Polynomial` 、 `Sigmoid` 、 `Gaussian` 、 `Floor` 、 `Ceil` 和 `Round`）。前 4 个的详细定义您可以在参考文献 [1] 中找到； `Floor` 、 `Ceil` 和 `Round` 为多值脉冲发射函数。
 
 该模块中的类一般实例化后作为 `matterhorn_pytorch.snn.soma` 中脉冲神经元胞体的 `spiking_function` 参数传入。
 
@@ -164,6 +164,60 @@ import matterhorn_pytorch as mth
 soma = mth.snn.LIF(
     spiking_function = mth.snn.Gaussian()
 )
+```
+
+## `matterhorn_pytorch.snn.Floor()` / `matterhorn_pytorch.snn.firing.Floor`
+
+多值脉冲发射函数。输出脉冲个数为归一化膜电位的向下取整：
+
+$$o = \lfloor (u - u_{rest}) / (u_{threshold} - u_{rest}) \rfloor$$
+
+```python
+Floor()
+```
+
+### 示例用法
+
+```python
+import matterhorn_pytorch as mth
+
+soma = mth.snn.LIF(spiking_function = mth.snn.Floor())
+```
+
+## `matterhorn_pytorch.snn.Ceil()` / `matterhorn_pytorch.snn.firing.Ceil`
+
+多值脉冲发射函数。输出脉冲个数为归一化膜电位的向上取整：
+
+$$o = \lceil (u - u_{rest}) / (u_{threshold} - u_{rest}) \rceil$$
+
+```python
+Ceil()
+```
+
+### 示例用法
+
+```python
+import matterhorn_pytorch as mth
+
+soma = mth.snn.LIF(spiking_function = mth.snn.Ceil())
+```
+
+## `matterhorn_pytorch.snn.Round()` / `matterhorn_pytorch.snn.firing.Round`
+
+多值脉冲发射函数。输出脉冲个数为归一化膜电位的四舍五入：
+
+$$o = \mathrm{round}((u - u_{rest}) / (u_{threshold} - u_{rest}))$$
+
+```python
+Round()
+```
+
+### 示例用法
+
+```python
+import matterhorn_pytorch as mth
+
+soma = mth.snn.LIF(spiking_function = mth.snn.Round())
 ```
 
 ## 参考文献

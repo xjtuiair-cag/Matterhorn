@@ -26,7 +26,7 @@ The surrogate gradient $h(x)$ should have the following properties:
 
 (2) $\int_{- \infty}^{+ \infty}{h(x)dx}=1$.
 
-The module defines four surrogate gradients of the Heaviside step function, and you can find detailed definitions about them in reference [1].
+The module defines seven surrogate gradients of the Heaviside step function (`Rectangular`, `Polynomial`, `Sigmoid`, `Gaussian`, `Floor`, `Ceil`, and `Round`). Detailed definitions of the first four can be found in reference [1]; `Floor`, `Ceil`, and `Round` are multi-spike firing functions.
 
 The classes in this module are generally instantiated as the `spiking_function` parameter in the soma of spiking neurons (`matterhorn_pytorch.snn.soma`).
 
@@ -164,6 +164,60 @@ import matterhorn_pytorch as mth
 soma = mth.snn.LIF(
     spiking_function = mth.snn.Gaussian()
 )
+```
+
+## `matterhorn_pytorch.snn.Floor()` / `matterhorn_pytorch.snn.firing.Floor`
+
+Multi-spike firing function. The output spike count is the floor of the normalized membrane potential:
+
+$$o = \lfloor (u - u_{rest}) / (u_{threshold} - u_{rest}) \rfloor$$
+
+```python
+Floor()
+```
+
+### Example Usage
+
+```python
+import matterhorn_pytorch as mth
+
+soma = mth.snn.LIF(spiking_function = mth.snn.Floor())
+```
+
+## `matterhorn_pytorch.snn.Ceil()` / `matterhorn_pytorch.snn.firing.Ceil`
+
+Multi-spike firing function. The output spike count is the ceiling of the normalized membrane potential:
+
+$$o = \lceil (u - u_{rest}) / (u_{threshold} - u_{rest}) \rceil$$
+
+```python
+Ceil()
+```
+
+### Example Usage
+
+```python
+import matterhorn_pytorch as mth
+
+soma = mth.snn.LIF(spiking_function = mth.snn.Ceil())
+```
+
+## `matterhorn_pytorch.snn.Round()` / `matterhorn_pytorch.snn.firing.Round`
+
+Multi-spike firing function. The output spike count is the rounded normalized membrane potential:
+
+$$o = \mathrm{round}((u - u_{rest}) / (u_{threshold} - u_{rest}))$$
+
+```python
+Round()
+```
+
+### Example Usage
+
+```python
+import matterhorn_pytorch as mth
+
+soma = mth.snn.LIF(spiking_function = mth.snn.Round())
 ```
 
 ## References

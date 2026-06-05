@@ -1021,6 +1021,31 @@ z = TF.s_ge(x, y)
 print(z)
 ```
 
+## `matterhorn_pytorch.tnn.functional.t_delta`
+
+Compute the time difference between two temporal signals in TNN competitive logic.
+
+```python
+t_delta(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor
+```
+
+## Competitive-Logic (RL) Operators
+
+Besides the 24 space-time algebra operators above, this module also provides competitive-logic operators for building TNN columns. They are grouped into time-domain (`t_rl_*`) and spike-domain (`s_rl_*`) variants.
+
+| Function | Description |
+|----------|-------------|
+| `t_rl_forward_add(x, t)` / `t_rl_add(x, t)` | Delay a temporal signal by `t`. |
+| `t_rl_forward_min(x, y)` / `t_rl_min(x, y)` | Element-wise minimum of two temporal signals. |
+| `t_rl_forward_max(x, y)` / `t_rl_max(x, y)` | Element-wise maximum of two temporal signals. |
+| `t_rl_forward_inh(x, y)` / `t_rl_inh(x, y)` | Inhibit `x` when `y` arrives earlier. |
+| `s_rl_forward_add(x, t)` / `s_rl_add(x, t)` | Delay a spike train by `t` time steps. |
+| `s_rl_forward_min(x, y)` / `s_rl_min(x, y)` | Element-wise minimum of two spike trains. |
+| `s_rl_forward_max(x, y)` / `s_rl_max(x, y)` | Element-wise maximum of two spike trains. |
+| `s_rl_forward_inh(x, y)` / `s_rl_inh(x, y)` | Inhibit spikes in `x` when `y` fires earlier. |
+
+Functions without the `_forward_` prefix are autograd-enabled wrappers; `*_forward_*` variants are the underlying JIT-compiled forward implementations.
+
 ## References
 
 [1] Hestenes D. Space-time algebra[M]. Switzerland: Springer International Publishing, 2015.

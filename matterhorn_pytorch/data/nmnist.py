@@ -16,6 +16,9 @@ from matterhorn_pytorch.data.skeleton import EventDataset2d
 
 
 class NMNIST(EventDataset2d):
+    """
+    N-MNIST神经形态数据集。
+    """
     original_data_polarity_exists = True
     original_size = (1, 2, 34, 34)
     mirrors = ["https://data.mendeley.com/public-files/datasets/468j46mzdv/files/"]

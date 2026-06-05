@@ -22,6 +22,9 @@ import matterhorn_pytorch.data.functional as _DF
 
 
 class EventDataset(Dataset):
+    """
+    神经形态事件数据集的基类，负责下载、缓存与索引管理。
+    """
     idx_filename = "__main__.csv"
     original_data_polarity_exists = False
     original_size = (1,)
@@ -323,6 +326,9 @@ class EventDataset(Dataset):
 
 
 class EventDataset1d(EventDataset):
+    """
+    一维空间（T-X）事件数据集基类。
+    """
     original_size = (1, 2, 128)
 
 
@@ -407,6 +413,9 @@ class EventDataset1d(EventDataset):
 
 
 class EventDataset2d(EventDataset):
+    """
+    二维空间（T-Y-X）事件数据集基类。
+    """
     original_size = (1, 2, 128, 128)
 
 

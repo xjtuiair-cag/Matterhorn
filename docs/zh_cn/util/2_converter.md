@@ -12,7 +12,7 @@ ANN 转 SNN 的基本原理为：在 SNN 模型中，以软重置为重置机制
 
 （1）将数据集（一般为训练集）输入 ANN 中，统计每层 ReLU 函数输出的最大值 $\lambda^{l}$ ；
 
-（2）将 ANN 模块替换成 Matterhorn 对应的 SNN 模块（若是未知模块，则用 `matterhorn_pytorch.snn.container.Proxy` 包裹），随后使用 `matterhorn_pytorch.snn.container.Temporal` 将其转为多时间步的 SNN 模块；
+（2）将 ANN 模块逐个替换成 Matterhorn 对应的 SNN 模块。对于无法自动映射的自定义模块，可通过 `ann_to_snn` 的 `replace_rule` 参数提供替换规则；自 Matterhorn 2.0.0 起，所有 SNN 模块默认以多时间步模式运行，无需额外包装；
 
 （3）以计算图顺序遍历 SNN 模型：
 
@@ -46,6 +46,8 @@ ANN 转 SNN 的转换器。
 ann_to_snn(
     model: nn.Module,
     demo_data: torch.utils.data.Dataset,
+    pre_process: Callable = lambda x: x[0],
+    replace_rule: Optional[Callable] = None,
     mode: str = "max"
 ) -> snn.Module
 ```
@@ -55,6 +57,10 @@ ann_to_snn(
 `model (torch.nn.Module)`：待转的 ANN 模型。
 
 `demo_data (torch.utils.data.Dataset)`：示例数据，用于确定每个激活函数输出的最大值。
+
+`pre_process (Callable)`：从数据集中取出单条样本并转为模型输入张量的预处理函数，默认为 `lambda x: x[0]`。
+
+`replace_rule (Callable | None)`：自定义模块替换规则。若返回非 `None` 的 SNN 模块，则使用该模块替代默认映射。
 
 `mode (str)`：如何确定转换倍率 $\lambda^{l}$。默认为 `"max"`，即每个激活函数的最大值。
 
@@ -106,9 +112,9 @@ if __name__ == "__main__":
         transform = torchvision.transforms.ToTensor(),
         download = True
     )
-    torch.save(a, "ann_model.pt")
+    torch.save(ann_model, "ann_model.pt")
     snn_model = ann_to_snn(ann_model, data)
-    torch.save(s, "snn_model.pt")
+    torch.save(snn_model, "snn_model.pt")
 ```
 
 **注意：** 待转 ANN 模型的所有模块，其 `forward` 函数内要么全为算子的调用，要么全为模块的调用。 **最好不要将算子与模块合并调用（尤其是含有全连接/卷积/激活函数的模块），否则可能无法顺利将 ANN 模型转为 SNN 模型！**

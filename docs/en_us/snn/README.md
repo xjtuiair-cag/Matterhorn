@@ -26,7 +26,7 @@ You can read [the documentation](./9_decoder.md) to learn more about the usage o
 
 This module contains encoders that encode analog values along the temporal dimension into spike sequences. It serves as a bridge for the output of ANNs to be used as input for SNNs.
 
-Containing `matterhorn_pytorch.snn` modules: `DirectEncoder`, `PoissonEncoder`, and `TemporalEncoder`.
+Containing `matterhorn_pytorch.snn` modules: `DirectEncoder`, `AnalogEncoder`, `PoissonEncoder`, and `TemporalEncoder`.
 
 You can read [the documentation](./8_encoder.md) to learn more about the usage of classes and variables.
 
@@ -40,7 +40,7 @@ You can read [the documentation](./1_functional.md) to learn more about the usag
 
 The units in this module, both input and output are spike sequences. It contains flattening layers, pooling layers, etc.
 
-Containing `matterhorn_pytorch.snn` modules: `STDPLinear`, `MaxPool1d`, `MaxPool2d`, `MaxPool3d`, `AvgPool1d`, `AvgPool2d`, `AvgPool3d`, `Flatten`, `Unflatten`, `Dropout`, `Dropout1d`, `Dropout2d`, and `Dropout3d`.
+Containing `matterhorn_pytorch.snn` modules: `STDPLinear`, `STDPConv2d`, `MaxPool1d`, `MaxPool2d`, `MaxPool3d`, `AvgPool1d`, `AvgPool2d`, `AvgPool3d`, `MaxUnpool1d`, `MaxUnpool2d`, `MaxUnpool3d`, `Upsample`, `Flatten`, `Unflatten`, `Dropout`, `Dropout1d`, `Dropout2d`, `Dropout3d`, and `TemporalWiseAttention`.
 
 You can read [the documentation](./6_layer.md) to learn more about the usage of classes and variables.
 
@@ -64,7 +64,7 @@ You can read [the documentation](./4_soma.md) to learn more about the usage of c
 
 This module defines surrogate gradients for the Heaviside step function of spiking neurons. The specific definition can be found in reference [1].
 
-Containing `matterhorn_pytorch.snn` modules: `Rectangular`, `Polynomial`, `Sigmoid`, and `Gaussian`.
+Containing `matterhorn_pytorch.snn` modules: `Rectangular`, `Polynomial`, `Sigmoid`, `Gaussian`, `Floor`, `Ceil`, and `Round`.
 
 You can read [the documentation](./3_firing.md) to learn more about the usage of classes and variables.
 
@@ -72,7 +72,7 @@ You can read [the documentation](./3_firing.md) to learn more about the usage of
 
 This module defines the synapse of SNNs, where the input is a spike sequence and the output is the membrane potential (analog value). It contains operations such as fully connected layers, convolutions, etc.
 
-Containing `matterhorn_pytorch.snn` modules: `Linear`, `Conv1d`, `Conv2d`, `Conv3d`, `ConvTranspose1d`, `ConvTranspose2d`, `ConvTranspose3d`, `BatchNorm1d`, `BatchNorm2d`, `BatchNorm3d`, and `LayerNorm`.
+Containing `matterhorn_pytorch.snn` modules: `Linear`, `WSLinear`, `Conv1d`, `WSConv1d`, `Conv2d`, `WSConv2d`, `Conv3d`, `WSConv3d`, `ConvTranspose1d`, `ConvTranspose2d`, `ConvTranspose3d`, `BatchNorm1d`, `BatchNorm2d`, `BatchNorm3d`, `LayerNorm`, and `MultiheadAttention`.
 
 You can read [the documentation](./5_synapse.md) to learn more about the usage of classes and variables.
 

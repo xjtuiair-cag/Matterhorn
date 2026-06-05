@@ -22,6 +22,7 @@ CIFAR10DVS(
     target_transform: Optional[Callable] = None,
     download: bool = False,
     cached: bool = True,
+    cache_dtype: torch.dtype = torch.uint8,
     count: bool = False,
     time_steps: int = 128,
     width: int = 128,
@@ -71,7 +72,7 @@ test_dataset = CIFAR10DVS(
     time_steps = 128
 )
 demo_data, demo_label = test_dataset[0]
-mth.util.plotter.event_plot_tyx(demo_data, titles = ["Label %s" % test_dataset.labels[demo_label]])
+mth.util.plotter.event_plot_tyx(demo_data)
 ```
 
 ![数据集示例](../../../assets/docs/data/readme_1.png)
@@ -90,6 +91,7 @@ DVS128Gesture(
     target_transform: Optional[Callable] = None,
     download: bool = False,
     cached: bool = True,
+    cache_dtype: torch.dtype = torch.uint8,
     count: bool = False,
     time_steps: int = 128,
     width: int = 128,
@@ -139,7 +141,7 @@ test_dataset = DVS128Gesture(
     time_steps = 128
 )
 demo_data, demo_label = test_dataset[0]
-mth.util.plotter.event_plot_tyx(demo_data, titles = ["Label %s" % test_dataset.labels[demo_label]])
+mth.util.plotter.event_plot_tyx(demo_data)
 ```
 
 ![数据集示例](../../../assets/docs/data/readme_2.png)
@@ -149,13 +151,14 @@ mth.util.plotter.event_plot_tyx(demo_data, titles = ["Label %s" % test_dataset.l
 Spiking Heidelberg Digits （SHD）神经形态数据集。
 
 ```python
-CIFAR10DVS(
+SpikingHeidelbergDigits(
     root: str,
     train: bool = True,
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     download: bool = False,
     cached: bool = True,
+    cache_dtype: torch.dtype = torch.uint8,
     count: bool = False,
     precision: float = 1e9,
     time_steps: int = 128,
@@ -202,7 +205,7 @@ test_dataset = SpikingHeidelbergDigits(
     time_steps = 128
 )
 demo_data, demo_label = test_dataset[0]
-mth.util.plotter.event_plot_tx(demo_data, titles = ["Label %s" % test_dataset.labels[demo_label]])
+mth.util.plotter.event_plot_tx(demo_data)
 ```
 
 ![数据集示例](../../../assets/docs/data/readme_3.png)
@@ -219,6 +222,7 @@ NMNIST(
     target_transform: Optional[Callable] = None,
     download: bool = False,
     cached: bool = True,
+    cache_dtype: torch.dtype = torch.uint8,
     count: bool = False,
     time_steps: int = 128,
     width: int = 34,
@@ -268,7 +272,7 @@ test_dataset = NMNIST(
     time_steps = 128
 )
 demo_data, demo_label = test_dataset[0]
-mth.util.plotter.event_plot_tyx(demo_data, titles = ["Label %s" % test_dataset.labels[demo_label]])
+mth.util.plotter.event_plot_tyx(demo_data)
 ```
 
 ![数据集示例](../../../assets/docs/data/readme_4.png)

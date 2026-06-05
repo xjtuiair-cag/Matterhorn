@@ -32,7 +32,7 @@ You can read [the documentation](./training/README.md) to learn more about the u
 
 ## `matterhorn_pytorch.util`: Utilities
 
-This module carries some utilities useful for researching and deploying spike-based neural networks, such as plotting tools, etc.
+This module carries some utilities useful for researching and deploying spike-based neural networks, such as plotting tools and the ANN-to-SNN converter.
 
 You can read [the documentation](./util/README.md) to learn more about the usage of classes and variables.
 

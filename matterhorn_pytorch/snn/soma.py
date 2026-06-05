@@ -48,6 +48,11 @@ class Soma(_Module):
 
     @property
     def firing_str(self) -> str:
+        """
+        发射函数名称的小写字符串，用于functional层分发。
+        Returns:
+            name (str): 发射函数类名的小写形式
+        """
         return self.spiking_function.__class__.__name__.lower()
 
 

@@ -1044,7 +1044,7 @@ class Dropout3d(Layer, nn.Dropout3d):
 class TemporalWiseAttention(Layer):
     def __init__(self, time_steps: int, d_threshold: float, expand: float = 1.0, batch_first: bool = False) -> None:
         """
-        Tempora-wise Attention连接层：[Yao M, Gao H, Zhao G, et al. Temporal-wise attention spiking neural networks for event streams classification\[C\]//Proceedings of the IEEE/CVF International Conference on Computer Vision. 2021: 10221-10230.](https://openaccess.thecvf.com/content/ICCV2021/html/Yao_Temporal-Wise_Attention_Spiking_Neural_Networks_for_Event_Streams_Classification_ICCV_2021_paper.html)
+        Temporal-wise Attention连接层：[Yao M, Gao H, Zhao G, et al. Temporal-wise attention spiking neural networks for event streams classification\[C\]//Proceedings of the IEEE/CVF International Conference on Computer Vision. 2021: 10221-10230.](https://openaccess.thecvf.com/content/ICCV2021/html/Yao_Temporal-Wise_Attention_Spiking_Neural_Networks_for_Event_Streams_Classification_ICCV_2021_paper.html)
         Args:
             time_steps (int): 时间步长
             d_threshold (float): 注意阈值，用于阶跃函数

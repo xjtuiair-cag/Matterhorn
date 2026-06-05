@@ -19,7 +19,7 @@ def stdp_online(delta_weight: torch.Tensor, input_trace: torch.Tensor, output_tr
         input_trace (torch.Tensor): 输入的迹，形状为[B, O, I]
         output_trace (torch.Tensor): 输出的迹，形状为[B, O, I]
         input_spike_train (torch.Tensor): 当前时间步的输入脉冲，形状为[B, I]
-        output_spike_train (torch.Tensor): 当前时间步的输入脉冲，形状为[B, O]
+        output_spike_train (torch.Tensor): 当前时间步的输出脉冲，形状为[B, O]
         a_pos (float): STDP参数A+
         tau_pos (float): STDP参数tau+
         a_neg (float): STDP参数A-

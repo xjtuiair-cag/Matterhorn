@@ -71,6 +71,51 @@ import matterhorn_pytorch as mth
 fc = mth.snn.Linear(784, 10) # [T, B, 784] -> [T, B, 10]
 ```
 
+## `matterhorn_pytorch.snn.WSLinear` / `matterhorn_pytorch.snn.synapse.WSLinear`
+
+Weight-standardized fully connected layer. Same interface as `Linear`, with weights normalized before the linear transformation.
+
+```python
+WSLinear(
+    in_features: int,
+    out_features: int,
+    bias: bool = True,
+    affine: bool = True,
+    eps: float = 1e-6,
+    batch_first: bool = False,
+    device: torch.device = None,
+    dtype: torch.dtype = None
+)
+```
+
+### Constructor Parameters
+
+Same as `Linear`, plus:
+
+`affine (bool)`: Whether to apply learnable affine parameters $\gamma$ and $\beta$ after weight standardization.
+
+`eps (float)`: Variance offset used in weight standardization.
+
+### Example Usage
+
+```python
+import matterhorn_pytorch as mth
+
+fc = mth.snn.WSLinear(784, 10)
+```
+
+## `matterhorn_pytorch.snn.WSConv1d` / `matterhorn_pytorch.snn.synapse.WSConv1d`
+
+Weight-standardized 1D convolution. Same interface as `Conv1d`, plus `affine` and `eps` parameters.
+
+## `matterhorn_pytorch.snn.WSConv2d` / `matterhorn_pytorch.snn.synapse.WSConv2d`
+
+Weight-standardized 2D convolution. Same interface as `Conv2d`, plus `affine` and `eps` parameters.
+
+## `matterhorn_pytorch.snn.WSConv3d` / `matterhorn_pytorch.snn.synapse.WSConv3d`
+
+Weight-standardized 3D convolution. Same interface as `Conv3d`, plus `affine` and `eps` parameters.
+
 ## `matterhorn_pytorch.snn.Conv1d` / `matterhorn_pytorch.snn.synapse.Conv1d`
 
 One-dimensional convolution operation of synapses. Can be represented as the formula below:

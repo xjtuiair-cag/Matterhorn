@@ -60,7 +60,7 @@ res = encoder(data)
 print(res.shape)
 ```
 
-## `matterhorn_pytorch.snn.PoissionEncoder` / `matterhorn_pytorch.snn.encoder.Poission`
+## `matterhorn_pytorch.snn.PoissonEncoder` / `matterhorn_pytorch.snn.encoder.Poisson`
 
 Encoder for Poisson encoding (rate encoding). Converts values to the probability of each neuron in the input layer emitting spikes. It can be described by the following formula:
 
@@ -96,7 +96,7 @@ import matterhorn_pytorch as mth
 
 data = torch.rand(4, 1, 28, 28) # [B, C, H, W]
 print(data.shape)
-encoder = mth.snn.PoissionEncoder(32)
+encoder = mth.snn.PoissonEncoder(32)
 res = encoder(data)
 print(res.shape)
 ```

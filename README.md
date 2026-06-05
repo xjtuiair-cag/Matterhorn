@@ -26,7 +26,7 @@ TorchVision (>= 0.14.0)
 
 ### Requirement Installation
 
-For Windows version you may have to install GCC as well as G++ through Visual Studio (build tools) and [MinGW](./mingw-get-setup.exe).
+For Windows users, you may need GCC and G++ through Visual Studio (build tools) and [MinGW](https://sourceforge.net/projects/mingw/) if you build optional C++ extensions separately.
 
 Then execute:
 
@@ -308,19 +308,7 @@ cd Matterhorn
 python3 examples/2_using_stdp.py
 ```
 
-**Note:** Please make sure you have installed `matterhorn_cpp_extensions` (or `matterhorn_cuda_extensions` if you have CUDA), otherwise it will be extremely slow.
-
-```sh
-cd matterhorn_cpp_extensions
-python3 setup.py develop
-```
-
-if you have CUDA, you can install CUDA version:
-
-```sh
-cd matterhorn_cuda_extensions
-python3 setup.py develop
-```
+**Note:** STDP training in this repository uses the pure-Python implementation in `matterhorn_pytorch.training.functional`. Optional `matterhorn_cpp_extensions` / `matterhorn_cuda_extensions` packages (not bundled here) can accelerate STDP further if installed separately.
 
 ### Neuromorphic Datasets
 

@@ -276,7 +276,7 @@ g++ -v
 
 ### Windows 用户
 
-使用本仓库中提供的 `mingw-get-setup.exe` ，参考[该教程](https://blog.csdn.net/weixin_43448473/article/details/126942594)安装 GCC 与 G++ 。
+若需编译可选的 C++ 扩展，请单独安装 [MinGW](https://sourceforge.net/projects/mingw/) ，并参考[该教程](https://blog.csdn.net/weixin_43448473/article/details/126942594)安装 GCC 与 G++ 。
 
 ### MacOS 用户
 

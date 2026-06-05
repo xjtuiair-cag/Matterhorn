@@ -17,6 +17,9 @@ import h5py
 
 
 class HDF5(EventDataset1d):
+    """
+    后缀名为.h5的神经形态数据集基类。
+    """
     original_data_polarity_exists = True
     training_file = "training.pt"
     test_file = "test.pt"
@@ -72,6 +75,9 @@ class HDF5(EventDataset1d):
 
 
 class SpikingHeidelbergDigits(HDF5):
+    """
+    Spiking Heidelberg Digits（SHD）神经形态数据集。
+    """
     original_data_polarity_exists = False
     original_size = (1, 1, 700)
     mirrors = ["https://zenkelab.org/datasets/"]

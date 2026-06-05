@@ -26,7 +26,7 @@
 
 该模块中含有将模拟值在时间维度上编码，转化为脉冲序列的编码器。是 ANN 的输出作为 SNN 的输入的桥梁。
 
-含有的 `matterhorn_pytorch.snn` 模块： `DirectEncoder` 、 `PoissonEncoder` 和 `TemporalEncoder` 。
+含有的 `matterhorn_pytorch.snn` 模块： `DirectEncoder` 、 `AnalogEncoder` 、 `PoissonEncoder` 和 `TemporalEncoder` 。
 
 您可以阅读[文档](./8_encoder.md)以了解更多类与变量的使用方法。
 
@@ -40,7 +40,7 @@
 
 该模块中的单元，输入和输出皆为脉冲序列。含有展开层、池化层等。
 
-含有的 `matterhorn_pytorch.snn` 模块： `STDPLinear` 、 `MaxPool1d` 、 `MaxPool2d` 、 `MaxPool3d` 、 `AvgPool1d` 、 `AvgPool2d` 、 `AvgPool3d` 、 `Flatten` 、 `Unflatten` 、 `Dropout` 、 `Dropout1d` 、 `Dropout2d` 和 `Dropout3d` 。
+含有的 `matterhorn_pytorch.snn` 模块： `STDPLinear` 、 `STDPConv2d` 、 `MaxPool1d` 、 `MaxPool2d` 、 `MaxPool3d` 、 `AvgPool1d` 、 `AvgPool2d` 、 `AvgPool3d` 、 `MaxUnpool1d` 、 `MaxUnpool2d` 、 `MaxUnpool3d` 、 `Upsample` 、 `Flatten` 、 `Unflatten` 、 `Dropout` 、 `Dropout1d` 、 `Dropout2d` 、 `Dropout3d` 和 `TemporalWiseAttention` 。
 
 您可以阅读[文档](./6_layer.md)以了解更多类与变量的使用方法。
 
@@ -64,7 +64,7 @@
 
 该模块定义了脉冲神经元 Heaviside 阶跃函数的替代梯度，具体的定义您可以在参考文献 [1] 中找到。
 
-含有的 `matterhorn_pytorch.snn` 模块： `Rectangular` 、 `Polynomial` 、 `Sigmoid` 和 `Gaussian` 。
+含有的 `matterhorn_pytorch.snn` 模块： `Rectangular` 、 `Polynomial` 、 `Sigmoid` 、 `Gaussian` 、 `Floor` 、 `Ceil` 和 `Round` 。
 
 您可以阅读[文档](./3_firing.md)以了解更多类与变量的使用方法。
 
@@ -72,7 +72,7 @@
 
 该模块定义了 SNNs 的脉冲神经元突触，它们的输入为脉冲序列，输出为输入电位（模拟值）。含有全连接、卷积操作等。
 
-含有的 `matterhorn_pytorch.snn` 模块： `Linear` 、 `Conv1d` 、 `Conv2d` 、 `Conv3d` 、 `ConvTranspose1d` 、 `ConvTranspose2d` 、 `ConvTranspose3d` 、 `BatchNorm1d` 、 `BatchNorm2d` 、 `BatchNorm3d` 和 `LayerNorm` 。
+含有的 `matterhorn_pytorch.snn` 模块： `Linear` 、 `WSLinear` 、 `Conv1d` 、 `WSConv1d` 、 `Conv2d` 、 `WSConv2d` 、 `Conv3d` 、 `WSConv3d` 、 `ConvTranspose1d` 、 `ConvTranspose2d` 、 `ConvTranspose3d` 、 `BatchNorm1d` 、 `BatchNorm2d` 、 `BatchNorm3d` 、 `LayerNorm` 和 `MultiheadAttention` 。
 
 您可以阅读[文档](./5_synapse.md)以了解更多类与变量的使用方法。
 

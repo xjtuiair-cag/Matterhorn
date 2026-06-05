@@ -41,6 +41,49 @@ y = SF.to_spike_train(x)
 print(y)
 ```
 
+## `matterhorn_pytorch.snn.functional.from_spike_train`
+
+`to_spike_train` 的逆操作，将脉冲转回模拟值。
+
+```python
+from_spike_train(
+    o: torch.Tensor
+) -> torch.Tensor
+```
+
+### 参数
+
+`o (torch.Tensor)`：输入脉冲序列。
+
+### 返回值
+
+`x (torch.Tensor)`：模拟值张量。
+
+## `matterhorn_pytorch.snn.functional.reset_hard`
+
+硬重置（归零重置）。发放脉冲后将膜电位设为静息电位。
+
+```python
+reset_hard(
+    u: torch.Tensor,
+    o: torch.Tensor,
+    u_rest: torch.Tensor = torch.tensor(0.0)
+) -> torch.Tensor
+```
+
+## `matterhorn_pytorch.snn.functional.reset_soft`
+
+软重置（减法重置）。发放脉冲后从膜电位中减去阈值。
+
+```python
+reset_soft(
+    u: torch.Tensor,
+    o: torch.Tensor,
+    u_threshold: torch.Tensor,
+    u_rest: torch.Tensor = torch.tensor(0.0)
+) -> torch.Tensor
+```
+
 ## `matterhorn_pytorch.snn.functional.heaviside_rectangular`
 
 Heaviside 阶跃函数：

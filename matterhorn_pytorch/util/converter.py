@@ -171,12 +171,12 @@ def ann_to_snn(model: nn.Module, demo_data: Dataset, pre_process: Callable = lam
                 ceil_mode = ann_module.ceil_mode,
                 count_include_pad = ann_module.count_include_pad
             )
-            if isinstance(ann_module, nn.MaxPool1d):
+            if isinstance(ann_module, nn.AvgPool1d):
                 snn_module = snn.AvgPool1d(**kwargs)
-            elif isinstance(ann_module, nn.MaxPool2d):
+            elif isinstance(ann_module, nn.AvgPool2d):
                 kwargs["divisor_override"] = ann_module.divisor_override
                 snn_module = snn.AvgPool2d(**kwargs)
-            elif isinstance(ann_module, nn.MaxPool3d):
+            elif isinstance(ann_module, nn.AvgPool3d):
                 kwargs["divisor_override"] = ann_module.divisor_override
                 snn_module = snn.AvgPool3d(**kwargs)
         # 展开和反展开

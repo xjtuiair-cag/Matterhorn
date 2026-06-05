@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """
-此文件夹放置各式各样的小工具。
+Matterhorn 神经形态计算框架的顶层包，导出 snn、tnn 与 training 子模块。
 """
 
 from .__info__ import __version__

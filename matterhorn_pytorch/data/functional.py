@@ -22,6 +22,13 @@ from rich import print
 
 
 def get_md5(filename: str):
+    """
+    计算文件的MD5校验值。
+    Args:
+        filename (str): 文件路径
+    Returns:
+        md5 (str): 小写十六进制MD5字符串
+    """
     md5_hash = hashlib.md5()
     with open(filename, "rb") as f:
         for byte_block in iter(lambda: f.read(4096), b""):
@@ -30,6 +37,16 @@ def get_md5(filename: str):
 
 
 def download_file(src: str, dest: str, md5: _Optional[str] = None, retry: int = 5) -> None:
+    """
+    从指定URL下载文件到本地。
+    Args:
+        src (str): 下载地址
+        dest (str): 本地保存路径
+        md5 (str | None): 期望的MD5校验值
+        retry (int): 下载失败时的重试次数
+    Returns:
+        success (bool): 是否下载成功
+    """
     md5 = md5.lower()
     if os.path.isfile(dest):
         if (md5 is not None) and get_md5(dest) != md5:
@@ -56,6 +73,15 @@ def download_file(src: str, dest: str, md5: _Optional[str] = None, retry: int = 
 
 
 def check_zip_file(src: str, dest: str) -> _Tuple[bool, _Iterable[str]]:
+    """
+    检查压缩包是否已完整解压到目标目录。
+    Args:
+        src (str): 压缩包路径
+        dest (str): 解压目标目录
+    Returns:
+        success (bool): 是否全部文件均已存在
+        existed_files (Iterable[str]): 已存在的文件路径列表
+    """
     if not os.path.exists(dest):
         return False, []
     try:
@@ -76,6 +102,14 @@ def check_zip_file(src: str, dest: str) -> _Tuple[bool, _Iterable[str]]:
 
 
 def unzip_file(src: str, dest: str) -> str:
+    """
+    将压缩包解压到目标目录。
+    Args:
+        src (str): 压缩包路径
+        dest (str): 解压目标目录
+    Returns:
+        success (bool): 是否解压成功
+    """
     success, existed_files = check_zip_file(src, dest)
     if success:
         print("[blue]File %s is already unzipped.[/blue]" % (src,))

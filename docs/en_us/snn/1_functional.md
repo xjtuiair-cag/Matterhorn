@@ -41,6 +41,49 @@ y = SF.to_spike_train(x)
 print(y)
 ```
 
+## `matterhorn_pytorch.snn.functional.from_spike_train`
+
+Inverse of `to_spike_train`. Converts spikes back to analog values.
+
+```python
+from_spike_train(
+    o: torch.Tensor
+) -> torch.Tensor
+```
+
+### Parameters
+
+`o (torch.Tensor)`: Input spike train.
+
+### Returns
+
+`x (torch.Tensor)`: Analog value tensor.
+
+## `matterhorn_pytorch.snn.functional.reset_hard`
+
+Hard reset after firing. Sets membrane potential to resting potential when a spike is emitted.
+
+```python
+reset_hard(
+    u: torch.Tensor,
+    o: torch.Tensor,
+    u_rest: torch.Tensor = torch.tensor(0.0)
+) -> torch.Tensor
+```
+
+## `matterhorn_pytorch.snn.functional.reset_soft`
+
+Soft reset after firing. Subtracts threshold from membrane potential when a spike is emitted.
+
+```python
+reset_soft(
+    u: torch.Tensor,
+    o: torch.Tensor,
+    u_threshold: torch.Tensor,
+    u_rest: torch.Tensor = torch.tensor(0.0)
+) -> torch.Tensor
+```
+
 ## `matterhorn_pytorch.snn.functional.heaviside_rectangular`
 
 Heaviside step function:

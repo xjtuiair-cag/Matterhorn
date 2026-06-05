@@ -26,7 +26,7 @@ TorchVision （版本 >=0.14.0）
 
 ### 依赖安装
 
-对于 Windows 用户来说，您需要安装额外的 GCC 和 G++ 编译器以正常安装 C++ 扩展，请安装 Visual Studio （仅安装生成工具），并执行[所下载的 MinGW 安装软件](./mingw-get-setup.exe)以安装环境。
+对于 Windows 用户来说，若需单独编译可选的 C++ 扩展，您需要安装额外的 GCC 和 G++ 编译器，请安装 Visual Studio （仅安装生成工具），并安装 [MinGW](https://sourceforge.net/projects/mingw/) 环境。
 
 随后执行：
 
@@ -308,19 +308,7 @@ cd Matterhorn
 python3 examples/2_using_stdp.py
 ```
 
-**注意：** 请确保已安装 `matterhorn_cpp_extensions` （或者如果有 CUDA ，则安装 `matterhorn_cuda_extensions`），否则速度将非常慢。
-
-```sh
-cd matterhorn_cpp_extensions
-python3 setup.py develop
-```
-
-如果有 CUDA ，您可以安装 CUDA 版本：
-
-```sh
-cd matterhorn_cuda_extensions
-python3 setup.py develop
-```
+**注意：** 本仓库中的 STDP 训练使用 `matterhorn_pytorch.training.functional` 提供的纯 Python 实现。可选的 `matterhorn_cpp_extensions` / `matterhorn_cuda_extensions` 加速包（未随本仓库提供）可在单独安装后进一步提升 STDP 速度。
 
 ### 神经形态数据集
 

@@ -20,13 +20,16 @@ SNN 序列容器。其与 `nn.Sequential` 用法类似，然而：
 
 ```python
 Sequential(
-    *args: Tuple[nn.Module]
+    *args: Tuple[nn.Module],
+    return_states: bool = True
 )
 ```
 
 ### 构造函数参数
 
 `*args (*nn.Module)` ：按空间顺序传入的各个模块。
+
+`return_states (bool)` ：前向传播后是否返回有状态子模块（如胞体神经元）的状态变量。默认为 `True` 。
 
 ### 示例用法
 

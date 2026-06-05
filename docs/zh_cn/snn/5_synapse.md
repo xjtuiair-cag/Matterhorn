@@ -71,6 +71,51 @@ import matterhorn_pytorch as mth
 fc = mth.snn.Linear(784, 10) # [T, B, 784] -> [T, B, 10]
 ```
 
+## `matterhorn_pytorch.snn.WSLinear` / `matterhorn_pytorch.snn.synapse.WSLinear`
+
+权重标准化的全连接层。接口与 `Linear` 相同，在线性变换前对权重进行标准化。
+
+```python
+WSLinear(
+    in_features: int,
+    out_features: int,
+    bias: bool = True,
+    affine: bool = True,
+    eps: float = 1e-6,
+    batch_first: bool = False,
+    device: torch.device = None,
+    dtype: torch.dtype = None
+)
+```
+
+### 构造函数参数
+
+与 `Linear` 相同，并额外包含：
+
+`affine (bool)`：标准化后是否使用可学习的仿射参数 $\gamma$ 和 $\beta$。
+
+`eps (float)`：权重标准化时使用的方差偏移量。
+
+### 示例用法
+
+```python
+import matterhorn_pytorch as mth
+
+fc = mth.snn.WSLinear(784, 10)
+```
+
+## `matterhorn_pytorch.snn.WSConv1d` / `matterhorn_pytorch.snn.synapse.WSConv1d`
+
+权重标准化的一维卷积。接口与 `Conv1d` 相同，并额外包含 `affine` 与 `eps` 参数。
+
+## `matterhorn_pytorch.snn.WSConv2d` / `matterhorn_pytorch.snn.synapse.WSConv2d`
+
+权重标准化的二维卷积。接口与 `Conv2d` 相同，并额外包含 `affine` 与 `eps` 参数。
+
+## `matterhorn_pytorch.snn.WSConv3d` / `matterhorn_pytorch.snn.synapse.WSConv3d`
+
+权重标准化的三维卷积。接口与 `Conv3d` 相同，并额外包含 `affine` 与 `eps` 参数。
+
 ## `matterhorn_pytorch.snn.Conv1d` / `matterhorn_pytorch.snn.synapse.Conv1d`
 
 突触的一维卷积操作。可用如下公式表示：

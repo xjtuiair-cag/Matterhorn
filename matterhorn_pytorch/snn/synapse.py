@@ -70,6 +70,11 @@ class _WeightStd(_Module):
 
     @property
     def weight_std(self) -> torch.Tensor:
+        """
+        返回标准化并仿射变换后的权重张量。
+        Returns:
+            weight (torch.Tensor): 标准化后的权重
+        """
         assert hasattr(self, "weight"), "The property weight doesn't exist."
         weight: torch.Tensor = getattr(self, "weight")
         dims = tuple(range(1, weight.ndim))

@@ -60,7 +60,7 @@ res = encoder(data)
 print(res.shape)
 ```
 
-## `matterhorn_pytorch.snn.PoissionEncoder` / `matterhorn_pytorch.snn.encoder.Poission`
+## `matterhorn_pytorch.snn.PoissonEncoder` / `matterhorn_pytorch.snn.encoder.Poisson`
 
 泊松编码（速率编码）的编码器。将值转换为输入层每个神经元发放脉冲的概率。可以用如下公式描述：
 
@@ -96,7 +96,7 @@ import matterhorn_pytorch as mth
 
 data = torch.rand(4, 1, 28, 28) # [B, C, H, W]
 print(data.shape)
-encoder = mth.snn.PoissionEncoder(32)
+encoder = mth.snn.PoissonEncoder(32)
 res = encoder(data)
 print(res.shape)
 ```

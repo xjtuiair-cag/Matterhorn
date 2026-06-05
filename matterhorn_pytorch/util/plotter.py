@@ -43,6 +43,15 @@ def transition_color(val: float, min_val: float = 0., max_val: float = 1., min_c
 
 
 def init_figure(ndim: int, **kwargs) -> Tuple[Figure, Union[Axes, Axes3D]]:
+    """
+    初始化matplotlib图像与坐标轴。
+    Args:
+        ndim (int): 空间维度个数，不小于3时使用3D坐标轴
+        **kwargs: 传给plt.figure的参数
+    Returns:
+        fig (Figure): 图像对象
+        ax (Axes | Axes3D): 坐标轴对象
+    """
     fig = plt.figure(**kwargs)
     if ndim >= 3:
         ax = fig.add_subplot(projection = "3d")
@@ -52,6 +61,15 @@ def init_figure(ndim: int, **kwargs) -> Tuple[Figure, Union[Axes, Axes3D]]:
 
 
 def _check_and_merge_kwargs(kwargs: Mapping, ndim: int, default_kwargs: Mapping = dict()) -> Mapping:
+    """
+    从关键字参数中提取并合并绘图相关配置。
+    Args:
+        kwargs (Mapping): 传入的关键字参数
+        ndim (int): 空间维度个数
+        default_kwargs (Mapping): 默认配置
+    Returns:
+        merged (Mapping): 合并后的配置
+    """
     for k in kwargs:
         if k in ("color_pos", "color_neg"):
             default_kwargs[k] = kwargs[k]

@@ -20,13 +20,16 @@ SNN sequential container. Similar to `nn.Sequential`, but:
 
 ```python
 Sequential(
-    *args: Tuple[nn.Module]
+    *args: Tuple[nn.Module],
+    return_states: bool = True
 )
 ```
 
 ### Constructor Arguments
 
 `*args (*nn.Module)`: Various modules passed in spatial order.
+
+`return_states (bool)`: Whether to return state variables from stateful submodules (e.g. soma neurons) after forward propagation. Defaults to `True`.
 
 ### Example Usage
 

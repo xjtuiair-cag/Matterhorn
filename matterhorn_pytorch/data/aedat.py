@@ -17,6 +17,9 @@ from matterhorn_pytorch.data.skeleton import EventDataset2d as _EventDataset2d
 
 
 class AEDAT(_EventDataset2d):
+    """
+    后缀名为.aedat的神经形态数据集基类。
+    """
     original_data_polarity_exists = True
     original_size = (1, 2, 128, 128)
     mirrors = []
@@ -142,6 +145,9 @@ class AEDAT(_EventDataset2d):
 
 
 class CIFAR10DVS(AEDAT):
+    """
+    CIFAR10-DVS神经形态数据集。
+    """
     original_data_polarity_exists = True
     original_size = (1, 2, 128, 128)
     mirrors = ["https://ndownloader.figshare.com/files/"]
@@ -274,6 +280,9 @@ class CIFAR10DVS(AEDAT):
 
 
 class DVS128Gesture(AEDAT):
+    """
+    DVS128 Gesture神经形态数据集。
+    """
     original_data_polarity_exists = True
     original_size = (1, 2, 128, 128)
     mirrors = ["https://ibm.ent.box.com/s/3hiq58ww1pbbjrinh367ykfdf60xsfm8/folder/50167556794"]

@@ -1021,6 +1021,31 @@ z = TF.s_ge(x, y)
 print(z)
 ```
 
+## `matterhorn_pytorch.tnn.functional.t_delta`
+
+计算 TNN 竞争逻辑中两个时间信号之间的差值。
+
+```python
+t_delta(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor
+```
+
+## 竞争逻辑（RL）算子
+
+除上述 24 个时空代数算子外，本模块还提供用于构建 TNN 柱的竞争逻辑算子，分为时间域（`t_rl_*`）与脉冲域（`s_rl_*`）两类。
+
+| 函数 | 说明 |
+|------|------|
+| `t_rl_forward_add(x, t)` / `t_rl_add(x, t)` | 将时间信号延迟 `t`。 |
+| `t_rl_forward_min(x, y)` / `t_rl_min(x, y)` | 两个时间信号逐元素取最小。 |
+| `t_rl_forward_max(x, y)` / `t_rl_max(x, y)` | 两个时间信号逐元素取最大。 |
+| `t_rl_forward_inh(x, y)` / `t_rl_inh(x, y)` | 当 `y` 更早到达时抑制 `x`。 |
+| `s_rl_forward_add(x, t)` / `s_rl_add(x, t)` | 将脉冲序列延迟 `t` 个时间步。 |
+| `s_rl_forward_min(x, y)` / `s_rl_min(x, y)` | 两个脉冲序列逐元素取最小。 |
+| `s_rl_forward_max(x, y)` / `s_rl_max(x, y)` | 两个脉冲序列逐元素取最大。 |
+| `s_rl_forward_inh(x, y)` / `s_rl_inh(x, y)` | 当 `y` 更早发放时抑制 `x` 中的脉冲。 |
+
+不带 `_forward_` 前缀的函数为支持自动求导的封装；带 `*_forward_*` 前缀的为底层 JIT 编译的前向实现。
+
 ## 参考文献
 
 [1] Hestenes D. Space-time algebra[M]. Switzerland: Springer International Publishing, 2015.

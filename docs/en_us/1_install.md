@@ -274,7 +274,7 @@ in the command line without errors, you can skip this step.
 
 ### For Windows Users
 
-Use the provided `mingw-get-setup.exe` in this repository, and refer to [this tutorial](https://blog.csdn.net/weixin_43448473/article/details/126942594) for installing GCC and G++.
+Install [MinGW](https://sourceforge.net/projects/mingw/) separately if you need to build optional C++ extensions, and refer to [this tutorial](https://blog.csdn.net/weixin_43448473/article/details/126942594) for installing GCC and G++.
 
 ### For MacOS Users
 
