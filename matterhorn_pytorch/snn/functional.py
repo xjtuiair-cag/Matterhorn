@@ -816,7 +816,7 @@ def expif_neuron(x: torch.Tensor, h: torch.Tensor, u_threshold: torch.Tensor, u_
     """
     o_seq = []
     for t in range(x.shape[0]):
-        du = (1.0 / tau_m) * (-(h - u_rest) + delta_t * torch.exp((h - u_t) / delta_t) + x)
+        du = (1.0 / tau_m.to(x)) * (-(h - u_rest.to(x)) + delta_t.to(x) * torch.exp((h - u_t.to(x)) / delta_t.to(x)) + x[t])
         u = h + du
         o = _firing(u, u_threshold, u_rest, firing)
         if hard_reset:
@@ -848,9 +848,9 @@ def izhikevich_neuron(x: torch.Tensor, h_w: _Tuple[torch.Tensor, torch.Tensor], 
     h, w = h_w
     o_seq = []
     for t in range(x.shape[0]):
-        dw = a * (b * h - w)
+        dw = a.to(x) * (b.to(x) * h - w)
         w = w + dw
-        du = 0.00004 * h * h + 0.005 * h + 0.14 + u_rest - w + x
+        du = 0.00004 * h * h + 0.005 * h + 0.14 + u_rest.to(x) - w + x[t]
         u = h + du
         o = _firing(u, u_threshold, u_rest, firing)
         if hard_reset:

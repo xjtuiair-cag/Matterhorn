@@ -6,4 +6,5 @@ tqdm
 rich
 torch
 torchvision
+torch-scatter
 pyecharts
